@@ -1,0 +1,166 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../models/models.dart';
+import '../../providers/shopping_provider.dart';
+import '../../core/di.dart';
+import '../../core/colors.dart';
+
+/// Universal Title Tile that replaces the status bar across all screens.
+///
+/// Title-bar standard (owner, 2026-07-12 — see theme.md §5.1):
+/// - Line 1: the screen title. Line 2 is ALWAYS the status line
+///   (boat • Pro/Free • Online/Offline • email user • Syncing (N)).
+/// - A back arrow sits on the far left whenever the screen can pop
+///   (the home screen can't, so it never shows one).
+/// - Trailing icons, right to left: drawer (menu), import/export, share.
+class TitleTile extends ConsumerStatefulWidget {
+  /// The main title to display (context-aware, e.g., "Sisu Mate", "Checklists", "Daily Engine Checks")
+  final String title;
+
+  /// Optional callback for menu button press
+  final VoidCallback? onMenuPressed;
+
+  /// Optional extra icon buttons rendered before the menu icon (e.g. share/print).
+  /// Receives the tile's computed icon color so actions match the header style.
+  final List<Widget> Function(Color iconColor)? actionsBuilder;
+
+  const TitleTile({
+    super.key,
+    required this.title,
+    this.onMenuPressed,
+    this.actionsBuilder,
+  });
+
+  @override
+  ConsumerState<TitleTile> createState() => _TitleTileState();
+}
+
+class _TitleTileState extends ConsumerState<TitleTile> {
+  List<ConnectivityResult> _connectivity = [ConnectivityResult.none];
+
+  @override
+  void initState() {
+    super.initState();
+    _initConnectivity();
+    Connectivity().onConnectivityChanged.listen(_updateConnectivity);
+  }
+
+  Future<void> _initConnectivity() async {
+    try {
+      final result = await Connectivity().checkConnectivity();
+      _updateConnectivity(result);
+    } catch (e) {
+      // Failed to get connectivity
+    }
+  }
+
+  void _updateConnectivity(List<ConnectivityResult> result) {
+    if (mounted) {
+      setState(() => _connectivity = result);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isProAsync = ref.watch(isProProvider);
+    final activeBoatAsync = ref.watch(activeBoatProvider);
+    final userAsync = ref.watch(authStateProvider);
+
+    return isProAsync.when(
+      data: (isPro) => activeBoatAsync.when(
+        data: (boat) => userAsync.when(
+          data: (user) => _buildTitleTile(isPro, boat, user),
+          loading: () => _buildTitleTile(isPro, boat, null),
+          error: (_, _) => _buildTitleTile(isPro, boat, null),
+        ),
+        loading: () => _buildTitleTile(isPro, null, null),
+        error: (_, _) => _buildTitleTile(isPro, null, null),
+      ),
+      loading: () => _buildTitleTile(false, null, null),
+      error: (_, _) => _buildTitleTile(false, null, null),
+    );
+  }
+
+  Widget _buildTitleTile(bool isPro, Boat? activeBoat, dynamic user) {
+    final isOnline = _connectivity.any(
+      (result) => result != ConnectivityResult.none,
+    );
+    final backgroundColor = SisuColors.getStatusBarColor(isPro, isOnline);
+    final textColor = Theme.of(context).colorScheme.onPrimary;
+
+    // Status line (mandatory): Boat • Pro/Free • Online/Offline • user • Syncing (N)
+    final boatName = activeBoat?.name ?? 'No Boat';
+    final proStatus = isPro ? 'Pro' : 'Free';
+    final onlineStatus = isPro ? (isOnline ? 'Online' : 'Offline') : '';
+    final username = isPro && user != null
+        ? user.email?.split('@')[0] ?? ''
+        : '';
+    final outbox = ref.watch(syncOutboxCountProvider).value ?? 0;
+
+    final secondLineParts = [boatName, proStatus];
+    if (onlineStatus.isNotEmpty) secondLineParts.add(onlineStatus);
+    if (username.isNotEmpty) secondLineParts.add(username);
+    if (outbox > 0) secondLineParts.add('Syncing ($outbox)');
+
+    final secondLine = secondLineParts.join(' • ');
+    final canPop = Navigator.of(context).canPop();
+
+    return Container(
+      width: double.infinity, // Full width
+      height: 62, // Reduced height to prevent overflow
+      color: backgroundColor,
+      padding: EdgeInsets.only(
+        left: canPop ? 0 : 16,
+        top: 6,
+        bottom: 6,
+      ),
+      child: Row(
+        children: [
+          if (canPop)
+            IconButton(
+              icon: Icon(Icons.arrow_back, color: textColor),
+              onPressed: () => Navigator.of(context).maybePop(),
+              tooltip: 'Back',
+            ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // First line: Context-aware title in bold
+                Text(
+                  widget.title,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16, // Reduced font size
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1), // Reduced spacing
+                // Second line: the mandatory status line.
+                Text(
+                  secondLine,
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.9),
+                    fontSize: 11, // Reduced font size
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          // Trailing icons, right to left: drawer (menu), import/export, share.
+          ...?widget.actionsBuilder?.call(textColor),
+          if (widget.onMenuPressed != null)
+            IconButton(
+              icon: Icon(Icons.menu, color: textColor),
+              onPressed: widget.onMenuPressed,
+              tooltip: 'Menu',
+            ),
+        ],
+      ),
+    );
+  }
+}

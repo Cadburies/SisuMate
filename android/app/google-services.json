@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "836442385475",
+    "project_id": "boatchecks-1f390",
+    "storage_bucket": "boatchecks-1f390.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:836442385475:android:0a40b23f8f53440952f8f6",
+        "android_client_info": {
+          "package_name": "com.sailingsisu.boatchecks"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "836442385475-nchou818gtddak9ugrcje51a6a3jfchr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sailingsisu.boatchecks",
+            "certificate_hash": "6aad8749d03783dbc925ece2e4ffc167f0e8f136"
+          }
+        },
+        {
+          "client_id": "836442385475-5c7o0kpdt1s7h66lo18bd5b0q7p351nk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJP5qBPPXjrOyTO8qnnTQ4_MncP_gX8Uw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "836442385475-5c7o0kpdt1s7h66lo18bd5b0q7p351nk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "836442385475-ivnp8m13r26amcdr5rrdfsuce1mfj0mt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sailingsisu.boatchecks"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

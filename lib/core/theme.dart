@@ -1,0 +1,135 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'colors.dart';
+import 'di.dart';
+
+// ── Theme Mode State ──────────────────────────────────────────────────────────
+
+class ThemeModeNotifier extends Notifier<ThemeMode> {
+  // Dark is the default (theme.md §1).
+  @override
+  ThemeMode build() => ThemeMode.dark;
+
+  void toggleTheme() {
+    final next = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    state = next;
+    _persist(next);
+  }
+
+  void setLightTheme() {
+    state = ThemeMode.light;
+    _persist(ThemeMode.light);
+  }
+
+  void setDarkTheme() {
+    state = ThemeMode.dark;
+    _persist(ThemeMode.dark);
+  }
+
+  /// Restores the persisted theme on startup without triggering another write.
+  void restoreTheme(bool isDark) {
+    state = isDark ? ThemeMode.dark : ThemeMode.light;
+  }
+
+  Future<void> _persist(ThemeMode mode) async {
+    try {
+      final settings = await ref.read(userSettingsProvider.future);
+      if (settings == null) return;
+      settings.isDarkMode = mode == ThemeMode.dark;
+      await ref.read(userSettingsRepositoryProvider).updateSettings(settings);
+    } catch (_) {
+      // Best-effort — next successful call will catch up
+    }
+  }
+}
+
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
+  ThemeModeNotifier.new,
+);
+
+// ── Theme Builder ─────────────────────────────────────────────────────────────
+
+ThemeData createSisuMateTheme({required Brightness brightness}) {
+  final isDark = brightness == Brightness.dark;
+
+  final colorScheme = ColorScheme(
+    brightness: brightness,
+    // Surfaces — the middle "list/surface" layer (theme.md §3)
+    surface: SisuColors.getListSurface(isDark),
+    onSurface: SisuColors.getTextPrimaryColor(isDark),
+    // Primary maps to "incomplete" — the default resting state of list items
+    primary: SisuColors.incompleteBackground,
+    onPrimary: SisuColors.incompleteText,
+    primaryContainer: SisuColors.getBackgroundColor(isDark),
+    onPrimaryContainer: SisuColors.getTextPrimaryColor(isDark),
+    // Secondary maps to "completed"
+    secondary: SisuColors.completedBackground,
+    onSecondary: SisuColors.completedText,
+    secondaryContainer:
+        isDark ? const Color(0xFF003d3d) : const Color(0xFFb2dfdb),
+    onSecondaryContainer: SisuColors.completedBackground,
+    // Tertiary maps to "hidden"
+    tertiary: SisuColors.hiddenBackground,
+    onTertiary: SisuColors.hiddenText,
+    tertiaryContainer:
+        isDark ? const Color(0xFF1c252b) : const Color(0xFFe0e0e0),
+    onTertiaryContainer: SisuColors.hiddenBackground,
+    // Error maps to "not available"
+    error: SisuColors.notAvailableBackground,
+    onError: SisuColors.notAvailableText,
+    errorContainer:
+        isDark ? const Color(0xFF5d1a0a) : const Color(0xFFfce8e6),
+    onErrorContainer: SisuColors.notAvailableBackground,
+  );
+
+  final textTheme = TextTheme(
+    headlineMedium: TextStyle(
+      fontFamily: 'Nunito',
+      color: SisuColors.getTextPrimaryColor(isDark),
+    ),
+    titleMedium: TextStyle(
+      fontFamily: 'Nunito',
+      color: SisuColors.getTextPrimaryColor(isDark),
+    ),
+    bodyMedium: TextStyle(
+      fontFamily: 'Nunito',
+      color: SisuColors.getTextPrimaryColor(isDark),
+    ),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    fontFamily: 'Nunito',
+    colorScheme: colorScheme,
+    textTheme: textTheme,
+    // Three-layer greys (theme.md §3): scaffold = darkest, card = raised tile.
+    scaffoldBackgroundColor: SisuColors.getAppBackground(isDark),
+    cardColor: SisuColors.getTileColor(isDark),
+    // Tooltips: theme-aware (the default is near-white, too bright on dark).
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(
+        color: SisuColors.getTileColor(isDark),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      textStyle: TextStyle(
+        color: SisuColors.getTextPrimaryColor(isDark),
+        fontSize: 12,
+      ),
+    ),
+    // Snackbars: a dark surface (the M3 default inverts to near-white on dark).
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: SisuColors.getListSurface(isDark),
+      contentTextStyle: TextStyle(color: SisuColors.getTextPrimaryColor(isDark)),
+      actionTextColor: SisuColors.completedText,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+// ── Theme Instances ───────────────────────────────────────────────────────────
+
+final ThemeData sisuMateLightTheme =
+    createSisuMateTheme(brightness: Brightness.light);
+
+final ThemeData sisuMateDarkTheme =
+    createSisuMateTheme(brightness: Brightness.dark);

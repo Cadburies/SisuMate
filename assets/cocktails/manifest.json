@@ -1,0 +1,42 @@
+{
+  "navy_grog.jpg": {
+    "name": "Navy Grog",
+    "source_title": "File:Royal Navy Grog issue.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/04/Royal_Navy_Grog_issue.jpg",
+    "license": "Public domain",
+    "artist": "Austin, Robert Sargent RA",
+    "query": "Navy Grog cocktail"
+  },
+  "paper_plane.jpg": {
+    "name": "Paper Plane",
+    "source_title": "File:Dieter Michael Krone Paper Plane.png",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/a/af/Dieter_Michael_Krone_Paper_Plane.png",
+    "license": "Public domain",
+    "artist": "RegiegeigeR",
+    "query": "Paper Plane cocktail"
+  },
+  "espresso_martini.jpg": {
+    "name": "Espresso Martini",
+    "source_title": "File:Espresso Martini 01.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Espresso_Martini_01.jpg",
+    "license": "CC BY-SA 4.0",
+    "artist": "Arnaud 25",
+    "query": "Espresso Martini cocktail"
+  },
+  "paloma.jpg": {
+    "name": "Paloma",
+    "source_title": "File:TequilaPaloma.JPG",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/0c/TequilaPaloma.JPG",
+    "license": "Public domain",
+    "artist": "Antonio Cavallo",
+    "query": "Paloma cocktail"
+  },
+  "bloody_mary.jpg": {
+    "name": "Bloody Mary",
+    "source_title": "File:Bloody Mary Coctail with celery stalk - Evan Swigart.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Bloody_Mary_Coctail_with_celery_stalk_-_Evan_Swigart.jpg",
+    "license": "CC BY 2.0",
+    "artist": "Evan Swigart from Chicago, USA",
+    "query": "Bloody Mary cocktail"
+  }
+}
