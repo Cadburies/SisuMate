@@ -42,9 +42,11 @@ When reading source that **contradicts a Tier A/B claim**, fix the context file 
 
 ### 1. Pick & claim (before any planning or code)
 1. Resolve what the task actually is: an explicit ask ("do issue #N"), a batch/sequence ("do all
-   TEST issues" / "pick next work" → `gh issue list --label ready`, highest priority first —
+   TEST issues" / "pick next work" → `gh issue list --state open`, highest priority first —
    P1 > P2 > P3, lowest number breaks ties), or a one-off the user just typed. See
-   §Issue kickoff for the exact command shorthand.
+   §Issue kickoff for the exact command shorthand. There is no "claimable" label — an issue's
+   workability is judged from its **Touches** field (real paths, not a placeholder) and its Notes
+   (skip anything with an unresolved `Depends on #N`).
 2. Before claiming, check what else is already claimed: `gh issue list` and look for any open
    issue already carrying an `agent:*` label — that is in-flight work by another agent in this
    same shared tree.
@@ -54,9 +56,9 @@ When reading source that **contradicts a Tier A/B claim**, fix the context file 
    `lobby_screen.dart`, `suggestion_engine.dart`, `mixologist_service.dart`, the suite/SEC3
    scripts). Full rules in §Parallel agents. If it collides, pick a different task — never guess
    and proceed anyway.
-4. Claim it **first, before writing any code**: `gh issue edit <N> --add-label agent:<you>
-   --remove-label ready` + a one-line comment stating what's claimed and why it's parallel-safe
-   against the other open claims. Only once the claim lands, move to Plan.
+4. Claim it **first, before writing any code**: `gh issue edit <N> --add-label agent:<you>` + a
+   one-line comment stating what's claimed and why it's parallel-safe against the other open
+   claims. Only once the claim lands, move to Plan.
 
 ### 2. Plan
 - Short bullet list: change, files, acceptance criteria.
@@ -168,6 +170,7 @@ green suite is the trigger, not a reason to pause for confirmation:
 - `SisuColors` only in `lib/core/colors.dart`.
 - Any GUI colour/layout change → read `theme.md` first; tokens only from `SisuColors`.
 - Self-heal Tier A/B only (see above).
+- Every GitHub issue you file must carry an accurate **Touches** field (real file paths). This is the only parallel-safety signal other agents have — see §Issue kickoff.
 
 ---
 
@@ -176,10 +179,10 @@ green suite is the trigger, not a reason to pause for confirmation:
 Shorthand the user may give any agent at session start:
 
 - **"do issue #N"** → `gh issue view N`; claim per §Parallel agents, then execute to its Acceptance boxes.
-- **"do all TEST issues"** → `gh issue list --label test-gap --label ready`; work highest priority first (P1 > P2 > P3, lowest number breaks ties), one at a time, full suite + comment + close after each.
-- **"pick next work"** → same but `--label ready` only.
+- **"do all TEST issues"** → `gh issue list --label test-gap --state open`, excluding any already carrying an `agent:*` label; work highest priority first (P1 > P2 > P3, lowest number breaks ties), one at a time, full suite + comment + close after each.
+- **"pick next work"** → same query without the `test-gap` filter, narrowed to issues with a concrete **Touches** field (real paths — skip placeholder-style ones like "new service if ever built") and no unresolved `Depends on #N` in Notes.
 
-Label vocabulary: TEST = `test-gap`; claimable = `ready`; types = `bug` / `enhancement` / `chore` / `test-gap`; `historical` = closed archive, never touch.
+Label vocabulary: TEST = `test-gap`; types = `bug` / `enhancement` / `chore` / `test-gap`; `historical` = closed archive, never touch. **No "claimable" label exists** — the **Touches** field is the vetting signal. Every issue, whether filed by a human or an agent (a bug found mid-task, a follow-up), **must** carry an accurate Touches field predicting the real files/paths it will change: this is what the parallel-safety check in §1 and §Parallel agents reads. A vague or missing Touches field blocks safe parallel work — write it before anything else when filing.
 
 While batching: claim before code; suite green per issue (`--skip-*` flags need justification in the issue comment); respect Touches overlap + bad pairs (§Parallel agents); if blocked, comment why and move to the next issue — never flail.
 
@@ -187,7 +190,7 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 
 ## Parallel agents (local CLIs)
 
-- Backlog = GitHub Issues labeled `ready`. Session start: `gh issue list --label ready`; claim with `gh issue edit <N> --add-label agent:<you> --remove-label ready` + a one-line comment. **Claim before code.** Never take an issue carrying another `agent:*` label unless it has been idle >1 session and the user reassigns.
+- Backlog = open GitHub Issues not already carrying an `agent:*` label, with a concrete **Touches** field. Session start: `gh issue list --state open`; skip anything labeled `agent:*` or with an unresolved `Depends on #N` in Notes. Claim with `gh issue edit <N> --add-label agent:<you>` + a one-line comment. **Claim before code.** Never take an issue carrying another `agent:*` label unless it has been idle >1 session and the user reassigns.
 - Disjoint scope: no two claimed issues may overlap in their **Touches** fields. Single-owner hotspots per wave: `lib/core/di.dart`, `app_database.dart`, `app_router.dart`, `models.dart`, `units.dart`, `lobby_screen.dart`, `suggestion_engine.dart`, `mixologist_service.dart`, and the suite/SEC3 scripts.
 - Bad pairs (same stack): game AI ∥ TEST18 LAN (lobby/games) · units feature ∥ units tests · anything ∥ suite-script edits.
 - One agent per worktree: `git worktree add ../SisuMate-<N> issue-<N>`; run the full suite in the worktree before merging to `main`.
