@@ -273,8 +273,8 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                           Navigator.pop(context);
                           // Show interstitial ad first, then upgrade prompt
                           final adMobService = AdMobService();
-                          adMobService.createInterstitialAd();
-                          await Future.delayed(const Duration(milliseconds: 500));
+                          adMobService.createInterstitialAd(); // idempotent; usually preloaded
+                          await adMobService.awaitInterstitialReady();
                           await adMobService.showInterstitialAdIfAllowed();
 
                           if (context.mounted) {
@@ -657,8 +657,8 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
   // Free-tier tap on Complete: interstitial ad + upgrade prompt.
   Future<void> _proGatedComplete() async {
     final adMobService = AdMobService();
-    adMobService.createInterstitialAd();
-    await Future.delayed(const Duration(milliseconds: 500));
+    adMobService.createInterstitialAd(); // idempotent; usually preloaded
+    await adMobService.awaitInterstitialReady();
     await adMobService.showInterstitialAdIfAllowed();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

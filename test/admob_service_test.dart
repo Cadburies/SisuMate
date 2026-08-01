@@ -182,4 +182,102 @@ void main() {
       expect(service.createNativeAd(), isNull);
     });
   });
+
+  group('AdMobService singleton (#123)', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    tearDown(() {
+      AdMobService.instance.resetInterstitialStateForTests();
+      AdMobService.debugSetPlatformForTests(const LiveAdMobPlatform());
+      AdMobService.resetInitializedForTests();
+    });
+
+    test('no-arg construction returns the shared instance', () {
+      expect(identical(AdMobService(), AdMobService()), isTrue);
+      expect(identical(AdMobService(), AdMobService.instance), isTrue);
+    });
+
+    test('platform construction still returns isolated instances', () {
+      final a = AdMobService(platform: FakeAdMobPlatform());
+      final b = AdMobService(platform: FakeAdMobPlatform());
+      expect(identical(a, b), isFalse);
+      expect(identical(a, AdMobService.instance), isFalse);
+    });
+
+    test('interstitial state persists across independent constructions',
+        () async {
+      final platform = FakeAdMobPlatform();
+      AdMobService.debugSetPlatformForTests(platform);
+      final a = AdMobService();
+      await a.init();
+
+      a.createInterstitialAd();
+
+      // A second, independent `AdMobService()` (what the gate call sites do)
+      // must see the same loaded ad — the pre-#123 orphan bug.
+      final b = AdMobService();
+      expect(b.hasInterstitialReady, isTrue);
+      expect(platform.loadCalls, 1);
+    });
+
+    test('createInterstitialAd is idempotent while an ad is ready', () async {
+      final platform = FakeAdMobPlatform();
+      AdMobService.debugSetPlatformForTests(platform);
+      final a = AdMobService();
+      await a.init();
+
+      a.createInterstitialAd();
+      a.createInterstitialAd();
+      a.createInterstitialAd();
+
+      expect(platform.loadCalls, 1);
+    });
+
+    test('awaitInterstitialReady returns once the ad is loaded', () async {
+      final platform = FakeAdMobPlatform();
+      AdMobService.debugSetPlatformForTests(platform);
+      final a = AdMobService();
+      await a.init();
+      a.createInterstitialAd();
+
+      await a.awaitInterstitialReady(timeout: const Duration(seconds: 1));
+
+      expect(AdMobService().hasInterstitialReady, isTrue);
+    });
+
+    test('reset seam clears singleton interstitial state', () async {
+      final platform = FakeAdMobPlatform();
+      AdMobService.debugSetPlatformForTests(platform);
+      final a = AdMobService();
+      await a.init();
+      a.createInterstitialAd();
+      expect(a.hasInterstitialReady, isTrue);
+
+      a.resetInterstitialStateForTests();
+
+      expect(a.hasInterstitialReady, isFalse);
+      expect(a.interstitialLoadAttempts, 0);
+    });
+
+    test('daily cap blocks the 4th show through the singleton', () async {
+      final platform = FakeAdMobPlatform();
+      AdMobService.debugSetPlatformForTests(platform);
+      final a = AdMobService();
+      await a.init();
+      a.createInterstitialAd();
+
+      // First three gate triggers show (fake platform auto-reloads on
+      // dismiss via the service's onDismissed → createInterstitialAd).
+      for (var i = 0; i < AdMobService.maxInterstitialAdsPerDay; i++) {
+        await a.showInterstitialAdIfAllowed();
+      }
+      expect(platform.showCalls, AdMobService.maxInterstitialAdsPerDay);
+
+      // 4th same-day trigger: cap blocks even though an ad is loaded.
+      await a.showInterstitialAdIfAllowed();
+      expect(platform.showCalls, AdMobService.maxInterstitialAdsPerDay);
+    });
+  });
 }
