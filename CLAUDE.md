@@ -40,32 +40,50 @@ When reading source that **contradicts a Tier A/B claim**, fix the context file 
 
 ## How a task works
 
-### 1. Plan
+### 1. Pick & claim (before any planning or code)
+1. Resolve what the task actually is: an explicit ask ("do issue #N"), a batch/sequence ("do all
+   TEST issues" / "pick next work" → `gh issue list --label ready`, highest priority first —
+   P1 > P2 > P3, lowest number breaks ties), or a one-off the user just typed. See
+   §Issue kickoff for the exact command shorthand.
+2. Before claiming, check what else is already claimed: `gh issue list` and look for any open
+   issue already carrying an `agent:*` label — that is in-flight work by another agent in this
+   same shared tree.
+3. Check parallel safety against **every** currently claimed issue: no overlap in **Touches**,
+   not a listed bad pair, and not a single-owner hotspot another claim already owns
+   (`lib/core/di.dart`, `app_database.dart`, `app_router.dart`, `models.dart`, `units.dart`,
+   `lobby_screen.dart`, `suggestion_engine.dart`, `mixologist_service.dart`, the suite/SEC3
+   scripts). Full rules in §Parallel agents. If it collides, pick a different task — never guess
+   and proceed anyway.
+4. Claim it **first, before writing any code**: `gh issue edit <N> --add-label agent:<you>
+   --remove-label ready` + a one-line comment stating what's claimed and why it's parallel-safe
+   against the other open claims. Only once the claim lands, move to Plan.
+
+### 2. Plan
 - Short bullet list: change, files, acceptance criteria.
 - Model / provider / Pro / sync → re-read the **matching section** of `risks.md` (not the whole file if avoidable).
 
-### 2. Implement
+### 3. Implement
 - Smallest change that meets the requirement. No drive-by refactors.
 - Comments only for non-obvious *why*.
 - Pattern: repository → provider → `ConsumerWidget`. **Never** Drift/Supabase from UI.
 - Local DB: Drift. Domain models in `lib/models/` (plain Dart). Tables in `lib/data/drift/app_database.dart`. Mapping in repositories. List/embedded fields = JSON text columns.
 - New/changed Drift column → domain model + repo mapping + `fromJson`/`toJson` if serialized → `build_runner`.
 
-### 3. Analyze & generate
+### 4. Analyze & generate
 ```
 flutter analyze
 dart run build_runner build --delete-conflicting-outputs
 ```
 Zero analyzer issues. Do not suppress.
 
-### 4. Build
+### 5. Build
 Always pass dart-defines (missing → splash hang / missing credentials assert):
 ```
 flutter build apk --debug --dart-define-from-file=dart-defines.json
 ```
 Zero build errors before claiming done.
 
-### 5. Test (mandatory after every task)
+### 6. Test (mandatory after every task)
 
 ```bash
 ./scripts/run_full_suite.sh
@@ -118,10 +136,24 @@ flutter test integration_test -d flutter-tester
 
 Also: human **README.md → Testing**; open backlog = GitHub Issues (`test-gap` label for testing gaps); parallel-agent protocol in §Parallel agents below.
 
-### 6. Update context (end of task)
+### 7. Update context (end of task)
 1. Update **Tier A/B** files actually affected (not every file).
 2. Cap `INDEX.md` → **NEXT** at ~6 lines (last / doing / blockers).
 3. Close or comment the GitHub issue: suite result (+ skip flags used), files touched, blockers. History = git log + issue threads — there is no changelog file.
+4. Remove the claim: `gh issue edit <N> --remove-label agent:<you>` (closing the issue leaves the
+   label attached otherwise, which reads as still-claimed to the next session's §1 check).
+
+### 8. Commit & push (closing rule — only once the suite is green)
+Once §6 is green and §7 is done, commit and push **without waiting for a separate ask** — a
+green suite is the trigger, not a reason to pause for confirmation:
+1. `git add` the **specific files the task touched** (source + tests + the Tier A/B context
+   files updated in step 7) — never a blanket `git add -A`; that risks sweeping up another
+   agent's unrelated in-progress edits in a shared working tree (see §Parallel agents).
+2. Commit with a message describing the change and why (issue number if one exists).
+3. `git push origin <current-branch>`. If the push is rejected (remote moved), `git fetch` +
+   rebase/merge and retry — never force-push.
+4. Skip this step only if the suite is not green, the user asked to hold off, or the task was
+   pure investigation/read-only with no diff.
 
 ---
 
@@ -159,7 +191,7 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 - Disjoint scope: no two claimed issues may overlap in their **Touches** fields. Single-owner hotspots per wave: `lib/core/di.dart`, `app_database.dart`, `app_router.dart`, `models.dart`, `units.dart`, `lobby_screen.dart`, `suggestion_engine.dart`, `mixologist_service.dart`, and the suite/SEC3 scripts.
 - Bad pairs (same stack): game AI ∥ TEST18 LAN (lobby/games) · units feature ∥ units tests · anything ∥ suite-script edits.
 - One agent per worktree: `git worktree add ../SisuMate-<N> issue-<N>`; run the full suite in the worktree before merging to `main`.
-- Hand-off: comment on the issue (suite result, flags, files touched), close it, set INDEX **NEXT**.
+- Hand-off: comment on the issue (suite result, flags, files touched), close it, remove the `agent:<you>` claim label, set INDEX **NEXT**, then commit + push per §8 (scoped `git add`, never `-A`, in a shared tree).
 
 ---
 
@@ -184,7 +216,7 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 | `lt_ui_helpers.sh` | Shared adb/idb helpers for LT scripts |
 | `sync_conflict_2device_setup.sh` | 2-device offline-edit sync-conflict smoke test (SUG2); see `lib/services/sync_conflict_2device_setup.md` |
 | `wipe_android_avds.sh` | Factory-wipe all local Android AVD userdata/snapshots (keeps AVD defs; does not touch physical phones) |
-| `run_full_suite.sh` | **Default post-task gate** — SEC3 → analyze → `flutter test` → TEST8 live RLS → `integration_test/`. Flags: `--skip-live`, `--skip-integration`, `--device <id>`. See §5 above. |
+| `run_full_suite.sh` | **Default post-task gate** — SEC3 → analyze → `flutter test` → TEST8 live RLS → `integration_test/`. Flags: `--skip-live`, `--skip-integration`, `--device <id>`. See §6 above. |
 | `scan_release_secrets.sh` | SEC3: scan pubspec/assets/lib (+ optional APK/IPA) for leaked credentials |
 | `test_supabase_rls.sh` | TEST8: live Supabase auth/RLS smoke (`dart-defines.json`; skips if missing) |
 
