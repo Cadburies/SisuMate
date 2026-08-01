@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #121 closed (Claude) — `ErrorLogTable` (schemaVersion 4) + `ErrorLogService` singleton (FlutterError/async capture from `main.dart`, fingerprint dedupe, secret redaction) + `scripts/triage_error_logs.sh` (auto-files one GH issue per fingerprint, Android only). #123 in progress (Kimi — AdMobService singleton).
-- **Doing:** Claude on #122 (sweep `lib/` catch/print/throw → `ErrorLogService`, depends on #121 ✓ landed); Kimi on #123. Open: #124 (P2), #125 (P1)
+- **Last:** #123 closed (Kimi) — `AdMobService` singleton + idempotent preload + consume-before-show; live-verified 3 shows + 4th capped on emulator; `main.dart` preload landed inside Claude's #121 commit. #121 closed (Claude) — `ErrorLogTable` (schemaVersion 4) + `ErrorLogService` + `scripts/triage_error_logs.sh`.
+- **Doing:** Claude on #122 (catch-site sweep); Kimi on #124 (tile-styled native ads). Open: #125 (P1), #126 (P3)
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 
