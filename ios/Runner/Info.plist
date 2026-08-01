@@ -40,6 +40,17 @@
 	<string>Used to centre the weather forecast on your current location.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to choose a photo for a bar ingredient from your photo library.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>login-callback</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.supabase.sisu</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
