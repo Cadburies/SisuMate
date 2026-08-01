@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #122 closed (Claude) — swept 109 `catch` sites in `lib/`, converted 60+ to `ErrorLogService` (32 files) per the verdict table now in `Claude.md` § Error logging; 3 regression tests (DB/import/sync). Deferred `admob_service.dart`/`native_ad_widget.dart`/`banner_ad_widget.dart` — Kimi's #123 (landed)/#124 territory.
-- **Doing:** nothing claimed by Claude; Kimi on #124 (tile-styled native ads). Open: #125 (P1), #126 (P3)
+- **Last:** #141 closed (Claude) — Join Boat / Create Account / paywall-upgrade drawer entries now `context.push` (not `.go`) so the default AppBar back arrow renders; 2 regression tests (`drawer_navigation_test.dart`).
+- **Doing:** nothing claimed by Claude; Kimi on #124/#155 (native ads). Open: #147, #156, #157, #158, #159, #160, #161 (see GitHub issues)
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 

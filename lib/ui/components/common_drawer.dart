@@ -34,13 +34,13 @@ class AccountSection extends ConsumerWidget {
                     leading: const Icon(Icons.sailing),
                     title: const Text('Boat account'),
                     subtitle: const Text('Create or sign in to sync (Pro)'),
-                    onTap: () => context.go(AppRoutes.accountSetup),
+                    onTap: () => context.push(AppRoutes.accountSetup),
                   ),
                   ListTile(
                     leading: const Icon(Icons.group_add),
                     title: const Text('Join a boat'),
                     subtitle: const Text('Enter a share code from your captain'),
-                    onTap: () => context.go(AppRoutes.joinBoat),
+                    onTap: () => context.push(AppRoutes.joinBoat),
                   ),
                 ],
               );
@@ -73,7 +73,7 @@ class AccountSection extends ConsumerWidget {
                   ListTile(
                     leading: const Icon(Icons.group_add),
                     title: const Text('Join another boat'),
-                    onTap: () => context.go(AppRoutes.joinBoat),
+                    onTap: () => context.push(AppRoutes.joinBoat),
                   ),
                 ListTile(
                   leading: const Icon(Icons.logout),

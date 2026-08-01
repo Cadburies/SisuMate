@@ -169,7 +169,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               // session already exists, e.g. the debug bootstrap owner).
               if (mounted &&
                   SupabaseClientWrapper.instance.auth.currentUser == null) {
-                context.go(AppRoutes.accountSetup);
+                context.push(AppRoutes.accountSetup);
               }
             },
             child: const Text('Get Started'),
