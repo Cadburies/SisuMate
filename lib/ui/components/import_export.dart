@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/shopping_provider.dart';
+import '../../services/error_log_service.dart';
 import '../../services/import_service.dart';
 
 /// Result of persisting an import batch (SUG7 — show updated vs inserted).
@@ -155,7 +156,9 @@ Future<void> _runImport(
       allowedExtensions: ['json'],
       withData: true,
     );
-  } catch (e) {
+  } catch (e, st) {
+    unawaited(
+        ErrorLogService().logException(e, st, context: 'import_export: pickFiles'));
     messenger.showSnackBar(SnackBar(content: Text('Could not open file: $e')));
     return;
   }
@@ -173,8 +176,12 @@ Future<void> _runImport(
     try {
       boatSupabaseId =
           (await ref.read(activeBoatProvider.future))?.supabaseId;
-    } catch (_) {
+    } catch (e) {
       // Offline / no settings — keep placeholder boat id from parse.
+      unawaited(ErrorLogService().logWarning(
+        'active boat lookup failed during import: $e',
+        context: 'import_export: _runImport',
+      ));
     }
   }
 
@@ -185,9 +192,15 @@ Future<void> _runImport(
       boatSupabaseId: boatSupabaseId,
     );
   } on ImportException catch (e) {
+    // Usually an expected "malformed/wrong-shape file" outcome, but a
+    // warning-level signal is still useful for spotting a common mistake.
+    unawaited(ErrorLogService()
+        .logWarning(e.display, context: 'import_export: parse (ImportException)'));
     if (context.mounted) _showError(context, e.display);
     return;
-  } catch (_) {
+  } catch (e, st) {
+    unawaited(ErrorLogService()
+        .logException(e, st, context: 'import_export: parse (unexpected)'));
     if (context.mounted) {
       _showError(context, 'The file could not be read as text.');
     }

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/supabase_client.dart';
+import '../../services/error_log_service.dart';
 import '../components/title_tile.dart';
 
 /// Hidden developer console (STALE-DATA): subscription/usage stats and
@@ -44,7 +47,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         _stats = (stats as Map).cast<String, dynamic>();
         _staleBoats = stale as List<dynamic>;
       });
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(ErrorLogService().logException(e, st, context: 'admin_screen: _load'));
       setState(() => _error = '$e');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -126,7 +130,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('$name marked as warned')));
       _load();
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(ErrorLogService().logException(e, st, context: 'admin_screen: _warn'));
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Failed to record: $e')));
@@ -173,7 +178,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           content: Text(
               'Purged $name — ${(result as Map)['contentRowsDeleted']} content rows')));
       _load();
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(ErrorLogService().logException(e, st, context: 'admin_screen: _purge'));
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Purge failed: $e')));

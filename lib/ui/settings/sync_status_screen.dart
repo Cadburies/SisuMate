@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/di.dart';
+import '../../services/error_log_service.dart';
 
 /// Pro/dev sync health view (S7) — queue depth, retries, last success/fail.
 class SyncStatusScreen extends ConsumerStatefulWidget {
@@ -37,7 +40,9 @@ class _SyncStatusScreenState extends ConsumerState<SyncStatusScreen> {
         _status = status;
         _loading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'sync_status_screen: _refresh'));
       if (!mounted) return;
       setState(() {
         _error = e.toString();
@@ -55,7 +60,9 @@ class _SyncStatusScreenState extends ConsumerState<SyncStatusScreen> {
       messenger.showSnackBar(
         const SnackBar(content: Text('Queue flush requested')),
       );
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'sync_status_screen: _forceFlush'));
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text('Flush failed: $e')));
     }

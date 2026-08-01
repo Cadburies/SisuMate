@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+
+import 'error_log_service.dart';
 
 /// Persists user-picked photos into the app documents directory (IMG1).
 ///
@@ -47,8 +50,10 @@ class ImageService {
       final destPath = '$userImagesPath/${safePrefix}_$timestamp$ext';
       final saved = await src.copy(destPath);
       return saved.path;
-    } catch (e) {
+    } catch (e, st) {
       if (kDebugMode) print('Error persisting user image: $e');
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'image_service: persistPickedPath'));
       return tempPath;
     }
   }
@@ -59,8 +64,10 @@ class ImageService {
     try {
       if (!await imageFile.exists()) return null;
       return await persistPickedPath(imageFile.path, prefix: itemId);
-    } catch (e) {
+    } catch (e, st) {
       if (kDebugMode) print('Error saving user image: $e');
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'image_service: saveUserImage'));
       return null;
     }
   }
@@ -74,8 +81,10 @@ class ImageService {
       if (!path.startsWith(userImagesPath)) return;
       final file = File(path);
       if (await file.exists()) await file.delete();
-    } catch (e) {
+    } catch (e, st) {
       if (kDebugMode) print('Error deleting user image: $e');
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'image_service: deleteUserImage'));
     }
   }
 
@@ -94,8 +103,10 @@ class ImageService {
         }
       }
       return totalSize;
-    } catch (e) {
+    } catch (e, st) {
       if (kDebugMode) print('Error getting user images size: $e');
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'image_service: getUserImagesSize'));
       return 0;
     }
   }
@@ -117,8 +128,10 @@ class ImageService {
         }
       }
       return deletedCount;
-    } catch (e) {
+    } catch (e, st) {
       if (kDebugMode) print('Error cleaning up orphaned images: $e');
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'image_service: cleanupOrphanedImages'));
       return 0;
     }
   }

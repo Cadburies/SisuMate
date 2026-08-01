@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/di.dart';
 import '../../models/models.dart';
+import '../../services/error_log_service.dart';
 import '../../services/revenuecat_service.dart';
 
 /// Result of [AddChecklistItemFormDialog] when the user confirms Add.
@@ -145,7 +148,9 @@ Future<void> showAddCustomChecklistItemDialog({
     messenger.showSnackBar(
       SnackBar(content: Text('${result.title} added')),
     );
-  } catch (e) {
+  } catch (e, st) {
+    unawaited(ErrorLogService()
+        .logException(e, st, context: 'add_checklist_item_dialog: addItem'));
     messenger.showSnackBar(
       SnackBar(content: Text('Failed to add $itemNoun: $e')),
     );

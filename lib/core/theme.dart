@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'colors.dart';
 import 'di.dart';
+import '../services/error_log_service.dart';
 
 // ── Theme Mode State ──────────────────────────────────────────────────────────
 
@@ -37,8 +40,10 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
       if (settings == null) return;
       settings.isDarkMode = mode == ThemeMode.dark;
       await ref.read(userSettingsRepositoryProvider).updateSettings(settings);
-    } catch (_) {
+    } catch (e) {
       // Best-effort — next successful call will catch up
+      unawaited(ErrorLogService()
+          .logWarning('theme mode failed to persist: $e', context: 'theme: _persist'));
     }
   }
 }

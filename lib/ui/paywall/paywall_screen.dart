@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../components/title_tile.dart';
 import '../../core/app_router.dart';
 import '../../core/supabase_client.dart';
+import '../../services/error_log_service.dart';
 import '../../services/revenuecat_service.dart';
 import '../../core/di.dart';
 
@@ -46,13 +50,24 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'paywall_screen: load offerings'));
       setState(() {
         _error = e.toString();
         _isLoading = false;
       });
     }
   }
+
+  /// Purchase/restore user-cancellation is expected control flow — the
+  /// RevenueCat SDK surfaces it as a typed [PurchasesErrorCode], not a
+  /// generic failure, so it can be filtered out precisely instead of
+  /// guessing from the message text.
+  static bool _isUserCancelled(Object e) =>
+      e is PlatformException &&
+      PurchasesErrorHelper.getErrorCode(e) ==
+          PurchasesErrorCode.purchaseCancelledError;
 
   Future<void> _purchasePackage(Package package) async {
     setState(() => _isLoading = true);
@@ -70,7 +85,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           _showSuccessDialog();
         }
       }
-    } catch (e) {
+    } catch (e, st) {
+      if (!_isUserCancelled(e)) {
+        unawaited(
+            ErrorLogService().logException(e, st, context: 'paywall_screen: purchase'));
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Purchase failed: ${e.toString()}')),
@@ -103,7 +122,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           );
         }
       }
-    } catch (e) {
+    } catch (e, st) {
+      if (!_isUserCancelled(e)) {
+        unawaited(
+            ErrorLogService().logException(e, st, context: 'paywall_screen: restore'));
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Restore failed: ${e.toString()}')),

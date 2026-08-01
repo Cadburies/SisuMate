@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import '../data/drift/app_database.dart';
 import '../data/seed/bundled_data_seeder.dart';
 import '../data/seed/seed_expansion_catalog.dart';
+import 'error_log_service.dart';
 
 enum DbInitResult { healthy, seeded, corrupted }
 
@@ -33,7 +36,12 @@ class DatabaseService {
         return DbInitResult.seeded;
       }
       return DbInitResult.healthy;
-    } catch (_) {
+    } catch (e, st) {
+      // Attempted even though this DB may itself be the corrupt one —
+      // ErrorLogService never throws further, so this is a safe no-op if the
+      // write also fails, and a real signal if some other table is fine.
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'database_service: init (DB corrupt)'));
       return DbInitResult.corrupted;
     }
   }
@@ -51,8 +59,12 @@ class DatabaseService {
       final pristine = await _isPristine();
       await seedExpansionCatalog(_defaultBoatSupabaseId);
       if (pristine) await markFactoryBaseline();
-    } catch (_) {
+    } catch (e) {
       // Non-fatal: app remains usable with existing local data.
+      unawaited(ErrorLogService().logWarning(
+        'deferred catalog seed failed: $e',
+        context: 'database_service: runDeferredSeeds',
+      ));
     }
   }
 

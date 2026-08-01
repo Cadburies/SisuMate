@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'di.dart';
+import '../services/error_log_service.dart';
 
 /// App unit preference. Storage is always metric; this only affects UI and
 /// import/export conversion.
@@ -761,7 +763,11 @@ class UnitPrefsNotifier extends Notifier<AppUnitPrefs> {
       state = AppUnitPrefs.fromJson(
         jsonDecode(unitPrefsJson) as Map<String, dynamic>,
       );
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'stored unit prefs failed to parse, reset to marine defaults: $e',
+        context: 'units: restoreFromJson',
+      ));
       state = AppUnitPrefs.marine;
     }
   }
@@ -816,7 +822,10 @@ class UnitPrefsNotifier extends Notifier<AppUnitPrefs> {
       if (settings == null) return;
       settings.unitPrefsJson = jsonEncode(state.toJson());
       await ref.read(userSettingsRepositoryProvider).updateSettings(settings);
-    } catch (_) {}
+    } catch (e) {
+      unawaited(ErrorLogService()
+          .logWarning('unit prefs failed to persist: $e', context: 'units: _persist'));
+    }
   }
 }
 

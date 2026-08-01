@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
@@ -5,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/units.dart';
+import 'error_log_service.dart';
 
 /// A saved or search-result place (SUG3 named locations).
 class WeatherPlace {
@@ -130,7 +132,12 @@ class WeatherService {
         final extras = await Future.wait<Object?>([nameFut, depthFut]);
         resolvedName = extras[0] as String?;
         depthM = extras[1] as double?;
-      } catch (_) {}
+      } catch (e) {
+        unawaited(ErrorLogService().logWarning(
+          'place name / charted depth enrichment failed: $e',
+          context: 'weather_service: getWeather enrichment',
+        ));
+      }
 
       final bundle = WeatherBundle.fromJson(
         forecast: forecast,
@@ -146,6 +153,8 @@ class WeatherService {
       return bundle;
     } catch (e) {
       // TEST26: never hang; prefer any cache over hard failure when offline.
+      unawaited(ErrorLogService()
+          .logWarning('live fetch failed: $e', context: 'weather_service: getWeather'));
       final cached = await loadCache();
       if (cached != null) {
         return cached.copyWith(fromCache: true);
@@ -176,7 +185,9 @@ class WeatherService {
       final res = await c.get(uri).timeout(networkTimeout);
       if (res.statusCode != 200) return const [];
       return parsePlaceSearchJson(res.body);
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService()
+          .logWarning('place search failed: $e', context: 'weather_service: searchPlaces'));
       return const [];
     } finally {
       if (client == null) c.close();
@@ -203,7 +214,9 @@ class WeatherService {
       ).timeout(networkTimeout);
       if (res.statusCode != 200) return null;
       return parseNominatimReverseJson(res.body);
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService()
+          .logWarning('reverse geocode failed: $e', context: 'weather_service: reverseGeocode'));
       return null;
     } finally {
       if (client == null) c.close();
@@ -224,7 +237,11 @@ class WeatherService {
       final res = await c.get(uri).timeout(networkTimeout);
       if (res.statusCode != 200) return null;
       return parseGebcoElevationJson(res.body);
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'charted depth lookup failed: $e',
+        context: 'weather_service: fetchWaterDepthM',
+      ));
       return null;
     } finally {
       if (client == null) c.close();
@@ -240,7 +257,11 @@ class WeatherService {
       return list
           .map((e) => WeatherPlace.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'stored favorite locations failed to parse: $e',
+        context: 'weather_service: loadNamedLocations',
+      ));
       return const [];
     }
   }
@@ -290,7 +311,11 @@ class WeatherService {
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
       return WeatherBundle.fromStorage(map);
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'stored weather cache failed to parse: $e',
+        context: 'weather_service: loadCache',
+      ));
       return null;
     }
   }

@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/title_tile.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../providers/shopping_provider.dart';
+import '../../services/error_log_service.dart';
 
 class BoatsScreen extends ConsumerStatefulWidget {
   const BoatsScreen({super.key});
@@ -141,7 +144,9 @@ class _BoatsScreenState extends ConsumerState<BoatsScreen> {
                   messenger.showSnackBar(
                     SnackBar(content: Text('${boat.name} added successfully')),
                   );
-                } catch (e) {
+                } catch (e, st) {
+                  unawaited(ErrorLogService()
+                      .logException(e, st, context: 'boats_screen: add boat'));
                   messenger.showSnackBar(
                     SnackBar(content: Text('Error adding boat: $e')),
                   );
@@ -201,7 +206,9 @@ class _BoatsScreenState extends ConsumerState<BoatsScreen> {
                   messenger.showSnackBar(
                     SnackBar(content: Text('${updatedBoat.name} updated successfully')),
                   );
-                } catch (e) {
+                } catch (e, st) {
+                  unawaited(ErrorLogService()
+                      .logException(e, st, context: 'boats_screen: update boat'));
                   messenger.showSnackBar(
                     SnackBar(content: Text('Error updating boat: $e')),
                   );
@@ -257,7 +264,9 @@ class _BoatsScreenState extends ConsumerState<BoatsScreen> {
                 messenger.showSnackBar(
                   SnackBar(content: Text('${boat.name} deleted successfully')),
                 );
-              } catch (e) {
+              } catch (e, st) {
+                unawaited(
+                    ErrorLogService().logException(e, st, context: 'boats_screen: delete boat'));
                 messenger.showSnackBar(
                   SnackBar(content: Text('Error deleting boat: $e')),
                 );

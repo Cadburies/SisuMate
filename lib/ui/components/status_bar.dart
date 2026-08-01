@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -5,6 +7,7 @@ import '../../models/models.dart';
 import '../../providers/shopping_provider.dart';
 import '../../core/di.dart';
 import '../../core/colors.dart';
+import '../../services/error_log_service.dart';
 
 class StatusBar extends ConsumerStatefulWidget {
   const StatusBar({super.key});
@@ -28,7 +31,8 @@ class _StatusBarState extends ConsumerState<StatusBar> {
       final result = await Connectivity().checkConnectivity();
       _updateConnectivity(result);
     } catch (e) {
-      // Failed to get connectivity: $e
+      unawaited(ErrorLogService()
+          .logWarning('connectivity check failed: $e', context: 'status_bar: _initConnectivity'));
     }
   }
 

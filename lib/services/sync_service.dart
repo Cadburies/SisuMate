@@ -10,6 +10,7 @@ import '../core/supabase_client.dart';
 import '../data/drift/app_database.dart';
 import '../models/models.dart';
 import 'conflict_resolution_service.dart';
+import 'error_log_service.dart';
 import 'inbound_sync_applier.dart';
 import 'supabase_remote.dart';
 import 'wire_prefix.dart';
@@ -122,9 +123,13 @@ class SyncService {
 
     try {
       await _subscribeToTables();
-    } catch (_) {
+    } catch (e) {
       // Offline / Supabase not initialised (unit tests, cold crew join) —
       // outbox monitor still runs; realtime attaches on a later ensureStarted.
+      unawaited(ErrorLogService().logWarning(
+        'realtime subscribe failed: $e',
+        context: 'sync_service: ensureStarted',
+      ));
     }
   }
 
@@ -162,8 +167,12 @@ class SyncService {
         final id = _applier.recordId(decoded);
         if (id.isNotEmpty) remoteIds.add(id);
         await _handleOneIncoming(table, decoded);
-      } catch (_) {
+      } catch (e) {
         // One bad row must not stop the rest of the batch.
+        unawaited(ErrorLogService().logWarning(
+          '$table: bad inbound row skipped: $e',
+          context: 'sync_service: processIncomingChanges',
+        ));
       }
     }
     await _reconcileRemoteDeletes(table, remoteIds);
@@ -182,8 +191,12 @@ class SyncService {
       try {
         await _applier.deleteLocal(table, id);
         await _deleteOutboxFor(table, id);
-      } catch (_) {
+      } catch (e) {
         // Best-effort; next snapshot will retry.
+        unawaited(ErrorLogService().logWarning(
+          '$table: remote-delete reconcile failed for $id: $e',
+          context: 'sync_service: _reconcileRemoteDeletes',
+        ));
       }
     }
   }
@@ -547,6 +560,10 @@ class SyncService {
       }
     } catch (e) {
       // Failed to push, queue for later
+      unawaited(ErrorLogService().logWarning(
+        '$table: push failed, queued for retry: $e',
+        context: 'sync_service: queueOutgoingChange',
+      ));
       await _addToOutbox(table, record, priority: priority, isDelete: isDelete);
     }
   }
@@ -585,7 +602,10 @@ class SyncService {
       // Clean up old failed items (older than 24 hours with max retries)
       await _cleanupOldFailedItems();
     } catch (e) {
-      // Silently handle monitoring errors
+      // Fingerprint-deduped (runs every 30s) — won't spam rows if offline
+      // for a long stretch, just increments occurrences on the one row.
+      unawaited(ErrorLogService()
+          .logWarning('queue health check failed: $e', context: 'sync_service: _monitorQueueHealth'));
     }
   }
 
@@ -612,6 +632,10 @@ class SyncService {
           results.contains(ConnectivityResult.wifi) ||
           results.contains(ConnectivityResult.ethernet);
     } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'connectivity check failed, treating as offline: $e',
+        context: 'sync_service: _isCurrentlyOnline',
+      ));
       return false;
     }
   }
@@ -671,6 +695,10 @@ class SyncService {
         final newRetryCount = item.retryCount + 1;
         _lastSyncFailure = DateTime.now();
         _failedCount++;
+        unawaited(ErrorLogService().logWarning(
+          '${item.targetTable} outbox push failed (retry $newRetryCount/5): $e',
+          context: 'sync_service: _processOutgoingQueue',
+        ));
 
         if (newRetryCount < 5) {
           // Max 5 retries
@@ -712,8 +740,13 @@ class SyncService {
             .from(table)
             .delete()
             .like('supabaseId', '$boatGuid::%');
-      } catch (_) {
-        // Offline / transient — best effort.
+      } catch (e) {
+        // Offline / transient — best effort. Worth surfacing: a stale remote
+        // row that fails to clear here can sync back and undo the reset.
+        unawaited(ErrorLogService().logWarning(
+          '$table: wipeRemoteBoatContent failed for boat $boatGuid: $e',
+          context: 'sync_service: wipeRemoteBoatContent',
+        ));
       }
     }
   }

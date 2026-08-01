@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,7 @@ import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
+import '../../services/error_log_service.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/suggestion_engine.dart';
 
@@ -160,7 +163,9 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
               try {
                 await ref.read(checklistRepositoryProvider).createGroup(group);
                 ref.invalidate(checklistGroupsProvider);
-              } catch (e) {
+              } catch (e, st) {
+                unawaited(ErrorLogService()
+                    .logException(e, st, context: 'checklist_screen: createGroup'));
                 messenger.showSnackBar(
                   SnackBar(content: Text('Failed to create checklist: $e')),
                 );

@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:drift/drift.dart';
 import '../../models/models.dart';
 import '../drift/app_database.dart';
 import '../seed/checklist_drift_seed.dart';
 import '../../services/community_merge.dart';
+import '../../services/error_log_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/supabase_remote.dart';
 import '../../domain/repositories/community_repository.dart';
@@ -40,7 +42,9 @@ class CommunityRepositoryImpl implements CommunityRepository {
         orderColumn: orderColumn,
       );
       return rows.map(CommunityTemplate.fromJson).toList();
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'community_repository: browseCommunity'));
       return [];
     }
   }
@@ -82,7 +86,9 @@ class CommunityRepositoryImpl implements CommunityRepository {
           );
 
       return saved;
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'community_repository: publishTemplate'));
       return template;
     }
   }
@@ -120,7 +126,9 @@ class CommunityRepositoryImpl implements CommunityRepository {
       ));
 
       return saved;
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'community_repository: updateTemplate'));
       return template;
     }
   }
@@ -136,7 +144,9 @@ class CommunityRepositoryImpl implements CommunityRepository {
         rating: rating,
       );
       return true;
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'community_repository: rateTemplate'));
       return false;
     }
   }
@@ -147,7 +157,9 @@ class CommunityRepositoryImpl implements CommunityRepository {
       final uid = remote.currentUserId;
       if (uid == null || uid.isEmpty) return null;
       return remote.communityMyRating(templateId: templateId, userId: uid);
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService()
+          .logWarning('getMyRating failed: $e', context: 'community_repository: getMyRating'));
       return null;
     }
   }
@@ -214,7 +226,9 @@ class CommunityRepositoryImpl implements CommunityRepository {
           'checklist_groups', _groupRowToDomain(updatedGroup).toJson());
 
       return true;
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'community_repository: applyCommunityUpdate'));
       return false;
     }
   }
@@ -321,10 +335,15 @@ class CommunityRepositoryImpl implements CommunityRepository {
       // Record the download (best-effort — table may not exist yet)
       try {
         await remote.communityRecordDownload(templateId);
-      } catch (_) {}
+      } catch (_) {
+        // Genuinely optional bookkeeping — table may not exist yet; the
+        // import itself already succeeded by this point.
+      }
 
       return true;
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'community_repository: importTemplate'));
       return false;
     }
   }
@@ -333,7 +352,11 @@ class CommunityRepositoryImpl implements CommunityRepository {
   Future<int> getDownloadCount(String templateId) async {
     try {
       return await remote.communityDownloadCount(templateId);
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'getDownloadCount failed: $e',
+        context: 'community_repository: getDownloadCount',
+      ));
       return 0;
     }
   }

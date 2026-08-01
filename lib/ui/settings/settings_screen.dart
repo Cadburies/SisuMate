@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,7 @@ import '../../core/factory_reset.dart';
 import '../../core/units.dart';
 import '../../models/models.dart';
 import '../../providers/shopping_provider.dart';
+import '../../services/error_log_service.dart';
 import '../../core/theme.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -282,7 +285,9 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     );
                   }
-                } catch (e) {
+                } catch (e, st) {
+                  unawaited(ErrorLogService().logException(e, st,
+                      context: 'settings_screen: signInWithMagicLink'));
                   if (context.mounted) {
                     ScaffoldMessenger.of(
                       context,

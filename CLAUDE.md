@@ -175,6 +175,29 @@ green suite is the trigger, not a reason to pause for confirmation:
 
 ---
 
+## Error logging (#121/#122)
+
+Every `catch`/`FlutterError.onError`/`PlatformDispatcher.onError` site in the app feeds a local
+`ErrorLogTable` (`lib/services/error_log_service.dart`), read by `scripts/triage_error_logs.sh`
+to auto-file one deduped GitHub issue per fingerprint. Verdict when writing or touching a `catch`:
+
+| Verdict | When | Action |
+| --- | --- | --- |
+| **Log as `exception`** | Unexpected failure the user/dev must hear about (I/O, parse, network, DB, null-state bugs) — usually already user-visible via `setState`/`SnackBar`, but that alone doesn't reach an agent | `ErrorLogService().logException(e, st, context: '<module>: <what was attempted>')` |
+| **Log as `warning`** | Degraded but survivable (offline, denied permission, best-effort retry, corrupt-but-recoverable local data) | `logWarning(msg, context: ...)` — no stack needed |
+| **Don't log** | Expected control flow (user-cancelled purchase/picker, invalid share code, a documented multi-cause early-return where the majority case is normal, per-item parse-and-skip loops, cosmetic display fallbacks, test/platform-channel-absent cleanup paths) | Leave as-is; the *why* belongs in a code comment at the site, not this table |
+
+Context strings: `'<module>: <operation>'` — the fingerprint/sourceFile extraction needs enough
+to point an agent at the right file without re-deriving it from a bare message. Never log
+credentials/tokens (`ErrorLogService` redacts `Authorization`/`Bearer`/`apikey`/tokens
+automatically, but don't rely on that as the only guard — keep messages boring).
+
+When in doubt, don't log and say why in a one-line comment — the triage automation files one
+GitHub issue per fingerprint, so noise from expected-control-flow paths becomes noise in the
+issue tracker, not just the log table.
+
+---
+
 ## Issue kickoff (one-line user commands)
 
 Shorthand the user may give any agent at session start:

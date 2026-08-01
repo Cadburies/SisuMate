@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import '../../core/colors.dart';
 import '../../core/di.dart';
 import '../../providers/shopping_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/error_log_service.dart';
 
 /// Owner account flow at Pro upgrade: create an email+password account and the
 /// first boat (which crew later join by code), or sign back in on a new device.
@@ -87,7 +90,9 @@ class _AccountSetupScreenState extends ConsumerState<AccountSetupScreen> {
 
       if (!mounted) return;
       context.go(AppRoutes.home);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'account_setup_screen: _submit'));
       setState(() => _error = 'Failed: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -105,8 +110,12 @@ class _AccountSetupScreenState extends ConsumerState<AccountSetupScreen> {
       await ref.read(boatRepositoryProvider).updateBoat(boat);
       try {
         await auth.claimBoatOwnership(guid);
-      } catch (_) {
+      } catch (e) {
         // Best-effort; the boat still syncs under permissive RLS.
+        unawaited(ErrorLogService().logWarning(
+          'claimBoatOwnership failed for $guid: $e',
+          context: 'account_setup_screen: _createOwnedBoat',
+        ));
       }
     }
 

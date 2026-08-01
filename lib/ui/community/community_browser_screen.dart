@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import '../../domain/repositories/community_repository.dart';
 import '../../models/models.dart';
 import '../../providers/checklist_provider.dart';
 import '../../services/community_merge.dart';
+import '../../services/error_log_service.dart';
 import '../../services/revenuecat_service.dart';
 
 class CommunityBrowserScreen extends ConsumerStatefulWidget {
@@ -69,7 +71,9 @@ class _CommunityBrowserScreenState
             sortBy: _sortBy,
           );
       if (mounted) setState(() => _templates = templates);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'community_browser_screen: load'));
       if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);

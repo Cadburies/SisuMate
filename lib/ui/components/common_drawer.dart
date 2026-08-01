@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import '../../providers/shopping_provider.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../core/factory_reset.dart';
+import '../../services/error_log_service.dart';
 import '../../services/revenuecat_service.dart';
 import '../conflicts/conflict_resolution_screen.dart';
 import '../settings/sync_status_screen.dart';
@@ -102,8 +105,10 @@ class AccountSection extends ConsumerWidget {
     String? code;
     try {
       code = await ref.read(authServiceProvider).fetchBoatShareCode(boat.supabaseId);
-    } catch (_) {
+    } catch (e) {
       // fall through to the "unavailable" message
+      unawaited(ErrorLogService()
+          .logWarning('fetchBoatShareCode failed: $e', context: 'common_drawer: _showShareCode'));
     }
     final senderName = ref.read(authServiceProvider).displayName;
     if (!context.mounted) return;
@@ -231,7 +236,9 @@ class DataManagementSection extends ConsumerWidget {
           const SnackBar(content: Text('Recipe counts updated')),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'common_drawer: _handleSync'));
       if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Sync failed: $e')));

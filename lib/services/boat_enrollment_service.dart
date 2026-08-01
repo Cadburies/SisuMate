@@ -2,8 +2,11 @@ import 'package:drift/drift.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import 'dart:async';
+
 import '../core/supabase_client.dart';
 import '../data/drift/app_database.dart';
+import 'error_log_service.dart';
 
 /// SHARE-ENROLL: turns the seeded, local-only default boat into a permanent,
 /// GUID-identified boat at Pro onboarding (single-boat model — see
@@ -95,7 +98,9 @@ class BoatEnrollmentService {
           .maybeSingle();
       final guid = row?['boatGuid'] as String?;
       return (guid != null && guid.isNotEmpty) ? guid : null;
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService()
+          .logWarning('remote boat GUID lookup failed: $e', context: 'boat_enrollment_service: _remoteGuid'));
       return null;
     }
   }
@@ -110,8 +115,12 @@ class BoatEnrollmentService {
         'boatGuid': guid,
         'updatedAt': DateTime.now().toIso8601String(),
       });
-    } catch (_) {
+    } catch (e) {
       // Offline / anonymous / test process — harmless, retried on next enroll.
+      unawaited(ErrorLogService().logWarning(
+        'remote boat GUID save failed: $e',
+        context: 'boat_enrollment_service: _saveRemoteGuid',
+      ));
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -5,6 +7,7 @@ import '../../models/models.dart';
 import '../../providers/shopping_provider.dart';
 import '../../core/di.dart';
 import '../../core/colors.dart';
+import '../../services/error_log_service.dart';
 
 /// Universal Title Tile that replaces the status bar across all screens.
 ///
@@ -51,7 +54,8 @@ class _TitleTileState extends ConsumerState<TitleTile> {
       final result = await Connectivity().checkConnectivity();
       _updateConnectivity(result);
     } catch (e) {
-      // Failed to get connectivity
+      unawaited(ErrorLogService()
+          .logWarning('connectivity check failed: $e', context: 'title_tile: _initConnectivity'));
     }
   }
 

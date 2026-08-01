@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,7 @@ import '../../providers/recipe_provider.dart';
 import '../../providers/pantry_ingredient_provider.dart';
 import '../../providers/shopping_provider.dart';
 import '../components/import_export.dart';
+import '../../services/error_log_service.dart';
 import '../../services/import_service.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/mixologist_service.dart';
@@ -421,9 +423,19 @@ class _ChefScreenState extends ConsumerState<ChefScreen>
                             content: Text(
                                 'Imported "${parsed.recipe.name}" — ${parsed.ingredients.length} ingredients')));
                       } on RecipeImportException catch (e) {
+                        // Usually an expected "that URL/page doesn't work"
+                        // outcome, but still worth a warning-level signal —
+                        // a spike on one fingerprint means a previously
+                        // working recipe site's markup changed.
+                        unawaited(ErrorLogService().logWarning(
+                          e.message,
+                          context: 'chef_screen: recipe import (RecipeImportException)',
+                        ));
                         setState(() => isLoading = false);
                         messenger.showSnackBar(SnackBar(content: Text(e.message)));
-                      } catch (_) {
+                      } catch (e, st) {
+                        unawaited(ErrorLogService().logException(e, st,
+                            context: 'chef_screen: recipe import (unexpected)'));
                         setState(() => isLoading = false);
                         messenger.showSnackBar(const SnackBar(
                             content: Text('Something went wrong importing that recipe')));

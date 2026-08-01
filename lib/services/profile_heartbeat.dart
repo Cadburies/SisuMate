@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/supabase_client.dart';
+import 'error_log_service.dart';
 import 'revenuecat_service.dart';
 
 /// STALE-DATA: on every signed-in (owner) launch, stamp the account's profile
@@ -46,8 +49,10 @@ class ProfileHeartbeat {
       } else {
         await SupabaseClientWrapper.instance.from('profiles').upsert(row);
       }
-    } catch (_) {
+    } catch (e) {
       // No session / offline / missing platform channel — retried next launch.
+      unawaited(ErrorLogService()
+          .logWarning('profile heartbeat stamp failed: $e', context: 'profile_heartbeat: stamp'));
     }
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/units.dart';
+import '../../services/error_log_service.dart';
 import '../../services/weather_service.dart';
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
@@ -121,6 +124,10 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       });
       if (!silent) await _load();
     } catch (e) {
+      // Denied permission is common/expected; still worth a warning-level
+      // signal since it also covers real GPS/timeout failures.
+      unawaited(ErrorLogService()
+          .logWarning('location lookup failed: $e', context: 'weather_screen: _locate'));
       if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Could not get location: $e'),
@@ -163,6 +170,8 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         _loading = false;
       });
     } catch (e) {
+      unawaited(
+          ErrorLogService().logWarning('weather load failed: $e', context: 'weather_screen: _load'));
       if (!mounted) return;
       setState(() {
         _error = e.toString();

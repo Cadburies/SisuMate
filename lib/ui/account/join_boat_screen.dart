@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/di.dart';
 import '../../providers/shopping_provider.dart';
+import '../../services/error_log_service.dart';
 import '../../services/join_boat_service.dart';
 
 /// Crew join-a-boat flow: enter the share code the captain gave you. Signs in
@@ -59,7 +62,9 @@ class _JoinBoatScreenState extends ConsumerState<JoinBoatScreen> {
         SnackBar(content: Text('Joined “${joined.name}”. Syncing…')),
       );
       context.go(AppRoutes.home);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'join_boat_screen: _join'));
       setState(() => _error = JoinBoatService.friendlyError(e));
     } finally {
       if (mounted) setState(() => _busy = false);

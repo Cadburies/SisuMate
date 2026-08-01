@@ -7,6 +7,7 @@ import '../../../core/app_router.dart';
 import '../../../core/colors.dart';
 import '../../../services/game_ai/game_ai_difficulty.dart';
 import '../../../services/game_ai/game_ai_persona.dart';
+import '../../../services/error_log_service.dart';
 import '../../../services/lan/game_lan_service.dart';
 import '../../../services/lan/lan_providers.dart';
 import '../games/liars_dice/logic.dart' as liars_dice;
@@ -124,7 +125,9 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
         _view = _LobbyView.hosting;
         _busy = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'lobby_screen: host start'));
       setState(() {
         _busy = false;
         _error = 'Could not start host: $e';
@@ -219,7 +222,9 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
         }
       });
       setState(() => _busy = false);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+          ErrorLogService().logException(e, st, context: 'lobby_screen: discovery'));
       setState(() {
         _busy = false;
         _error = 'Discovery failed: $e';
@@ -271,7 +276,9 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
         _view = _LobbyView.waitingForHost;
         _busy = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'lobby_screen: connect to host'));
       setState(() {
         _busy = false;
         _error = 'Could not connect: $e';

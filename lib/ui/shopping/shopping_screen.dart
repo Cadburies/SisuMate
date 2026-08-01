@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -13,6 +15,7 @@ import '../components/swipeable_list_item.dart';
 import '../components/themed_state_tile.dart';
 import '../components/item_detail_shell.dart';
 import '../../core/di.dart';
+import '../../services/error_log_service.dart';
 import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../services/revenuecat_service.dart';
@@ -746,7 +749,9 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
                   messenger.showSnackBar(
                     SnackBar(content: Text('${item.name} added to shopping list')),
                   );
-                } catch (e) {
+                } catch (e, st) {
+                  unawaited(
+                      ErrorLogService().logException(e, st, context: 'shopping_screen: addItem'));
                   messenger.showSnackBar(
                     SnackBar(content: Text('Error adding item: $e')),
                   );

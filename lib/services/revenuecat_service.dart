@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../ui/paywall/paywall_screen.dart';
+import 'error_log_service.dart';
 
 /// TESTING BYPASS — when true, `isPro()` always returns true after the real
 /// entitlement check, so on-device testing runs as Pro without re-purchasing.
@@ -149,8 +150,12 @@ class RevenueCatService {
         }
       }
       _notifyCustomerInfoUpdated();
-    } catch (_) {
+    } catch (e) {
       // Platform channel missing in tests / offline — keep last known state.
+      unawaited(ErrorLogService().logWarning(
+        'RevenueCat linkSupabaseUserId failed: $e',
+        context: 'revenuecat_service: linkSupabaseUserId',
+      ));
     }
   }
 

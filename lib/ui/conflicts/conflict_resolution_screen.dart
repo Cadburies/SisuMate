@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import '../../core/colors.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/conflict_resolution_service.dart';
+import '../../services/error_log_service.dart';
 
 /// Pending concurrent offline edits — keep local or keep remote (T5).
 class ConflictResolutionScreen extends ConsumerWidget {
@@ -209,7 +211,11 @@ class _ConflictCard extends ConsumerWidget {
       final local = jsonDecode(c.localData) as Map<String, dynamic>;
       final remote = jsonDecode(c.remoteData) as Map<String, dynamic>;
       return _svc.buildConflictDiff(local, remote);
-    } catch (_) {
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'conflict diff parse failed: $e',
+        context: 'conflict_resolution_screen: _diffReport',
+      ));
       return null;
     }
   }
