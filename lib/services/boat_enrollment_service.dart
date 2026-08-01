@@ -73,9 +73,14 @@ class BoatEnrollmentService {
       }
     }
 
-    await _restampContentToBoat(guid);
+    await restampContentToBoat(guid);
     return guid;
   }
+
+  /// Stamp every sync-participating content row onto [guid] (crew join or
+  /// owner enroll). Public so [JoinBoatService] can re-scope local data when a
+  /// device links to an existing shared boat without minting a new GUID.
+  Future<void> restampContentToBoat(String guid) => _restampContentToBoat(guid);
 
   /// The account's remembered boat GUID from Supabase `profiles`, or null.
   /// Best-effort: no session / offline / test process (no Supabase) → null.

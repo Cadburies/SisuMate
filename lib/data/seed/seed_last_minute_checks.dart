@@ -103,7 +103,7 @@ Future<void> seedLastMinuteChecks(
   add(
     lastMinuteId,
     'Secure Saloon Loose Items',
-    'Stow or secure all loose items in the saloon and cabins. Imagine the vessel heeled 90° in both directions to identify potential projectiles.',
+    'Stow or secure all loose items in the saloon and cabins. Imagine the vessel heeled 90 in both directions to identify potential projectiles.',
     'lib/assets/lists/LastMinute/Saloon.jpg',
   );
   add(

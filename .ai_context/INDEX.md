@@ -5,10 +5,10 @@
 
 ## NEXT
 
-- **Last:** No-install-base policy; seed consolidation (bar/pantry single call site); schemaVersion 11→1; Supabase migrations squashed to one baseline
-- **Doing:** none
+- **Last:** #10 TEST24 closed (Claude); #11 SUG5 closed (Claude) — split `AppUnitPrefs.speed` into independent `windSpeed`/`boatSpeed` (weather = wind, passage planner = boat; settings has two rows now)
+- **Doing:** Kimi on #5 TEST19 (real-device permissions/cold-resume); next unclaimed ready work: #6/#7/#9
 - **Open game bugs:** none
-- **Blockers:** you must wipe local app data on every test device/sim (schemaVersion reset — see changelog)
+- **Blockers:** rotate Play SA key if prior builds shipped
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.
 
@@ -16,7 +16,9 @@
 
 | Task | Load |
 | --- | --- |
-| Backlog / pick next work | `outstanding.md` |
+| Backlog / pick next work | GitHub Issues: `gh issue list --label ready` ("do all TEST issues" = `--label test-gap`; protocol in `Claude.md` §Issue kickoff) |
+| Parallel agents | `Claude.md` §Parallel agents (issue labels + worktrees) |
+| Full test suite (post every task) | **`./scripts/run_full_suite.sh`** (SEC3 → analyze → `flutter test` → live RLS → integration). Flags: `--skip-live`, `--skip-integration`, `--device <id>`. Detail: `Claude.md` §5 + `README.md` Testing + `test-gap` issues on GitHub |
 | GUI / colour / layout | `theme.md` → `lib/core/colors.dart` |
 | New screen / home tile | `screens.md` gotchas + `home_screen.dart` + `theme.md` §5 |
 | One game | that game only: `lib/ui/games/games/<game>/gameflow.md` + `logic.dart` — never all 9 |
@@ -24,13 +26,13 @@
 | Sync / WirePrefix / RLS | `caching.md` + `sync_service.dart` / `wire_prefix.dart` |
 | Pro / paywall | `access_tiers.md` |
 | Provider / DI | grep `lib/core/di.dart` + `lib/providers/` — not a full provider dump |
-| Auth / crew join | `auth_service.dart` + `boat_enrollment_service.dart` |
+| Auth / crew join | `auth_service.dart` + `join_boat_service.dart` + `boat_enrollment_service.dart` + `join_boat_screen.dart` |
 | Seed | `bundled_data_seeder.dart` (+ `data_models.md` §Seed if needed) |
 | Import / export | `import_service.dart` + `ui/components/import_export.dart` |
 | Cascade risk (model/Pro/sync) | matching **§** in `risks.md` only |
 | Epic design (sharing, conflicts) | `plans/<epic>.md` only when implementing that epic |
 
-**Never session-load:** `changelog.md` (hot append-only), `.ai_context/archive/*`.
+**Never session-load:** `.ai_context/archive/*` (includes retired changelog/parallel_ai/outstanding snapshots). Open backlog = GitHub Issues, not a context file.
 
 ## App (one paragraph)
 
@@ -60,6 +62,6 @@ lib/ui/       home, modules…, games/, community/, account/, components/
 
 - Theme: `theme.md` before any UI colour/layout work.
 - Self-heal **Tier A/B only** (see `Claude.md`); never grow source mirrors.
-- End task: touch affected context + short changelog prepend + NEXT.
+- End task: touch affected context + NEXT; close/comment the GitHub issue. History = git log + issue threads.
 - UI never talks to Drift/Supabase; Pro via `isProProvider`.
 - Drift between context and code is the failure mode — fix claims, delete mirrors.

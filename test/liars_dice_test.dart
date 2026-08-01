@@ -1,5 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sisu_mate/services/game_ai/game_ai_difficulty.dart';
+import 'package:sisu_mate/services/game_ai/game_ai_persona.dart';
 import 'package:sisu_mate/services/lan/game_lan_service.dart';
 import 'package:sisu_mate/ui/games/games/liars_dice/helpers.dart';
 import 'package:sisu_mate/ui/games/games/liars_dice/logic.dart';
@@ -1054,6 +1058,147 @@ void main() {
         if (!notifier(c).getAIAccept()) challenges++;
       }
       expect(challenges, 20);
+    });
+  });
+
+  // ── GAI4: prior / escalation Liar's Dice AI ────────────────────────────────
+
+  group('GAI4 Liar\'s Dice AI — pure helpers', () {
+    test('computeLiarDiceAiBid uses honest min-face for own rank (F7)', () {
+      final bid = computeLiarDiceAiBid([2, 2, 3, 4, 5], null);
+      expect(bid.rank, DiceRank.onePair);
+      expect(bid.face, 1);
+    });
+
+    test('GAI5 aggressive honest bid presses max face (not F7 min)', () {
+      final bid = computeLiarDiceAiBid(
+        [2, 2, 3, 4, 5],
+        null,
+        persona: GameAiPersona.aggressive,
+        rng: Random(0),
+      );
+      expect(bid.rank, DiceRank.onePair);
+      expect(bid.face, 6);
+    });
+
+    test('GAI5 tight challenges earlier than aggressive on mid bluff', () {
+      // Claim is three of a kind vs our high-card hand — mid-range challenge.
+      var tightChallenges = 0;
+      var aggChallenges = 0;
+      const n = 40;
+      for (var seed = 0; seed < n; seed++) {
+        final declared = const Bid(DiceRank.threeOfAKind, 3);
+        final dice = [1, 2, 4, 5, 6];
+        final hist = const [Bid(DiceRank.threeOfAKind, 3)];
+        if (!computeLiarDiceAiAccept(
+          declared: declared,
+          myDice: dice,
+          bidHistory: hist,
+          rng: Random(seed),
+          persona: GameAiPersona.tight,
+        )) {
+          tightChallenges++;
+        }
+        if (!computeLiarDiceAiAccept(
+          declared: declared,
+          myDice: dice,
+          bidHistory: hist,
+          rng: Random(seed),
+          persona: GameAiPersona.aggressive,
+        )) {
+          aggChallenges++;
+        }
+      }
+      expect(tightChallenges, greaterThanOrEqualTo(aggChallenges),
+          reason: 'tight should challenge at least as often as aggressive');
+    });
+
+    test('GAI5 persona wires from LobbyPlayer into multiplayer seats', () {
+      final c = makeContainer();
+      notifier(c).initHostMode(const [
+        LobbyPlayer(id: 'host', name: 'Host'),
+        LobbyPlayer(
+          id: 'ai_wild',
+          name: 'Wildcard 1 (Normal)',
+          isAI: true,
+          aiPersona: GameAiPersona.chaos,
+          aiDifficulty: GameAiDifficulty.normal,
+        ),
+      ]);
+      final bot = gs(c).players.firstWhere((p) => p.id == 'ai_wild');
+      expect(bot.aiPersona, GameAiPersona.chaos);
+      expect(bot.aiDifficulty, GameAiDifficulty.normal);
+    });
+
+    test('computeLiarDiceAiBid escalates past lastBid with a valid raise', () {
+      const last = Bid(DiceRank.threeOfAKind, 4);
+      // Hand is only one pair — must bluff/escalate above three of a kind.
+      final bid = computeLiarDiceAiBid([2, 2, 3, 4, 5], last);
+      expect(isValidBid(bid, last), isTrue);
+      expect(compareBids(bid, last), 1);
+    });
+
+    test('forced pure bluff prefers higher-prior rank when last is max-1', () {
+      // Last bid is four of a kind face 6 — only five of a kind remains.
+      const last = Bid(DiceRank.fourOfAKind, 6);
+      final bid = computeLiarDiceAiBid([1, 2, 3, 4, 6], last);
+      expect(bid.rank, DiceRank.fiveOfAKind);
+      expect(isValidBid(bid, last), isTrue);
+    });
+
+    test('computeLiarDiceAiAccept always accepts when our hand beats claim', () {
+      final accept = computeLiarDiceAiAccept(
+        declared: const Bid(DiceRank.onePair, 2),
+        myDice: [6, 6, 6, 6, 6],
+        bidHistory: const [Bid(DiceRank.onePair, 2)],
+        rng: Random(1),
+      );
+      expect(accept, isTrue);
+    });
+
+    test('computeLiarDiceAiAccept always challenges five-of-a-kind claim', () {
+      for (var seed = 0; seed < 15; seed++) {
+        final accept = computeLiarDiceAiAccept(
+          declared: const Bid(DiceRank.fiveOfAKind, 3),
+          myDice: [1, 2, 3, 4, 6],
+          bidHistory: const [Bid(DiceRank.fiveOfAKind, 3)],
+          rng: Random(seed),
+        );
+        expect(accept, isFalse, reason: 'seed $seed');
+      }
+    });
+
+    test('long bid history makes mid-range claims more challengeable', () {
+      // twoPair vs our onePair → rankDiff 1, prior ~0.23 > 0.1
+      // With empty history ~15% challenge; with long history challenge rate rises.
+      const declared = Bid(DiceRank.twoPair, 3);
+      final myDice = [2, 2, 4, 5, 6];
+      final longHistory = List.generate(
+        5,
+        (i) => Bid(DiceRank.onePair, i + 1),
+      )..add(declared);
+
+      var challengesLong = 0;
+      var challengesShort = 0;
+      for (var seed = 0; seed < 200; seed++) {
+        if (!computeLiarDiceAiAccept(
+          declared: declared,
+          myDice: myDice,
+          bidHistory: longHistory,
+          rng: Random(seed),
+        )) {
+          challengesLong++;
+        }
+        if (!computeLiarDiceAiAccept(
+          declared: declared,
+          myDice: myDice,
+          bidHistory: const [declared],
+          rng: Random(seed),
+        )) {
+          challengesShort++;
+        }
+      }
+      expect(challengesLong, greaterThan(challengesShort));
     });
   });
 

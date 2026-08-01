@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../services/game_ai/game_ai_difficulty.dart';
 import '../../../../services/lan/game_lan_service.dart';
 import '../../../../services/lan/lan_providers.dart';
 
@@ -241,11 +242,532 @@ List<int> validAiMoves(BackgammonState s, int from, int die) {
   return [dest];
 }
 
+// ── GAI3: full-turn AI (beam search + position eval) ─────────────────────────
+//
+// Old bot scored each die greedily (hit > bear-off > home). This searches
+// complete plays for the current roll and scores the resulting position with
+// pip race, bar pressure, blot risk, and home structure.
+
+/// One ply in an AI play: (from, to, die). from/to use the same conventions
+/// as [validAiMoves] (from == -1 bar, to == -2 bear off).
+typedef AiPlayStep = (int from, int to, int die);
+
+/// Pure AI helpers — unit-tested without the notifier.
+class BackgammonAi {
+  /// Beam width per ply for [GameAiDifficulty.normal] (doubles expand a lot).
+  static const int beamWidthNormal = 14;
+  static const int beamWidthHard = 28;
+  static const int beamWidthEasy = 4;
+
+  /// Higher = better for AI (black).
+  static double evaluate(BackgammonState s) {
+    if (s.aiBornOff >= 15) return 1e6;
+    if (s.humanBornOff >= 15) return -1e6;
+
+    var score = 0.0;
+
+    // Pip race (lower AI pips / higher human pips is good for AI).
+    score += (humanPipCount(s) - aiPipCount(s)) * 1.15;
+
+    // Race finish.
+    score += (s.aiBornOff - s.humanBornOff) * 42.0;
+
+    // Bar pressure.
+    score += s.humanBar * 28.0;
+    score -= s.aiBar * 32.0;
+
+    // Structure / contact.
+    var aiBlots = 0;
+    var humanBlots = 0;
+    var aiPoints = 0;
+    var humanPoints = 0;
+    var aiHomeCheckers = 0;
+    var humanHomeCheckers = 0;
+    var longestAiPrime = 0;
+    var run = 0;
+
+    for (var i = 0; i < 24; i++) {
+      final v = s.board[i];
+      if (v <= -2) {
+        aiPoints++;
+        run++;
+        if (run > longestAiPrime) longestAiPrime = run;
+      } else {
+        run = 0;
+      }
+      if (v >= 2) humanPoints++;
+      if (v == -1) aiBlots++;
+      if (v == 1) humanBlots++;
+      if (i >= 18 && v < 0) aiHomeCheckers += -v;
+      if (i <= 5 && v > 0) humanHomeCheckers += v;
+    }
+
+    // Exposed singles are liabilities; opponent blots are opportunities.
+    score -= aiBlots * 18.0;
+    score += humanBlots * 10.0;
+
+    // Made points and primes (blockade value).
+    score += aiPoints * 3.5;
+    score -= humanPoints * 3.0;
+    if (longestAiPrime >= 4) score += (longestAiPrime - 3) * 12.0;
+
+    // Home-board concentration (bearing readiness / containment).
+    score += aiHomeCheckers * 2.5;
+    score -= humanHomeCheckers * 1.5;
+
+    // Anchors in opponent's home (indices 0–5 for AI) are strong.
+    for (var i = 0; i < 6; i++) {
+      if (s.board[i] <= -2) score += 14.0;
+      if (s.board[i] == -1) score += 4.0; // advanced builder, still blot risk above
+    }
+
+    return score;
+  }
+
+  static int aiPipCount(BackgammonState s) {
+    var pips = s.aiBar * 25;
+    for (var i = 0; i < 24; i++) {
+      if (s.board[i] < 0) pips += -s.board[i] * (24 - i);
+    }
+    return pips;
+  }
+
+  static int humanPipCount(BackgammonState s) {
+    var pips = s.humanBar * 25;
+    for (var i = 0; i < 24; i++) {
+      if (s.board[i] > 0) pips += s.board[i] * (i + 1);
+    }
+    return pips;
+  }
+
+  /// Legal (from, to) pairs for [die] given AI to move.
+  static List<(int from, int to)> legalMoves(BackgammonState s, int die) {
+    final out = <(int, int)>[];
+    if (s.aiBar > 0) {
+      for (final dest in validAiMoves(s, -1, die)) {
+        out.add((-1, dest));
+      }
+      return out;
+    }
+    for (var i = 0; i < 24; i++) {
+      if (s.board[i] >= 0) continue;
+      for (final dest in validAiMoves(s, i, die)) {
+        out.add((i, dest));
+      }
+    }
+    return out;
+  }
+
+  /// Apply one AI checker move; removes [die] from [movesLeft].
+  static BackgammonState applyMove(
+    BackgammonState s,
+    int from,
+    int to,
+    int die,
+  ) {
+    final board = List<int>.from(s.board);
+    var aiBar = s.aiBar;
+    var humanBar = s.humanBar;
+    var aiBornOff = s.aiBornOff;
+
+    if (from == -1) {
+      aiBar--;
+    } else {
+      board[from]++;
+    }
+    if (to == -2) {
+      aiBornOff++;
+    } else {
+      if (board[to] == 1) {
+        board[to] = 0;
+        humanBar++;
+      }
+      board[to]--;
+    }
+
+    final movesLeft = List<int>.from(s.movesLeft)..remove(die);
+    return s.copyWith(
+      board: board,
+      aiBar: aiBar,
+      humanBar: humanBar,
+      aiBornOff: aiBornOff,
+      movesLeft: movesLeft,
+      selectedPoint: () => null,
+      isHumanTurn: false,
+      phase: BgPhase.moving,
+    );
+  }
+
+  static int beamWidthFor(GameAiDifficulty d) => switch (d) {
+        GameAiDifficulty.easy => beamWidthEasy,
+        GameAiDifficulty.normal => beamWidthNormal,
+        GameAiDifficulty.hard => beamWidthHard,
+      };
+
+  /// Best full play for the current [movesLeft] roll. Empty if no legal move.
+  ///
+  /// GAI1: [difficulty] widens/narrows the beam; Easy sometimes picks a
+  /// random legal full play instead of the top eval line.
+  static List<AiPlayStep> bestPlay(
+    BackgammonState s, {
+    GameAiDifficulty difficulty = GameAiDifficulty.normal,
+    Random? rng,
+  }) {
+    if (s.movesLeft.isEmpty) return const [];
+    final r = rng ?? Random();
+    final width = beamWidthFor(difficulty);
+
+    // Beam: each entry is (state after partial play, steps so far).
+    var beam = <(BackgammonState, List<AiPlayStep>)>[(s, <AiPlayStep>[])];
+    final stepsRemaining = s.movesLeft.length;
+
+    for (var depth = 0; depth < stepsRemaining; depth++) {
+      final next = <(BackgammonState, List<AiPlayStep>)>[];
+      for (final (cur, path) in beam) {
+        if (cur.movesLeft.isEmpty) {
+          next.add((cur, path));
+          continue;
+        }
+        final uniqueDice = cur.movesLeft.toSet();
+        var expanded = false;
+        for (final die in uniqueDice) {
+          final moves = legalMoves(cur, die);
+          for (final m in moves) {
+            expanded = true;
+            final ns = applyMove(cur, m.$1, m.$2, die);
+            next.add((ns, [...path, (m.$1, m.$2, die)]));
+          }
+        }
+        if (!expanded) {
+          // Stuck with unused dice — keep partial play.
+          next.add((cur, path));
+        }
+      }
+      if (next.isEmpty) break;
+      next.sort((a, b) => evaluate(b.$1).compareTo(evaluate(a.$1)));
+      beam = next.length <= width ? next : next.sublist(0, width);
+    }
+
+    if (beam.isEmpty) return const [];
+    beam.sort((a, b) => evaluate(b.$1).compareTo(evaluate(a.$1)));
+
+    // Easy: ~40% of the time pick a random beam candidate (noise).
+    if (difficulty == GameAiDifficulty.easy && beam.length > 1 && r.nextInt(5) < 2) {
+      return beam[r.nextInt(beam.length)].$2;
+    }
+    // Hard: always top. Normal: top (beam already narrower than hard).
+    return beam.first.$2;
+  }
+
+  /// Whether AI should accept an offered double (crude equity on eval).
+  static bool shouldAcceptDouble(
+    BackgammonState s, {
+    GameAiDifficulty difficulty = GameAiDifficulty.normal,
+  }) {
+    final e = evaluate(s);
+    // Easy holds more often (accept worse positions); hard is pickier.
+    final floor = switch (difficulty) {
+      GameAiDifficulty.easy => -80.0,
+      GameAiDifficulty.normal => -40.0,
+      GameAiDifficulty.hard => -20.0,
+    };
+    return e > floor;
+  }
+
+  /// Whether AI should offer a double before rolling.
+  static bool shouldOfferDouble(
+    BackgammonState s,
+    Random rng, {
+    GameAiDifficulty difficulty = GameAiDifficulty.normal,
+  }) {
+    if (!s.canOfferDouble) return false;
+    final e = evaluate(s);
+    final minLead = switch (difficulty) {
+      GameAiDifficulty.easy => 90.0,
+      GameAiDifficulty.normal => 55.0,
+      GameAiDifficulty.hard => 40.0,
+    };
+    if (e < minLead) return false;
+    // Stronger lead → more likely to cube (hard cubes more aggressively).
+    if (e >= 120) {
+      return rng.nextInt(difficulty == GameAiDifficulty.hard ? 2 : 3) == 0;
+    }
+    return rng.nextInt(difficulty == GameAiDifficulty.easy ? 8 : 5) == 0;
+  }
+
+  // ── GAI6: coach / hint mode (human to move; does not apply the play) ─────
+
+  /// Higher = better for human (white). Negation of black-centric [evaluate].
+  static double evaluateForHuman(BackgammonState s) => -evaluate(s);
+
+  /// Legal (from, to) for [die] with human (white) to move.
+  static List<(int from, int to)> legalHumanMoves(BackgammonState s, int die) {
+    final out = <(int, int)>[];
+    if (s.humanBar > 0) {
+      for (final dest in validHumanMoves(s, -1, die)) {
+        out.add((-1, dest));
+      }
+      return out;
+    }
+    for (var i = 0; i < 24; i++) {
+      if (s.board[i] <= 0) continue;
+      for (final dest in validHumanMoves(s, i, die)) {
+        out.add((i, dest));
+      }
+    }
+    return out;
+  }
+
+  /// Apply one human checker move; removes [die] from [movesLeft].
+  static BackgammonState applyHumanMove(
+    BackgammonState s,
+    int from,
+    int to,
+    int die,
+  ) {
+    final board = List<int>.from(s.board);
+    var humanBar = s.humanBar;
+    var aiBar = s.aiBar;
+    var humanBornOff = s.humanBornOff;
+
+    if (from == -1) {
+      humanBar--;
+    } else {
+      board[from]--;
+    }
+    if (to == -2) {
+      humanBornOff++;
+    } else {
+      if (board[to] == -1) {
+        board[to] = 0;
+        aiBar++;
+      }
+      board[to]++;
+    }
+
+    final movesLeft = List<int>.from(s.movesLeft)..remove(die);
+    return s.copyWith(
+      board: board,
+      humanBar: humanBar,
+      aiBar: aiBar,
+      humanBornOff: humanBornOff,
+      movesLeft: movesLeft,
+      selectedPoint: () => null,
+      isHumanTurn: true,
+      phase: BgPhase.moving,
+    );
+  }
+
+  /// Best full human play for current [movesLeft] (Hard beam by default).
+  static List<AiPlayStep> bestHumanPlay(
+    BackgammonState s, {
+    GameAiDifficulty difficulty = GameAiDifficulty.hard,
+  }) {
+    if (s.movesLeft.isEmpty) return const [];
+    final width = beamWidthFor(difficulty);
+
+    var beam = <(BackgammonState, List<AiPlayStep>)>[(s, <AiPlayStep>[])];
+    final stepsRemaining = s.movesLeft.length;
+
+    for (var depth = 0; depth < stepsRemaining; depth++) {
+      final next = <(BackgammonState, List<AiPlayStep>)>[];
+      for (final (cur, path) in beam) {
+        if (cur.movesLeft.isEmpty) {
+          next.add((cur, path));
+          continue;
+        }
+        final uniqueDice = cur.movesLeft.toSet();
+        var expanded = false;
+        for (final die in uniqueDice) {
+          final moves = legalHumanMoves(cur, die);
+          for (final m in moves) {
+            expanded = true;
+            final ns = applyHumanMove(cur, m.$1, m.$2, die);
+            next.add((ns, [...path, (m.$1, m.$2, die)]));
+          }
+        }
+        if (!expanded) next.add((cur, path));
+      }
+      if (next.isEmpty) break;
+      // Best for human = highest evaluateForHuman = lowest AI evaluate.
+      next.sort(
+          (a, b) => evaluateForHuman(b.$1).compareTo(evaluateForHuman(a.$1)));
+      beam = next.length <= width ? next : next.sublist(0, width);
+    }
+
+    if (beam.isEmpty) return const [];
+    beam.sort(
+        (a, b) => evaluateForHuman(b.$1).compareTo(evaluateForHuman(a.$1)));
+    return beam.first.$2;
+  }
+
+  /// GAI6: suggested full play + plain-language reasons. Does **not** mutate
+  /// game state — safe for solo coach UI.
+  static CoachHint coachHint(
+    BackgammonState s, {
+    GameAiDifficulty difficulty = GameAiDifficulty.hard,
+  }) {
+    if (s.phase == BgPhase.gameOver) {
+      return const CoachHint(
+        steps: [],
+        reasons: ['Game over — start a new game to practice.'],
+        scoreDelta: 0,
+      );
+    }
+    if (!s.isHumanTurn) {
+      return const CoachHint(
+        steps: [],
+        reasons: ["Not your turn — coach only advises on your move."],
+        scoreDelta: 0,
+      );
+    }
+    if (s.phase == BgPhase.rolling) {
+      return const CoachHint(
+        steps: [],
+        reasons: ['Roll the dice first, then ask for a hint.'],
+        scoreDelta: 0,
+      );
+    }
+    if (s.phase != BgPhase.moving || s.movesLeft.isEmpty) {
+      return const CoachHint(
+        steps: [],
+        reasons: ['No dice left to play — pass or wait for the next roll.'],
+        scoreDelta: 0,
+      );
+    }
+
+    final before = evaluateForHuman(s);
+    final play = bestHumanPlay(s, difficulty: difficulty);
+    if (play.isEmpty) {
+      return const CoachHint(
+        steps: [],
+        reasons: ['No legal play with this roll — pass the turn.'],
+        scoreDelta: 0,
+      );
+    }
+
+    var cur = s;
+    final stepNotes = <String>[];
+    for (final step in play) {
+      final prev = cur;
+      cur = applyHumanMove(cur, step.$1, step.$2, step.$3);
+      stepNotes.add(_describeHumanStep(prev, step));
+    }
+    final after = evaluateForHuman(cur);
+    final delta = after - before;
+    final reasons = <String>[
+      ...stepNotes,
+      ..._positionReasons(s, cur),
+      if (delta > 5)
+        'Overall: improves your standing (eval +${delta.toStringAsFixed(0)}).'
+      else if (delta < -5)
+        'Overall: damage control — least-bad line (eval ${delta.toStringAsFixed(0)}).'
+      else
+        'Overall: roughly even position after this play.',
+    ];
+
+    return CoachHint(steps: play, reasons: reasons, scoreDelta: delta);
+  }
+
+  static String _pointLabel(int idx) {
+    if (idx == -1) return 'bar';
+    if (idx == -2) return 'off';
+    return 'point ${idx + 1}';
+  }
+
+  static String _describeHumanStep(BackgammonState before, AiPlayStep step) {
+    final (from, to, die) = step;
+    final parts = <String>[
+      '${_pointLabel(from)} → ${_pointLabel(to)} (die $die)',
+    ];
+    if (to != -2 && to >= 0 && before.board[to] == -1) {
+      parts.add('hits blot');
+    }
+    if (to == -2) parts.add('bears off');
+    if (from == -1) parts.add('enters from bar');
+    if (to >= 0 && to <= 5 && from > 5) parts.add('into home');
+    return parts.join(' — ');
+  }
+
+  static List<String> _positionReasons(
+      BackgammonState before, BackgammonState after) {
+    final out = <String>[];
+    final pipGain = humanPipCount(before) - humanPipCount(after);
+    if (pipGain > 0) out.add('Closes $pipGain pip(s) in the race.');
+    if (after.aiBar > before.aiBar) {
+      out.add('Puts ${after.aiBar - before.aiBar} opponent checker(s) on the bar.');
+    }
+    if (after.humanBar < before.humanBar) {
+      out.add('Clears your bar.');
+    }
+    if (after.humanBornOff > before.humanBornOff) {
+      out.add(
+          'Bears off ${after.humanBornOff - before.humanBornOff} checker(s).');
+    }
+
+    int blots(BackgammonState s, {required bool human}) {
+      var n = 0;
+      for (var i = 0; i < 24; i++) {
+        if (human && s.board[i] == 1) n++;
+        if (!human && s.board[i] == -1) n++;
+      }
+      return n;
+    }
+
+    final blotDelta = blots(after, human: true) - blots(before, human: true);
+    if (blotDelta < 0) out.add('Reduces your exposed blots.');
+    if (blotDelta > 0) out.add('Leaves a blot — watch for return hits.');
+
+    int madePoints(BackgammonState s, {required bool human}) {
+      var n = 0;
+      for (var i = 0; i < 24; i++) {
+        if (human && s.board[i] >= 2) n++;
+        if (!human && s.board[i] <= -2) n++;
+      }
+      return n;
+    }
+
+    final pointDelta =
+        madePoints(after, human: true) - madePoints(before, human: true);
+    if (pointDelta > 0) out.add('Makes a new point (safer structure).');
+
+    return out;
+  }
+}
+
+/// GAI6: coach suggestion for the human side (never auto-applied).
+class CoachHint {
+  /// Ordered plies `(from, to, die)` using human move conventions.
+  final List<AiPlayStep> steps;
+  /// Plain-language why lines for the sheet UI.
+  final List<String> reasons;
+  /// Change in [BackgammonAi.evaluateForHuman] after the full play.
+  final double scoreDelta;
+
+  const CoachHint({
+    required this.steps,
+    required this.reasons,
+    required this.scoreDelta,
+  });
+
+  bool get hasPlay => steps.isNotEmpty;
+}
+
 class BackgammonNotifier extends Notifier<BackgammonState> {
   bool _isHostMode = false;
   bool _isClientMode = false;
+  GameAiDifficulty _aiDifficulty = GameAiDifficulty.normal;
+
+  /// GAI7: after each human turn, emit Hard-AI review for the roll position.
+  bool practiceMode = false;
+  BackgammonState? _practiceTurnStart;
+  final _practiceReviewCtrl = StreamController<CoachHint>.broadcast();
 
   bool get isClientMode => _isClientMode;
+  GameAiDifficulty get aiDifficulty => _aiDifficulty;
+
+  /// Fires when [practiceMode] is on and the human finishes a turn (or wins).
+  Stream<CoachHint> get practiceReviews => _practiceReviewCtrl.stream;
 
   StreamSubscription<Map<String, dynamic>>? _remoteSub;
   StreamSubscription<({String peerId, String action, Map<String, dynamic> data})>?
@@ -263,6 +785,7 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
       _remoteSub?.cancel();
       _moveSub?.cancel();
       _leaveSub?.cancel();
+      _practiceReviewCtrl.close();
     });
     return BackgammonState(
       board: _initialBoard(),
@@ -285,6 +808,7 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
   void initHostMode(List<LobbyPlayer> lobbyPlayers) {
     _isHostMode = true;
     _isClientMode = false;
+    _aiDifficulty = maxAiDifficulty(lobbyPlayers);
     _sessionGeneration++;
     _remoteSub?.cancel();
     _moveSub?.cancel();
@@ -500,12 +1024,10 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
 
   void _aiRespondToDouble() {
     if (state.phase != BgPhase.doubleOffered) return;
-    // Accept unless the human is clearly ahead on bearing off.
-    final humanLead = state.humanBornOff - state.aiBornOff;
-    if (humanLead >= 6) {
-      declineDouble();
-    } else {
+    if (BackgammonAi.shouldAcceptDouble(state, difficulty: _aiDifficulty)) {
       acceptDouble();
+    } else {
+      declineDouble();
     }
   }
 
@@ -513,9 +1035,7 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
     if (!state.canOfferDouble) return;
     if (state.isHumanTurn) return;
     if (state.isMultiplayer && !state.isOpponentAI) return;
-    final aiLead = state.aiBornOff - state.humanBornOff;
-    // Offer when ahead by a few borne-off checkers (~20% of the time).
-    if (aiLead >= 3 && _rng.nextInt(5) == 0) {
+    if (BackgammonAi.shouldOfferDouble(state, _rng, difficulty: _aiDifficulty)) {
       offerDouble();
     }
   }
@@ -544,6 +1064,7 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
           : 'AI rolled $d1, $d2.',
     );
     _broadcastIfHost();
+    if (isHumanRole) _capturePracticeTurnStart();
 
     // A remote human opponent plays its own turn via its own device's taps —
     // only fire the local AI when there's no such opponent to wait for
@@ -573,6 +1094,7 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
           message: isHumanRole ? "Opponent's turn." : 'Your turn. Tap Roll.',
         );
         _broadcastIfHost();
+        _emitPracticeReviewIfNeeded(humanTurnEnded: isHumanRole);
         final nextIsLocalAi = !state.isHumanTurn &&
             (!state.isMultiplayer || state.isOpponentAI);
         if (nextIsLocalAi) {
@@ -609,6 +1131,7 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
       message: wasHumanTurn ? "Opponent's turn." : 'Your turn. Tap Roll.',
     );
     _broadcastIfHost();
+    _emitPracticeReviewIfNeeded(humanTurnEnded: wasHumanTurn);
     final nextIsLocalAi =
         !state.isHumanTurn && (!state.isMultiplayer || state.isOpponentAI);
     if (nextIsLocalAi) {
@@ -719,6 +1242,7 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
         message: 'You win! All pieces borne off ($stake pt).',
       );
       _broadcastIfHost();
+      _emitPracticeReviewIfNeeded(humanTurnEnded: true);
       return;
     }
     if (!isHumanRole && aiBornOff == 15) {
@@ -751,6 +1275,7 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
         message: isHumanRole ? "Opponent's turn." : 'Your turn. Tap Roll.',
       );
       _broadcastIfHost();
+      _emitPracticeReviewIfNeeded(humanTurnEnded: isHumanRole);
       final nextIsLocalAi = !state.isHumanTurn &&
           (!state.isMultiplayer || state.isOpponentAI);
       if (nextIsLocalAi) {
@@ -793,52 +1318,27 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
   void _aiMove() {
     if (state.isHumanTurn || state.phase == BgPhase.gameOver) return;
     final s = state;
-    var board = [...s.board];
-    int aiBar = s.aiBar;
-    int aiBornOff = s.aiBornOff;
-    int humanBar = s.humanBar;
-    var movesLeft = [...s.movesLeft];
-
-    bool madeMove = true;
-    while (movesLeft.isNotEmpty && madeMove) {
-      madeMove = false;
-      for (final die in [...movesLeft.toSet()]) {
-        final move = _bestAiMove(BackgammonState(
-          board: board, humanBar: humanBar, aiBar: aiBar,
-          humanBornOff: s.humanBornOff, aiBornOff: aiBornOff,
-          dice: s.dice, movesLeft: movesLeft,
-          isHumanTurn: false, selectedPoint: null,
-          phase: BgPhase.moving, message: '',
-        ), die);
-        if (move != null) {
-          final from = move.$1;
-          final to = move.$2;
-          if (from == -1) {
-            aiBar--;
-          } else {
-            board[from]++;
-          }
-          if (to == -2) {
-            aiBornOff++;
-          } else {
-            if (board[to] == 1) {
-              board[to] = 0;
-              humanBar++;
-            }
-            board[to]--;
-          }
-          movesLeft.remove(die);
-          madeMove = true;
-          break;
-        }
-      }
+    // GAI3 beam search; GAI1 difficulty scales beam / noise.
+    final play = BackgammonAi.bestPlay(
+      s,
+      difficulty: _aiDifficulty,
+      rng: _rng,
+    );
+    var cur = s;
+    for (final step in play) {
+      cur = BackgammonAi.applyMove(cur, step.$1, step.$2, step.$3);
     }
 
-    if (aiBornOff == 15) {
+    if (cur.aiBornOff >= 15) {
       final stake = state.cubeValue;
       state = state.copyWith(
-        board: board, aiBar: aiBar, aiBornOff: aiBornOff,
-        humanBar: humanBar, movesLeft: [],
+        board: cur.board,
+        aiBar: cur.aiBar,
+        aiBornOff: cur.aiBornOff,
+        humanBar: cur.humanBar,
+        humanBornOff: cur.humanBornOff,
+        movesLeft: [],
+        selectedPoint: () => null,
         phase: BgPhase.gameOver,
         message: 'AI wins! All pieces borne off ($stake pt).',
       );
@@ -847,8 +1347,13 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
     }
 
     state = state.copyWith(
-      board: board, aiBar: aiBar, aiBornOff: aiBornOff,
-      humanBar: humanBar, movesLeft: [],
+      board: cur.board,
+      aiBar: cur.aiBar,
+      aiBornOff: cur.aiBornOff,
+      humanBar: cur.humanBar,
+      humanBornOff: cur.humanBornOff,
+      movesLeft: [],
+      selectedPoint: () => null,
       isHumanTurn: true,
       phase: BgPhase.rolling,
       message: 'Your turn. Tap Roll.',
@@ -856,41 +1361,41 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
     _broadcastIfHost();
   }
 
-  (int, int)? _bestAiMove(BackgammonState s, int die) {
-    final moves = <(int, int)>[];
-    if (s.aiBar > 0) {
-      for (final dest in validAiMoves(s, -1, die)) {
-        moves.add((-1, dest));
-      }
-    } else {
-      for (int i = 0; i < 24; i++) {
-        if (s.board[i] >= 0) continue; // no AI piece
-        for (final dest in validAiMoves(s, i, die)) {
-          moves.add((i, dest));
-        }
-      }
-    }
-    if (moves.isEmpty) return null;
-    // Prefer: hitting blots > bearing off > advancing home > moving any
-    moves.sort((a, b) {
-      int scoreA = _aiMoveScore(s, a);
-      int scoreB = _aiMoveScore(s, b);
-      return scoreB.compareTo(scoreA);
-    });
-    return moves.first;
-  }
-
-  int _aiMoveScore(BackgammonState s, (int, int) move) {
-    final to = move.$2;
-    if (to == -2) return 10; // bear off
-    if (to >= 0 && s.board[to] == 1) return 8; // hit blot
-    if (to >= 18) return 5; // advance into home
-    return to; // prefer advancing
-  }
-
   void newGame() {
     exitMultiplayerMode();
     state = build();
+  }
+
+  /// GAI6: coach suggestion for the current position (does not change state).
+  CoachHint coachHint({
+    GameAiDifficulty difficulty = GameAiDifficulty.hard,
+  }) =>
+      BackgammonAi.coachHint(state, difficulty: difficulty);
+
+  /// Snapshot after a human roll for GAI7 end-of-turn review.
+  void _capturePracticeTurnStart() {
+    if (!practiceMode) {
+      _practiceTurnStart = null;
+      return;
+    }
+    if (!state.isHumanTurn || state.phase != BgPhase.moving) return;
+    // Deep-enough copy for coach eval (lists duplicated in copyWith defaults
+    // would alias — rebuild from toJson/fromJson for isolation).
+    _practiceTurnStart = BackgammonState.fromJson(state.toJson());
+  }
+
+  /// GAI7: compute Hard-AI suggestion for the captured roll and emit to UI.
+  void _emitPracticeReviewIfNeeded({required bool humanTurnEnded}) {
+    if (!practiceMode || !humanTurnEnded) return;
+    final snap = _practiceTurnStart;
+    _practiceTurnStart = null;
+    if (snap == null) return;
+    if (_practiceReviewCtrl.isClosed) return;
+    final hint = BackgammonAi.coachHint(
+      snap,
+      difficulty: GameAiDifficulty.hard,
+    );
+    _practiceReviewCtrl.add(hint);
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:bonsoir/bonsoir.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sisu_mate/services/game_ai/game_ai_difficulty.dart';
 import 'package:sisu_mate/services/lan/game_lan_service.dart';
 
 import 'test_helpers/fake_lan_engine.dart';
@@ -76,6 +77,126 @@ void main() {
       expect(move.peerId, 'peer_1');
       expect(move.action, 'declareBid');
       expect(move.data, {'quantity': 3, 'face': 4});
+    });
+  });
+
+  group('TEST7 multi-seat host + clients', () {
+    test('host can join three human clients and sees all in lobby', () async {
+      final hostEngine = FakeLanEngine();
+      final c1 = FakeLanEngine();
+      final c2 = FakeLanEngine();
+      final c3 = FakeLanEngine();
+      hostEngine.connectClient(c1, clientPeerId: 'peer_1');
+      hostEngine.connectClient(c2, clientPeerId: 'peer_2');
+      hostEngine.connectClient(c3, clientPeerId: 'peer_3');
+      expect(hostEngine.connectedClientCount, 3);
+
+      final host = GameLanService(hostEngine);
+      final client1 = GameLanService(c1);
+      final client2 = GameLanService(c2);
+      final client3 = GameLanService(c3);
+
+      await host.hostGame(gameName: '4-up', hostPlayerName: 'Skipper');
+      final dummy =
+          BonsoirService(name: '4-up', type: '_sisumate._tcp', port: 0);
+      await client1.joinGame(service: dummy, playerName: 'Mate1');
+      await client2.joinGame(service: dummy, playerName: 'Mate2');
+      await client3.joinGame(service: dummy, playerName: 'Mate3');
+      await flush();
+
+      expect(host.lobbyPlayers.map((p) => p.name).toSet(),
+          {'Skipper', 'Mate1', 'Mate2', 'Mate3'});
+      expect(client1.myAssignedId, 'peer_1');
+      expect(client2.myAssignedId, 'peer_2');
+      expect(client3.myAssignedId, 'peer_3');
+    });
+
+    test('broadcastState reaches every connected client', () async {
+      final hostEngine = FakeLanEngine();
+      final c1 = FakeLanEngine();
+      final c2 = FakeLanEngine();
+      hostEngine.connectClient(c1, clientPeerId: 'peer_1');
+      hostEngine.connectClient(c2, clientPeerId: 'peer_2');
+      final host = GameLanService(hostEngine);
+      final client1 = GameLanService(c1);
+      final client2 = GameLanService(c2);
+
+      await host.hostGame(gameName: 'Bcast', hostPlayerName: 'H');
+      final dummy =
+          BonsoirService(name: 'Bcast', type: '_sisumate._tcp', port: 0);
+      await client1.joinGame(service: dummy, playerName: 'A');
+      await client2.joinGame(service: dummy, playerName: 'B');
+      await flush();
+
+      final f1 = client1.remoteStates.first;
+      final f2 = client2.remoteStates.first;
+      host.broadcastState({'round': 7, 'seat': 'all'});
+      final s1 = await f1;
+      final s2 = await f2;
+      expect(s1, {'round': 7, 'seat': 'all'});
+      expect(s2, {'round': 7, 'seat': 'all'});
+    });
+
+    test('moves from two clients both arrive at host with correct peer ids',
+        () async {
+      final hostEngine = FakeLanEngine();
+      final c1 = FakeLanEngine();
+      final c2 = FakeLanEngine();
+      hostEngine.connectClient(c1, clientPeerId: 'peer_1');
+      hostEngine.connectClient(c2, clientPeerId: 'peer_2');
+      final host = GameLanService(hostEngine);
+      final client1 = GameLanService(c1);
+      final client2 = GameLanService(c2);
+
+      await host.hostGame(gameName: 'Moves', hostPlayerName: 'H');
+      final dummy =
+          BonsoirService(name: 'Moves', type: '_sisumate._tcp', port: 0);
+      await client1.joinGame(service: dummy, playerName: 'A');
+      await client2.joinGame(service: dummy, playerName: 'B');
+      await flush();
+
+      final moves = <({String peerId, String action, Map<String, dynamic> data})>[];
+      final sub = host.incomingMoves.listen(moves.add);
+
+      client1.sendMove('declareBid', {'q': 1});
+      client2.sendMove('declareBid', {'q': 2});
+      await flush();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(moves.map((m) => m.peerId).toSet(), {'peer_1', 'peer_2'});
+      expect(moves.map((m) => m.data['q']).toSet(), {1, 2});
+      await sub.cancel();
+    });
+
+    test('AI seats coexist with human clients in lobby roster', () async {
+      final hostEngine = FakeLanEngine();
+      final c1 = FakeLanEngine();
+      hostEngine.connectClient(c1, clientPeerId: 'peer_1');
+      final host = GameLanService(hostEngine);
+      final client1 = GameLanService(c1);
+
+      await host.hostGame(gameName: 'AI+Human', hostPlayerName: 'Host');
+      final dummy =
+          BonsoirService(name: 'AI+Human', type: '_sisumate._tcp', port: 0);
+      await client1.joinGame(service: dummy, playerName: 'Human');
+      await flush();
+
+      host.addLocalPlayer(const LobbyPlayer(
+        id: 'ai_1',
+        name: 'AI 1 (Hard)',
+        isAI: true,
+        aiDifficulty: GameAiDifficulty.hard,
+      ));
+      await flush();
+
+      expect(host.lobbyPlayers.where((p) => p.isAI), hasLength(1));
+      expect(host.lobbyPlayers.where((p) => !p.isAI), hasLength(2));
+      expect(
+        host.lobbyPlayers.firstWhere((p) => p.isAI).aiDifficulty,
+        GameAiDifficulty.hard,
+      );
+      // Client lobby mirror receives AI seat via lobby broadcast.
+      expect(client1.lobbyPlayers.any((p) => p.isAI), isTrue);
     });
   });
 

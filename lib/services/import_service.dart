@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import '../core/units.dart';
 import '../models/models.dart';
 
@@ -110,6 +111,15 @@ class ImportedShoppingItem {
   const ImportedShoppingItem(this.item, this.categoryName);
 }
 
+/// One "this looks like an existing item" heads-up (BAI6) — informational
+/// only, surfaced in the import confirm dialog so the user can back out and
+/// rename/merge by hand. Never blocks or auto-merges the import.
+class FuzzyDuplicateWarning {
+  final String incomingName;
+  final String existingName;
+  const FuzzyDuplicateWarning(this.incomingName, this.existingName);
+}
+
 /// Shared JSON bulk import/export for the app (IMP1). One envelope shape for
 /// every module: `{ "sisuMateImport": 1, "kind": "...", "items": [...] }`.
 /// Items carry only user-facing fields; import mints the internal ones
@@ -205,6 +215,98 @@ class ImportService {
       if (contentKeyOf(e) == incomingContentKey) return e;
     }
     return null;
+  }
+
+  // ── BAI6: offline "did you mean X?" duplicate heads-up ─────────────────────
+  //
+  // Purely a pre-import warning shown alongside the confirm dialog — never
+  // blocks or auto-merges. Exact matches are already handled by contentKeyOf
+  // above; this only flags close-but-not-exact name matches (typos, plurals,
+  // spacing) that contentKey's exact string compare misses.
+
+  /// Below this length, edit-distance similarity is too noisy to be useful
+  /// (e.g. "Oil" vs "Oar" would already look "close"). Skip these names.
+  static const int _fuzzyMinNameLength = 4;
+
+  /// Minimum [nameSimilarity] to flag as a possible duplicate.
+  static const double fuzzyDuplicateThreshold = 0.82;
+
+  /// Levenshtein edit distance between [a] and [b].
+  static int _editDistance(String a, String b) {
+    if (a == b) return 0;
+    if (a.isEmpty) return b.length;
+    if (b.isEmpty) return a.length;
+    var prev = List<int>.generate(b.length + 1, (j) => j);
+    for (var i = 1; i <= a.length; i++) {
+      final curr = List<int>.filled(b.length + 1, 0);
+      curr[0] = i;
+      for (var j = 1; j <= b.length; j++) {
+        final cost = a[i - 1] == b[j - 1] ? 0 : 1;
+        final deletion = curr[j - 1] + 1;
+        final insertion = prev[j] + 1;
+        final substitution = prev[j - 1] + cost;
+        curr[j] = [deletion, insertion, substitution].reduce(min);
+      }
+      prev = curr;
+    }
+    return prev[b.length];
+  }
+
+  /// Normalized name similarity: 1.0 = identical (case/whitespace aside),
+  /// 0.0 = completely different. Case-insensitive, offline, no LLM.
+  static double nameSimilarity(String a, String b) {
+    final na = a.toLowerCase().trim();
+    final nb = b.toLowerCase().trim();
+    if (na == nb) return 1.0;
+    final maxLen = na.length > nb.length ? na.length : nb.length;
+    if (maxLen == 0) return 1.0;
+    return 1 - _editDistance(na, nb) / maxLen;
+  }
+
+  /// Display names to run the fuzzy-duplicate check against, per [batch.kind].
+  /// Fuel logs are excluded — identical fill-ups are valid, so there's no
+  /// duplicate concept for them (see [contentKeyCrew] family docs above).
+  static List<String> namesForFuzzyCheck(ImportBatch batch) =>
+      switch (batch.kind) {
+        kindInventory => batch.inventoryItems.map((e) => e.name).toList(),
+        kindRecipe => batch.recipes.map((r) => r.recipe.name).toList(),
+        kindCrew => batch.crewMembers.map((e) => e.name).toList(),
+        kindDocument => batch.documents.map((e) => e.title).toList(),
+        kindMaintenance =>
+          batch.maintenanceTasks.map((e) => e.description).toList(),
+        kindChecklist => batch.checklistItems.map((e) => e.title).toList(),
+        kindShopping => batch.shoppingItems.map((e) => e.item.name).toList(),
+        _ => const [],
+      };
+
+  /// Flags incoming names that closely — but not exactly — match an existing
+  /// name, for a pre-import "did you mean X?" heads-up. Exact matches (case/
+  /// whitespace aside) are excluded: those are the normal update path via
+  /// [matchExisting]'s contentKey compare, not a typo/duplicate risk.
+  static List<FuzzyDuplicateWarning> findFuzzyDuplicates({
+    required List<String> incomingNames,
+    required List<String> existingNames,
+  }) {
+    final warnings = <FuzzyDuplicateWarning>[];
+    for (final incoming in incomingNames) {
+      if (incoming.trim().length < _fuzzyMinNameLength) continue;
+      String? bestMatch;
+      var bestScore = 0.0;
+      for (final existing in existingNames) {
+        if (existing.trim().length < _fuzzyMinNameLength) continue;
+        final score = nameSimilarity(incoming, existing);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = existing;
+        }
+      }
+      if (bestMatch != null &&
+          bestScore >= fuzzyDuplicateThreshold &&
+          bestScore < 1.0) {
+        warnings.add(FuzzyDuplicateWarning(incoming, bestMatch));
+      }
+    }
+    return warnings;
   }
 
   // ---- Import ----

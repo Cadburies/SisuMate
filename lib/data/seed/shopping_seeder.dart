@@ -86,7 +86,7 @@ Future<void> seedShoppingData(String defaultBoatSupabaseId) async {
     }
   });
 
-  // Categories only — no seeded items. A fresh install or factory reset
+  // Categories only - no seeded items. A fresh install or factory reset
   // should give the user a genuinely empty shopping list, not example data
   // for one specific engine (Yanmar) under one specific category.
 }

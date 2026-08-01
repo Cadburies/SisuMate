@@ -5,7 +5,7 @@
 library;
 
 /// Filenames (under `assets/cocktails/`) that ship in the APK.
-/// Kept in sync with the directory — regenerate when adding photos.
+/// Kept in sync with the directory - regenerate when adding photos.
 const Set<String> kBundledCocktailImageFiles = {
   '_default.jpg',
   '_default_rocks.jpg',

@@ -15,8 +15,10 @@ migrate_working_dir/
 .secret
 dart-defines.json
 
-# Real credentials — never commit
+# Real credentials — never commit (SEC1: Play SA must not be a Flutter asset)
 assets/service-account-google-play.json
+secrets/**
+!secrets/README.md
 
 # Local-machine tooling, not project state
 .idea/

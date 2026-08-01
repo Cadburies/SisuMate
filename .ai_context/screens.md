@@ -9,11 +9,11 @@
 - Some detail/editor flows still use ad-hoc `Navigator.push` + `extra`.
 - **No bottom tab bar** — home is a tile grid + per-screen `endDrawer`.
 - Paywall is **not** a GoRouter route: `RevenueCatService.showPaywall` → `MaterialPageRoute`.
-- Games: `AppRoutes.playGame(id)` / `lobbyGame(id)`; multiplayer-ready id set = `GameCatalog.multiplayerReady` (today: `liars_dice` only).
+- Games: `AppRoutes.playGame(id)` / `lobbyGame(id)`; multiplayer-ready set = `GameCatalog.multiplayerReady` (source of truth; solitaire is `soloOnlyByDesign`).
 
 ## Auth / startup
 
-`StartupScreen` → DB init + theme restore → `onboarding_seen_v1` → onboarding or home. No hard auth gate for Free. Owner: `/account`. Crew: `/join` (anonymous + share code). Developer console: `/admin` only if `AuthService.developerEmail`.
+`StartupScreen` → DB init + theme restore → `onboarding_seen_v1` → onboarding or home. No hard auth gate for Free. Owner: `/account`. Crew: `/join` via `JoinBoatService` (redeem share code **first**, then local boat upsert + active boat + **restamp content** + `ensureStarted` — invalid code never half-enrolls). Developer console: `/admin` only if `AuthService.developerEmail`.
 
 ## Shared UI primitives (prefer these)
 
@@ -36,9 +36,14 @@
 | Nested `Slidable` | Never wrap an `ExpansionTile` that already has per-row `Slidable`s; scope outer `Slidable` to the **header row only**. |
 | Checklist complete | List-level complete = hard Pro gate + interstitial; detail (`CheckPageViewer`) = FREE-EDITS (5 free). |
 | Checklist item rows | Deep `isProAsync.when` → `SwipeableListItem` — preserve Pro gate when refactoring layout. |
+| Checklist autopilot (BAI3) | Banner is keyword-match on existing checklist *titles* (last minute / one day / one week / document / watch) from trip window + weather — no new schema. Logic: `SuggestionEngine.checklistAutopilot` + `checklist_autopilot_provider.dart`. |
 | Home drawer Pro | Free + ≤1 boat → lock tile for boat management (no navigation). |
-| Games multiplayer | Only Liar's Dice; others dimmed + "Solo only" when multiplayer toggle on. |
-| Lobby coupling | `lobby_screen.dart` hard-imports Liar's Dice providers — **blocker for GAME1** second title. |
+| Crew join (`/join`) | Always go through `JoinBoatService.join` — never set active boat before redeem succeeds. Restamp is required so local rows use the captain’s boat GUID for wire-prefix sync. |
+| Home readiness (BAI1) | `_PassageReadinessCard` always shown (Ready is useful). Uses `passage_readiness_provider` + `SuggestionEngine.passageReadiness` (safety + maint + wind + fuel ETA). |
+| Fuel burn (BAI4/SUG6–7) | Single fill → remaining is **unknown** (`null`), not full tank. L/day = last 6 intervals, recency-weighted. Source: `fuel_burn_estimator.dart`. |
+| Games multiplayer | Hub multiplayer toggle: non-`multiplayerReady` tiles dim + "Solo only" badge. Lobby `switch (gameId)` starts the matching notifier — add both chip + case when shipping a new multiplayer title. |
+| AI seats (GAI1/GAI5) | Lobby Skill + Style chips → `LobbyPlayer.aiDifficulty` / `aiPersona`. Dice multi-seat bots (Dudo, Liar's Dice) apply **per-seat** skill/style; board games still use max-seat skill unless they grow their own. |
+| Screen+Drift tests (TEST6) | Prefer `AppDatabase.forTesting(NativeDatabase.memory())` + real screen pump (see `test/shopping_screen_integration_test.dart`); not dialog-only. Free tier: `debugProOverrideForTests` when Sync would hit platform channels. |
 | Paywall context | Don't call `showPaywall` after async gap with a disposed `BuildContext`. |
 
 ## Per-game logic

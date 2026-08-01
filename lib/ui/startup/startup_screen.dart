@@ -44,8 +44,8 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
             .read(themeModeProvider.notifier)
             .restoreTheme(settings?.isDarkMode ?? true);
         ref
-            .read(unitSystemProvider.notifier)
-            .restore(settings?.useImperial ?? false);
+            .read(unitPrefsProvider.notifier)
+            .restoreFromJson(settings?.unitPrefsJson);
 
         // Capture the app-global container before navigating away — the widget
         // ref is unsafe once StartupScreen unmounts during the deferred work.

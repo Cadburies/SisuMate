@@ -65,13 +65,15 @@ void main() {
   });
 
   testWidgets(
-      'a pending conflict renders both sides with table label + resolve buttons',
+      'a pending conflict renders field diffs, suggestion, + resolve buttons',
       (tester) async {
     await pumpScreen(tester, [conflict()]);
 
     expect(find.text('Shopping item'), findsOneWidget);
     expect(find.textContaining('SyncTest-Offline'), findsOneWidget);
     expect(find.textContaining('SyncTest-Online'), findsOneWidget);
+    expect(find.textContaining('Suggested:'), findsOneWidget);
+    expect(find.text('Field differences'), findsOneWidget);
     expect(find.text('Keep mine'), findsOneWidget);
     expect(find.text('Keep cloud'), findsOneWidget);
   });

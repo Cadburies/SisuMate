@@ -17,7 +17,7 @@ const _pantryData = <(
   List<String>, // allergenTags
   List<String>  // dietaryTags
 )>[
-  // ── Oils & fats ────────────────────────────────────────────────────────────
+  // -- Oils & fats ------------------------------------------------------------
   ('Extra Virgin Olive Oil', 500, 'ml', 'oil',
     ['rich', 'fruity', 'savory', 'smooth', 'grassy'],
     ['Italian', 'Mediterranean', 'Greek'],
@@ -41,7 +41,7 @@ const _pantryData = <(
     5.0, '250g block', null,
     ['dairy'], ['vegetarian', 'gluten-free', 'egg-free', 'nut-free', 'keto']),
 
-  // ── Acids & condiments ────────────────────────────────────────────────────
+  // -- Acids & condiments ----------------------------------------------------
   ('White Wine Vinegar', 250, 'ml', 'acid',
     ['sharp', 'sour', 'light', 'bright', 'tangy'],
     ['French', 'Mediterranean', 'General'],
@@ -89,7 +89,7 @@ const _pantryData = <(
     6.0, '200g tub', null,
     ['gluten', 'soy'], ['vegetarian', 'dairy-free', 'egg-free']),
 
-  // ── Sweeteners ────────────────────────────────────────────────────────────
+  // -- Sweeteners ------------------------------------------------------------
   ('Honey', 500, 'g', 'sweetener',
     ['sweet', 'floral', 'rich', 'warm', 'natural'],
     ['Mediterranean', 'General'],
@@ -112,7 +112,7 @@ const _pantryData = <(
     3.0, '500g bag', null,
     [], ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free', 'nut-free', 'halal', 'kosher']),
 
-  // ── Aromatics ─────────────────────────────────────────────────────────────
+  // -- Aromatics -------------------------------------------------------------
   ('Garlic', 1, 'bulb', 'vegetable',
     ['pungent', 'savory', 'aromatic', 'umami', 'sharp'],
     ['Italian', 'Mediterranean', 'Asian', 'General'],
@@ -148,7 +148,7 @@ const _pantryData = <(
     'https://commons.wikimedia.org/wiki/Special:FilePath/Lime-Whole-Split.jpg',
     [], ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free', 'nut-free', 'keto', 'paleo', 'halal', 'kosher']),
 
-  // ── Dry goods ─────────────────────────────────────────────────────────────
+  // -- Dry goods -------------------------------------------------------------
   ('All-Purpose Flour', 1, 'kg', 'baking',
     ['neutral', 'starchy', 'mild'],
     ['General'],
@@ -190,7 +190,7 @@ const _pantryData = <(
     3.0, '200g pack', null,
     ['gluten'], ['vegan', 'vegetarian', 'dairy-free', 'egg-free', 'nut-free', 'halal', 'kosher']),
 
-  // ── Tins & jars ───────────────────────────────────────────────────────────
+  // -- Tins & jars -----------------------------------------------------------
   ('Canned Chopped Tomatoes', 400, 'g', 'tinned',
     ['sweet', 'sour', 'savory', 'bright', 'umami', 'acidic'],
     ['Italian', 'Mediterranean', 'General'],
@@ -237,7 +237,7 @@ const _pantryData = <(
     5.0, '150g jar', null,
     ['sulphites'], ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free', 'nut-free', 'keto', 'paleo', 'halal', 'kosher']),
 
-  // ── Dairy ─────────────────────────────────────────────────────────────────
+  // -- Dairy -----------------------------------------------------------------
   ('Eggs', 6, 'pieces', 'dairy',
     ['rich', 'savory', 'creamy', 'neutral', 'versatile'],
     ['General'],
@@ -264,7 +264,7 @@ const _pantryData = <(
     6.0, '250g ball', null,
     ['dairy'], ['vegetarian', 'gluten-free', 'egg-free', 'nut-free', 'halal', 'kosher']),
 
-  // ── Spices & herbs ────────────────────────────────────────────────────────
+  // -- Spices & herbs --------------------------------------------------------
   ('Salt', null, null, 'seasoning',
     ['salty', 'neutral', 'mineral'],
     ['General'],
@@ -316,7 +316,7 @@ const _pantryData = <(
     8.0, '50ml bottle', null,
     [], ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free', 'nut-free', 'halal', 'kosher']),
 
-  // ── Fruits ────────────────────────────────────────────────────────────────
+  // -- Fruits ----------------------------------------------------------------
   ('Pineapple', 1, 'whole', 'fruit',
     ['tropical', 'sweet', 'tart', 'bright', 'fruity'],
     ['Caribbean', 'Asian', 'Thai'],
@@ -343,7 +343,7 @@ const _pantryData = <(
     14.0, '200g bag', null,
     ['nuts'], ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free', 'keto', 'paleo', 'halal', 'kosher']),
 
-  // ── Fresh herbs ───────────────────────────────────────────────────────────
+  // -- Fresh herbs -----------------------------------------------------------
   ('Fresh Basil', 1, 'bunch', 'herb',
     ['herbal', 'sweet', 'fresh', 'aromatic', 'floral'],
     ['Italian', 'Mediterranean', 'Thai'],
@@ -376,7 +376,7 @@ const _pantryData = <(
     2.0, 'bunch', null,
     [], ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free', 'nut-free', 'keto', 'paleo', 'halal', 'kosher']),
 
-  // ── Japanese & Asian pantry ───────────────────────────────────────────────
+  // -- Japanese & Asian pantry -----------------------------------------------
   ('Mirin', 250, 'ml', 'sauce',
     ['sweet', 'umami', 'light', 'warm', 'rice wine'],
     ['Japanese', 'Asian'],
@@ -398,21 +398,21 @@ const _pantryData = <(
     4.0, '200g block', null,
     [], ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free', 'nut-free', 'halal', 'kosher']),
 
-  // ── Cooking wine ─────────────────────────────────────────────────────────
+  // -- Cooking wine ---------------------------------------------------------
   ('Dry White Wine', 750, 'ml', 'wine',
     ['dry', 'acidic', 'light', 'fresh', 'crisp'],
     ['French', 'Mediterranean', 'General'],
     12.0, '750ml bottle', null,
     ['sulphites'], ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free', 'nut-free', 'halal', 'kosher']),
 
-  // ── Baking ────────────────────────────────────────────────────────────────
+  // -- Baking ----------------------------------------------------------------
   ('Dark Chocolate', 200, 'g', 'baking',
     ['bitter', 'sweet', 'rich', 'dark', 'complex', 'earthy'],
     ['General'],
     6.0, '200g bar', null,
     ['dairy'], ['vegetarian', 'gluten-free', 'egg-free', 'nut-free']),
 
-  // ── Added from recipe/menu seed usage (auto-curated 2026-07-09) ─────
+  // -- Added from recipe/menu seed usage (auto-curated 2026-07-09) -----
   ('Tuna', 300, 'g', 'protein',
     ['savory'],
     ['General'],
@@ -788,7 +788,7 @@ const _pantryData = <(
     ['General'],
     6.0, null, null,
     [], ['vegan', 'vegetarian', 'gluten-free']),
-  ('Jalapeño', 2, 'count', 'vegetable',
+  ('Jalapeno', 2, 'count', 'vegetable',
     ['savory'],
     ['General'],
     6.0, null, null,
@@ -1346,7 +1346,7 @@ const _macrosPer100g = <String, (double, double, double, double)>{
   'Palm Sugar': (383, 0, 0, 98),
   'Dry White Wine': (82, 0.1, 0, 2.6),
   'Dark Chocolate': (546, 4.9, 31, 61),
-  // ── USDA-style macros for auto-added pantry items (per 100g) ─────────
+  // -- USDA-style macros for auto-added pantry items (per 100g) ---------
   'Tuna': (144, 23.3, 4.9, 0),
   'Salmon': (208, 20.4, 13.4, 0),
   'Sea Bass': (97, 18.4, 2, 0),
@@ -1422,7 +1422,7 @@ const _macrosPer100g = <String, (double, double, double, double)>{
   'Butternut Squash': (45, 1, 0.1, 12),
   'Pumpkin Puree': (34, 1.1, 0.1, 8.1),
   'Waterblommetjies': (25, 2, 0.3, 4),
-  'Jalapeño': (29, 0.9, 0.4, 6.5),
+  'Jalapeno': (29, 0.9, 0.4, 6.5),
   'Roasted Red Peppers': (28, 1, 0.3, 5.5),
   'Tomato': (18, 0.9, 0.2, 3.9),
   'Apple': (52, 0.3, 0.2, 14),

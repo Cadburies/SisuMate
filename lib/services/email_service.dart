@@ -9,6 +9,42 @@ import '../models/models.dart';
 class EmailService {
   static const _maxRecent = 5;
 
+  /// TEST3: override in unit tests (defaults to [launchUrl]).
+  static Future<bool> Function(Uri uri)? debugLaunchUrl;
+
+  /// Clears TEST3 hooks (call from test tearDown).
+  static void resetDebugHooks() {
+    debugLaunchUrl = null;
+  }
+
+  /// Pure mailto URI builder (RFC 6068 percent-encoding — not form `+` spaces).
+  static Uri buildMailtoUri({
+    required String recipient,
+    required String subject,
+    required String body,
+    String? replyTo,
+  }) {
+    final params = {
+      'subject': subject,
+      'body': body,
+      if (replyTo != null && replyTo.trim().isNotEmpty) 'reply-to': replyTo,
+    };
+    final query =
+        params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
+    return Uri.parse('mailto:$recipient?$query');
+  }
+
+  /// Pure recent-email MRU update (newest first, capped at [max]).
+  static List<String> nextRecentEmails(
+    List<String> current,
+    String email, {
+    int max = _maxRecent,
+  }) {
+    final list = [...current]..remove(email);
+    list.insert(0, email);
+    return list.take(max).toList();
+  }
+
   /// Prompts for a recipient (pre-filled with the most recent, plus
   /// tappable chips for the rest), then launches the mail app.
   static Future<void> composeAndSend(
@@ -23,7 +59,7 @@ class EmailService {
 
     final recipient = await showDialog<String>(
       context: context,
-      builder: (_) => _RecipientDialog(recentEmails: recentEmails),
+      builder: (_) => RecipientDialog(recentEmails: recentEmails),
     );
     if (recipient == null || recipient.isEmpty) return;
 
@@ -32,19 +68,15 @@ class EmailService {
     final finalBody =
         fromName != null && fromName.trim().isNotEmpty ? '$body\n\n— $fromName' : body;
 
-    // Uri(queryParameters:) form-encodes spaces as "+", which RFC 6068
-    // mailto consumers (e.g. Gmail) show literally instead of decoding —
-    // percent-encode each value by hand so spaces render correctly.
-    final params = {
-      'subject': subject,
-      'body': finalBody,
-      if (replyTo != null && replyTo.trim().isNotEmpty) 'reply-to': replyTo,
-    };
-    final query =
-        params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
-    final uri = Uri.parse('mailto:$recipient?$query');
+    final uri = buildMailtoUri(
+      recipient: recipient,
+      subject: subject,
+      body: finalBody,
+      replyTo: replyTo,
+    );
 
-    final launched = await launchUrl(uri);
+    final launcher = debugLaunchUrl ?? ((Uri u) => launchUrl(u));
+    final launched = await launcher(uri);
     if (!context.mounted) return;
     if (!launched) {
       ScaffoldMessenger.of(context)
@@ -58,23 +90,23 @@ class EmailService {
   static Future<void> _recordRecentEmail(
       WidgetRef ref, UserSettings? settings, String email) async {
     final updated = settings ?? UserSettings();
-    final list = [...updated.recentEmails]..remove(email);
-    list.insert(0, email);
-    updated.recentEmails = list.take(_maxRecent).toList();
+    updated.recentEmails = nextRecentEmails(updated.recentEmails, email);
     await ref.read(userSettingsRepositoryProvider).updateSettings(updated);
     ref.invalidate(userSettingsProvider);
   }
 }
 
-class _RecipientDialog extends StatefulWidget {
+/// Recipient picker used by [EmailService.composeAndSend]. Public for TEST3
+/// widget coverage (chip pre-fill + cancel/send).
+class RecipientDialog extends StatefulWidget {
   final List<String> recentEmails;
-  const _RecipientDialog({required this.recentEmails});
+  const RecipientDialog({super.key, required this.recentEmails});
 
   @override
-  State<_RecipientDialog> createState() => _RecipientDialogState();
+  State<RecipientDialog> createState() => _RecipientDialogState();
 }
 
-class _RecipientDialogState extends State<_RecipientDialog> {
+class _RecipientDialogState extends State<RecipientDialog> {
   late final TextEditingController _controller;
 
   @override

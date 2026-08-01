@@ -104,7 +104,7 @@ class GuestProfilesScreen extends ConsumerWidget {
   void _showEditDialog(BuildContext context, WidgetRef ref, GuestProfile? existing) {
     showDialog<void>(
       context: context,
-      builder: (_) => _ProfileEditDialog(
+      builder: (_) => AddEditGuestProfileDialog(
         existing: existing,
         onSave: (profile) async {
           final repo = ref.read(guestProfileRepositoryProvider);
@@ -177,16 +177,22 @@ class _ProfileSummary extends StatelessWidget {
   }
 }
 
-class _ProfileEditDialog extends StatefulWidget {
+/// Create / edit a guest dietary profile (TEST5 — public for widget tests).
+class AddEditGuestProfileDialog extends StatefulWidget {
   final GuestProfile? existing;
   final Future<void> Function(GuestProfile) onSave;
-  const _ProfileEditDialog({required this.existing, required this.onSave});
+  const AddEditGuestProfileDialog({
+    super.key,
+    required this.existing,
+    required this.onSave,
+  });
 
   @override
-  State<_ProfileEditDialog> createState() => _ProfileEditDialogState();
+  State<AddEditGuestProfileDialog> createState() =>
+      AddEditGuestProfileDialogState();
 }
 
-class _ProfileEditDialogState extends State<_ProfileEditDialog> {
+class AddEditGuestProfileDialogState extends State<AddEditGuestProfileDialog> {
   late final TextEditingController _nameCtrl;
   late Set<String> _selectedAllergens;
   late Set<String> _selectedDietary;
@@ -226,6 +232,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                 border: OutlineInputBorder(),
               ),
               textCapitalization: TextCapitalization.words,
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
             Text('Cannot eat (allergens):',

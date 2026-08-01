@@ -6,11 +6,14 @@ import '../components/common_drawer.dart';
 import '../components/group_grid.dart';
 import '../components/main_list_tile.dart';
 import '../../providers/checklist_provider.dart';
+import '../../providers/checklist_autopilot_provider.dart';
 import '../../providers/shopping_provider.dart';
 import '../../core/app_router.dart';
+import '../../core/colors.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/revenuecat_service.dart';
+import '../../services/suggestion_engine.dart';
 
 class ChecklistScreen extends ConsumerStatefulWidget {
   const ChecklistScreen({super.key});
@@ -34,6 +37,8 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncGroups = ref.watch(checklistGroupsProvider('checklist'));
+    final autopilot = ref.watch(checklistAutopilotProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(
@@ -44,6 +49,9 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
                 title: 'Checklists',
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
               ),
+              if (autopilot.isNotEmpty)
+                _ChecklistAutopilotBanner(
+                    suggestions: autopilot, isDark: isDark),
               MainListSearchBar(
                 controller: _searchController,
                 hintText: 'Search checklists...',
@@ -199,6 +207,85 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
                 DrawerFooter(),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// BAI3 — "which checklist should I run?" nudge from days-until-departure,
+/// trip length, and cached weather. Tapping a line opens that checklist
+/// directly, same target as tapping its tile below.
+class _ChecklistAutopilotBanner extends StatelessWidget {
+  final List<ChecklistAutopilotSuggestion> suggestions;
+  final bool isDark;
+  const _ChecklistAutopilotBanner({
+    required this.suggestions,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Card(
+        elevation: 2,
+        color: SisuColors.getTileColor(isDark),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Run before you go',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: SisuColors.getTextPrimaryColor(isDark),
+                ),
+              ),
+              const SizedBox(height: 6),
+              for (final s in suggestions)
+                InkWell(
+                  onTap: () => context.push(
+                    AppRoutes.checklistItems,
+                    extra: s.group,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.checklist_rtl,
+                            size: 18, color: SisuColors.completedText),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s.group.title,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: SisuColors.getTextPrimaryColor(isDark),
+                                ),
+                              ),
+                              Text(
+                                s.reason,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: SisuColors.getTextSecondaryColor(isDark),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

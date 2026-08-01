@@ -1,22 +1,35 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../ads/ad_helper.dart';
+import 'admob_platform.dart';
 
 class AdMobService {
+  AdMobService({AdMobPlatform? platform})
+      : _platform = platform ?? const LiveAdMobPlatform();
+
+  final AdMobPlatform _platform;
+
   static bool _isInitialized = false;
   static bool get isInitialized => _isInitialized;
 
+  /// Resets static init flag (tests only).
+  @visibleForTesting
+  static void resetInitializedForTests() {
+    _isInitialized = false;
+  }
+
   Future<void> init() async {
-    // Only initialize on supported platforms (Android/iOS)
-    if (!Platform.isAndroid && !Platform.isIOS) {
-      if (kDebugMode) print('AdMob: Skipping initialization - platform not supported (${Platform.operatingSystem})');
+    if (!_platform.isSupported) {
+      if (kDebugMode) {
+        print(
+            'AdMob: Skipping initialization - platform not supported');
+      }
       return;
     }
 
     try {
-      await MobileAds.instance.initialize();
+      await _platform.initialize();
       _isInitialized = true;
       if (kDebugMode) print('AdMob: Successfully initialized');
     } catch (e) {
@@ -27,12 +40,16 @@ class AdMobService {
   }
 
   BannerAd? createBannerAd() {
-    if (!Platform.isAndroid && !Platform.isIOS) {
-      if (kDebugMode) print('AdMob: Cannot create banner ad - platform not supported');
+    if (!_platform.isSupported) {
+      if (kDebugMode) {
+        print('AdMob: Cannot create banner ad - platform not supported');
+      }
       return null;
     }
     if (!_isInitialized) {
-      if (kDebugMode) print('AdMob: Cannot create banner ad - AdMob not initialized');
+      if (kDebugMode) {
+        print('AdMob: Cannot create banner ad - AdMob not initialized');
+      }
       return null;
     }
 
@@ -52,46 +69,61 @@ class AdMobService {
     );
   }
 
-  InterstitialAd? _interstitialAd;
+  AdMobInterstitialHandle? _interstitialAd;
   int _numInterstitialLoadAttempts = 0;
   static const int maxFailedLoadAttempts = 3;
 
+  /// Whether a loaded interstitial is ready to show (TEST4).
+  @visibleForTesting
+  bool get hasInterstitialReady => _interstitialAd != null;
+
+  /// How many load attempts have failed since last success (TEST4).
+  @visibleForTesting
+  int get interstitialLoadAttempts => _numInterstitialLoadAttempts;
+
   void createInterstitialAd() {
-    if (!Platform.isAndroid && !Platform.isIOS) {
-      if (kDebugMode) print('AdMob: Cannot create interstitial ad - platform not supported');
+    if (!_platform.isSupported) {
+      if (kDebugMode) {
+        print(
+            'AdMob: Cannot create interstitial ad - platform not supported');
+      }
       return;
     }
     if (!_isInitialized) {
-      if (kDebugMode) print('AdMob: Cannot create interstitial ad - AdMob not initialized');
+      if (kDebugMode) {
+        print(
+            'AdMob: Cannot create interstitial ad - AdMob not initialized');
+      }
       return;
     }
 
-    InterstitialAd.load(
+    _platform.loadInterstitial(
       adUnitId: AdHelper.interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (InterstitialAd ad) {
-          _interstitialAd = ad;
-          _numInterstitialLoadAttempts = 0;
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          _numInterstitialLoadAttempts += 1;
-          _interstitialAd = null;
-          if (_numInterstitialLoadAttempts < maxFailedLoadAttempts) {
-            createInterstitialAd();
-          }
-        },
-      ),
+      onLoaded: (ad) {
+        _interstitialAd = ad;
+        _numInterstitialLoadAttempts = 0;
+      },
+      onFailed: (_) {
+        _numInterstitialLoadAttempts += 1;
+        _interstitialAd = null;
+        if (_numInterstitialLoadAttempts < maxFailedLoadAttempts) {
+          createInterstitialAd();
+        }
+      },
     );
   }
 
   void showInterstitialAd() {
-    if (!Platform.isAndroid && !Platform.isIOS) {
-      if (kDebugMode) print('AdMob: Cannot show interstitial ad - platform not supported');
+    if (!_platform.isSupported) {
+      if (kDebugMode) {
+        print('AdMob: Cannot show interstitial ad - platform not supported');
+      }
       return;
     }
     if (!_isInitialized) {
-      if (kDebugMode) print('AdMob: Cannot show interstitial ad - AdMob not initialized');
+      if (kDebugMode) {
+        print('AdMob: Cannot show interstitial ad - AdMob not initialized');
+      }
       return;
     }
     if (_interstitialAd == null) {
@@ -99,20 +131,21 @@ class AdMobService {
       return;
     }
 
-    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) {
+    final ad = _interstitialAd!;
+    ad.setFullScreenCallbacks(
+      onShowed: () {
         if (kDebugMode) print('ad onAdShowedFullScreenContent.');
       },
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+      onDismissed: () {
         ad.dispose();
         createInterstitialAd();
       },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+      onFailedToShow: () {
         ad.dispose();
         createInterstitialAd();
       },
     );
-    _interstitialAd!.show();
+    ad.show();
     _interstitialAd = null;
   }
 
@@ -147,12 +180,16 @@ class AdMobService {
   }
 
   Future<void> showInterstitialAdIfAllowed() async {
-    if (!Platform.isAndroid && !Platform.isIOS) {
-      if (kDebugMode) print('AdMob: Cannot show interstitial ad - platform not supported');
+    if (!_platform.isSupported) {
+      if (kDebugMode) {
+        print('AdMob: Cannot show interstitial ad - platform not supported');
+      }
       return;
     }
     if (!_isInitialized) {
-      if (kDebugMode) print('AdMob: Cannot show interstitial ad - AdMob not initialized');
+      if (kDebugMode) {
+        print('AdMob: Cannot show interstitial ad - AdMob not initialized');
+      }
       return;
     }
 
@@ -167,31 +204,36 @@ class AdMobService {
       return;
     }
 
-    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) async {
+    final ad = _interstitialAd!;
+    ad.setFullScreenCallbacks(
+      onShowed: () async {
         await recordInterstitialAdShown();
         if (kDebugMode) print('Interstitial ad shown. Daily count updated.');
       },
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+      onDismissed: () {
         ad.dispose();
         createInterstitialAd();
       },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+      onFailedToShow: () {
         ad.dispose();
         createInterstitialAd();
       },
     );
-    _interstitialAd!.show();
+    await ad.show();
     _interstitialAd = null;
   }
 
   NativeAd? createNativeAd() {
-    if (!Platform.isAndroid && !Platform.isIOS) {
-      if (kDebugMode) print('AdMob: Cannot create native ad - platform not supported');
+    if (!_platform.isSupported) {
+      if (kDebugMode) {
+        print('AdMob: Cannot create native ad - platform not supported');
+      }
       return null;
     }
     if (!_isInitialized) {
-      if (kDebugMode) print('AdMob: Cannot create native ad - AdMob not initialized');
+      if (kDebugMode) {
+        print('AdMob: Cannot create native ad - AdMob not initialized');
+      }
       return null;
     }
 

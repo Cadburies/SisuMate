@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../services/lan/game_lan_service.dart';
 import '../../../../services/lan/lan_providers.dart';
@@ -149,6 +150,184 @@ class CheckersState {
       isOpponentAI: j['isOpponentAI'] as bool? ?? true,
     );
   }
+}
+
+// ── GAI2: minimax + alpha-beta search ───────────────────────────────────
+//
+// A "full turn" is the unit of search, not a single board step: a mandatory
+// chain jump keeps the same side to move and isn't a real choice point for
+// the opponent, so each node explores every complete forced-capture
+// sequence (or, absent captures, every simple move) as one branch rather
+// than treating each jump hop as its own ply.
+
+class _TurnOutcome {
+  final CheckersMove firstMove;
+  final List<List<int>> board;
+  const _TurnOutcome(this.firstMove, this.board);
+}
+
+/// Applies one move/jump step in place; returns true if it just promoted
+/// (which — per GB9 — ends the turn even mid-chain).
+bool _applyStep(List<List<int>> board, CheckersMove move) {
+  final piece = board[move.fromRow][move.fromCol];
+  for (final (cr, cc) in move.captured) {
+    board[cr][cc] = 0;
+  }
+  board[move.fromRow][move.fromCol] = 0;
+  board[move.toRow][move.toCol] = piece;
+  final justPromoted =
+      (piece == 1 && move.toRow == 7) || (piece == 2 && move.toRow == 0);
+  if (justPromoted) {
+    board[move.toRow][move.toCol] = _isHumanPiece(piece) ? 3 : 4;
+  }
+  return justPromoted;
+}
+
+List<_TurnOutcome> _fullTurnOutcomes(List<List<int>> board, bool isHumanTurn) {
+  final firstMoves = getAllMoves(board, isHumanTurn);
+  if (firstMoves.isEmpty) {
+    return const [];
+  }
+
+  final outcomes = <_TurnOutcome>[];
+  if (firstMoves.first.captured.isEmpty) {
+    for (final m in firstMoves) {
+      final b = _copyBoard(board);
+      _applyStep(b, m);
+      outcomes.add(_TurnOutcome(m, b));
+    }
+    return outcomes;
+  }
+
+  void extendChain(
+      List<List<int>> b, CheckersMove firstMove, int row, int col) {
+    final chainJumps = getChainJumps(b, row, col, const []);
+    if (chainJumps.isEmpty) {
+      outcomes.add(_TurnOutcome(firstMove, b));
+      return;
+    }
+    for (final cj in chainJumps) {
+      final b2 = _copyBoard(b);
+      final promoted = _applyStep(b2, cj);
+      if (promoted) {
+        outcomes.add(_TurnOutcome(firstMove, b2));
+      } else {
+        extendChain(b2, firstMove, cj.toRow, cj.toCol);
+      }
+    }
+  }
+
+  for (final m in firstMoves) {
+    final b = _copyBoard(board);
+    final promoted = _applyStep(b, m);
+    if (promoted) {
+      outcomes.add(_TurnOutcome(m, b));
+    } else {
+      extendChain(b, m, m.toRow, m.toCol);
+    }
+  }
+  return outcomes;
+}
+
+/// Material + advancement, positive favors the AI (black).
+double _evaluateBoard(List<List<int>> board) {
+  double score = 0;
+  for (int r = 0; r < 8; r++) {
+    for (int c = 0; c < 8; c++) {
+      final p = board[r][c];
+      if (p == 0) continue;
+      final isKing = _isKing(p);
+      final sign = _isAiPiece(p) ? 1.0 : -1.0;
+      score += sign * (isKing ? 1.5 : 1.0);
+      if (!isKing) {
+        score += sign * (_isAiPiece(p) ? (7 - r) : r) * 0.02;
+      }
+    }
+  }
+  return score;
+}
+
+const int _aiSearchDepth = 6;
+const double _winScore = 1000.0;
+
+double _minimaxValue(
+  List<List<int>> board,
+  bool isHumanTurn,
+  int depth,
+  double alpha,
+  double beta,
+) {
+  final outcomes = _fullTurnOutcomes(board, isHumanTurn);
+  if (outcomes.isEmpty) {
+    // Side to move is stuck — loses.
+    return isHumanTurn ? _winScore : -_winScore;
+  }
+  if (depth == 0) {
+    return _evaluateBoard(board);
+  }
+
+  if (isHumanTurn) {
+    var best = double.infinity;
+    for (final o in outcomes) {
+      final value = _minimaxValue(o.board, false, depth - 1, alpha, beta);
+      if (value < best) best = value;
+      if (best < beta) beta = best;
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+
+  var best = -double.infinity;
+  for (final o in outcomes) {
+    final value = _minimaxValue(o.board, true, depth - 1, alpha, beta);
+    if (value > best) best = value;
+    if (best > alpha) alpha = best;
+    if (beta <= alpha) break;
+  }
+  return best;
+}
+
+/// Root search: picks the AI's best full turn, breaking ties randomly
+/// across equally-good options so play isn't fully deterministic.
+///
+/// TEST28: pass [rng] (e.g. [Random] with a fixed seed) so two runs with the
+/// same board + seed pick the same tied outcome.
+_TurnOutcome? _selectAiTurn(List<List<int>> board, {Random? rng}) {
+  final r = rng ?? _rng;
+  final outcomes = _fullTurnOutcomes(board, false);
+  if (outcomes.isEmpty) {
+    return null;
+  }
+
+  var alpha = -double.infinity;
+  const beta = double.infinity;
+  var bestValue = -double.infinity;
+  final best = <_TurnOutcome>[];
+
+  for (final o in outcomes) {
+    final value =
+        _minimaxValue(o.board, true, _aiSearchDepth - 1, alpha, beta);
+    if (value > bestValue + 1e-9) {
+      bestValue = value;
+      best
+        ..clear()
+        ..add(o);
+    } else if (value >= bestValue - 1e-9) {
+      best.add(o);
+    }
+    if (value > alpha) alpha = value;
+  }
+
+  return best[r.nextInt(best.length)];
+}
+
+/// TEST28: board after AI's chosen turn (null if no moves). Same seed → same board.
+@visibleForTesting
+List<List<int>>? debugSelectAiBoard(List<List<int>> board, {Random? rng}) {
+  final o = _selectAiTurn(board, rng: rng);
+  if (o == null) return null;
+  // Deep copy so tests don't mutate shared lists.
+  return o.board.map((row) => List<int>.from(row)).toList();
 }
 
 // Sentinel to distinguish null from "not provided" in copyWith
@@ -723,6 +902,12 @@ class CheckersNotifier extends Notifier<CheckersState> {
     }
   }
 
+  /// Test-only synchronous entry point — production code only reaches
+  /// _aiMove via the Timer in _executeMove, which unit tests can't await
+  /// without going through a full human-move sequence first.
+  @visibleForTesting
+  void debugRunAiMove() => _aiMove();
+
   void _aiMove() {
     if (!_isMounted) {
       return;
@@ -731,8 +916,11 @@ class CheckersNotifier extends Notifier<CheckersState> {
       return;
     }
 
-    final moves = state.allMoves;
-    if (moves.isEmpty) {
+    // GAI2: minimax/alpha-beta over full turns (see _selectAiTurn) picks the
+    // whole forced-chain sequence at once, rather than re-picking greedily
+    // at each jump hop.
+    final outcome = _selectAiTurn(state.board);
+    if (outcome == null) {
       // AI has no moves — player wins
       state = state.copyWith(
         isPlayerTurn: true,
@@ -748,60 +936,7 @@ class CheckersNotifier extends Notifier<CheckersState> {
       return;
     }
 
-    final move = _pickAiMove(moves);
-    final board = _copyBoard(state.board);
-    final piece = board[move.fromRow][move.fromCol];
-
-    // Remove captured pieces
-    for (final (cr, cc) in move.captured) {
-      board[cr][cc] = 0;
-    }
-
-    // Move the piece
-    board[move.fromRow][move.fromCol] = 0;
-    board[move.toRow][move.toCol] = piece;
-
-    // King promotion for AI
-    if (_isAiPiece(piece) && move.toRow == 0) {
-      board[move.toRow][move.toCol] = 4;
-    }
-
-    // Check for chain jump for AI
-    if (move.captured.isNotEmpty) {
-      final chainJumps = getChainJumps(board, move.toRow, move.toCol, []);
-      if (chainJumps.isNotEmpty) {
-        // AI continues chain
-        final nextMove = _pickAiMove(chainJumps);
-        // Recursively apply chain jumps
-        _applyAiChain(board, nextMove);
-        return;
-      }
-    }
-
-    _finishAiMove(board);
-  }
-
-  void _applyAiChain(List<List<int>> board, CheckersMove move) {
-    final piece = board[move.fromRow][move.fromCol];
-
-    for (final (cr, cc) in move.captured) {
-      board[cr][cc] = 0;
-    }
-
-    board[move.fromRow][move.fromCol] = 0;
-    board[move.toRow][move.toCol] = piece;
-
-    if (_isAiPiece(piece) && move.toRow == 0) {
-      board[move.toRow][move.toCol] = 4;
-    }
-
-    final chainJumps = getChainJumps(board, move.toRow, move.toCol, []);
-    if (chainJumps.isNotEmpty) {
-      _applyAiChain(board, _pickAiMove(chainJumps));
-      return;
-    }
-
-    _finishAiMove(board);
+    _finishAiMove(outcome.board);
   }
 
   void _finishAiMove(List<List<int>> board) {
@@ -833,30 +968,6 @@ class CheckersNotifier extends Notifier<CheckersState> {
       message: 'Your turn — tap a red piece to select it.',
     );
     _broadcastIfHost();
-  }
-
-  CheckersMove _pickAiMove(List<CheckersMove> moves) {
-    // Prefer multi-captures, then single captures, then kings moving, then regular
-    final multiCaptures = moves.where((m) => m.captured.length > 1).toList();
-    if (multiCaptures.isNotEmpty) {
-      return multiCaptures[_rng.nextInt(multiCaptures.length)];
-    }
-
-    final captures = moves.where((m) => m.captured.isNotEmpty).toList();
-    if (captures.isNotEmpty) {
-      return captures[_rng.nextInt(captures.length)];
-    }
-
-    // Among simple moves, prefer kings
-    final board = state.board;
-    final kingMoves = moves
-        .where((m) => _isKing(board[m.fromRow][m.fromCol]))
-        .toList();
-    if (kingMoves.isNotEmpty) {
-      return kingMoves[_rng.nextInt(kingMoves.length)];
-    }
-
-    return moves[_rng.nextInt(moves.length)];
   }
 
   // Notifier is alive as long as the provider is alive

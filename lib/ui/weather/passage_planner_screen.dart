@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/colors.dart';
+import '../../core/units.dart';
 import '../../services/weather_service.dart';
 
 class _Wp {
@@ -12,8 +14,8 @@ class _Wp {
   _Wp(this.name, this.lat, this.lon);
 }
 
-/// Simple multi-waypoint passage plan: NM, ETA hours, fuel (S3).
-class PassagePlannerScreen extends StatefulWidget {
+/// Simple multi-waypoint passage plan: NM, ETA hours, fuel (S3 + SUG3 imperial).
+class PassagePlannerScreen extends ConsumerStatefulWidget {
   final double? initialLat;
   final double? initialLon;
 
@@ -24,13 +26,16 @@ class PassagePlannerScreen extends StatefulWidget {
   });
 
   @override
-  State<PassagePlannerScreen> createState() => _PassagePlannerScreenState();
+  ConsumerState<PassagePlannerScreen> createState() =>
+      _PassagePlannerScreenState();
 }
 
-class _PassagePlannerScreenState extends State<PassagePlannerScreen> {
+class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
   final _speedCtrl = TextEditingController(text: '6');
   final _burnCtrl = TextEditingController(text: '4');
   late final List<_Wp> _wps;
+  UnitSystem? _lastVolumeSystem;
+  SpeedUnitPref? _lastSpeedUnit;
 
   @override
   void initState() {
@@ -50,6 +55,29 @@ class _PassagePlannerScreenState extends State<PassagePlannerScreen> {
     super.dispose();
   }
 
+  /// Keep burn/speed fields in active display units when prefs change.
+  void _syncDisplayFields(AppUnitPrefs prefs) {
+    final volume = prefs.volumeSystem;
+    if (_lastVolumeSystem != null && _lastVolumeSystem != volume) {
+      final raw = double.tryParse(_burnCtrl.text.trim()) ?? 0;
+      final liters = UnitConverter.displayVolumeToLiters(raw, _lastVolumeSystem!);
+      _burnCtrl.text = UnitConverter.formatNumber(
+        UnitConverter.litersToDisplay(liters, volume),
+      );
+    }
+    _lastVolumeSystem = volume;
+
+    final speed = prefs.boatSpeed;
+    if (_lastSpeedUnit != null && _lastSpeedUnit != speed) {
+      final raw = double.tryParse(_speedCtrl.text.trim()) ?? 0;
+      final kn = UnitConverter.speedDisplayToKnots(raw, _lastSpeedUnit!);
+      _speedCtrl.text = UnitConverter.formatNumber(
+        UnitConverter.knotsToSpeedDisplay(kn, speed),
+      );
+    }
+    _lastSpeedUnit = speed;
+  }
+
   void _addWp() {
     final last = _wps.last;
     setState(() {
@@ -60,13 +88,26 @@ class _PassagePlannerScreenState extends State<PassagePlannerScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final speed = double.tryParse(_speedCtrl.text) ?? 6;
-    final burn = double.tryParse(_burnCtrl.text) ?? 4;
+    final prefs = ref.watch(unitPrefsProvider);
+    _syncDisplayFields(prefs);
+    final unitSystem = prefs.volumeSystem;
+    final speedDisplay = double.tryParse(_speedCtrl.text) ?? 6;
+    final speedKn =
+        UnitConverter.speedDisplayToKnots(speedDisplay, prefs.boatSpeed);
+    final burnDisplay = double.tryParse(_burnCtrl.text) ?? 4;
+    final litersPerHour =
+        UnitConverter.displayVolumeToLiters(burnDisplay, unitSystem);
     final plan = planPassage(
       waypoints: _wps.map((w) => (lat: w.lat, lon: w.lon)).toList(),
-      speedKn: speed,
-      litersPerHour: burn,
+      speedKn: speedKn,
+      litersPerHour: litersPerHour,
     );
+    final fuelLabel = UnitConverter.fuelVolumeLabel(unitSystem);
+    final burnLabel = 'Fuel $fuelLabel/h';
+    final speedLabel = 'Speed (${UnitConverter.speedUnitLabel(prefs.boatSpeed)})';
+    final fuelDisplay = UnitConverter.formatLiters(plan.liters, unitSystem);
+    final distanceDisplay =
+        UnitConverter.formatDistanceNm(plan.nm, prefs.distance);
     final center = _wps.isEmpty
         ? const LatLng(33.45, -112.07)
         : LatLng(_wps.first.lat, _wps.first.lon);
@@ -159,10 +200,10 @@ class _PassagePlannerScreenState extends State<PassagePlannerScreen> {
                       Expanded(
                         child: TextField(
                           controller: _speedCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Speed (kn)',
+                          decoration: InputDecoration(
+                            labelText: speedLabel,
                             isDense: true,
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                           ),
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
@@ -173,10 +214,10 @@ class _PassagePlannerScreenState extends State<PassagePlannerScreen> {
                       Expanded(
                         child: TextField(
                           controller: _burnCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Fuel L/h',
+                          decoration: InputDecoration(
+                            labelText: burnLabel,
                             isDense: true,
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                           ),
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
@@ -186,14 +227,14 @@ class _PassagePlannerScreenState extends State<PassagePlannerScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Summary — Wrap avoids overflow
+                  // Summary - Wrap avoids overflow
                   Wrap(
                     spacing: 16,
                     runSpacing: 8,
                     children: [
-                      _stat('Distance', '${plan.nm.toStringAsFixed(1)} NM'),
+                      _stat('Distance', distanceDisplay),
                       _stat('ETA', '${plan.hours.toStringAsFixed(1)} h'),
-                      _stat('Fuel', '${plan.liters.toStringAsFixed(1)} L'),
+                      _stat('Fuel', fuelDisplay),
                     ],
                   ),
                 ],

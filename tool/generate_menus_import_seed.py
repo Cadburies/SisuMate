@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Process lib/recipe_import.json → assets/seed/menus_import_seed.json.
+"""Process lib/recipe_import.json -> assets/seed/menus_import_seed.json.
 
 - Base quantities for **2 people** (app servings 1/2/4/6/10 scale from that base).
 - Ensure ingredients cover foods named in description/instructions.
 - Add a guest-friendly **story** with wine or beer pairing (Caribbean-friendly
   substitutes: colour + grape / style, not specific vintage).
-- Map meal course types (main/side/braai/…) into cuisine tags; recipeType is menu.
+- Map meal course types (main/side/braai/...) into cuisine tags; recipeType is menu.
 
 Regenerate:
   python3 tool/generate_menus_import_seed.py
@@ -33,7 +33,7 @@ COURSE_LABEL = {
     "appetizer": "Appetizer",
 }
 
-# Phrases in prose → ingredient to ensure is listed (name, qty for 2p, unit).
+# Phrases in prose -> ingredient to ensure is listed (name, qty for 2p, unit).
 PROSE_INGREDIENTS: list[tuple[str, float | None, str | None]] = [
     ("proscuitto", 4, "slices"),  # typo guard
     ("prosciutto", 4, "slices"),
@@ -99,7 +99,7 @@ PAIRINGS: list[tuple[list[str], str, str]] = [
     # keywords, primary pairing line, Caribbean substitute line
     (
         ["braai", "bbq", "barbecue", "wors", "steak", "rib", "grill"],
-        "Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat.",
+        "Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat.",
         "If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
     ),
     (
@@ -114,7 +114,7 @@ PAIRINGS: list[tuple[list[str], str, str]] = [
     ),
     (
         ["preserve", "jam", "chutney", "pickle"],
-        "Serve with a cheese board and a glass of dry white or light red — acidity balances sugar.",
+        "Serve with a cheese board and a glass of dry white or light red - acidity balances sugar.",
         "Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
     ),
     (
@@ -124,8 +124,8 @@ PAIRINGS: list[tuple[list[str], str, str]] = [
     ),
     (
         ["thai", "curry", "spicy", "chilli", "chili", "sambal"],
-        "Off-dry Gewürztraminer or Riesling calms chilli heat; a cold lager also works hard.",
-        "Substitute: slightly sweet white (Riesling / Gewürztraminer style) or ice-cold lager.",
+        "Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works hard.",
+        "Substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.",
     ),
     (
         ["italian", "pasta", "pizza", "risotto", "tomato"],
@@ -139,7 +139,7 @@ PAIRINGS: list[tuple[list[str], str, str]] = [
     ),
     (
         ["asian", "soy", "ginger", "wok", "udon", "ramen"],
-        "Aromatic dry white (Riesling / Grüner style) or jasmine green tea if skipping alcohol.",
+        "Aromatic dry white (Riesling / Gruner style) or jasmine green tea if skipping alcohol.",
         "Substitute: dry aromatic white; beer: light lager.",
     ),
     (
@@ -154,13 +154,13 @@ PAIRINGS: list[tuple[list[str], str, str]] = [
     ),
     (
         ["caribbean", "jerk", "rum", "plantain", "coconut"],
-        "Ice-cold lager or a rum highball with lime; for wine, off-dry Riesling or rosé.",
-        "Substitute: any cold lager or dry rosé; keep spirits light with plenty of ice and citrus.",
+        "Ice-cold lager or a rum highball with lime; for wine, off-dry Riesling or rose.",
+        "Substitute: any cold lager or dry rose; keep spirits light with plenty of ice and citrus.",
     ),
     (
         ["salad", "fig", "prosciutto", "cheese", "appetizer"],
-        "Dry rosé or light Pinot Grigio keeps salty cured meat and soft cheese lively.",
-        "Substitute: dry rosé or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+        "Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively.",
+        "Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
     ),
     (
         ["beef", "lamb", "steak", "wellington"],
@@ -355,8 +355,8 @@ def build_story(item: dict, course: str, cuisine_tags: list[str]) -> str:
         ]
     ).lower()
     primary = (
-        "A versatile table wine or cold beer works on board — match weight of the dish "
-        "to the drink (lighter food → lighter drink)."
+        "A versatile table wine or cold beer works on board - match weight of the dish "
+        "to the drink (lighter food -> lighter drink)."
     )
     sub = (
         "Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and "
@@ -368,7 +368,7 @@ def build_story(item: dict, course: str, cuisine_tags: list[str]) -> str:
             break
     name = item.get("name") or "This dish"
     base = (
-        f"{name} is scaled for two people at sea — double or triple from the app "
+        f"{name} is scaled for two people at sea - double or triple from the app "
         f"servings control for 4, 6, or more guests. "
     )
     return f"{base}{primary} {sub}"
@@ -417,7 +417,7 @@ def process_item(item: dict, index: int) -> dict | None:
 
     ings = ensure_prose_ingredients(item, ings)
 
-    # Clean instructions: strip °F imperial bake notes lightly? keep as-is for chef skill.
+    # Clean instructions: strip F imperial bake notes lightly? keep as-is for chef skill.
     instructions = item.get("instructions") or ""
     description = item.get("description") or ""
 
@@ -425,9 +425,9 @@ def process_item(item: dict, index: int) -> dict | None:
     def f_to_c(m):
         f = int(m.group(1))
         c = round((f - 32) * 5 / 9 / 5) * 5  # nearest 5
-        return f"{c}°C"
+        return f"{c}C"
 
-    instructions = re.sub(r"(\d{3})°F", f_to_c, instructions)
+    instructions = re.sub(r"(\d{3})F", f_to_c, instructions)
 
     sid = f"menu_imp_{slugify(name)}"
     if len(sid) < 12:
@@ -497,7 +497,7 @@ def main() -> None:
         + "\n",
         encoding="utf-8",
     )
-    print(f"Wrote {len(out_list)} menus → {OUT.relative_to(ROOT)}")
+    print(f"Wrote {len(out_list)} menus -> {OUT.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

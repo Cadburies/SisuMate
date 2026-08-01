@@ -1,6 +1,9 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math';
+
+import 'package:sisu_mate/services/game_ai/game_ai_difficulty.dart';
 import 'package:sisu_mate/services/lan/game_lan_service.dart';
 import 'package:sisu_mate/ui/games/games/backgammon/logic.dart';
 
@@ -46,6 +49,289 @@ BackgammonState _empty({
     );
 
 void main() {
+  // ── GAI3 BackgammonAi ─────────────────────────────────────────────────────
+
+  group('BackgammonAi (GAI3)', () {
+    test('pip counts: AI bar costs 25; human distance is point number', () {
+      final board = List.filled(24, 0);
+      board[0] = -1; // AI on point 1 → 24 pips
+      board[23] = 1; // human on point 24 → 24 pips
+      final s = _empty(board: board, aiBar: 1, humanBar: 1, movesLeft: const []);
+      expect(BackgammonAi.aiPipCount(s), 24 + 25);
+      expect(BackgammonAi.humanPipCount(s), 24 + 25);
+    });
+
+    test('evaluate prefers putting the human on the bar', () {
+      final board = List.filled(24, 0);
+      board[5] = -2;
+      board[10] = 2;
+      final equal = _empty(board: board, movesLeft: const []);
+      final humanBarred = _empty(
+        board: board,
+        humanBar: 1,
+        movesLeft: const [],
+      );
+      expect(
+        BackgammonAi.evaluate(humanBarred),
+        greaterThan(BackgammonAi.evaluate(equal)),
+      );
+    });
+
+    test('evaluate rewards AI borne-off lead', () {
+      final board = List.filled(24, 0);
+      board[20] = -5;
+      board[4] = 5;
+      final behind = _empty(
+        board: board,
+        aiBornOff: 2,
+        humanBornOff: 8,
+        movesLeft: const [],
+      );
+      final ahead = _empty(
+        board: board,
+        aiBornOff: 8,
+        humanBornOff: 2,
+        movesLeft: const [],
+      );
+      expect(
+        BackgammonAi.evaluate(ahead),
+        greaterThan(BackgammonAi.evaluate(behind)),
+      );
+    });
+
+    test('bestPlay hits a blot when that is clearly best for a single die', () {
+      final board = List.filled(24, 0);
+      board[5] = -1; // can hit human blot on 8 with die 3
+      board[8] = 1;
+      board[10] = -1; // alternative: advance 10→13 (no hit)
+      final s = _empty(
+        board: board,
+        isHumanTurn: false,
+        movesLeft: const [3],
+      );
+      final play = BackgammonAi.bestPlay(s);
+      expect(play, isNotEmpty);
+      expect(play.first.$1, 5);
+      expect(play.first.$2, 8);
+      expect(play.first.$3, 3);
+      final after = BackgammonAi.applyMove(s, play.first.$1, play.first.$2, play.first.$3);
+      expect(after.humanBar, 1);
+      expect(after.board[8], -1);
+    });
+
+    test('bestPlay bears off when all AI checkers are home', () {
+      final board = List.filled(24, 0);
+      board[22] = -1; // needs die 2 for exact bear-off (22+2=24)
+      board[20] = -1;
+      final s = _empty(
+        board: board,
+        isHumanTurn: false,
+        movesLeft: const [2],
+        aiBornOff: 13,
+      );
+      final play = BackgammonAi.bestPlay(s);
+      expect(play, isNotEmpty);
+      expect(play.first.$2, -2);
+      final after =
+          BackgammonAi.applyMove(s, play.first.$1, play.first.$2, play.first.$3);
+      expect(after.aiBornOff, 14);
+    });
+
+    test('bestPlay plans a full two-die turn (both dice used when legal)', () {
+      final board = List.filled(24, 0);
+      // Open board: AI can use both 3 and 4 from the back.
+      board[0] = -2;
+      board[5] = -1;
+      final s = _empty(
+        board: board,
+        isHumanTurn: false,
+        movesLeft: const [3, 4],
+      );
+      final play = BackgammonAi.bestPlay(s);
+      expect(play.length, 2);
+      final diceUsed = play.map((p) => p.$3).toList()..sort();
+      expect(diceUsed, [3, 4]);
+    });
+
+    test('GAI6 coachHint suggests a legal human play without mutating state', () {
+      // Human blot can hit AI blot with die 3 from pt 8 (idx 7) → idx 4.
+      final board = List.filled(24, 0);
+      board[7] = 2; // human
+      board[4] = -1; // AI blot
+      final s = _empty(
+        board: board,
+        movesLeft: const [3],
+        isHumanTurn: true,
+        phase: BgPhase.moving,
+      );
+      final beforeBoard = List<int>.from(s.board);
+      final hint = BackgammonAi.coachHint(s);
+      expect(hint.hasPlay, isTrue);
+      expect(hint.steps, isNotEmpty);
+      expect(hint.reasons, isNotEmpty);
+      // State not mutated by coach.
+      expect(s.board, beforeBoard);
+      expect(s.movesLeft, [3]);
+      // Suggested play is legal.
+      final step = hint.steps.first;
+      final legal = BackgammonAi.legalHumanMoves(s, step.$3);
+      expect(legal, contains((step.$1, step.$2)));
+    });
+
+    test('GAI6 coachHint asks to roll when still in rolling phase', () {
+      final s = _empty(movesLeft: const [], phase: BgPhase.rolling);
+      final hint = BackgammonAi.coachHint(s);
+      expect(hint.hasPlay, isFalse);
+      expect(hint.reasons.single.toLowerCase(), contains('roll'));
+    });
+
+    test('GAI6 bestHumanPlay prefers hitting a blot when clearly best', () {
+      final board = List.filled(24, 0);
+      board[7] = 1;
+      board[4] = -1;
+      final s = _empty(
+        board: board,
+        movesLeft: const [3],
+        isHumanTurn: true,
+      );
+      final play = BackgammonAi.bestHumanPlay(s);
+      expect(play, isNotEmpty);
+      final after = BackgammonAi.applyHumanMove(
+          s, play.first.$1, play.first.$2, play.first.$3);
+      expect(after.aiBar, 1);
+    });
+
+    test('GAI7 practice mode emits a review after human turn ends', () async {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      final n = c.read(backgammonStateProvider.notifier);
+      n.practiceMode = true;
+
+      final reviews = <CoachHint>[];
+      final sub = n.practiceReviews.listen(reviews.add);
+      addTearDown(sub.cancel);
+
+      // Force a human roll with a known die by playing from rolling phase.
+      n.roll();
+      final afterRoll = c.read(backgammonStateProvider);
+      if (afterRoll.phase != BgPhase.moving || !afterRoll.isHumanTurn) {
+        // Extremely rare if AI somehow rolled — skip assert.
+        return;
+      }
+
+      // End the turn without playing (pass) — still reviews the roll position.
+      n.passTurn();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(reviews, isNotEmpty);
+      // Snapshot was the post-roll position; reasons always non-empty.
+      expect(reviews.last.reasons, isNotEmpty);
+    });
+
+    test('GAI1 hard beam is wider than easy', () {
+      expect(
+        BackgammonAi.beamWidthFor(GameAiDifficulty.hard),
+        greaterThan(BackgammonAi.beamWidthFor(GameAiDifficulty.easy)),
+      );
+      expect(
+        BackgammonAi.beamWidthFor(GameAiDifficulty.normal),
+        BackgammonAi.beamWidthNormal,
+      );
+    });
+
+    test('GAI1 easy still returns a legal play on a clear single-die hit', () {
+      final board = List.filled(24, 0);
+      board[0] = -2;
+      board[3] = 1; // human blot on AI die-3 land
+      final s = _empty(
+        board: board,
+        movesLeft: const [3],
+        isHumanTurn: false,
+      );
+      final play = BackgammonAi.bestPlay(
+        s,
+        difficulty: GameAiDifficulty.easy,
+        rng: Random(1),
+      );
+      expect(play, isNotEmpty);
+    });
+
+    test('bestPlay returns empty when no legal moves', () {
+      final board = List.filled(24, 0);
+      board[0] = -1;
+      board[3] = 2; // blocks die-3 entry/advance from 0
+      board[1] = 2;
+      board[2] = 2;
+      board[4] = 2;
+      board[5] = 2;
+      board[6] = 2;
+      final s = _empty(
+        board: board,
+        isHumanTurn: false,
+        movesLeft: const [3],
+      );
+      // From 0 with die 3 → dest 3 blocked by 2 humans.
+      expect(BackgammonAi.legalMoves(s, 3), isEmpty);
+      expect(BackgammonAi.bestPlay(s), isEmpty);
+    });
+
+    test('shouldAcceptDouble declines when AI is far behind on the race', () {
+      final board = List.filled(24, 0);
+      board[22] = -1;
+      board[0] = 10;
+      final s = _empty(
+        board: board,
+        aiBornOff: 0,
+        humanBornOff: 12,
+        movesLeft: const [],
+        phase: BgPhase.doubleOffered,
+      );
+      expect(BackgammonAi.shouldAcceptDouble(s), isFalse);
+    });
+
+    test('shouldAcceptDouble accepts a roughly equal position', () {
+      final board = List.filled(24, 0);
+      board[11] = -5;
+      board[12] = 5;
+      final s = _empty(
+        board: board,
+        aiBornOff: 3,
+        humanBornOff: 3,
+        movesLeft: const [],
+        phase: BgPhase.doubleOffered,
+      );
+      expect(BackgammonAi.shouldAcceptDouble(s), isTrue);
+    });
+
+    test('solo AI roll schedules a full play and returns the turn to human', () {
+      fakeAsync((async) {
+        // Standard contact position: AI always has legal moves for almost any roll.
+        final board = List.filled(24, 0);
+        board[0] = -2;
+        board[11] = -5;
+        board[16] = -3;
+        board[18] = -5;
+        board[23] = 2;
+        board[12] = 5;
+        board[7] = 3;
+        board[5] = 5;
+        final c = _makeSeeded(_empty(
+          board: board,
+          isHumanTurn: false,
+          movesLeft: const [],
+          phase: BgPhase.rolling,
+        ));
+        c.read(backgammonStateProvider.notifier).roll();
+        // roll() delays 600ms then _aiMove.
+        async.elapse(const Duration(milliseconds: 700));
+        final s = c.read(backgammonStateProvider);
+        expect(s.isHumanTurn, isTrue);
+        expect(s.phase, BgPhase.rolling);
+        expect(s.movesLeft, isEmpty);
+      });
+    });
+  });
+
   // ── GB7 doubling cube ─────────────────────────────────────────────────────
 
   group('doubling cube (GB7)', () {

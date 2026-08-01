@@ -1,8 +1,37 @@
+import '../core/units.dart';
 import '../models/models.dart';
+import 'fuel_burn_estimator.dart';
+import 'weather_service.dart';
 
 /// Offline-rules suggestions (S4). No LLM required — pure deterministic rules
 /// over local Drift data. Optional weather/log cues when present.
 enum SuggestionSeverity { info, watch, urgent }
+
+/// BAI1: single go/no-go verdict for the home screen, distinct from the
+/// scrolling tip list [SuggestionEngine.build] — combines safety checklist
+/// completion, maintenance overdue, cached weather, and fuel/water runway
+/// into "Ready" or a short list of things to fix first.
+enum ReadinessStatus { ready, needsAttention }
+
+class PassageReadiness {
+  final ReadinessStatus status;
+  final List<String> blockers;
+  const PassageReadiness({required this.status, required this.blockers});
+
+  bool get isReady => status == ReadinessStatus.ready;
+
+  String get headline => isReady
+      ? 'Ready for passage'
+      : 'Fix ${blockers.length} thing${blockers.length == 1 ? '' : 's'} first';
+}
+
+/// BAI3: one checklist group the autopilot thinks is worth running now,
+/// with a short human reason.
+class ChecklistAutopilotSuggestion {
+  final ChecklistGroup group;
+  final String reason;
+  const ChecklistAutopilotSuggestion({required this.group, required this.reason});
+}
 
 class BoatSuggestion {
   final String id;
@@ -25,6 +54,12 @@ class BoatSuggestion {
 class SuggestionEngine {
   const SuggestionEngine();
 
+  /// Days without a captain's log before [build] suggests writing one (BAI7).
+  static const int logStaleDays = 14;
+
+  /// Tank runway (days) at or below which [build] surfaces a fuel/water tip.
+  static const int fuelWatchDays = 5;
+
   List<BoatSuggestion> build({
     required List<MaintenanceTask> maintenanceTasks,
     DateTime? now,
@@ -32,6 +67,10 @@ class SuggestionEngine {
     List<String> recentWeatherNotes = const [],
     /// Optional current wind speed (knots) if weather module has a reading.
     double? windKnots,
+    /// BAI7: most recent captain-log date (any boat), if any exist.
+    DateTime? lastLogDate,
+    /// BAI7: optional fuel/water runway estimates (same shape as readiness).
+    List<TankBurnEstimate> fuelEstimates = const [],
   }) {
     final at = now ?? DateTime.now().toUtc();
     final out = <BoatSuggestion>[];
@@ -74,9 +113,176 @@ class SuggestionEngine {
       ));
     }
 
+    // BAI7: fog / low visibility cues from free-text log notes.
+    if (_looksFoggy(weatherBlob)) {
+      out.add(const BoatSuggestion(
+        id: 'wx_fog',
+        title: 'Low visibility noted',
+        detail: 'Recent log mentions fog or poor visibility — confirm nav lights, '
+            'radar/AIS if fitted, and a sound signal plan.',
+        severity: SuggestionSeverity.watch,
+        routePath: '/weather',
+      ));
+    }
+
+    // BAI7: lightning / thunderstorm cues (distinct from generic gale).
+    if (_looksElectric(weatherBlob)) {
+      out.add(const BoatSuggestion(
+        id: 'wx_lightning',
+        title: 'Thunderstorm risk noted',
+        detail: 'Recent log mentions lightning or thunder — avoid mast work, '
+            'unplug shore power if storming, and review crew shelter plan.',
+        severity: SuggestionSeverity.watch,
+        routePath: '/safety',
+      ));
+    }
+
+    // BAI7: stale or missing captain's log.
+    final logTip = _logStaleTip(lastLogDate, at);
+    if (logTip != null) out.add(logTip);
+
+    // BAI7: fuel/water runway watch (milder than passage-readiness blockers).
+    for (final e in fuelEstimates) {
+      final days = e.daysUntilEmpty;
+      if (days == null || days > fuelWatchDays) continue;
+      out.add(BoatSuggestion(
+        id: 'fuel_${e.type.toLowerCase()}',
+        title: days <= 2
+            ? '${e.type} nearly empty'
+            : '${e.type} running low',
+        detail: 'Estimated ~$days day${days == 1 ? '' : 's'} of ${e.type.toLowerCase()} '
+            'left from recent fills — top up before a longer passage.',
+        severity: days <= 2 ? SuggestionSeverity.urgent : SuggestionSeverity.watch,
+        routePath: '/fuel',
+      ));
+    }
+
     // Stable order: urgent first, then watch, then info; cap list.
     out.sort((a, b) => b.severity.index.compareTo(a.severity.index));
     if (out.length > 8) return out.sublist(0, 8);
+    return out;
+  }
+
+  BoatSuggestion? _logStaleTip(DateTime? lastLogDate, DateTime at) {
+    if (lastLogDate == null) {
+      return const BoatSuggestion(
+        id: 'log_missing',
+        title: 'No captain\'s log yet',
+        detail: 'Start a short entry after each passage — weather and position '
+            'notes power offline tips later.',
+        severity: SuggestionSeverity.info,
+        routePath: '/logbook',
+      );
+    }
+    final last = lastLogDate.toUtc();
+    final days = at.difference(last).inDays;
+    if (days < logStaleDays) return null;
+    return BoatSuggestion(
+      id: 'log_stale',
+      title: 'Captain\'s log is $days days old',
+      detail: 'Last entry ${_fmt(last)}. A quick log keeps weather/maintenance '
+          'tips honest when you are offline.',
+      severity: SuggestionSeverity.info,
+      routePath: '/logbook',
+    );
+  }
+
+  /// BAI1: "Ready for passage?" verdict. Reuses the same overdue detection
+  /// as [build] so the two never disagree about what counts as overdue.
+  PassageReadiness passageReadiness({
+    required List<ChecklistItem> safetyItems,
+    required List<MaintenanceTask> maintenanceTasks,
+    WeatherBundle? weather,
+    List<TankBurnEstimate> fuelEstimates = const [],
+    DateTime? now,
+  }) {
+    final at = now ?? DateTime.now().toUtc();
+    final blockers = <String>[];
+
+    final uncheckedSafety =
+        safetyItems.where((i) => !i.isHidden && !i.isCompleted).length;
+    if (uncheckedSafety > 0) {
+      blockers.add('$uncheckedSafety safety item'
+          '${uncheckedSafety == 1 ? '' : 's'} not checked off');
+    }
+
+    final overdueMaint = maintenanceTasks.where((t) {
+      if (t.isHidden) return false;
+      return _dueInfo(t, at)?.overdue ?? false;
+    }).length;
+    if (overdueMaint > 0) {
+      blockers.add('$overdueMaint maintenance task'
+          '${overdueMaint == 1 ? '' : 's'} overdue');
+    }
+
+    final windMs = weather?.windMs;
+    if (windMs != null) {
+      final windKn = windMs / UnitConverter.msPerKnot;
+      if (windKn >= 25) {
+        blockers.add('Cached forecast shows ${windKn.round()} kn wind — '
+            'recheck before departure');
+      }
+    }
+
+    for (final e in fuelEstimates) {
+      final days = e.daysUntilEmpty;
+      if (days != null && days <= 2) {
+        blockers.add('${e.type} estimated $days day${days == 1 ? '' : 's'} '
+            'from empty');
+      }
+    }
+
+    return PassageReadiness(
+      status:
+          blockers.isEmpty ? ReadinessStatus.ready : ReadinessStatus.needsAttention,
+      blockers: blockers,
+    );
+  }
+
+  /// BAI3: which checklists to run next, from days-until-departure, trip
+  /// length, and cached weather. Matches by keyword against whatever
+  /// checklist titles the boat actually has (bundled or custom) — no schema
+  /// change, same style as [_looksStormy] above. Nothing is suggested twice
+  /// even if it matches more than one rule.
+  List<ChecklistAutopilotSuggestion> checklistAutopilot({
+    required List<ChecklistGroup> checklistGroups,
+    int? daysUntilDeparture,
+    int? tripLengthDays,
+    WeatherBundle? weather,
+  }) {
+    final out = <ChecklistAutopilotSuggestion>[];
+    final suggested = <String>{};
+
+    void suggest(String keyword, String reason) {
+      final group = checklistGroups
+          .where((g) =>
+              !g.isHidden && g.title.toLowerCase().contains(keyword))
+          .firstOrNull;
+      if (group == null) return;
+      if (!suggested.add(group.supabaseId)) return; // already suggested
+      out.add(ChecklistAutopilotSuggestion(group: group, reason: reason));
+    }
+
+    // Nothing trip-specific to say without a known departure.
+    if (daysUntilDeparture != null) {
+      if (daysUntilDeparture <= 1) {
+        suggest('last minute', 'Departing very soon');
+        suggest('one day', 'Departing very soon');
+      } else if (daysUntilDeparture <= 7) {
+        suggest('one week', 'Departing within a week');
+      }
+      suggest('document', 'Good to review before any departure');
+    }
+
+    final windMs = weather?.windMs;
+    if (windMs != null && windMs / UnitConverter.msPerKnot >= 25) {
+      suggest('last minute', 'Rough weather ahead — recheck before you leave');
+    }
+
+    if (tripLengthDays != null && tripLengthDays > 1) {
+      suggest('watch', 'Multi-day passage — plan watch monitoring');
+    }
+
     return out;
   }
 
@@ -133,6 +339,31 @@ class SuggestionEngine {
       'force 9',
       'rough sea',
       'heavy weather',
+    ];
+    return keys.any(text.contains);
+  }
+
+  bool _looksFoggy(String text) {
+    if (text.isEmpty) return false;
+    const keys = [
+      'fog',
+      'foggy',
+      'mist',
+      'low visibility',
+      'poor visibility',
+      'visibility zero',
+      'haar',
+    ];
+    return keys.any(text.contains);
+  }
+
+  bool _looksElectric(String text) {
+    if (text.isEmpty) return false;
+    const keys = [
+      'lightning',
+      'thunder',
+      'thunderstorm',
+      'electrical storm',
     ];
     return keys.any(text.contains);
   }

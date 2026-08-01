@@ -100,7 +100,7 @@ class MealPlannerScreen extends ConsumerWidget {
   void _showEditDialog(BuildContext context, WidgetRef ref, MealPlan? existing) {
     showDialog<void>(
       context: context,
-      builder: (_) => _PlanEditDialog(
+      builder: (_) => AddEditMealPlanDialog(
         existing: existing,
         onSave: (plan) async {
           final repo = ref.read(mealPlanRepositoryProvider);
@@ -140,16 +140,21 @@ class MealPlannerScreen extends ConsumerWidget {
   }
 }
 
-class _PlanEditDialog extends StatefulWidget {
+/// Create / edit a meal plan (TEST5 — public for widget tests).
+class AddEditMealPlanDialog extends StatefulWidget {
   final MealPlan? existing;
   final Future<void> Function(MealPlan) onSave;
-  const _PlanEditDialog({required this.existing, required this.onSave});
+  const AddEditMealPlanDialog({
+    super.key,
+    required this.existing,
+    required this.onSave,
+  });
 
   @override
-  State<_PlanEditDialog> createState() => _PlanEditDialogState();
+  State<AddEditMealPlanDialog> createState() => AddEditMealPlanDialogState();
 }
 
-class _PlanEditDialogState extends State<_PlanEditDialog> {
+class AddEditMealPlanDialogState extends State<AddEditMealPlanDialog> {
   late final TextEditingController _nameCtrl;
   late DateTime _startDate;
   late int _numberOfDays;
@@ -209,6 +214,7 @@ class _PlanEditDialogState extends State<_PlanEditDialog> {
                 labelText: 'Plan name',
                 border: OutlineInputBorder(),
               ),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
             ListTile(

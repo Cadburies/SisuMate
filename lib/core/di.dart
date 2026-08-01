@@ -81,7 +81,7 @@ final captainLogsListProvider = StreamProvider<List<CaptainLogEntry>>((ref) {
   return ref.watch(captainLogRepositoryProvider).watchLogs();
 });
 
-/// S4 offline-rules suggestions (maintenance due + simple weather cues).
+/// S4 / BAI7 offline-rules suggestions (maintenance, weather/log cues, fuel).
 final boatSuggestionsProvider = Provider<List<BoatSuggestion>>((ref) {
   final tasks = ref.watch(maintenanceTasksProvider).asData?.value ??
       const <MaintenanceTask>[];
@@ -92,9 +92,15 @@ final boatSuggestionsProvider = Provider<List<BoatSuggestion>>((ref) {
       .where((w) => w.trim().isNotEmpty)
       .take(8)
       .toList();
+  DateTime? lastLogDate;
+  for (final e in logs) {
+    final d = e.logDate.toUtc();
+    if (lastLogDate == null || d.isAfter(lastLogDate)) lastLogDate = d;
+  }
   return const SuggestionEngine().build(
     maintenanceTasks: tasks,
     recentWeatherNotes: weatherNotes,
+    lastLogDate: lastLogDate,
   );
 });
 

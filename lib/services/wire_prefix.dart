@@ -59,11 +59,28 @@ class WirePrefix {
   }
 
   /// Encode a bare record id (for delete-by-`supabaseId`). No-op for unscoped
-  /// tables (e.g. `boats`) or an empty/already-prefixed id.
+  /// tables (e.g. `boats`), empty id, or an already-prefixed id.
   static String encodeRecordId(String table, String id, String guid) {
-    if (!_fields.containsKey(table) || guid.isEmpty || id.contains(_sep)) {
+    if (!_fields.containsKey(table) ||
+        guid.isEmpty ||
+        id.isEmpty ||
+        id.contains(_sep)) {
       return id;
     }
     return '$guid$_sep$id';
   }
+
+  /// Strip `<guid>::` from a bare wire id (inbound delete / lookup).
+  static String decodeRecordId(String id) {
+    final i = id.indexOf(_sep);
+    if (i >= 0) return id.substring(i + _sep.length);
+    return id;
+  }
+
+  /// Tables that receive boat-scoped wire prefixes (TEST25).
+  static Iterable<String> get scopedTables => _fields.keys;
+
+  /// Id-ref field names for [table], or empty if unscoped.
+  static List<String> fieldsFor(String table) =>
+      List<String>.unmodifiable(_fields[table] ?? const []);
 }

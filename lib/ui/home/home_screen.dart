@@ -11,6 +11,7 @@ import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../models/models.dart';
 import '../../providers/shopping_provider.dart';
+import '../../providers/passage_readiness_provider.dart';
 import '../../services/suggestion_engine.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -19,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final suggestions = ref.watch(boatSuggestionsProvider);
+    final readiness = ref.watch(passageReadinessProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -31,6 +33,7 @@ class HomeScreen extends ConsumerWidget {
                 title: 'Sisu Mate',
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
               ),
+              _PassageReadinessCard(readiness: readiness, isDark: isDark),
               if (suggestions.isNotEmpty)
                 _SuggestionsBanner(suggestions: suggestions, isDark: isDark),
               Expanded(
@@ -271,25 +274,34 @@ class HomeScreen extends ConsumerWidget {
                               : notifier.setLightTheme();
                         },
                       ),
-                      SwitchListTile(
-                        secondary: Icon(
-                          ref.watch(unitSystemProvider) == UnitSystem.imperial
-                              ? Icons.straighten
-                              : Icons.science_outlined,
-                        ),
-                        title: const Text('Imperial units'),
+                      ListTile(
+                        leading: const Icon(Icons.straighten),
+                        title: const Text('Units'),
                         subtitle: Text(
-                          ref.watch(unitSystemProvider) == UnitSystem.imperial
-                              ? 'Showing fl oz, cups, gal, °F…'
-                              : 'Showing ml, g, L, °C… (storage is always metric)',
+                          () {
+                            final p = ref.watch(unitPrefsProvider);
+                            final name = switch (p.matchingPreset) {
+                              UnitPreset.marine => 'Marine',
+                              UnitPreset.us => 'US',
+                              UnitPreset.metric => 'Metric',
+                              null => 'Custom',
+                            };
+                            final windLabel =
+                                UnitConverter.speedUnitLabel(p.windSpeed);
+                            final boatLabel =
+                                UnitConverter.speedUnitLabel(p.boatSpeed);
+                            final speedSummary = windLabel == boatLabel
+                                ? windLabel
+                                : '$windLabel wind / $boatLabel boat';
+                            return '$name · $speedSummary · '
+                                '${p.depth == DepthUnitPref.feet ? 'ft' : (p.depth == DepthUnitPref.fathoms ? 'fm' : 'm')} · '
+                                'DB metric';
+                          }(),
                         ),
-                        value:
-                            ref.watch(unitSystemProvider) == UnitSystem.imperial,
-                        onChanged: (useImperial) {
-                          final notifier = ref.read(unitSystemProvider.notifier);
-                          useImperial
-                              ? notifier.setImperial()
-                              : notifier.setMetric();
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push(AppRoutes.settings);
                         },
                       ),
                       const Divider(),
@@ -312,6 +324,70 @@ class HomeScreen extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// BAI1 — single go/no-go verdict: safety checklist + maintenance overdue +
+/// cached weather + fuel/water runway, combined into "Ready" or a short list
+/// of things to fix first. Always shown (unlike the tip banner below) — a
+/// clean "Ready for passage" is itself useful reassurance, not just a warning.
+class _PassageReadinessCard extends StatelessWidget {
+  final PassageReadiness readiness;
+  final bool isDark;
+  const _PassageReadinessCard({required this.readiness, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = readiness.isReady;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Card(
+        elevation: 2,
+        color: ready
+            ? SisuColors.getTileColor(isDark)
+            : SisuColors.notAvailableBackground.withValues(alpha: 0.18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                ready ? Icons.check_circle_outline : Icons.error_outline,
+                color: ready
+                    ? SisuColors.completedText
+                    : SisuColors.notAvailableText,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      readiness.headline,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: SisuColors.getTextPrimaryColor(isDark),
+                      ),
+                    ),
+                    for (final b in readiness.blockers)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          '• $b',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: SisuColors.getTextSecondaryColor(isDark),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -287,97 +287,148 @@ class InboundSyncApplier {
     }
   }
 
-  /// Local `supabaseId`s that were previously accepted from cloud (`isSynced`).
-  /// Used to reconcile remote hard-deletes (stream no longer lists the row).
+  /// Local `supabaseId`s eligible for remote hard-delete reconcile.
+  ///
+  /// Excludes:
+  /// - unsynced local rows
+  /// - **bundled seed** rows (`isBundled`) where the column exists
+  /// - **factory-baseline** rows (`lastModified` ≤ factory epoch) — seed stamps
+  ///   `isSynced=true` + epoch so they lose LWW to real edits, but Supabase
+  ///   streams often start empty for a boat that never uploaded seed content.
+  ///   Reconciling those empties hard-deleted every checklist/recipe/bar row.
   Future<List<String>> listLocalSyncedIds(String table) async {
+    // Import-safe epoch (same as DatabaseService.factoryEpoch).
+    final factoryEpoch = DateTime.utc(2000);
     switch (table) {
       case 'boats':
         return (await (db.select(db.boats)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'checklist_groups':
         return (await (db.select(db.checklistGroups)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.isBundled.equals(false) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'checklist_items':
         return (await (db.select(db.checklistItems)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.isBundled.equals(false) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'shopping_categories':
         return (await (db.select(db.shoppingCategories)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'shopping_items':
         return (await (db.select(db.shoppingItems)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.isBundled.equals(false) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'captain_logs':
         return (await (db.select(db.captainLogEntries)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'maintenance_tasks':
         return (await (db.select(db.maintenanceTasks)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'documents':
         return (await (db.select(db.documents)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'crew_members':
         return (await (db.select(db.crewMembers)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'inventory_items':
         return (await (db.select(db.inventoryItems)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'fuel_logs':
         return (await (db.select(db.fuelLogEntries)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'recipes':
         return (await (db.select(db.recipes)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.isBundled.equals(false) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'recipe_ingredients':
-        return (await (db.select(db.recipeIngredients)
-                  ..where((t) => t.isSynced.equals(true)))
+        final bundledRecipeIds = (await (db.select(db.recipes)
+                  ..where((t) => t.isBundled.equals(true)))
                 .get())
+            .map((r) => r.supabaseId)
+            .toSet();
+        return (await (db.select(db.recipeIngredients)
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
+                .get())
+            .where((r) => !bundledRecipeIds.contains(r.recipeSupabaseId))
             .map((r) => r.supabaseId)
             .toList();
       case 'bar_ingredients':
         return (await (db.select(db.barIngredients)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.isBundled.equals(false) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();
       case 'pantry_ingredients':
         return (await (db.select(db.pantryIngredients)
-                  ..where((t) => t.isSynced.equals(true)))
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
+                      t.isBundled.equals(false) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)
             .toList();

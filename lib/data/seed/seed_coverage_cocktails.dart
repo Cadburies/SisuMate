@@ -7,13 +7,13 @@ import 'cocktail_image_assets.dart';
 import 'cocktail_tags.dart';
 import 'recipe_drift_seed.dart';
 
-/// Prefix for bar-catalog coverage cocktails (`cocktail_cov_…`).
+/// Prefix for bar-catalog coverage cocktails (`cocktail_cov_...`).
 ///
-/// Ensures every bundled bar ingredient is used in **≥2** cocktail recipes
+/// Ensures every bundled bar ingredient is used in **>=2** cocktail recipes
 /// (ingredient detail would otherwise show "Not used in any cocktail").
 const coverageCocktailIdPrefix = 'cocktail_cov_';
 
-/// Seeds coverage cocktails when missing (idempotent — safe every launch).
+/// Seeds coverage cocktails when missing (idempotent - safe every launch).
 Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
   final db = AppDatabase.instance;
   final existing = {
@@ -73,12 +73,12 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
     }
   }
 
-  // ── Spirits / rums that had 0 catalog cocktail uses ─────────────────────
+  // -- Spirits / rums that had 0 catalog cocktail uses ---------------------
 
   cocktail(
     idSuffix: 'ti_punch',
     name: "Ti' Punch",
-    description: 'Martinique classic — agricole, lime, sugar',
+    description: 'Martinique classic - agricole, lime, sugar',
     instructions:
         'Build in a rocks glass over ice cubes. Squeeze lime, add sugar or syrup, then agricole. Swizzle briefly.',
     glassware: 'Rocks glass',
@@ -228,7 +228,7 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
     ],
   );
 
-  // ── Whiskey / tequila / arrack ────────────────────────────────────────────
+  // -- Whiskey / tequila / arrack --------------------------------------------
 
   cocktail(
     idSuffix: 'irish_coffee',
@@ -316,17 +316,17 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
     ],
   );
 
-  // ── Liqueurs ──────────────────────────────────────────────────────────────
+  // -- Liqueurs --------------------------------------------------------------
 
   cocktail(
     idSuffix: 'blue_hawaiian',
     name: 'Blue Hawaiian',
-    description: 'Blue curaçao tropical classic',
+    description: 'Blue curacao tropical classic',
     instructions: 'Shake with ice, strain over crushed ice, pineapple garnish.',
     glassware: 'Hurricane glass',
     ings: [
       ('White Blended Rum', 30, 'ml', garnish: false),
-      ('Blue Curaçao', 15, 'ml', garnish: false),
+      ('Blue Curacao', 15, 'ml', garnish: false),
       ('Pineapple Juice', 60, 'ml', garnish: false),
       ('Cream of Coconut', 20, 'ml', garnish: false),
       ('Pineapple Spears', null, null, garnish: true),
@@ -336,12 +336,12 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
   cocktail(
     idSuffix: 'blue_lagoon',
     name: 'Blue Lagoon',
-    description: 'Vodka and blue curaçao highball',
+    description: 'Vodka and blue curacao highball',
     instructions: 'Build over ice, top with lemonade or soda.',
     glassware: 'Highball glass',
     ings: [
       ('Vodka', 40, 'ml', garnish: false),
-      ('Blue Curaçao', 20, 'ml', garnish: false),
+      ('Blue Curacao', 20, 'ml', garnish: false),
       ('Fresh Lemon Juice', 15, 'ml', garnish: false),
       ('Soda Water', 80, 'ml', garnish: false),
       ('Dehydrated Lime Wheel', null, null, garnish: true),
@@ -352,11 +352,11 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
     idSuffix: 'white_russian',
     name: 'White Russian',
     description: 'Vodka, coffee liqueur, cream',
-    instructions: 'Build vodka and Kahlúa over ice, float cream.',
+    instructions: 'Build vodka and Kahlua over ice, float cream.',
     glassware: 'Rocks glass',
     ings: [
       ('Vodka', 40, 'ml', garnish: false),
-      ('Kahlúa', 20, 'ml', garnish: false),
+      ('Kahlua', 20, 'ml', garnish: false),
       ('Ice Cubes', null, null, garnish: false),
     ],
   );
@@ -368,7 +368,7 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
     glassware: 'Rocks glass',
     ings: [
       ('Vodka', 45, 'ml', garnish: false),
-      ('Kahlúa', 20, 'ml', garnish: false),
+      ('Kahlua', 20, 'ml', garnish: false),
       ('Ice Cubes', null, null, garnish: false),
     ],
   );
@@ -401,25 +401,25 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
   cocktail(
     idSuffix: 'mudslide',
     name: 'Mudslide',
-    description: 'Baileys, Kahlúa, vodka cream cocktail',
+    description: 'Baileys, Kahlua, vodka cream cocktail',
     instructions: 'Shake with ice, strain into a chilled glass or over ice.',
     glassware: 'Coupe',
     ings: [
       ('Vodka', 30, 'ml', garnish: false),
       ('Baileys Irish Cream', 30, 'ml', garnish: false),
-      ('Kahlúa', 30, 'ml', garnish: false),
+      ('Kahlua', 30, 'ml', garnish: false),
       ('Ice Cubes', null, null, garnish: false),
     ],
   );
   cocktail(
     idSuffix: 'b52',
     name: 'B-52',
-    description: 'Layered shot — coffee liqueur, Baileys, orange liqueur',
-    instructions: 'Layer carefully in a shot glass: Kahlúa, then Baileys, then triple sec.',
+    description: 'Layered shot - coffee liqueur, Baileys, orange liqueur',
+    instructions: 'Layer carefully in a shot glass: Kahlua, then Baileys, then triple sec.',
     glassware: 'Shot glass',
     prepMinutes: 3,
     ings: [
-      ('Kahlúa', 20, 'ml', garnish: false),
+      ('Kahlua', 20, 'ml', garnish: false),
       ('Baileys Irish Cream', 20, 'ml', garnish: false),
       ('Triple Sec', 20, 'ml', garnish: false),
     ],
@@ -574,12 +574,12 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
   cocktail(
     idSuffix: 'singapore_sling',
     name: "Singapore Sling (Yacht)",
-    description: 'Gin sling with Bénédictine and fruit',
+    description: 'Gin sling with Benedictine and fruit',
     instructions: 'Shake, strain over ice, top with soda.',
     glassware: 'Highball glass',
     ings: [
       ('Gin', 30, 'ml', garnish: false),
-      ('Bénédictine', 15, 'ml', garnish: false),
+      ('Benedictine', 15, 'ml', garnish: false),
       ('Grenadine', 15, 'ml', garnish: false),
       ('Fresh Lemon Juice', 15, 'ml', garnish: false),
       ('Pineapple Juice', 60, 'ml', garnish: false),
@@ -591,13 +591,13 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
   cocktail(
     idSuffix: 'bobby_burns',
     name: 'Bobby Burns',
-    description: 'Scotch and Bénédictine stirred classic',
+    description: 'Scotch and Benedictine stirred classic',
     instructions: 'Stir with ice, strain into a coupe.',
     glassware: 'Coupe',
     ings: [
       ('Scotch Whisky', 45, 'ml', garnish: false),
       ('Sweet Vermouth', 20, 'ml', garnish: false),
-      ('Bénédictine', 10, 'ml', garnish: false),
+      ('Benedictine', 10, 'ml', garnish: false),
     ],
   );
   cocktail(
@@ -653,7 +653,7 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
     ],
   );
 
-  // ── Juices / syrups / garnish-heavy seconds ───────────────────────────────
+  // -- Juices / syrups / garnish-heavy seconds -------------------------------
 
   cocktail(
     idSuffix: 'passion_cola',
@@ -725,7 +725,7 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
     ],
   );
 
-  // ── Second recipes for ingredients that only had 1 cocktail ───────────────
+  // -- Second recipes for ingredients that only had 1 cocktail ---------------
 
   cocktail(
     idSuffix: 'demerara_float_daiquiri',
@@ -824,7 +824,7 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
   cocktail(
     idSuffix: 'fernet_cola',
     name: 'Fernet & Cola',
-    description: 'Argentine classic — Fernet-Branca and cola',
+    description: 'Argentine classic - Fernet-Branca and cola',
     instructions: 'Build Fernet over ice, top with cola.',
     glassware: 'Highball glass',
     ings: [
@@ -915,26 +915,26 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
   cocktail(
     idSuffix: 'bramble',
     name: 'Bramble',
-    description: 'Gin sour with crème de mûre drizzle',
-    instructions: 'Shake gin, lemon, syrup; strain over crushed ice; drizzle mûre.',
+    description: 'Gin sour with creme de mure drizzle',
+    instructions: 'Shake gin, lemon, syrup; strain over crushed ice; drizzle mure.',
     glassware: 'Rocks glass',
     ings: [
       ('Gin', 45, 'ml', garnish: false),
       ('Fresh Lemon Juice', 20, 'ml', garnish: false),
       ('Simple Syrup', 10, 'ml', garnish: false),
-      ('Crème de Mûre', 15, 'ml', garnish: false),
+      ('Creme de Mure', 15, 'ml', garnish: false),
       ('Crushed Ice', null, null, garnish: false),
     ],
   );
   cocktail(
     idSuffix: 'pink_squirrel_2',
     name: 'Pink Squirrel Twin',
-    description: 'Crème de noyaux cream cocktail',
+    description: 'Creme de noyaux cream cocktail',
     instructions: 'Shake with ice, strain into a coupe.',
     glassware: 'Coupe',
     ings: [
-      ('Crème de Noyaux', 30, 'ml', garnish: false),
-      ('White Crème de Cacao', 30, 'ml', garnish: false),
+      ('Creme de Noyaux', 30, 'ml', garnish: false),
+      ('White Creme de Cacao', 30, 'ml', garnish: false),
       ('Baileys Irish Cream', 30, 'ml', garnish: false),
     ],
   );
@@ -945,20 +945,20 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
     instructions: 'Shake with ice, strain into a coupe.',
     glassware: 'Coupe',
     ings: [
-      ('Green Crème de Menthe', 30, 'ml', garnish: false),
-      ('White Crème de Cacao', 30, 'ml', garnish: false),
+      ('Green Creme de Menthe', 30, 'ml', garnish: false),
+      ('White Creme de Cacao', 30, 'ml', garnish: false),
       ('Baileys Irish Cream', 30, 'ml', garnish: false),
     ],
   );
   cocktail(
     idSuffix: 'stinger_2',
     name: 'Stinger Twin',
-    description: 'Brandy and white crème de menthe',
+    description: 'Brandy and white creme de menthe',
     instructions: 'Stir with ice, strain into a rocks glass over ice.',
     glassware: 'Rocks glass',
     ings: [
       ('Brandy', 50, 'ml', garnish: false),
-      ('White Crème de Menthe', 20, 'ml', garnish: false),
+      ('White Creme de Menthe', 20, 'ml', garnish: false),
       ('Ice Cubes', null, null, garnish: false),
     ],
   );

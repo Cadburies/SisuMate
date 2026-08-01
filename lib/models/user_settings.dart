@@ -9,8 +9,8 @@ class UserSettings {
   String? selectedBoatId;
   String? userId;
   bool isDarkMode = true; // dark is the default (theme.md §1)
-  /// When true, UI/export show imperial; DB remains metric (UnitConverter).
-  bool useImperial = false;
+  /// JSON [AppUnitPrefs] — per-category display units (DB stays metric).
+  String unitPrefsJson = '';
   bool isSynced = false;
   DateTime lastModified = DateTime.now().toUtc();
 
@@ -36,7 +36,7 @@ class UserSettings {
           selectedBoatId == other.selectedBoatId &&
           userId == other.userId &&
           isDarkMode == other.isDarkMode &&
-          useImperial == other.useImperial &&
+          unitPrefsJson == other.unitPrefsJson &&
           isSynced == other.isSynced &&
           lastModified == other.lastModified &&
           listEquals(recentEmails, other.recentEmails) &&
@@ -55,7 +55,7 @@ class UserSettings {
         selectedBoatId,
         userId,
         isDarkMode,
-        useImperial,
+        unitPrefsJson,
         isSynced,
         lastModified,
         Object.hashAll(recentEmails),
@@ -71,7 +71,7 @@ class UserSettings {
       'showHiddenItems: $showHiddenItems, isPro: $isPro, '
       'proExpiresAt: $proExpiresAt, selectedBoatId: $selectedBoatId, '
       'userId: $userId, isDarkMode: $isDarkMode, '
-      'useImperial: $useImperial, isSynced: $isSynced, '
+      'unitPrefsJson: $unitPrefsJson, isSynced: $isSynced, '
       'lastModified: $lastModified, recentEmails: $recentEmails, '
       'fromName: $fromName, replyToEmail: $replyToEmail, '
       'boatName: $boatName, freeEditsUsed: $freeEditsUsed)';

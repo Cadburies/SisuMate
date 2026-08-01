@@ -25,7 +25,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 20,
       "cookMinutes": 20,
-      "story": "Classic Boerewors on the Braai is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Classic Boerewors on the Braai is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -111,7 +111,7 @@
       "supabaseId": "menu_imp_traditional_bobotie",
       "name": "Traditional Bobotie",
       "description": "Spiced minced meat bake topped with golden egg custard, a beloved South African comfort dish.",
-      "instructions": "Soak 1 slice white bread in 100ml milk. Sauté 1 chopped onion and 2 garlic cloves in 1 tbsp oil. Add 400g beef mince, 1 tbsp curry powder, 1 tsp turmeric, 2 tbsp chutney, 1 tbsp apricot jam, 1 tbsp Worcestershire sauce, 1 tbsp vinegar, salt and pepper. Cook until browned. Mix in bread and 50g sultanas. Transfer to small baking dish. Beat 2 eggs with 150ml milk and pour over. Bake at 180°C for 35-40 minutes until set. Boat tip: Use galley oven or adapt to stovetop covered pan.",
+      "instructions": "Soak 1 slice white bread in 100ml milk. Saute 1 chopped onion and 2 garlic cloves in 1 tbsp oil. Add 400g beef mince, 1 tbsp curry powder, 1 tsp turmeric, 2 tbsp chutney, 1 tbsp apricot jam, 1 tbsp Worcestershire sauce, 1 tbsp vinegar, salt and pepper. Cook until browned. Mix in bread and 50g sultanas. Transfer to small baking dish. Beat 2 eggs with 150ml milk and pour over. Bake at 180C for 35-40 minutes until set. Boat tip: Use galley oven or adapt to stovetop covered pan.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -131,7 +131,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 45,
-      "story": "Traditional Bobotie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "story": "Traditional Bobotie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
       "ingredients": [
         {
           "name": "White bread slice",
@@ -287,7 +287,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 120,
-      "story": "Tomato Bredie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Tomato Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Sunflower oil",
@@ -411,7 +411,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 120,
-      "story": "Beef Potjiekos is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Beef Potjiekos is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Beef short rib pieces",
@@ -523,7 +523,7 @@
       "supabaseId": "menu_imp_malva_pudding",
       "name": "Malva Pudding",
       "description": "Sticky apricot-soaked sponge pudding, warm and comforting.",
-      "instructions": "Preheat oven to 180°C. Cream 60g butter and 125ml sugar, beat in 1 egg. Mix 15ml vinegar with 5ml bicarb and 30ml apricot jam, add to batter with 125ml milk and 125ml flour pinch salt. Bake 25-30 minutes. Boil sauce: 125ml milk, 125ml sugar, 30g butter, 5ml vanilla; pour over hot pudding. Boat tip: Small oven dish, or stovetop steam adaptation.",
+      "instructions": "Preheat oven to 180C. Cream 60g butter and 125ml sugar, beat in 1 egg. Mix 15ml vinegar with 5ml bicarb and 30ml apricot jam, add to batter with 125ml milk and 125ml flour pinch salt. Bake 25-30 minutes. Boil sauce: 125ml milk, 125ml sugar, 30g butter, 5ml vanilla; pour over hot pudding. Boat tip: Small oven dish, or stovetop steam adaptation.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -542,7 +542,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 35,
-      "story": "Malva Pudding is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Malva Pudding is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Butter",
@@ -656,7 +656,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 10,
       "cookMinutes": 20,
-      "story": "Boereboontjies is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Boereboontjies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Green beans",
@@ -735,7 +735,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 40,
       "cookMinutes": 15,
-      "story": "Roosterkoek is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Roosterkoek is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -814,7 +814,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 60,
       "cookMinutes": 20,
-      "story": "Vetkoek is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Vetkoek is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -888,7 +888,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 15,
-      "story": "Melktert is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Melktert is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Milk",
@@ -977,7 +977,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 30,
       "cookMinutes": 12,
-      "story": "Lamb Sosaties is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Lamb Sosaties is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Lamb cubes",
@@ -1077,7 +1077,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 25,
       "cookMinutes": 20,
-      "story": "Karoo Boerewors is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Karoo Boerewors is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -1192,7 +1192,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 10,
       "cookMinutes": 10,
-      "story": "Snoek on the Braai is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Snoek on the Braai is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Apricot jam",
@@ -1276,7 +1276,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 110,
-      "story": "Beef Curry with Samp is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewürztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewürztraminer style) or ice-cold lager.",
+      "story": "Beef Curry with Samp is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.",
       "ingredients": [
         {
           "name": "Beef cubes",
@@ -1392,7 +1392,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 45,
       "cookMinutes": 20,
-      "story": "Koeksisters is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Koeksisters is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -1512,7 +1512,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 10,
       "cookMinutes": 25,
-      "story": "Soetpatats is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Soetpatats is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Sweet potatoes",
@@ -1562,7 +1562,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 30,
       "cookMinutes": 0,
-      "story": "Biltong is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red — acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
+      "story": "Biltong is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red - acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
       "ingredients": [
         {
           "name": "Beef silverside",
@@ -1636,7 +1636,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 20,
       "cookMinutes": 12,
-      "story": "Chicken Sosaties is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Chicken Sosaties is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Chicken breast cubes",
@@ -1717,7 +1717,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 15,
-      "story": "Melkkos is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "story": "Melkkos is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
       "ingredients": [
         {
           "name": "Milk",
@@ -1788,7 +1788,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 60,
       "cookMinutes": 40,
-      "story": "Potbrood is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Potbrood is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -1863,7 +1863,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 10,
       "cookMinutes": 60,
-      "story": "Pepper Steak Potjie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Pepper Steak Potjie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Beef steak strips",
@@ -1946,7 +1946,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 15,
       "cookMinutes": 25,
-      "story": "Lamb Ribbetjie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Lamb Ribbetjie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Onion",
@@ -2030,7 +2030,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 100,
-      "story": "Waterblommetjie Bredie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Waterblommetjie Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -2118,7 +2118,7 @@
       "supabaseId": "menu_imp_rusks",
       "name": "Rusks",
       "description": "Buttermilk rusks for dipping in coffee, a staple for long journeys.",
-      "instructions": "Mix 500g flour, 10g baking powder, 100g butter, 100ml buttermilk, 1 egg, 50g sugar. Bake loaf at 180°C 45 minutes. Slice, dry in low oven 4 hours. Boat tip: Long shelf life perfect for passages.",
+      "instructions": "Mix 500g flour, 10g baking powder, 100g butter, 100ml buttermilk, 1 egg, 50g sugar. Bake loaf at 180C 45 minutes. Slice, dry in low oven 4 hours. Boat tip: Long shelf life perfect for passages.",
       "recipeType": "menu",
       "course": "Snack",
       "cuisine": [
@@ -2134,7 +2134,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 30,
       "cookMinutes": 300,
-      "story": "Rusks is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Rusks is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -2210,7 +2210,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 15,
       "cookMinutes": 100,
-      "story": "Green Bean Bredie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Green Bean Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -2282,7 +2282,7 @@
       "supabaseId": "menu_imp_jan_ellis_pudding",
       "name": "Jan Ellis Pudding",
       "description": "Sticky date and apricot pudding with sauce.",
-      "instructions": "Mix 125ml flour, 125ml sugar, 5ml bicarb, 1 egg, 30ml apricot jam, 125ml milk, 50g dates. Bake 180°C 30 minutes. Pour hot sauce of milk, sugar, butter. Boat tip: Small dish galley bake.",
+      "instructions": "Mix 125ml flour, 125ml sugar, 5ml bicarb, 1 egg, 30ml apricot jam, 125ml milk, 50g dates. Bake 180C 30 minutes. Pour hot sauce of milk, sugar, butter. Boat tip: Small dish galley bake.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -2298,7 +2298,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 35,
-      "story": "Jan Ellis Pudding is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Jan Ellis Pudding is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -2387,7 +2387,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 30,
-      "story": "Boerepap with Sheba is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Boerepap with Sheba is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Water",
@@ -2466,7 +2466,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 20,
       "cookMinutes": 30,
-      "story": "Frikkadels is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Frikkadels is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -2551,7 +2551,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 15,
-      "story": "Pampoenkoekies is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Pampoenkoekies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Cooked pumpkin",
@@ -2632,7 +2632,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 20,
-      "story": "Chakalaka is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewürztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewürztraminer style) or ice-cold lager.",
+      "story": "Chakalaka is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.",
       "ingredients": [
         {
           "name": "Onion",
@@ -2696,7 +2696,7 @@
       "supabaseId": "menu_imp_skaapboud",
       "name": "Skaapboud",
       "description": "Roast leg of lamb with garlic and rosemary, Sunday farm favourite.",
-      "instructions": "Rub 800g lamb leg with 4 garlic cloves, 2 tsp rosemary, salt, pepper and 2 tbsp oil. Roast at 180°C for 1 hour 20 minutes. Rest before slicing. Boat tip: Use small joint or adapt to pot roast on stove.",
+      "instructions": "Rub 800g lamb leg with 4 garlic cloves, 2 tsp rosemary, salt, pepper and 2 tbsp oil. Roast at 180C for 1 hour 20 minutes. Rest before slicing. Boat tip: Use small joint or adapt to pot roast on stove.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -2715,7 +2715,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 80,
-      "story": "Skaapboud is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Skaapboud is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Lamb leg",
@@ -2788,7 +2788,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 30,
       "cookMinutes": 20,
-      "story": "Cape Malay Pickled Fish is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red — acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
+      "story": "Cape Malay Pickled Fish is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red - acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
       "ingredients": [
         {
           "name": "White fish fillets",
@@ -2870,7 +2870,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 20,
       "cookMinutes": 120,
-      "story": "Boontjiebredie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Boontjiebredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -2942,7 +2942,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 60,
       "cookMinutes": 15,
-      "story": "Koesisters is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Koesisters is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -3030,7 +3030,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 10,
       "cookMinutes": 10,
-      "story": "Braaibroodjies is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Braaibroodjies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "White bread slices",
@@ -3086,7 +3086,7 @@
       "supabaseId": "menu_imp_hertzoggie",
       "name": "Hertzoggie",
       "description": "Coconut meringue tarts with apricot jam.",
-      "instructions": "Line tins with pastry. Fill with jam. Top with coconut meringue mix. Bake 180°C 15 minutes. Boat tip: Small batch galley oven.",
+      "instructions": "Line tins with pastry. Fill with jam. Top with coconut meringue mix. Bake 180C 15 minutes. Boat tip: Small batch galley oven.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -3101,7 +3101,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 15,
-      "story": "Hertzoggie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Hertzoggie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Shortcrust pastry",
@@ -3166,7 +3166,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 10,
       "cookMinutes": 0,
-      "story": "Sosatie Marinade is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Sosatie Marinade is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Apricot jam",
@@ -3212,7 +3212,7 @@
     },
     {
       "supabaseId": "menu_imp_droewors",
-      "name": "Droëwors",
+      "name": "Droewors",
       "description": "Traditional dried sausage snack.",
       "instructions": "Mix 500g beef mince, spices, vinegar. Stuff casings loosely. Dry 3-5 days. Boat tip: Long lasting provision.",
       "recipeType": "menu",
@@ -3230,7 +3230,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 30,
       "cookMinutes": 0,
-      "story": "Droëwors is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Droewors is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -3286,7 +3286,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 15,
       "cookMinutes": 100,
-      "story": "Tomato Bredie with Samp is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Tomato Bredie with Samp is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -3341,7 +3341,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 45,
       "cookMinutes": 20,
-      "story": "Vetkoek with Mince is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Vetkoek with Mince is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -3398,7 +3398,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 15,
       "cookMinutes": 25,
-      "story": "Peri-Peri Chicken is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Peri-Peri Chicken is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Peri-peri sauce",
@@ -3469,7 +3469,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 20,
       "cookMinutes": 90,
-      "story": "Bredie with Dumplings is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Bredie with Dumplings is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -3525,7 +3525,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 30,
       "cookMinutes": 30,
-      "story": "Milk Tart is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Milk Tart is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Milk",
@@ -3595,7 +3595,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 10,
       "cookMinutes": 15,
-      "story": "Boerewors Roll is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Boerewors Roll is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Boerewors",
@@ -3655,7 +3655,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 15,
-      "story": "Pumpkin Fritters is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Pumpkin Fritters is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Mashed pumpkin",
@@ -3707,7 +3707,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 60,
       "cookMinutes": 60,
-      "story": "Green Fig Preserve is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red — acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
+      "story": "Green Fig Preserve is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red - acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
       "ingredients": [
         {
           "name": "Green figs",
@@ -3752,7 +3752,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 5,
       "cookMinutes": 15,
-      "story": "Stywe Pap is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Stywe Pap is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Mealie meal",
@@ -3806,7 +3806,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 15,
       "cookMinutes": 90,
-      "story": "Cabbage Bredie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Cabbage Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -3859,7 +3859,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 35,
-      "story": "Amarula Malva is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Amarula Malva is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Butter",
@@ -3898,7 +3898,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 30,
-      "story": "Biltong Quiche is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Biltong Quiche is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Biltong",
@@ -3947,7 +3947,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 5,
       "cookMinutes": 10,
-      "story": "Ostrich Steak is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Ostrich Steak is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Ostrich steaks",
@@ -4004,7 +4004,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 70,
-      "story": "Kerrie Vleis is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Kerrie Vleis is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Beef cubes",
@@ -4050,7 +4050,7 @@
     },
     {
       "supabaseId": "menu_imp_snoek_pate",
-      "name": "Snoek Pâté",
+      "name": "Snoek Pate",
       "description": "Smoked snoek spread for crackers.",
       "instructions": "Flake 200g snoek, mix with cream cheese, lemon, onion, herbs. Chill. Boat tip: Uses preserved fish.",
       "recipeType": "menu",
@@ -4066,7 +4066,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 0,
-      "story": "Snoek Pâté is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Snoek Pate is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Smoked snoek",
@@ -4118,7 +4118,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 90,
-      "story": "Butternut Bredie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Butternut Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -4163,7 +4163,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 0,
-      "story": "Peppermint Crisp Tart is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Peppermint Crisp Tart is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Tennis biscuits",
@@ -4215,7 +4215,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 5,
       "cookMinutes": 0,
-      "story": "Maas is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "story": "Maas is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
       "ingredients": [
         {
           "name": "Full cream milk",
@@ -4252,7 +4252,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 25,
       "cookMinutes": 40,
-      "story": "Frikkadel Curry is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewürztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewürztraminer style) or ice-cold lager.",
+      "story": "Frikkadel Curry is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -4296,7 +4296,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 30,
       "cookMinutes": 10,
-      "story": "Atjar is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red — acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
+      "story": "Atjar is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red - acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
       "ingredients": [
         {
           "name": "Mixed vegetables",
@@ -4334,7 +4334,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 15,
       "cookMinutes": 60,
-      "story": "Roast Chicken with Lemon is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Roast Chicken with Lemon is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Whole chicken",
@@ -4358,7 +4358,7 @@
       "supabaseId": "menu_imp_classic_all_american_meatloaf",
       "name": "Classic All-American Meatloaf",
       "description": "Hearty, moist meatloaf with a tangy ketchup glaze, a true Midwest family favorite.",
-      "instructions": "Preheat oven or use a covered skillet on low heat. Mix 1/2 lb ground beef, 1/4 lb ground pork, 1/2 cup breadcrumbs, 1/4 cup milk, 1 egg, 1/4 finely chopped onion, 1 minced garlic clove, 1 Tbsp Worcestershire, 1 tsp salt, 1/2 tsp pepper, and 1 Tbsp ketchup. Shape into a loaf. Top with glaze of 1/4 cup ketchup, 1 Tbsp brown sugar, 1 tsp mustard. Bake at 175°C for 50-60 minutes until 70°C internal. Rest 10 minutes before slicing. Boat adaptation: Use a cast iron skillet on the braai or stove with lid for even cooking; use shelf-stable breadcrumbs and canned milk if needed.",
+      "instructions": "Preheat oven or use a covered skillet on low heat. Mix 1/2 lb ground beef, 1/4 lb ground pork, 1/2 cup breadcrumbs, 1/4 cup milk, 1 egg, 1/4 finely chopped onion, 1 minced garlic clove, 1 Tbsp Worcestershire, 1 tsp salt, 1/2 tsp pepper, and 1 Tbsp ketchup. Shape into a loaf. Top with glaze of 1/4 cup ketchup, 1 Tbsp brown sugar, 1 tsp mustard. Bake at 175C for 50-60 minutes until 70C internal. Rest 10 minutes before slicing. Boat adaptation: Use a cast iron skillet on the braai or stove with lid for even cooking; use shelf-stable breadcrumbs and canned milk if needed.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -4378,7 +4378,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 60,
-      "story": "Classic All-American Meatloaf is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Classic All-American Meatloaf is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Ground Beef",
@@ -4474,7 +4474,7 @@
       "supabaseId": "menu_imp_southern_buttermilk_biscuits_and_sausage_gravy",
       "name": "Southern Buttermilk Biscuits and Sausage Gravy",
       "description": "Flaky buttermilk biscuits smothered in creamy peppery sausage gravy, a hearty Southern classic.",
-      "instructions": "For biscuits: Mix 1 cup self-rising flour, 1/4 tsp salt, cut in 1/4 cup cold butter until crumbly. Stir in 1/3 cup buttermilk until just combined. Pat to 1/2 inch thick, cut rounds. Bake at 220°C or braai indirect 12-15 min until golden. For gravy: Brown 1/4 lb breakfast sausage in skillet, stir in 1.5 Tbsp flour, cook 1 min. Whisk in 1 cup milk gradually, simmer until thick. Season with salt, lots of black pepper. Split biscuits, ladle gravy over. Boat: Use skillet on braai or stove; powdered buttermilk for shelf life.",
+      "instructions": "For biscuits: Mix 1 cup self-rising flour, 1/4 tsp salt, cut in 1/4 cup cold butter until crumbly. Stir in 1/3 cup buttermilk until just combined. Pat to 1/2 inch thick, cut rounds. Bake at 220C or braai indirect 12-15 min until golden. For gravy: Brown 1/4 lb breakfast sausage in skillet, stir in 1.5 Tbsp flour, cook 1 min. Whisk in 1 cup milk gradually, simmer until thick. Season with salt, lots of black pepper. Split biscuits, ladle gravy over. Boat: Use skillet on braai or stove; powdered buttermilk for shelf life.",
       "recipeType": "menu",
       "course": "Breakfast",
       "cuisine": [
@@ -4493,7 +4493,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 20,
-      "story": "Southern Buttermilk Biscuits and Sausage Gravy is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "story": "Southern Buttermilk Biscuits and Sausage Gravy is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
       "ingredients": [
         {
           "name": "Self-Rising Flour",
@@ -4564,7 +4564,7 @@
       "supabaseId": "menu_imp_crispy_southern_fried_chicken",
       "name": "Crispy Southern Fried Chicken",
       "description": "Golden, crunchy fried chicken with juicy meat, a timeless American comfort staple.",
-      "instructions": "Soak 1 lb chicken pieces in 1 cup buttermilk with 1 tsp salt, 1/2 tsp pepper 1-2 hours. Mix 1 cup flour, 1 tsp paprika, 1/2 tsp garlic powder, 1/2 tsp salt, 1/4 tsp cayenne. Dredge chicken in flour mix. Fry in 1 inch hot oil (175°C) 10-15 min per side until 75°C internal and golden. Drain on paper. Boat adaptation: Use deep skillet or Dutch oven on braai/stove; pre-soak for flavor, use shelf-stable spices.",
+      "instructions": "Soak 1 lb chicken pieces in 1 cup buttermilk with 1 tsp salt, 1/2 tsp pepper 1-2 hours. Mix 1 cup flour, 1 tsp paprika, 1/2 tsp garlic powder, 1/2 tsp salt, 1/4 tsp cayenne. Dredge chicken in flour mix. Fry in 1 inch hot oil (175C) 10-15 min per side until 75C internal and golden. Drain on paper. Boat adaptation: Use deep skillet or Dutch oven on braai/stove; pre-soak for flavor, use shelf-stable spices.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -4582,7 +4582,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 30,
-      "story": "Crispy Southern Fried Chicken is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked Chardonnay or light Pinot Noir is a safe deck pairing. Substitute: medium white (Chardonnay) or light red.",
+      "story": "Crispy Southern Fried Chicken is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked Chardonnay or light Pinot Noir is a safe deck pairing. Substitute: medium white (Chardonnay) or light red.",
       "ingredients": [
         {
           "name": "Chicken Pieces",
@@ -4646,7 +4646,7 @@
       "supabaseId": "menu_imp_creamy_classic_macaroni_and_cheese",
       "name": "Creamy Classic Macaroni and Cheese",
       "description": "Velvety baked macaroni and cheese with sharp cheddar, pure American comfort.",
-      "instructions": "Cook 1 cup elbow macaroni until al dente. Make sauce: Melt 2 Tbsp butter, whisk in 2 Tbsp flour, cook 1 min. Whisk in 1.5 cups milk, simmer thick. Stir in 1.5 cups shredded cheddar, salt, pepper, pinch mustard powder. Mix with pasta, top with 1/4 cup breadcrumbs. Bake 175°C 20-25 min bubbly. Boat: Stovetop version in skillet, use evaporated milk for shelf-stability.",
+      "instructions": "Cook 1 cup elbow macaroni until al dente. Make sauce: Melt 2 Tbsp butter, whisk in 2 Tbsp flour, cook 1 min. Whisk in 1.5 cups milk, simmer thick. Stir in 1.5 cups shredded cheddar, salt, pepper, pinch mustard powder. Mix with pasta, top with 1/4 cup breadcrumbs. Bake 175C 20-25 min bubbly. Boat: Stovetop version in skillet, use evaporated milk for shelf-stability.",
       "recipeType": "menu",
       "course": "Side",
       "cuisine": [
@@ -4664,7 +4664,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 30,
-      "story": "Creamy Classic Macaroni and Cheese is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Dry rosé or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rosé or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "story": "Creamy Classic Macaroni and Cheese is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
       "ingredients": [
         {
           "name": "Elbow Macaroni",
@@ -4734,7 +4734,7 @@
       "supabaseId": "menu_imp_old_fashioned_apple_cobbler",
       "name": "Old-Fashioned Apple Cobbler",
       "description": "Warm spiced apples under a sweet biscuit topping, a rustic American favorite.",
-      "instructions": "Toss 2 peeled sliced apples with 2 Tbsp brown sugar, 1 tsp lemon juice, 1/2 tsp cinnamon. Place in greased skillet. Mix 1/2 cup flour, 2 Tbsp sugar, 1 tsp baking powder, pinch salt, cut in 2 Tbsp butter, stir in 1/4 cup milk. Drop spoonfuls over apples. Bake 190°C or braai indirect 30-35 min golden and bubbly. Boat: Cast iron skillet on braai works perfectly; use canned apples if fresh limited.",
+      "instructions": "Toss 2 peeled sliced apples with 2 Tbsp brown sugar, 1 tsp lemon juice, 1/2 tsp cinnamon. Place in greased skillet. Mix 1/2 cup flour, 2 Tbsp sugar, 1 tsp baking powder, pinch salt, cut in 2 Tbsp butter, stir in 1/4 cup milk. Drop spoonfuls over apples. Bake 190C or braai indirect 30-35 min golden and bubbly. Boat: Cast iron skillet on braai works perfectly; use canned apples if fresh limited.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -4752,7 +4752,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 35,
-      "story": "Old-Fashioned Apple Cobbler is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Old-Fashioned Apple Cobbler is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Apples",
@@ -4816,7 +4816,7 @@
       "supabaseId": "menu_imp_classic_southern_cornbread",
       "name": "Classic Southern Cornbread",
       "description": "Golden, crispy-edged cornbread baked in cast iron, perfect with any meal.",
-      "instructions": "Preheat cast iron skillet with 1 Tbsp oil or bacon fat in 220°C oven. Mix 1 cup cornmeal, 1/2 cup flour, 1 Tbsp baking powder, 1/2 tsp salt, 1 tsp sugar optional. Whisk in 1 egg, 1 cup buttermilk, 2 Tbsp melted butter. Pour into hot skillet. Bake 15-20 min golden. Boat: Excellent on braai in skillet; use shelf-stable cornmeal.",
+      "instructions": "Preheat cast iron skillet with 1 Tbsp oil or bacon fat in 220C oven. Mix 1 cup cornmeal, 1/2 cup flour, 1 Tbsp baking powder, 1/2 tsp salt, 1 tsp sugar optional. Whisk in 1 egg, 1 cup buttermilk, 2 Tbsp melted butter. Pour into hot skillet. Bake 15-20 min golden. Boat: Excellent on braai in skillet; use shelf-stable cornmeal.",
       "recipeType": "menu",
       "course": "Side",
       "cuisine": [
@@ -4833,7 +4833,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 20,
-      "story": "Classic Southern Cornbread is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Classic Southern Cornbread is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Cornmeal",
@@ -4921,7 +4921,7 @@
       "cookingMethod": "Raw / No-cook",
       "prepMinutes": 15,
       "cookMinutes": 0,
-      "story": "Creamy Southern Coleslaw is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Creamy Southern Coleslaw is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Green Cabbage",
@@ -4998,7 +4998,7 @@
       "supabaseId": "menu_imp_classic_chocolate_chip_cookies",
       "name": "Classic Chocolate Chip Cookies",
       "description": "Soft chewy centers with crisp edges loaded with chocolate chips, America's favorite cookie.",
-      "instructions": "Cream 1/3 cup butter, 1/4 cup brown sugar, 1/4 cup white sugar. Beat in 1 egg, 1 tsp vanilla. Mix in 1 cup flour, 1/2 tsp baking soda, 1/4 tsp salt. Stir in 1/2 cup chocolate chips. Chill dough 30 min. Scoop, bake 190°C 10-12 min. Boat: Skillet cookies or pre-made dough; long-shelf chips.",
+      "instructions": "Cream 1/3 cup butter, 1/4 cup brown sugar, 1/4 cup white sugar. Beat in 1 egg, 1 tsp vanilla. Mix in 1 cup flour, 1/2 tsp baking soda, 1/4 tsp salt. Stir in 1/2 cup chocolate chips. Chill dough 30 min. Scoop, bake 190C 10-12 min. Boat: Skillet cookies or pre-made dough; long-shelf chips.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -5015,7 +5015,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 12,
-      "story": "Classic Chocolate Chip Cookies is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Classic Chocolate Chip Cookies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Butter",
@@ -5104,7 +5104,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 20,
       "cookMinutes": 15,
-      "story": "Traditional American Potato Salad is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "story": "Traditional American Potato Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
       "ingredients": [
         {
           "name": "Potatoes",
@@ -5206,7 +5206,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 15,
       "cookMinutes": 120,
-      "story": "BBQ Braai Pork Ribs is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "BBQ Braai Pork Ribs is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Pork Ribs",
@@ -5253,7 +5253,7 @@
       "supabaseId": "menu_imp_classic_yankee_pot_roast",
       "name": "Classic Yankee Pot Roast",
       "description": "Tender beef chuck slow-cooked with root vegetables in rich gravy, a New England Sunday dinner staple.",
-      "instructions": "Season 1 lb beef chuck with salt and pepper. Brown in Dutch oven or skillet. Add 1 cup beef broth, 1/2 chopped onion, 2 carrots sliced, 2 potatoes cubed, 1 bay leaf. Cover and braise low heat or oven 165°C for 2.5-3 hours until fork tender. Thicken gravy if desired with 1 tsp cornstarch slurry. Boat adaptation: Use pressure cooker or long simmer on stove/braai; canned broth and root veggies store well.",
+      "instructions": "Season 1 lb beef chuck with salt and pepper. Brown in Dutch oven or skillet. Add 1 cup beef broth, 1/2 chopped onion, 2 carrots sliced, 2 potatoes cubed, 1 bay leaf. Cover and braise low heat or oven 165C for 2.5-3 hours until fork tender. Thicken gravy if desired with 1 tsp cornstarch slurry. Boat adaptation: Use pressure cooker or long simmer on stove/braai; canned broth and root veggies store well.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -5271,7 +5271,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 180,
-      "story": "Classic Yankee Pot Roast is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Classic Yankee Pot Roast is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Beef Chuck Roast",
@@ -5351,7 +5351,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 15,
-      "story": "Fluffy Buttermilk Pancakes is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Fluffy Buttermilk Pancakes is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "All-Purpose Flour",
@@ -5407,7 +5407,7 @@
       "supabaseId": "menu_imp_boston_baked_beans",
       "name": "Boston Baked Beans",
       "description": "Slow-cooked navy beans in sweet molasses and bacon sauce, a Puritan heritage dish.",
-      "instructions": "Soak 1 cup navy beans overnight. Simmer until tender. Mix with 1/4 cup molasses, 2 Tbsp brown sugar, 1 tsp mustard, 1/4 cup chopped onion, 2 slices bacon diced, salt, pepper, 1/2 cup bean liquid. Bake covered 150°C 2-3 hours, uncover last hour. Boat: Long simmer on stove; use canned beans for quicker version.",
+      "instructions": "Soak 1 cup navy beans overnight. Simmer until tender. Mix with 1/4 cup molasses, 2 Tbsp brown sugar, 1 tsp mustard, 1/4 cup chopped onion, 2 slices bacon diced, salt, pepper, 1/2 cup bean liquid. Bake covered 150C 2-3 hours, uncover last hour. Boat: Long simmer on stove; use canned beans for quicker version.",
       "recipeType": "menu",
       "course": "Side",
       "cuisine": [
@@ -5424,7 +5424,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 180,
-      "story": "Boston Baked Beans is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Boston Baked Beans is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Navy Beans",
@@ -5479,7 +5479,7 @@
       "supabaseId": "menu_imp_green_bean_casserole",
       "name": "Green Bean Casserole",
       "description": "Classic creamy green beans topped with crispy fried onions, holiday favorite.",
-      "instructions": "Mix 1 can green beans, 1/2 can cream of mushroom soup, 1/4 cup milk, 1/2 tsp soy sauce, pepper. Top with 1/2 cup fried onions. Bake 175°C 25-30 min until bubbly and golden. Boat: Stovetop or oven; use shelf-stable canned ingredients.",
+      "instructions": "Mix 1 can green beans, 1/2 can cream of mushroom soup, 1/4 cup milk, 1/2 tsp soy sauce, pepper. Top with 1/2 cup fried onions. Bake 175C 25-30 min until bubbly and golden. Boat: Stovetop or oven; use shelf-stable canned ingredients.",
       "recipeType": "menu",
       "course": "Side",
       "cuisine": [
@@ -5495,7 +5495,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 30,
-      "story": "Green Bean Casserole is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Green Bean Casserole is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Canned Green Beans",
@@ -5542,7 +5542,7 @@
       "supabaseId": "menu_imp_fudgy_brownies",
       "name": "Fudgy Brownies",
       "description": "Dense, chocolatey brownies with crackly tops, an iconic American treat.",
-      "instructions": "Melt 1/3 cup butter with 1/3 cup cocoa. Stir in 1/2 cup sugar, 1 egg, 1 tsp vanilla. Mix in 1/3 cup flour, pinch salt. Bake in greased pan 175°C 20-25 min. Cool before cutting. Boat: Skillet brownies on low heat; shelf-stable cocoa and sugar.",
+      "instructions": "Melt 1/3 cup butter with 1/3 cup cocoa. Stir in 1/2 cup sugar, 1 egg, 1 tsp vanilla. Mix in 1/3 cup flour, pinch salt. Bake in greased pan 175C 20-25 min. Cool before cutting. Boat: Skillet brownies on low heat; shelf-stable cocoa and sugar.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -5559,7 +5559,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 25,
-      "story": "Fudgy Brownies is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Fudgy Brownies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Butter",
@@ -5623,7 +5623,7 @@
       "cookingMethod": "Raw / No-cook",
       "prepMinutes": 15,
       "cookMinutes": 10,
-      "story": "Deviled Eggs is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "story": "Deviled Eggs is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
       "ingredients": [
         {
           "name": "Eggs",
@@ -5693,7 +5693,7 @@
       "cookingMethod": "Grill",
       "prepMinutes": 10,
       "cookMinutes": 20,
-      "story": "Grilled Corn on the Cob is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Grilled Corn on the Cob is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Corn on the Cob",
@@ -5748,7 +5748,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 120,
-      "story": "Homemade Apple Butter is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "story": "Homemade Apple Butter is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
       "ingredients": [
         {
           "name": "Apples",
@@ -5810,7 +5810,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 20,
       "cookMinutes": 45,
-      "story": "Chicken and Dumplings is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked Chardonnay or light Pinot Noir is a safe deck pairing. Substitute: medium white (Chardonnay) or light red.",
+      "story": "Chicken and Dumplings is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked Chardonnay or light Pinot Noir is a safe deck pairing. Substitute: medium white (Chardonnay) or light red.",
       "ingredients": [
         {
           "name": "Chicken Thighs",
@@ -5880,7 +5880,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 20,
-      "story": "Creamy Garlic Mashed Potatoes is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Creamy Garlic Mashed Potatoes is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Potatoes",
@@ -5943,7 +5943,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 15,
-      "story": "NY Strip Steak with Herb Butter is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "NY Strip Steak with Herb Butter is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "NY Strip Steak",
@@ -6000,7 +6000,7 @@
       "cookingMethod": "Raw / No-cook",
       "prepMinutes": 10,
       "cookMinutes": 0,
-      "story": "Waldorf Salad is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Dry rosé or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rosé or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "story": "Waldorf Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
       "ingredients": [
         {
           "name": "Apple",
@@ -6077,7 +6077,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 5,
-      "story": "Shrimp Cocktail is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Shrimp Cocktail is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Shrimp",
@@ -6132,7 +6132,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 20,
-      "story": "Chicken Marsala is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Chicken Marsala is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Chicken Cutlets",
@@ -6195,7 +6195,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 0,
-      "story": "Caesar Salad is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Dry rosé or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rosé or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "story": "Caesar Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
       "ingredients": [
         {
           "name": "Romaine Lettuce",
@@ -6242,7 +6242,7 @@
       "supabaseId": "menu_imp_veal_piccata",
       "name": "Veal Piccata",
       "description": "Tender veal in bright lemon caper sauce, upscale Italian-American NYC staple.",
-      "instructions": "Dredge 1/2 lb veal cutlets in flour. Sauté in butter and oil. Deglaze with 1/4 cup white wine, lemon juice, capers. Boat: Quick skillet; shelf-stable capers.",
+      "instructions": "Dredge 1/2 lb veal cutlets in flour. Saute in butter and oil. Deglaze with 1/4 cup white wine, lemon juice, capers. Boat: Quick skillet; shelf-stable capers.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -6257,7 +6257,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 15,
-      "story": "Veal Piccata is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Veal Piccata is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Veal Cutlets",
@@ -6310,7 +6310,7 @@
       "supabaseId": "menu_imp_linguine_with_clam_sauce",
       "name": "Linguine with Clam Sauce",
       "description": "Pasta tossed in garlicky white clam sauce, seafood restaurant classic.",
-      "instructions": "Cook 4 oz linguine. Sauté garlic in oil, add 1 can clams with juice, white wine, parsley. Toss with pasta. Boat: Canned clams for sea use; quick stove.",
+      "instructions": "Cook 4 oz linguine. Saute garlic in oil, add 1 can clams with juice, white wine, parsley. Toss with pasta. Boat: Canned clams for sea use; quick stove.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -6325,7 +6325,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 15,
-      "story": "Linguine with Clam Sauce is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "story": "Linguine with Clam Sauce is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
       "ingredients": [
         {
           "name": "Linguine",
@@ -6386,7 +6386,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 0,
-      "story": "Tiramisu is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Tiramisu is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Mascarpone Cheese",
@@ -6432,7 +6432,7 @@
       "supabaseId": "menu_imp_prime_rib_roast",
       "name": "Prime Rib Roast",
       "description": "Slow-roasted prime rib with au jus, signature upscale steakhouse dish.",
-      "instructions": "Season 1.5 lb bone-in rib roast with salt, pepper, garlic. Roast at 230°C 15 min, then 165°C to 55°C internal. Rest. Serve with pan juices. Boat: Oven or covered braai roast; impressive for guests.",
+      "instructions": "Season 1.5 lb bone-in rib roast with salt, pepper, garlic. Roast at 230C 15 min, then 165C to 55C internal. Rest. Serve with pan juices. Boat: Oven or covered braai roast; impressive for guests.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -6446,7 +6446,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 90,
-      "story": "Prime Rib Roast is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Prime Rib Roast is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Prime Rib Roast",
@@ -6470,7 +6470,7 @@
       "supabaseId": "menu_imp_key_lime_pie",
       "name": "Key Lime Pie",
       "description": "Tangy key lime filling in graham crust, a bright favorite on many NYC menus.",
-      "instructions": "Mix 1 cup graham crumbs, 3 Tbsp butter for crust. Fill with 1 can sweetened condensed milk, 1/2 cup lime juice, 2 egg yolks. Bake 175°C 15 min. Chill. Boat: No-bake variation possible; shelf-stable condensed milk.",
+      "instructions": "Mix 1 cup graham crumbs, 3 Tbsp butter for crust. Fill with 1 can sweetened condensed milk, 1/2 cup lime juice, 2 egg yolks. Bake 175C 15 min. Chill. Boat: No-bake variation possible; shelf-stable condensed milk.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -6486,7 +6486,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 20,
-      "story": "Key Lime Pie is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Key Lime Pie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Graham Cracker Crumbs",
@@ -6549,7 +6549,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 20,
-      "story": "Seared Scallops with Cauliflower Puree is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Seared Scallops with Cauliflower Puree is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Sea Scallops",
@@ -6588,7 +6588,7 @@
       "supabaseId": "menu_imp_roasted_duck_breast",
       "name": "Roasted Duck Breast",
       "description": "Crispy skin duck breast with cherry sauce, refined NYC tasting menu style.",
-      "instructions": "Score and season 2 duck breasts. Sear skin-side down, finish oven 205°C to 55°C internal. Sauce: reduce cherries, port, stock. Boat: Braai sear then indirect; use shelf-stable sauce base.",
+      "instructions": "Score and season 2 duck breasts. Sear skin-side down, finish oven 205C to 55C internal. Sauce: reduce cherries, port, stock. Boat: Braai sear then indirect; use shelf-stable sauce base.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -6603,7 +6603,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 25,
-      "story": "Roasted Duck Breast is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Roasted Duck Breast is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Duck Breasts",
@@ -6648,7 +6648,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 30,
       "cookMinutes": 20,
-      "story": "Foie Gras Torchon is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Dry rosé or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rosé or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "story": "Foie Gras Torchon is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
       "ingredients": [
         {
           "name": "Foie Gras",
@@ -6688,7 +6688,7 @@
       "cookingMethod": "Raw / No-cook",
       "prepMinutes": 10,
       "cookMinutes": 0,
-      "story": "Burrata with Heirloom Tomatoes is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Burrata with Heirloom Tomatoes is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Burrata Cheese",
@@ -6749,7 +6749,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 10,
-      "story": "Blackened Red Snapper is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Blackened Red Snapper is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Red Snapper Fillets",
@@ -6794,7 +6794,7 @@
       "supabaseId": "menu_imp_truffle_risotto",
       "name": "Truffle Risotto",
       "description": "Creamy Arborio rice with parmesan and truffle oil, decadent restaurant risotto.",
-      "instructions": "Sauté onion, toast 1/2 cup Arborio rice. Add broth gradually stirring until creamy. Finish with parmesan, truffle oil. Boat: One-pot stove; use shelf truffle oil.",
+      "instructions": "Saute onion, toast 1/2 cup Arborio rice. Add broth gradually stirring until creamy. Finish with parmesan, truffle oil. Boat: One-pot stove; use shelf truffle oil.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -6809,7 +6809,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 10,
       "cookMinutes": 25,
-      "story": "Truffle Risotto is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Truffle Risotto is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Arborio Rice",
@@ -6855,7 +6855,7 @@
       "supabaseId": "menu_imp_chocolate_souffle",
       "name": "Chocolate Souffle",
       "description": "Light yet rich individual chocolate souffles, showstopper from fine dining.",
-      "instructions": "Melt chocolate with butter. Whisk yolks with sugar, fold in whites. Bake 205°C 12-15 min. Dust powdered sugar. Boat: Impressive but timing critical on oven or covered skillet.",
+      "instructions": "Melt chocolate with butter. Whisk yolks with sugar, fold in whites. Bake 205C 12-15 min. Dust powdered sugar. Boat: Impressive but timing critical on oven or covered skillet.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -6869,7 +6869,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 15,
-      "story": "Chocolate Souffle is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Chocolate Souffle is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Dark Chocolate",
@@ -6922,7 +6922,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 20,
       "cookMinutes": 30,
-      "story": "Lobster Bisque is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "story": "Lobster Bisque is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
       "ingredients": [
         {
           "name": "Lobster Meat",
@@ -6960,7 +6960,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 0,
-      "story": "Beef Tartare is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Beef Tartare is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Beef Tenderloin",
@@ -7005,7 +7005,7 @@
       "supabaseId": "menu_imp_lemon_olive_oil_cake",
       "name": "Lemon Olive Oil Cake",
       "description": "Bright, moist olive oil cake with lemon zest, modern Michelin-inspired simplicity.",
-      "instructions": "Whisk 2 eggs, 3/4 cup sugar, 1/2 cup olive oil, lemon zest, 1 cup flour, baking powder. Bake 175°C 30 min. Dust sugar. Boat: One-bowl; olive oil shelf-stable.",
+      "instructions": "Whisk 2 eggs, 3/4 cup sugar, 1/2 cup olive oil, lemon zest, 1 cup flour, baking powder. Bake 175C 30 min. Dust sugar. Boat: One-bowl; olive oil shelf-stable.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -7020,7 +7020,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 30,
-      "story": "Lemon Olive Oil Cake is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Lemon Olive Oil Cake is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Eggs",
@@ -7082,7 +7082,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 15,
-      "story": "Grilled Branzino is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Grilled Branzino is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Whole Branzino",
@@ -7135,7 +7135,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 150,
-      "story": "Short Ribs Bourguignon is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Short Ribs Bourguignon is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Beef Short Ribs",
@@ -7187,7 +7187,7 @@
       "cookingMethod": "Raw / No-cook",
       "prepMinutes": 10,
       "cookMinutes": 0,
-      "story": "Heirloom Tomato Salad is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Heirloom Tomato Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Heirloom Tomatoes",
@@ -7225,7 +7225,7 @@
       "supabaseId": "menu_imp_pan_seared_halibut",
       "name": "Pan Seared Halibut",
       "description": "Crisp-skinned halibut with spring vegetables and saffron broth.",
-      "instructions": "Sear 2 halibut fillets skin-side down. Serve over sautéed asparagus, carrots in light saffron broth. Boat: Quick pan sear; sustainable fish choice.",
+      "instructions": "Sear 2 halibut fillets skin-side down. Serve over sauteed asparagus, carrots in light saffron broth. Boat: Quick pan sear; sustainable fish choice.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -7239,7 +7239,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 15,
-      "story": "Pan Seared Halibut is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Pan Seared Halibut is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Halibut Fillets",
@@ -7277,7 +7277,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 20,
       "cookMinutes": 10,
-      "story": "Ricotta Gnudi is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Ricotta Gnudi is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Ricotta Cheese",
@@ -7329,7 +7329,7 @@
       "supabaseId": "menu_imp_flourless_chocolate_cake",
       "name": "Flourless Chocolate Cake",
       "description": "Intensely rich flourless chocolate cake with ganache.",
-      "instructions": "Melt 6 oz chocolate with butter, mix with eggs, sugar. Bake 175°C 25 min. Top with ganache. Boat: Dense and fudgy; gluten-free friendly.",
+      "instructions": "Melt 6 oz chocolate with butter, mix with eggs, sugar. Bake 175C 25 min. Top with ganache. Boat: Dense and fudgy; gluten-free friendly.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -7344,7 +7344,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 30,
-      "story": "Flourless Chocolate Cake is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Flourless Chocolate Cake is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Dark Chocolate",
@@ -7404,7 +7404,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 5,
-      "story": "Crispy Calamari is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "story": "Crispy Calamari is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
       "ingredients": [
         {
           "name": "Calamari",
@@ -7442,7 +7442,7 @@
       "supabaseId": "menu_imp_mushroom_risotto",
       "name": "Mushroom Risotto",
       "description": "Creamy risotto loaded with wild mushrooms and thyme.",
-      "instructions": "Sauté mushrooms, onion. Toast rice, add broth gradually. Finish with butter, cheese, thyme. Boat: One-pot comfort.",
+      "instructions": "Saute mushrooms, onion. Toast rice, add broth gradually. Finish with butter, cheese, thyme. Boat: One-pot comfort.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -7456,7 +7456,7 @@
       "cookingMethod": "One-pot",
       "prepMinutes": 15,
       "cookMinutes": 30,
-      "story": "Mushroom Risotto is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Mushroom Risotto is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Arborio Rice",
@@ -7506,9 +7506,9 @@
     },
     {
       "supabaseId": "menu_imp_creme_brulee",
-      "name": "Crème Brûlée",
+      "name": "Creme Brulee",
       "description": "Silky vanilla custard with caramelized sugar crust.",
-      "instructions": "Whisk cream, yolks, sugar, vanilla. Bake in ramekins water bath 165°C 35 min. Chill, torch sugar. Boat: Classic custard; torch or broil top.",
+      "instructions": "Whisk cream, yolks, sugar, vanilla. Bake in ramekins water bath 165C 35 min. Chill, torch sugar. Boat: Classic custard; torch or broil top.",
       "recipeType": "menu",
       "course": "Dessert",
       "cuisine": [
@@ -7522,7 +7522,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 40,
-      "story": "Crème Brûlée is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Creme Brulee is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Heavy Cream",
@@ -7568,7 +7568,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 15,
-      "story": "Pork Chop Milanese is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Pork Chop Milanese is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Bone-In Pork Chops",
@@ -7614,7 +7614,7 @@
       "supabaseId": "menu_imp_oven_roasted_salmon",
       "name": "Oven Roasted Salmon",
       "description": "Herb-crusted salmon with asparagus and hollandaise, refined bistro style.",
-      "instructions": "Season salmon fillet with herbs, lemon. Roast 205°C 12-15 min with asparagus. Drizzle hollandaise. Boat: Quick oven or covered braai.",
+      "instructions": "Season salmon fillet with herbs, lemon. Roast 205C 12-15 min with asparagus. Drizzle hollandaise. Boat: Quick oven or covered braai.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -7628,7 +7628,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 15,
-      "story": "Oven Roasted Salmon is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "story": "Oven Roasted Salmon is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
       "ingredients": [
         {
           "name": "Salmon Fillet",
@@ -7659,7 +7659,7 @@
       "supabaseId": "menu_imp_beef_wellington",
       "name": "Beef Wellington",
       "description": "Tender beef tenderloin wrapped in puff pastry with duxelles, showstopping classic.",
-      "instructions": "Sear beef, coat with mushroom duxelles, wrap in prosciutto and puff pastry. Bake 220°C then 205°C to desired doneness. Boat: Special occasion; use smaller cut.",
+      "instructions": "Sear beef, coat with mushroom duxelles, wrap in prosciutto and puff pastry. Bake 220C then 205C to desired doneness. Boat: Special occasion; use smaller cut.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -7673,7 +7673,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 30,
       "cookMinutes": 40,
-      "story": "Beef Wellington is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "story": "Beef Wellington is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
       "ingredients": [
         {
           "name": "Beef Tenderloin",
@@ -7725,7 +7725,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 0,
-      "story": "Baby Kale Salad is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "story": "Baby Kale Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
       "ingredients": [
         {
           "name": "Baby Kale",
@@ -7770,7 +7770,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 20,
       "cookMinutes": 60,
-      "story": "Grilled Octopus is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Grilled Octopus is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Octopus",
@@ -7822,7 +7822,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 30,
       "cookMinutes": 10,
-      "story": "Pumpkin Ravioli is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Pumpkin Ravioli is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Pumpkin Puree",
@@ -7867,7 +7867,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 35,
-      "story": "Sticky Toffee Pudding is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Sticky Toffee Pudding is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Dates",
@@ -7918,7 +7918,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 10,
-      "story": "Fried Artichokes is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Dry rosé or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rosé or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "story": "Fried Artichokes is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
       "ingredients": [
         {
           "name": "Artichokes",
@@ -7941,7 +7941,7 @@
       "supabaseId": "menu_imp_wild_mushroom_soup",
       "name": "Wild Mushroom Soup",
       "description": "Velvety cream of wild mushroom soup with thyme.",
-      "instructions": "Sauté mushrooms, onion, garlic. Simmer in broth, blend with cream. Boat: Pureed soup stores well.",
+      "instructions": "Saute mushrooms, onion, garlic. Simmer in broth, blend with cream. Boat: Pureed soup stores well.",
       "recipeType": "menu",
       "course": "Main",
       "cuisine": [
@@ -7955,7 +7955,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 25,
-      "story": "Wild Mushroom Soup is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Wild Mushroom Soup is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Mixed Wild Mushrooms",
@@ -8014,7 +8014,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 20,
       "cookMinutes": 0,
-      "story": "Pistachio Semifreddo is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Pistachio Semifreddo is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Heavy Cream",
@@ -8051,7 +8051,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 20,
       "cookMinutes": 180,
-      "story": "Osso Buco is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "story": "Osso Buco is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
       "ingredients": [
         {
           "name": "Veal Shanks",
@@ -8074,7 +8074,7 @@
       "supabaseId": "menu_imp_crispy_brussels_sprouts",
       "name": "Crispy Brussels Sprouts",
       "description": "Crispy roasted Brussels with balsamic and parmesan, modern NYC side.",
-      "instructions": "Toss Brussels with oil, salt. Roast 220°C until crispy. Drizzle balsamic, parmesan. Boat: Oven or braai roast; great veggie.",
+      "instructions": "Toss Brussels with oil, salt. Roast 220C until crispy. Drizzle balsamic, parmesan. Boat: Oven or braai roast; great veggie.",
       "recipeType": "menu",
       "course": "Side",
       "cuisine": [
@@ -8089,7 +8089,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 10,
       "cookMinutes": 25,
-      "story": "Crispy Brussels Sprouts is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board — match weight of the dish to the drink (lighter food → lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "story": "Crispy Brussels Sprouts is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
       "ingredients": [
         {
           "name": "Brussels Sprouts",
@@ -8140,7 +8140,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 180,
-      "story": "Duck Confit is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Duck Confit is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Duck Legs",
@@ -8170,7 +8170,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 15,
-      "story": "Quinoa Salad is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Dry rosé or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rosé or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "story": "Quinoa Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
       "ingredients": [
         {
           "name": "Quinoa",
@@ -8229,7 +8229,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 5,
-      "story": "Seared Ahi Tuna is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "story": "Seared Ahi Tuna is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
       "ingredients": [
         {
           "name": "Ahi Tuna Steak",
@@ -8266,7 +8266,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 45,
-      "story": "Butternut Squash Soup is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "story": "Butternut Squash Soup is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
       "ingredients": [
         {
           "name": "Butternut Squash",
@@ -8311,7 +8311,7 @@
       "cookingMethod": "Oven",
       "prepMinutes": 15,
       "cookMinutes": 35,
-      "story": "Lemon Olive Oil Cake is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Lemon Olive Oil Cake is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Olive Oil",
@@ -8376,7 +8376,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 10,
       "cookMinutes": 6,
-      "story": "Grilled Prawns is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Grilled Prawns is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Large Prawns",
@@ -8427,7 +8427,7 @@
       "cookingMethod": "Raw / No-cook",
       "prepMinutes": 10,
       "cookMinutes": 0,
-      "story": "Fig and Prosciutto Salad is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Dry rosé or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rosé or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "story": "Fig and Prosciutto Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
       "ingredients": [
         {
           "name": "Fresh Figs",
@@ -8478,7 +8478,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 5,
-      "story": "Espresso Panna Cotta is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "story": "Espresso Panna Cotta is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
       "ingredients": [
         {
           "name": "Heavy Cream",
@@ -8515,7 +8515,7 @@
       "cookingMethod": "Stovetop",
       "prepMinutes": 15,
       "cookMinutes": 10,
-      "story": "Lamb Chops Scottadito is scaled for two people at sea — double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale — carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "story": "Lamb Chops Scottadito is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
       "ingredients": [
         {
           "name": "Lamb Chops",

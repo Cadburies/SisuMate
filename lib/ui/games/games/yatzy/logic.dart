@@ -503,11 +503,11 @@ class YatzyNotifier extends Notifier<YatzyState> {
     if (!mounted) return;
     // AI rolls up to 3 times with simple hold strategy
     var d = List.generate(5, (_) => _rng.nextInt(6) + 1);
-    d = _aiSmartReroll(d);
-    d = _aiSmartReroll(d);
+    d = yatzyAiSmartReroll(d, _rng);
+    d = yatzyAiSmartReroll(d, _rng);
 
     final isJoker = d.toSet().length == 1 && state.aiCard.scores[YatzyCategory.yatzy] == 50;
-    final cat = _aiBestCat(d, state.aiCard, isJoker: isJoker);
+    final cat = yatzyAiBestCat(d, state.aiCard, isJoker: isJoker);
     final pts = isJoker ? jokerScoreFor(cat, d) : scoreFor(cat, d);
     final newAiCard = state.aiCard.withScore(cat, pts, addYatzyBonus: isJoker);
 
@@ -533,30 +533,6 @@ class YatzyNotifier extends Notifier<YatzyState> {
 
   bool get mounted => true; // Notifier is always alive while provider is alive
 
-  List<int> _aiSmartReroll(List<int> d) {
-    final cnt = List.filled(7, 0);
-    for (final v in d) { cnt[v]++; }
-    // Hold the most frequent face; reroll singles
-    final best = cnt.skip(1).reduce((a, b) => a > b ? a : b);
-    final bestFace = cnt.indexOf(best, 1);
-    return d.map((v) => (cnt[v] >= 2 || v == bestFace) ? v : _rng.nextInt(6) + 1).toList();
-  }
-
-  YatzyCategory _aiBestCat(List<int> d, Scorecard card, {bool isJoker = false}) {
-    YatzyCategory? best;
-    int bestPts = -1;
-    for (final cat in YatzyCategory.values) {
-      if (card.scores[cat] != null) continue;
-      final pts = isJoker ? jokerScoreFor(cat, d) : scoreFor(cat, d);
-      if (pts > bestPts) {
-        bestPts = pts;
-        best = cat;
-      }
-    }
-    return best ??
-        YatzyCategory.values.firstWhere((c) => card.scores[c] == null);
-  }
-
   String _endMessage(Scorecard p, Scorecard ai) {
     final ps = p.total;
     final as_ = ai.total;
@@ -569,6 +545,36 @@ class YatzyNotifier extends Notifier<YatzyState> {
     exitMultiplayerMode();
     state = build();
   }
+}
+
+/// TEST28: pure AI re-roll policy — same dice + same [rng] seed ⇒ same result.
+List<int> yatzyAiSmartReroll(List<int> d, Random rng) {
+  final cnt = List.filled(7, 0);
+  for (final v in d) {
+    cnt[v]++;
+  }
+  // Hold the most frequent face; reroll singles
+  final best = cnt.skip(1).reduce((a, b) => a > b ? a : b);
+  final bestFace = cnt.indexOf(best, 1);
+  return d
+      .map((v) => (cnt[v] >= 2 || v == bestFace) ? v : rng.nextInt(6) + 1)
+      .toList();
+}
+
+/// TEST28: pure category pick — no RNG; same dice + card ⇒ same category.
+YatzyCategory yatzyAiBestCat(List<int> d, Scorecard card,
+    {bool isJoker = false}) {
+  YatzyCategory? best;
+  int bestPts = -1;
+  for (final cat in YatzyCategory.values) {
+    if (card.scores[cat] != null) continue;
+    final pts = isJoker ? jokerScoreFor(cat, d) : scoreFor(cat, d);
+    if (pts > bestPts) {
+      bestPts = pts;
+      best = cat;
+    }
+  }
+  return best ?? YatzyCategory.values.firstWhere((c) => card.scores[c] == null);
 }
 
 final yatzyStateProvider =

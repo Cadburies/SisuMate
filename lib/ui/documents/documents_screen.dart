@@ -140,6 +140,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                               fileBaseName: 'sisu_documents',
                               exportCurrent: () async =>
                                   ImportService.exportDocuments(documents),
+                              existingNames: () async =>
+                                  documents.map((e) => e.title).toList(),
                               persist: (batch) async {
                                 final repo =
                                     ref.read(documentRepositoryProvider);

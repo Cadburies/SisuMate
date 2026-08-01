@@ -126,6 +126,96 @@ void main() {
     });
   });
 
+  group('ConflictResolutionService.buildConflictDiff (BAI5)', () {
+    const svc = ConflictResolutionService();
+
+    test('humanizeFieldName splits camelCase', () {
+      expect(
+        ConflictResolutionService.humanizeFieldName('lastPurchasePlace'),
+        'Last Purchase Place',
+      );
+      expect(
+        ConflictResolutionService.humanizeFieldName('notes'),
+        'Notes',
+      );
+    });
+
+    test('suggests merge when only empty-vs-filled fields differ', () {
+      final report = svc.buildConflictDiff(
+        {
+          'name': 'Anchor',
+          'notes': '',
+          'lastModified': '2026-01-01T00:00:00.000Z',
+        },
+        {
+          'name': 'Anchor',
+          'notes': '10mm chain',
+          'lastModified': '2026-01-02T00:00:00.000Z',
+        },
+      );
+      expect(report.canAutoMerge, isTrue);
+      expect(report.overall, OverallConflictSuggestion.mergeFields);
+      expect(report.hardConflictCount, 0);
+      final notes = report.fields.firstWhere((f) => f.key == 'notes');
+      expect(notes.kind, FieldDiffKind.onlyRemote);
+      expect(notes.suggestion, FieldSideSuggestion.mergeable);
+      expect(notes.remoteDisplay, '10mm chain');
+    });
+
+    test('hard name clash prefers cloud when remote is newer', () {
+      final report = svc.buildConflictDiff(
+        {
+          'name': 'Mine',
+          'lastModified': '2026-01-01T00:00:00.000Z',
+        },
+        {
+          'name': 'Theirs',
+          'lastModified': '2026-01-03T00:00:00.000Z',
+        },
+      );
+      expect(report.canAutoMerge, isFalse);
+      expect(report.overall, OverallConflictSuggestion.keepCloud);
+      expect(report.hardConflictCount, 1);
+      final name = report.fields.firstWhere((f) => f.key == 'name');
+      expect(name.kind, FieldDiffKind.conflict);
+      expect(name.suggestion, FieldSideSuggestion.preferTheirs);
+      expect(report.overallReason, contains('Keep cloud'));
+    });
+
+    test('hard name clash prefers mine when local is newer', () {
+      final report = svc.buildConflictDiff(
+        {
+          'name': 'Mine',
+          'lastModified': '2026-01-04T00:00:00.000Z',
+        },
+        {
+          'name': 'Theirs',
+          'lastModified': '2026-01-01T00:00:00.000Z',
+        },
+      );
+      expect(report.overall, OverallConflictSuggestion.keepMine);
+      expect(report.overallReason, contains('Keep mine'));
+    });
+
+    test('differing list skips equal fields', () {
+      final report = svc.buildConflictDiff(
+        {
+          'name': 'Same',
+          'notes': 'A',
+          'lastModified': '2026-01-01T00:00:00.000Z',
+        },
+        {
+          'name': 'Same',
+          'notes': 'B',
+          'lastModified': '2026-01-02T00:00:00.000Z',
+        },
+      );
+      expect(report.differing.map((f) => f.key), ['notes']);
+      expect(report.fields.where((f) => f.key == 'name').single.kind,
+          FieldDiffKind.same);
+    });
+  });
+
   group('SyncService inbound + conflict resolve (in-memory Drift)', () {
     late AppDatabase db;
     late ProviderContainer container;

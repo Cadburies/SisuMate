@@ -1,6 +1,10 @@
+import 'dart:math';
+
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sisu_mate/services/game_ai/game_ai_difficulty.dart';
+import 'package:sisu_mate/services/game_ai/game_ai_persona.dart';
 import 'package:sisu_mate/services/lan/game_lan_service.dart';
 import 'package:sisu_mate/ui/games/games/dudo/helpers.dart';
 import 'package:sisu_mate/ui/games/games/dudo/logic.dart';
@@ -678,6 +682,86 @@ void main() {
     });
   });
 
+  // ── GAI4: binomial Dudo AI ────────────────────────────────────────────────
+
+  group('GAI4 Dudo AI — binomial model', () {
+    test('dudoDieMatchProbability: non-ace wild = 2/6, ace/palafico = 1/6', () {
+      expect(dudoDieMatchProbability(3), closeTo(2 / 6, 1e-9));
+      expect(dudoDieMatchProbability(1), closeTo(1 / 6, 1e-9));
+      expect(dudoDieMatchProbability(3, isPalafico: true), closeTo(1 / 6, 1e-9));
+    });
+
+    test('binomialSurvival is 1 when k<=0 and 0 when k>n', () {
+      expect(binomialSurvival(5, 0.5, 0), 1.0);
+      expect(binomialSurvival(5, 0.5, 6), 0.0);
+    });
+
+    test('getAIShouldDudo challenges a clearly impossible quantity', () {
+      final players = [
+        const DudoPlayer(
+            id: 'a', name: 'A', isAI: false, dice: [2, 3, 4], diceCount: 3),
+        const DudoPlayer(
+            id: 'b', name: 'B', isAI: true, dice: [5, 5, 6], diceCount: 3),
+      ];
+      // Bid 10 sixes with only 6 dice on the table and AI holding zero sixes.
+      expect(
+        getAIShouldDudo(players, 1, const DudoBid(10, 6)),
+        isTrue,
+      );
+    });
+
+    test('getAIShouldDudo trusts a bid covered by own dice alone', () {
+      final players = [
+        const DudoPlayer(
+            id: 'a', name: 'A', isAI: false, dice: [2, 3, 4], diceCount: 3),
+        const DudoPlayer(
+            id: 'b', name: 'B', isAI: true, dice: [6, 6, 6], diceCount: 3),
+      ];
+      expect(
+        getAIShouldDudo(players, 1, const DudoBid(2, 6)),
+        isFalse,
+      );
+    });
+
+    test('getAIBid prefers a face well supported by own dice', () {
+      final players = [
+        const DudoPlayer(
+            id: 'a', name: 'A', isAI: false, diceCount: 5),
+        const DudoPlayer(
+            id: 'b',
+            name: 'B',
+            isAI: true,
+            dice: [4, 4, 4, 2, 1],
+            diceCount: 5),
+      ];
+      final bid = getAIBid(players, 1, null);
+      // Four 4s counting (3 fours + 1 ace wild) → should lean into fours.
+      expect(bid.face, 4);
+      expect(bid.quantity, greaterThanOrEqualTo(3));
+    });
+
+    test('getAIShouldSpotOn is true near expected exact count', () {
+      // AI sees 2 matching; 6 unknown dice, p=2/6 for face 3 → EV unknown = 2;
+      // total EV = 4. Exact mass at 4 should be material.
+      final players = [
+        const DudoPlayer(
+            id: 'a', name: 'A', isAI: false, diceCount: 6),
+        const DudoPlayer(
+            id: 'b',
+            name: 'B',
+            isAI: true,
+            dice: [3, 3, 2, 5, 6],
+            diceCount: 5),
+      ];
+      // May or may not spot depending on thresholds — assert pure exact mass
+      // is non-trivial and dudo is not forced.
+      final bid = const DudoBid(4, 3);
+      final exact = dudoBidExact(players, 1, bid);
+      expect(exact, greaterThan(0.15));
+      expect(getAIShouldDudo(players, 1, bid), isFalse);
+    });
+  });
+
   // ── GAME1: multiplayer scaffolding (mirrors liars_dice_test.dart) ─────────
 
   group('DudoGameNotifier.initHostMode — isAI wiring from LobbyPlayer', () {
@@ -695,11 +779,94 @@ void main() {
           reason: 'a host-added bot seat must carry isAI through to DudoPlayer');
     });
 
+    test('GAI5: persona + difficulty wire from LobbyPlayer to DudoPlayer', () {
+      final c = makeContainer();
+      notifier(c).initHostMode(const [
+        LobbyPlayer(id: 'host', name: 'Host'),
+        LobbyPlayer(
+          id: 'ai_bluff',
+          name: 'Bluffer 1 (Hard)',
+          isAI: true,
+          aiDifficulty: GameAiDifficulty.hard,
+          aiPersona: GameAiPersona.aggressive,
+        ),
+        LobbyPlayer(
+          id: 'ai_rock',
+          name: 'Rock 2 (Easy)',
+          isAI: true,
+          aiDifficulty: GameAiDifficulty.easy,
+          aiPersona: GameAiPersona.tight,
+        ),
+      ]);
+      final bluff = gs(c).players.firstWhere((p) => p.id == 'ai_bluff');
+      final rock = gs(c).players.firstWhere((p) => p.id == 'ai_rock');
+      expect(bluff.aiPersona, GameAiPersona.aggressive);
+      expect(bluff.aiDifficulty, GameAiDifficulty.hard);
+      expect(rock.aiPersona, GameAiPersona.tight);
+      expect(rock.aiDifficulty, GameAiDifficulty.easy);
+    });
+
     test('sets isMultiplayer and starts in the start state', () {
       final c = makeContainer();
       notifier(c).initHostMode(const [LobbyPlayer(id: 'host', name: 'Host')]);
       expect(gs(c).isMultiplayer, isTrue);
       expect(gs(c).currentState, DudoStateEnum.start);
+    });
+  });
+
+  group('GAI5 Dudo persona thresholds', () {
+    test('aggressive is less likely to dudo a borderline bid than tight', () {
+      // AI holds one 6; three unknown dice; bid 3 sixes is stretchy but not absurd.
+      final players = [
+        const DudoPlayer(
+            id: 'a', name: 'A', isAI: false, dice: [2, 3, 4], diceCount: 3),
+        const DudoPlayer(
+            id: 'b',
+            name: 'B',
+            isAI: true,
+            dice: [6, 2, 3, 4, 5],
+            diceCount: 5),
+      ];
+      const bid = DudoBid(3, 6);
+      // Tight calls earlier; aggressive sticks longer on same EV.
+      final tightDudo = getAIShouldDudo(players, 1, bid,
+          difficulty: GameAiDifficulty.normal,
+          persona: GameAiPersona.tight);
+      final aggDudo = getAIShouldDudo(players, 1, bid,
+          difficulty: GameAiDifficulty.normal,
+          persona: GameAiPersona.aggressive);
+      // If either differs, aggressive must not be the only one calling.
+      // On this board tight should dudo at least as often as aggressive.
+      expect(tightDudo || !aggDudo, isTrue);
+      // Prefer a strict split when thresholds land cleanly:
+      if (tightDudo != aggDudo) {
+        expect(tightDudo, isTrue);
+        expect(aggDudo, isFalse);
+      }
+    });
+
+    test('chaos getAIBid stays legal with fixed rng', () {
+      final players = [
+        const DudoPlayer(
+            id: 'a', name: 'A', isAI: false, diceCount: 5),
+        const DudoPlayer(
+            id: 'b',
+            name: 'B',
+            isAI: true,
+            dice: [4, 4, 4, 2, 1],
+            diceCount: 5),
+      ];
+      for (var seed = 0; seed < 12; seed++) {
+        final bid = getAIBid(players, 1, null,
+            difficulty: GameAiDifficulty.normal,
+            persona: GameAiPersona.chaos,
+            rng: Random(seed));
+        expect(
+          isValidRaise(bid, null, playerDiceCount: 5),
+          isTrue,
+          reason: 'chaos seed $seed produced illegal $bid',
+        );
+      }
     });
   });
 

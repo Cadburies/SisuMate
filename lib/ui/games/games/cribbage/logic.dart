@@ -1054,31 +1054,39 @@ class CribbageNotifier extends Notifier<CribbageState> {
     state = build();
   }
 
-  List<int> _aiSelectDiscard(List<int> hand, bool playerDealer) {
-    // Try all combinations of 4-keep, pick highest scoring hand
-    List<int> bestKeep = hand.sublist(0, 4);
-    int bestScore = -1;
-    for (int i = 0; i < hand.length; i++) {
-      for (int j = i + 1; j < hand.length; j++) {
-        final keep = [
-          for (int k = 0; k < hand.length; k++) if (k != i && k != j) hand[k]
-        ];
-        // Use a dummy starter for evaluation
-        int score = 0;
-        for (int s = 0; s < 52; s++) {
-          if (!hand.contains(s)) {
-            score += scoreHand(keep, s);
-            break; // just one estimate for speed
-          }
-        }
-        if (score > bestScore) {
-          bestScore = score;
-          bestKeep = keep;
+  List<int> _aiSelectDiscard(List<int> hand, bool playerDealer) =>
+      cribbageAiSelectKeep(hand, playerDealer: playerDealer);
+}
+
+/// TEST28 / GAI: pure crib-discard keep set (no RNG) — same hand ⇒ same keep.
+///
+/// Returns the 4 cards the AI keeps (not the two discarded).
+List<int> cribbageAiSelectKeep(List<int> hand, {bool playerDealer = false}) {
+  // Try all combinations of 4-keep, pick highest scoring hand.
+  // [playerDealer] reserved for future dealer-aware crib strategy.
+  List<int> bestKeep = hand.sublist(0, 4);
+  int bestScore = -1;
+  for (int i = 0; i < hand.length; i++) {
+    for (int j = i + 1; j < hand.length; j++) {
+      final keep = [
+        for (int k = 0; k < hand.length; k++)
+          if (k != i && k != j) hand[k]
+      ];
+      // Use a dummy starter for evaluation
+      int score = 0;
+      for (int s = 0; s < 52; s++) {
+        if (!hand.contains(s)) {
+          score += scoreHand(keep, s);
+          break; // just one estimate for speed
         }
       }
+      if (score > bestScore) {
+        bestScore = score;
+        bestKeep = keep;
+      }
     }
-    return bestKeep;
   }
+  return bestKeep;
 }
 
 final cribbageStateProvider =

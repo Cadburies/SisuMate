@@ -175,6 +175,8 @@ class _ChefScreenState extends ConsumerState<ChefScreen>
                                 fileBaseName: 'sisu_recipes',
                                 exportCurrent: () =>
                                     _exportRecipes(menuRecipes),
+                                existingNames: () async =>
+                                    menuRecipes.map((r) => r.name).toList(),
                                 persist: (batch) =>
                                     _importRecipes(batch, 'menu'),
                               ),
@@ -1336,6 +1338,31 @@ class ChefRecipeDetailScreenState extends ConsumerState<ChefRecipeDetailScreen> 
                     fontStyle: FontStyle.italic,
                     color: Theme.of(context).colorScheme.outline,
                   )),
+              if (suggestion.leftoverNotes.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                ...suggestion.leftoverNotes.map(
+                  (n) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.timer_outlined,
+                            size: 14, color: Colors.amber.shade800),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            n,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.amber.shade900),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               Text('Ingredients',
                   style: Theme.of(context).textTheme.titleSmall),
@@ -2750,17 +2777,13 @@ class _ChefsCornerTabState extends ConsumerState<_ChefsCornerTab> {
               ),
               const SizedBox(height: 20),
 
-              // "Use soon" banner — items expiring within 7 days
+              // MIX5: leftover / use-soon banner (expiry, low qty, stale stock)
               Builder(builder: (context) {
-                final soon = pantryIngredients
-                    .where((i) =>
-                        i.inMyPantry &&
-                        i.expiryDate != null &&
-                        i.expiryDate!
-                            .isBefore(DateTime.now().add(const Duration(days: 7))))
-                    .toList()
-                  ..sort((a, b) => a.expiryDate!.compareTo(b.expiryDate!));
-                if (soon.isEmpty) return const SizedBox.shrink();
+                final ranked = MixologistService.rankPantryForLeftovers(
+                  pantryIngredients: pantryIngredients,
+                  limit: 6,
+                ).where((p) => p.score >= 40).toList();
+                if (ranked.isEmpty) return const SizedBox.shrink();
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(10),
@@ -2769,17 +2792,32 @@ class _ChefsCornerTabState extends ConsumerState<_ChefsCornerTab> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.amber.shade700, width: 0.8),
                   ),
-                  child: Row(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.timer_outlined, size: 16, color: Colors.amber.shade800),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Use soon: ${soon.map((i) => i.name).join(', ')}',
-                          style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
-                        ),
+                      Row(
+                        children: [
+                          Icon(Icons.timer_outlined,
+                              size: 16, color: Colors.amber.shade800),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Use soon (leftovers first)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.amber.shade900,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 4),
+                      for (final p in ranked.take(4))
+                        Text(
+                          '· ${p.ingredient.name}'
+                          '${p.reasons.isEmpty ? '' : ' — ${p.reasons.first}'}',
+                          style: TextStyle(
+                              fontSize: 11, color: Colors.amber.shade900),
+                        ),
                     ],
                   ),
                 );
@@ -2885,6 +2923,25 @@ class _DishSuggestionCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (suggestion.leftoverNotes.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Clearing leftovers',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Colors.amber.shade900,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              ...suggestion.leftoverNotes.map(
+                (n) => Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    '· $n',
+                    style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                  ),
+                ),
+              ),
+            ],
             const Divider(height: 16),
             Text('Ingredients',
                 style: Theme.of(context).textTheme.labelLarge),

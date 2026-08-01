@@ -89,7 +89,7 @@ sleep 1
 ios_tap "$IOS_HOST" "Host Game"
 sleep 3
 for ((i = 1; i <= AI_COUNT; i++)); do
-  ios_tap "$IOS_HOST" "Add AI Player"
+  ios_tap "$IOS_HOST" "Add AI"
   sleep 1
 done
 
@@ -129,7 +129,7 @@ join_android() {
   local serial="$1" name="$2"
   and_tap "$serial" "Games"
   sleep 2
-  and_tap "$serial" -c "Multiplayer Mode"
+  and_tap -c "$serial" "Multiplayer Mode"
   sleep 1
   and_tap "$serial" "$GAME_LABEL"
   sleep 2
@@ -154,7 +154,7 @@ if m:
   fi
   and_tap "$serial" "Join a Game"
   sleep 4
-  and_tap "$serial" -c "$GAME_LABEL" 2>/dev/null || true
+  and_tap -c "$serial" "$GAME_LABEL" 2>/dev/null || true
   sleep 3
 }
 

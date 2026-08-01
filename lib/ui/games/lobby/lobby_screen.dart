@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/app_router.dart';
 import '../../../core/colors.dart';
+import '../../../services/game_ai/game_ai_difficulty.dart';
+import '../../../services/game_ai/game_ai_persona.dart';
 import '../../../services/lan/game_lan_service.dart';
 import '../../../services/lan/lan_providers.dart';
 import '../games/liars_dice/logic.dart' as liars_dice;
@@ -47,6 +49,10 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
   // ── live data ──────────────────────────────────────────────────────────────
   final List<LobbyPlayer> _lobbyPlayers = [];
   int _aiCounter = 0;
+  /// GAI1: difficulty applied to the next AI seat added.
+  GameAiDifficulty _nextAiDifficulty = GameAiDifficulty.normal;
+  /// GAI5: play style applied to the next AI seat added.
+  GameAiPersona _nextAiPersona = GameAiPersona.balanced;
   final List<BonsoirService> _discovered = [];
   StreamSubscription<LobbyPlayer>? _joinSub;
   StreamSubscription<String>? _leaveSub;
@@ -128,10 +134,25 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
 
   void _addAiPlayer() {
     _aiCounter++;
-    final player =
-        LobbyPlayer(id: 'ai_$_aiCounter', name: 'AI $_aiCounter', isAI: true);
+    // GAI5: persona seat name + difficulty, e.g. "Bluffer 2 (Hard)".
+    final player = LobbyPlayer(
+      id: 'ai_$_aiCounter',
+      name:
+          '${_nextAiPersona.seatName} $_aiCounter (${_nextAiDifficulty.label})',
+      isAI: true,
+      aiDifficulty: _nextAiDifficulty,
+      aiPersona: _nextAiPersona,
+    );
     _lan.addLocalPlayer(player);
     setState(() => _lobbyPlayers.add(player));
+  }
+
+  void _cycleNextAiDifficulty() {
+    setState(() => _nextAiDifficulty = _nextAiDifficulty.next);
+  }
+
+  void _cycleNextAiPersona() {
+    setState(() => _nextAiPersona = _nextAiPersona.next);
   }
 
   void _removeAiPlayer(String id) {
@@ -290,6 +311,10 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
           players: _lobbyPlayers,
           onStart: _lobbyPlayers.length >= 2 ? _startGame : null,
           onAddAi: _addAiPlayer,
+          nextAiDifficulty: _nextAiDifficulty,
+          onCycleAiDifficulty: _cycleNextAiDifficulty,
+          nextAiPersona: _nextAiPersona,
+          onCycleAiPersona: _cycleNextAiPersona,
           onRemoveAi: _removeAiPlayer,
         ),
       _LobbyView.joining => _JoiningView(
@@ -371,12 +396,20 @@ class _HostingView extends StatelessWidget {
   final VoidCallback? onStart;
   final VoidCallback onAddAi;
   final void Function(String id) onRemoveAi;
+  final GameAiDifficulty nextAiDifficulty;
+  final VoidCallback onCycleAiDifficulty;
+  final GameAiPersona nextAiPersona;
+  final VoidCallback onCycleAiPersona;
 
   const _HostingView({
     required this.players,
     required this.onStart,
     required this.onAddAi,
     required this.onRemoveAi,
+    required this.nextAiDifficulty,
+    required this.onCycleAiDifficulty,
+    required this.nextAiPersona,
+    required this.onCycleAiPersona,
   });
 
   @override
@@ -410,7 +443,9 @@ class _HostingView extends StatelessWidget {
                       title: Text(p.name),
                       subtitle: Text(p.id == 'host'
                           ? 'Host'
-                          : (p.isAI ? 'AI' : 'Player')),
+                          : (p.isAI
+                              ? 'AI · ${p.aiPersona.label} · ${p.aiDifficulty.label}'
+                              : 'Player')),
                       trailing: p.isAI
                           ? IconButton(
                               icon: const Icon(Icons.delete_outline),
@@ -422,10 +457,29 @@ class _HostingView extends StatelessWidget {
                 ),
         ),
         const SizedBox(height: 8),
-        FilledButton.tonalIcon(
-          onPressed: onAddAi,
-          icon: const Icon(Icons.smart_toy_outlined),
-          label: const Text('Add AI Player'),
+        // GAI1 difficulty + GAI5 persona chips for the next seat.
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              label: Text('Skill: ${nextAiDifficulty.label}'),
+              selected: true,
+              onSelected: (_) => onCycleAiDifficulty(),
+              avatar: const Icon(Icons.tune, size: 16),
+            ),
+            FilterChip(
+              label: Text('Style: ${nextAiPersona.label}'),
+              selected: true,
+              onSelected: (_) => onCycleAiPersona(),
+              avatar: const Icon(Icons.psychology_outlined, size: 16),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: onAddAi,
+              icon: const Icon(Icons.smart_toy_outlined),
+              label: const Text('Add AI'),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         FilledButton(

@@ -1,56 +1,47 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/supabase_client.dart';
+
+import 'auth_backend.dart';
 
 class AuthService {
+  AuthService(this.ref, {AuthBackend? backend})
+      : _backend = backend ?? const LiveAuthBackend();
+
   final Ref ref;
-  AuthService(this.ref);
+  final AuthBackend _backend;
 
-  User? get currentUser => SupabaseClientWrapper.instance.auth.currentUser;
+  User? get currentUser => _backend.currentUser;
 
-  Stream<User?> get authState => SupabaseClientWrapper
-      .instance
-      .auth
-      .onAuthStateChange
-      .map((data) => data.session?.user);
+  Stream<User?> get authState =>
+      _backend.onAuthStateChange.map((data) => data.session?.user);
 
   Future<void> signInWithMagicLink(String email) async {
-    await SupabaseClientWrapper.instance.auth.signInWithOtp(
+    await _backend.signInWithOtp(
       email: email,
       emailRedirectTo: 'io.supabase.sisu://login-callback/',
     );
   }
 
-  Future<void> signOut() => SupabaseClientWrapper.instance.auth.signOut();
+  Future<void> signOut() => _backend.signOut();
 
   Future<void> signIn(String email, String password) async {
-    await SupabaseClientWrapper.instance.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    await _backend.signInWithPassword(email: email, password: password);
   }
 
   /// Owner sign-up at Pro upgrade (email + password account creation).
   Future<void> signUp(String email, String password) async {
-    await SupabaseClientWrapper.instance.auth.signUp(
-      email: email,
-      password: password,
-    );
+    await _backend.signUp(email: email, password: password);
   }
 
   /// Crew join: anonymous device identity, then redeem a boat's share code.
   /// Requires "Allow anonymous sign-ins" enabled on the Supabase project.
   Future<void> signInAnonymously() async {
-    await SupabaseClientWrapper.instance.auth.signInAnonymously();
+    await _backend.signInAnonymously();
   }
 
   /// Redeems a per-boat [code] for the current (owner or anonymous) user and
   /// returns the joined boat's `supabaseId`. Throws on an invalid code.
-  Future<String> redeemBoatCode(String code) async {
-    final result = await SupabaseClientWrapper.instance
-        .rpc('redeem_boat_code', params: {'p_code': code});
-    return result as String;
-  }
+  Future<String> redeemBoatCode(String code) => _backend.redeemBoatCode(code);
 
   /// Crew flow: ensure a session (anonymous if none), redeem [code], and return
   /// the joined boat's id + name. Throws on an invalid code.
@@ -59,11 +50,7 @@ class AuthService {
       await signInAnonymously();
     }
     final boatId = await redeemBoatCode(code);
-    final row = await SupabaseClientWrapper.instance
-        .from('boats')
-        .select('name')
-        .eq('supabaseId', boatId)
-        .maybeSingle();
+    final row = await _backend.fetchBoatRow(boatId, select: 'name');
     return (boatId: boatId, name: (row?['name'] as String?) ?? 'Shared Boat');
   }
 
@@ -92,18 +79,16 @@ class AuthService {
   Future<void> claimBoatOwnership(String boatSupabaseId) async {
     final uid = currentUser?.id;
     if (uid == null || boatSupabaseId.isEmpty) return;
-    await SupabaseClientWrapper.instance
-        .from('boats')
-        .update({'ownerId': uid}).eq('supabaseId', boatSupabaseId);
+    await _backend.updateBoatOwner(
+      boatSupabaseId: boatSupabaseId,
+      ownerId: uid,
+    );
   }
 
   /// The share code crew use to join [boatSupabaseId], or null if unavailable.
   Future<String?> fetchBoatShareCode(String boatSupabaseId) async {
-    final row = await SupabaseClientWrapper.instance
-        .from('boats')
-        .select('shareCode')
-        .eq('supabaseId', boatSupabaseId)
-        .maybeSingle();
+    final row =
+        await _backend.fetchBoatRow(boatSupabaseId, select: 'shareCode');
     return row?['shareCode'] as String?;
   }
 }

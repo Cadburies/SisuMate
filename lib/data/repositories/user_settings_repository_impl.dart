@@ -19,7 +19,7 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
     ..selectedBoatId = r.selectedBoatId
     ..userId = r.userId
     ..isDarkMode = r.isDarkMode
-    ..useImperial = r.useImperial
+    ..unitPrefsJson = r.unitPrefsJson
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified
     ..recentEmails = (jsonDecode(r.recentEmails) as List).cast<String>()
@@ -38,7 +38,7 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
         selectedBoatId: Value(s.selectedBoatId),
         userId: Value(s.userId),
         isDarkMode: Value(s.isDarkMode),
-        useImperial: Value(s.useImperial),
+        unitPrefsJson: Value(s.unitPrefsJson),
         isSynced: Value(s.isSynced),
         lastModified: Value(s.lastModified),
         recentEmails: Value(jsonEncode(s.recentEmails)),

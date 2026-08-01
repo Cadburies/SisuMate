@@ -31,11 +31,11 @@ class MaintenanceItemsScreen extends ConsumerStatefulWidget {
 }
 
 class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showCompleted = true;
   bool _showIncomplete = true;
-  bool _showHidden = false;
 
   @override
   void dispose() {
@@ -49,14 +49,19 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
     final isProAsync = ref.watch(isProProvider);
     final isPro = isProAsync.value ?? false;
     final currentItems = asyncItems.asData?.value ?? const <ChecklistItem>[];
+    final showHidden =
+        ref.watch(userSettingsProvider).asData?.value?.showHiddenItems ?? false;
 
     return Scaffold(
+      key: _scaffoldKey,
       body: SafeArea(
         child: Column(
           children: [
             // Title Tile with group title
             TitleTile(
               title: widget.group.title,
+              onMenuPressed: () =>
+                  _scaffoldKey.currentState?.openEndDrawer(),
               actionsBuilder: (color) => [
                 IconButton(
                   icon: Icon(Icons.import_export, color: color),
@@ -69,6 +74,8 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                       fileBaseName: 'sisu_maintenance',
                       exportCurrent: () async =>
                           ImportService.exportChecklist(currentItems),
+                      existingNames: () async =>
+                          currentItems.map((e) => e.title).toList(),
                       persist: (batch) async {
                         final repo = ref.read(checklistRepositoryProvider);
                         final existing = await repo
@@ -127,7 +134,7 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                     }
 
                     // Status filters
-                    if (item.isHidden && !_showHidden) return false;
+                    if (item.isHidden && !showHidden) return false;
                     if (item.isCompleted && !_showCompleted) return false;
                     if (!item.isCompleted && !_showIncomplete) return false;
 
@@ -394,11 +401,10 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                     subtitle: const Text('Display soft-deleted items'),
                     value: settings?.showHiddenItems ?? false,
                     onChanged: (value) async {
-                      setState(() {
-                        _showHidden = value;
-                      });
-                      final updatedSettings = (settings ?? UserSettings())..showHiddenItems = value;
-                      final repository = ref.read(userSettingsRepositoryProvider);
+                      final updatedSettings = (settings ?? UserSettings())
+                        ..showHiddenItems = value;
+                      final repository =
+                          ref.read(userSettingsRepositoryProvider);
                       await repository.updateSettings(updatedSettings);
                       ref.invalidate(userSettingsProvider);
                     },

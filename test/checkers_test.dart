@@ -548,6 +548,47 @@ void main() {
     });
   });
 
+  // ── GAI2: minimax/alpha-beta AI ──────────────────────────────────────────
+
+  group('GAI2 minimax AI', () {
+    test(
+        'AI prefers a free capture over a same-value capture that gets '
+        'immediately recaptured — the old random-among-captures heuristic '
+        'could not see this one ply ahead', () {
+      final board = _emptyBoard();
+      // Option A: AI (3,3) can jump human (2,2) landing (1,1) — but human
+      // (0,0) then recaptures at (2,2), an even 1-for-1 trade.
+      board[3][3] = 2;
+      board[2][2] = 1;
+      board[0][0] = 1;
+      // Option B: AI (6,6) can jump human (5,5) landing (4,4) — nothing on
+      // the board can recapture there, a clean unanswered capture.
+      board[6][6] = 2;
+      board[5][5] = 1;
+
+      final c = _makeSeeded(CheckersState(
+        board: board,
+        isPlayerTurn: false,
+        selectedRow: null,
+        selectedCol: null,
+        validMoves: const [],
+        allMoves: getAllMoves(board, false),
+        phase: GamePhase.playing,
+        message: '',
+        winner: null,
+      ));
+      c.read(checkersStateProvider.notifier).debugRunAiMove();
+      final s = c.read(checkersStateProvider);
+
+      expect(s.board[5][5], 0, reason: 'the free capture must be taken');
+      expect(s.board[4][4], 2, reason: 'AI piece lands on the safe square');
+      expect(s.board[3][3], 2,
+          reason: 'the piece walking into a same-value trade stays put');
+      expect(s.board[2][2], 1,
+          reason: 'the piece that would only trade evenly is left alone');
+    });
+  });
+
   group('CheckersState JSON round-trip (broadcastIfHost payload)', () {
     test('toJson/fromJson round-trips fields and recomputes allMoves', () {
       final board = _emptyBoard();

@@ -14,10 +14,12 @@ TEXT="${2:?usage: adb_tap_text.sh [-c] <serial> <text>}"
 
 DUMP="$(adb -s "$SERIAL" exec-out uiautomator dump /dev/tty 2>/dev/null)"
 
+# Flutter surfaces semantics as content-desc on some Android versions and as
+# text on others — match either attribute.
 if [ "$CONTAINS" = true ]; then
-  PATTERN="\"[^\"]*${TEXT}[^\"]*\""
+  PATTERN="(text|content-desc)=\"[^\"]*${TEXT}[^\"]*\""
 else
-  PATTERN="\"${TEXT}\""
+  PATTERN="(text|content-desc)=\"${TEXT}\""
 fi
 
 BOUNDS="$(echo "$DUMP" | grep -oE "${PATTERN}[^/]*bounds=\"\[[0-9,]+\]\[[0-9,]+\]\"" | head -1 | grep -oE '\[[0-9,]+\]\[[0-9,]+\]')"

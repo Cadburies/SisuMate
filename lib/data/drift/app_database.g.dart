@@ -15186,20 +15186,17 @@ class $UserSettingsTableTable extends UserSettingsTable
     ),
     defaultValue: const Constant(true),
   );
-  static const VerificationMeta _useImperialMeta = const VerificationMeta(
-    'useImperial',
+  static const VerificationMeta _unitPrefsJsonMeta = const VerificationMeta(
+    'unitPrefsJson',
   );
   @override
-  late final GeneratedColumn<bool> useImperial = GeneratedColumn<bool>(
-    'use_imperial',
+  late final GeneratedColumn<String> unitPrefsJson = GeneratedColumn<String>(
+    'unit_prefs_json',
     aliasedName,
     false,
-    type: DriftSqlType.bool,
+    type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("use_imperial" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
+    defaultValue: const Constant(''),
   );
   static const VerificationMeta _isSyncedMeta = const VerificationMeta(
     'isSynced',
@@ -15295,7 +15292,7 @@ class $UserSettingsTableTable extends UserSettingsTable
     selectedBoatId,
     userId,
     isDarkMode,
-    useImperial,
+    unitPrefsJson,
     isSynced,
     lastModified,
     recentEmails,
@@ -15376,12 +15373,12 @@ class $UserSettingsTableTable extends UserSettingsTable
         ),
       );
     }
-    if (data.containsKey('use_imperial')) {
+    if (data.containsKey('unit_prefs_json')) {
       context.handle(
-        _useImperialMeta,
-        useImperial.isAcceptableOrUnknown(
-          data['use_imperial']!,
-          _useImperialMeta,
+        _unitPrefsJsonMeta,
+        unitPrefsJson.isAcceptableOrUnknown(
+          data['unit_prefs_json']!,
+          _unitPrefsJsonMeta,
         ),
       );
     }
@@ -15480,9 +15477,9 @@ class $UserSettingsTableTable extends UserSettingsTable
         DriftSqlType.bool,
         data['${effectivePrefix}is_dark_mode'],
       )!,
-      useImperial: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}use_imperial'],
+      unitPrefsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit_prefs_json'],
       )!,
       isSynced: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -15531,8 +15528,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
   final String? userId;
   final bool isDarkMode;
 
-  /// UI/export preference only — stored measurements stay metric.
-  final bool useImperial;
+  /// JSON [AppUnitPrefs]: volume, temperature, speed, depth, distance.
+  final String unitPrefsJson;
   final bool isSynced;
   final DateTime lastModified;
   final String recentEmails;
@@ -15552,7 +15549,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     this.selectedBoatId,
     this.userId,
     required this.isDarkMode,
-    required this.useImperial,
+    required this.unitPrefsJson,
     required this.isSynced,
     required this.lastModified,
     required this.recentEmails,
@@ -15580,7 +15577,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       map['user_id'] = Variable<String>(userId);
     }
     map['is_dark_mode'] = Variable<bool>(isDarkMode);
-    map['use_imperial'] = Variable<bool>(useImperial);
+    map['unit_prefs_json'] = Variable<String>(unitPrefsJson);
     map['is_synced'] = Variable<bool>(isSynced);
     map['last_modified'] = Variable<DateTime>(lastModified);
     map['recent_emails'] = Variable<String>(recentEmails);
@@ -15615,7 +15612,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           ? const Value.absent()
           : Value(userId),
       isDarkMode: Value(isDarkMode),
-      useImperial: Value(useImperial),
+      unitPrefsJson: Value(unitPrefsJson),
       isSynced: Value(isSynced),
       lastModified: Value(lastModified),
       recentEmails: Value(recentEmails),
@@ -15648,7 +15645,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       selectedBoatId: serializer.fromJson<String?>(json['selectedBoatId']),
       userId: serializer.fromJson<String?>(json['userId']),
       isDarkMode: serializer.fromJson<bool>(json['isDarkMode']),
-      useImperial: serializer.fromJson<bool>(json['useImperial']),
+      unitPrefsJson: serializer.fromJson<String>(json['unitPrefsJson']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
       recentEmails: serializer.fromJson<String>(json['recentEmails']),
@@ -15670,7 +15667,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       'selectedBoatId': serializer.toJson<String?>(selectedBoatId),
       'userId': serializer.toJson<String?>(userId),
       'isDarkMode': serializer.toJson<bool>(isDarkMode),
-      'useImperial': serializer.toJson<bool>(useImperial),
+      'unitPrefsJson': serializer.toJson<String>(unitPrefsJson),
       'isSynced': serializer.toJson<bool>(isSynced),
       'lastModified': serializer.toJson<DateTime>(lastModified),
       'recentEmails': serializer.toJson<String>(recentEmails),
@@ -15690,7 +15687,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     Value<String?> selectedBoatId = const Value.absent(),
     Value<String?> userId = const Value.absent(),
     bool? isDarkMode,
-    bool? useImperial,
+    String? unitPrefsJson,
     bool? isSynced,
     DateTime? lastModified,
     String? recentEmails,
@@ -15711,7 +15708,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
         : this.selectedBoatId,
     userId: userId.present ? userId.value : this.userId,
     isDarkMode: isDarkMode ?? this.isDarkMode,
-    useImperial: useImperial ?? this.useImperial,
+    unitPrefsJson: unitPrefsJson ?? this.unitPrefsJson,
     isSynced: isSynced ?? this.isSynced,
     lastModified: lastModified ?? this.lastModified,
     recentEmails: recentEmails ?? this.recentEmails,
@@ -15740,9 +15737,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       isDarkMode: data.isDarkMode.present
           ? data.isDarkMode.value
           : this.isDarkMode,
-      useImperial: data.useImperial.present
-          ? data.useImperial.value
-          : this.useImperial,
+      unitPrefsJson: data.unitPrefsJson.present
+          ? data.unitPrefsJson.value
+          : this.unitPrefsJson,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       lastModified: data.lastModified.present
           ? data.lastModified.value
@@ -15772,7 +15769,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           ..write('selectedBoatId: $selectedBoatId, ')
           ..write('userId: $userId, ')
           ..write('isDarkMode: $isDarkMode, ')
-          ..write('useImperial: $useImperial, ')
+          ..write('unitPrefsJson: $unitPrefsJson, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified, ')
           ..write('recentEmails: $recentEmails, ')
@@ -15794,7 +15791,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     selectedBoatId,
     userId,
     isDarkMode,
-    useImperial,
+    unitPrefsJson,
     isSynced,
     lastModified,
     recentEmails,
@@ -15815,7 +15812,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           other.selectedBoatId == this.selectedBoatId &&
           other.userId == this.userId &&
           other.isDarkMode == this.isDarkMode &&
-          other.useImperial == this.useImperial &&
+          other.unitPrefsJson == this.unitPrefsJson &&
           other.isSynced == this.isSynced &&
           other.lastModified == this.lastModified &&
           other.recentEmails == this.recentEmails &&
@@ -15834,7 +15831,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
   final Value<String?> selectedBoatId;
   final Value<String?> userId;
   final Value<bool> isDarkMode;
-  final Value<bool> useImperial;
+  final Value<String> unitPrefsJson;
   final Value<bool> isSynced;
   final Value<DateTime> lastModified;
   final Value<String> recentEmails;
@@ -15851,7 +15848,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.selectedBoatId = const Value.absent(),
     this.userId = const Value.absent(),
     this.isDarkMode = const Value.absent(),
-    this.useImperial = const Value.absent(),
+    this.unitPrefsJson = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
     this.recentEmails = const Value.absent(),
@@ -15869,7 +15866,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.selectedBoatId = const Value.absent(),
     this.userId = const Value.absent(),
     this.isDarkMode = const Value.absent(),
-    this.useImperial = const Value.absent(),
+    this.unitPrefsJson = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
     this.recentEmails = const Value.absent(),
@@ -15887,7 +15884,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Expression<String>? selectedBoatId,
     Expression<String>? userId,
     Expression<bool>? isDarkMode,
-    Expression<bool>? useImperial,
+    Expression<String>? unitPrefsJson,
     Expression<bool>? isSynced,
     Expression<DateTime>? lastModified,
     Expression<String>? recentEmails,
@@ -15906,7 +15903,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       if (selectedBoatId != null) 'selected_boat_id': selectedBoatId,
       if (userId != null) 'user_id': userId,
       if (isDarkMode != null) 'is_dark_mode': isDarkMode,
-      if (useImperial != null) 'use_imperial': useImperial,
+      if (unitPrefsJson != null) 'unit_prefs_json': unitPrefsJson,
       if (isSynced != null) 'is_synced': isSynced,
       if (lastModified != null) 'last_modified': lastModified,
       if (recentEmails != null) 'recent_emails': recentEmails,
@@ -15926,7 +15923,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Value<String?>? selectedBoatId,
     Value<String?>? userId,
     Value<bool>? isDarkMode,
-    Value<bool>? useImperial,
+    Value<String>? unitPrefsJson,
     Value<bool>? isSynced,
     Value<DateTime>? lastModified,
     Value<String>? recentEmails,
@@ -15944,7 +15941,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       selectedBoatId: selectedBoatId ?? this.selectedBoatId,
       userId: userId ?? this.userId,
       isDarkMode: isDarkMode ?? this.isDarkMode,
-      useImperial: useImperial ?? this.useImperial,
+      unitPrefsJson: unitPrefsJson ?? this.unitPrefsJson,
       isSynced: isSynced ?? this.isSynced,
       lastModified: lastModified ?? this.lastModified,
       recentEmails: recentEmails ?? this.recentEmails,
@@ -15984,8 +15981,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     if (isDarkMode.present) {
       map['is_dark_mode'] = Variable<bool>(isDarkMode.value);
     }
-    if (useImperial.present) {
-      map['use_imperial'] = Variable<bool>(useImperial.value);
+    if (unitPrefsJson.present) {
+      map['unit_prefs_json'] = Variable<String>(unitPrefsJson.value);
     }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
@@ -16022,7 +16019,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
           ..write('selectedBoatId: $selectedBoatId, ')
           ..write('userId: $userId, ')
           ..write('isDarkMode: $isDarkMode, ')
-          ..write('useImperial: $useImperial, ')
+          ..write('unitPrefsJson: $unitPrefsJson, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified, ')
           ..write('recentEmails: $recentEmails, ')
@@ -25370,7 +25367,7 @@ typedef $$UserSettingsTableTableCreateCompanionBuilder =
       Value<String?> selectedBoatId,
       Value<String?> userId,
       Value<bool> isDarkMode,
-      Value<bool> useImperial,
+      Value<String> unitPrefsJson,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
       Value<String> recentEmails,
@@ -25389,7 +25386,7 @@ typedef $$UserSettingsTableTableUpdateCompanionBuilder =
       Value<String?> selectedBoatId,
       Value<String?> userId,
       Value<bool> isDarkMode,
-      Value<bool> useImperial,
+      Value<String> unitPrefsJson,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
       Value<String> recentEmails,
@@ -25448,8 +25445,8 @@ class $$UserSettingsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get useImperial => $composableBuilder(
-    column: $table.useImperial,
+  ColumnFilters<String> get unitPrefsJson => $composableBuilder(
+    column: $table.unitPrefsJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -25538,8 +25535,8 @@ class $$UserSettingsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get useImperial => $composableBuilder(
-    column: $table.useImperial,
+  ColumnOrderings<String> get unitPrefsJson => $composableBuilder(
+    column: $table.unitPrefsJson,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -25622,8 +25619,8 @@ class $$UserSettingsTableTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<bool> get useImperial => $composableBuilder(
-    column: $table.useImperial,
+  GeneratedColumn<String> get unitPrefsJson => $composableBuilder(
+    column: $table.unitPrefsJson,
     builder: (column) => column,
   );
 
@@ -25705,7 +25702,7 @@ class $$UserSettingsTableTableTableManager
                 Value<String?> selectedBoatId = const Value.absent(),
                 Value<String?> userId = const Value.absent(),
                 Value<bool> isDarkMode = const Value.absent(),
-                Value<bool> useImperial = const Value.absent(),
+                Value<String> unitPrefsJson = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
                 Value<String> recentEmails = const Value.absent(),
@@ -25722,7 +25719,7 @@ class $$UserSettingsTableTableTableManager
                 selectedBoatId: selectedBoatId,
                 userId: userId,
                 isDarkMode: isDarkMode,
-                useImperial: useImperial,
+                unitPrefsJson: unitPrefsJson,
                 isSynced: isSynced,
                 lastModified: lastModified,
                 recentEmails: recentEmails,
@@ -25741,7 +25738,7 @@ class $$UserSettingsTableTableTableManager
                 Value<String?> selectedBoatId = const Value.absent(),
                 Value<String?> userId = const Value.absent(),
                 Value<bool> isDarkMode = const Value.absent(),
-                Value<bool> useImperial = const Value.absent(),
+                Value<String> unitPrefsJson = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
                 Value<String> recentEmails = const Value.absent(),
@@ -25758,7 +25755,7 @@ class $$UserSettingsTableTableTableManager
                 selectedBoatId: selectedBoatId,
                 userId: userId,
                 isDarkMode: isDarkMode,
-                useImperial: useImperial,
+                unitPrefsJson: unitPrefsJson,
                 isSynced: isSynced,
                 lastModified: lastModified,
                 recentEmails: recentEmails,

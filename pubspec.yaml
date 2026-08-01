@@ -66,6 +66,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -98,7 +100,8 @@ flutter:
   assets:
     - assets/Disclaimer.jpg
     - assets/NoPicture.jpg
-    - assets/service-account-google-play.json
+    # SEC1: never list Google Play / CI credentials here — they ship inside every
+    # APK/IPA. Keep service-account JSON under secrets/ (gitignored), inject via CI.
     - assets/seed/cocktails_import_seed.json
     - assets/seed/menus_import_seed.json
     - assets/cocktails/

@@ -108,16 +108,24 @@ class SyncService {
     _started = true;
     _startQueueMonitor();
 
-    // Monitor connectivity to flush queue when back online
-    Connectivity().onConnectivityChanged.listen((results) {
-      if (results.contains(ConnectivityResult.mobile) ||
-          results.contains(ConnectivityResult.wifi) ||
-          results.contains(ConnectivityResult.ethernet)) {
-        _processOutgoingQueue();
-      }
-    });
+    // Monitor connectivity to flush queue when back online. Best-effort:
+    // tests and desktop without the plugin must not crash crew join.
+    try {
+      Connectivity().onConnectivityChanged.listen((results) {
+        if (results.contains(ConnectivityResult.mobile) ||
+            results.contains(ConnectivityResult.wifi) ||
+            results.contains(ConnectivityResult.ethernet)) {
+          _processOutgoingQueue();
+        }
+      });
+    } catch (_) {}
 
-    _subscribeToTables();
+    try {
+      await _subscribeToTables();
+    } catch (_) {
+      // Offline / Supabase not initialised (unit tests, cold crew join) —
+      // outbox monitor still runs; realtime attaches on a later ensureStarted.
+    }
   }
 
   Future<void> _subscribeToTables() async {

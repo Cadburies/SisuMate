@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../components/title_tile.dart';
 import '../../core/app_router.dart';
+import '../../core/colors.dart';
 import '../../core/di.dart';
+import '../../core/factory_reset.dart';
+import '../../core/units.dart';
 import '../../models/models.dart';
 import '../../providers/shopping_provider.dart';
 import '../../core/theme.dart';
@@ -184,6 +187,9 @@ class SettingsScreen extends ConsumerWidget {
             },
           ),
           const Divider(),
+          _buildSectionHeader(context, 'Units'),
+          const _UnitsSettingsSection(),
+          const Divider(),
           _buildSectionHeader(context, 'Email & Sharing'),
           Consumer(
             builder: (context, ref, child) {
@@ -221,12 +227,13 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).primaryColor,
+          color: SisuColors.getTextSecondaryColor(isDark),
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -310,6 +317,7 @@ class SettingsScreen extends ConsumerWidget {
                 Navigator.of(dialogContext).pop();
                 final dbService = ref.read(databaseServiceProvider);
                 await dbService.factoryReset();
+                invalidateAfterFactoryReset(ref);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -323,6 +331,180 @@ class SettingsScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Marine-style unit profile: presets (like Garmin) + per-category overrides.
+/// Storage remains metric; these only affect display/input conversion.
+class _UnitsSettingsSection extends ConsumerWidget {
+  const _UnitsSettingsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prefs = ref.watch(unitPrefsProvider);
+    final notifier = ref.read(unitPrefsProvider.notifier);
+    final preset = prefs.matchingPreset;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Text(
+            'Database stays metric. Choose how values appear in the app.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              ChoiceChip(
+                label: const Text('Marine'),
+                selected: preset == UnitPreset.marine,
+                onSelected: (_) => notifier.applyPreset(UnitPreset.marine),
+              ),
+              ChoiceChip(
+                label: const Text('US'),
+                selected: preset == UnitPreset.us,
+                onSelected: (_) => notifier.applyPreset(UnitPreset.us),
+              ),
+              ChoiceChip(
+                label: const Text('Metric'),
+                selected: preset == UnitPreset.metric,
+                onSelected: (_) => notifier.applyPreset(UnitPreset.metric),
+              ),
+              if (preset == null)
+                const Chip(
+                  label: Text('Custom'),
+                  avatar: Icon(Icons.tune, size: 16),
+                ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+          child: Text(
+            preset == UnitPreset.marine
+                ? 'L, C, kn, m, NM - common for metric sailors'
+                : preset == UnitPreset.us
+                    ? 'gal, F, kn, ft, NM'
+                    : preset == UnitPreset.metric
+                        ? 'L, C, km/h, m, km'
+                        : 'Mixed units - adjust rows below',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _unitRow<VolumeUnitPref>(
+          context,
+          icon: Icons.local_gas_station_outlined,
+          title: 'Volume & fuel',
+          subtitle: 'Cooking, bar, fuel burn',
+          value: prefs.volume,
+          labels: const {
+            VolumeUnitPref.liters: 'Liters',
+            VolumeUnitPref.usGallons: 'US gal',
+          },
+          onChanged: notifier.setVolume,
+        ),
+        _unitRow<TempUnitPref>(
+          context,
+          icon: Icons.thermostat_outlined,
+          title: 'Temperature',
+          subtitle: 'Weather, recipes',
+          value: prefs.temperature,
+          labels: const {
+            TempUnitPref.celsius: 'C',
+            TempUnitPref.fahrenheit: 'F',
+          },
+          onChanged: notifier.setTemperature,
+        ),
+        _unitRow<SpeedUnitPref>(
+          context,
+          icon: Icons.air,
+          title: 'Wind speed',
+          subtitle: 'Current wind, gusts, forecast',
+          value: prefs.windSpeed,
+          labels: const {
+            SpeedUnitPref.knots: 'kn',
+            SpeedUnitPref.kmh: 'km/h',
+            SpeedUnitPref.mph: 'mph',
+            SpeedUnitPref.metersPerSecond: 'm/s',
+          },
+          onChanged: notifier.setWindSpeed,
+        ),
+        _unitRow<SpeedUnitPref>(
+          context,
+          icon: Icons.speed,
+          title: 'Boat / SOG speed',
+          subtitle: 'Passage planner, speed over ground',
+          value: prefs.boatSpeed,
+          labels: const {
+            SpeedUnitPref.knots: 'kn',
+            SpeedUnitPref.kmh: 'km/h',
+            SpeedUnitPref.mph: 'mph',
+            SpeedUnitPref.metersPerSecond: 'm/s',
+          },
+          onChanged: notifier.setBoatSpeed,
+        ),
+        _unitRow<DepthUnitPref>(
+          context,
+          icon: Icons.waves_outlined,
+          title: 'Depth & waves',
+          subtitle: 'Charted depth, wave height',
+          value: prefs.depth,
+          labels: const {
+            DepthUnitPref.meters: 'm',
+            DepthUnitPref.feet: 'ft',
+            DepthUnitPref.fathoms: 'fm',
+          },
+          onChanged: notifier.setDepth,
+        ),
+        _unitRow<DistanceUnitPref>(
+          context,
+          icon: Icons.straighten,
+          title: 'Distance',
+          subtitle: 'Passage planning',
+          value: prefs.distance,
+          labels: const {
+            DistanceUnitPref.nauticalMiles: 'NM',
+            DistanceUnitPref.kilometers: 'km',
+            DistanceUnitPref.statuteMiles: 'mi',
+          },
+          onChanged: notifier.setDistance,
+        ),
+      ],
+    );
+  }
+
+  Widget _unitRow<T extends Enum>(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required T value,
+    required Map<T, String> labels,
+    required Future<void> Function(T) onChanged,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: DropdownButton<T>(
+        value: value,
+        underline: const SizedBox.shrink(),
+        items: [
+          for (final e in labels.entries)
+            DropdownMenuItem(value: e.key, child: Text(e.value)),
+        ],
+        onChanged: (v) {
+          if (v != null) onChanged(v);
+        },
+      ),
     );
   }
 }

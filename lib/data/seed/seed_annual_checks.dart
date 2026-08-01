@@ -342,7 +342,7 @@ void add(String groupId, String title, String description, String assetPath) {
   add(
     annualId,
     'PFD Cartridges',
-    'Inspect inflatable PFD CO₂ cartridges and auto-inflation bobbins; replace if expired or used.',
+    'Inspect inflatable PFD CO2 cartridges and auto-inflation bobbins; replace if expired or used.',
     'lib/assets/lists/AnualChecks/PFDCartridges.jpg',
   );
   add(

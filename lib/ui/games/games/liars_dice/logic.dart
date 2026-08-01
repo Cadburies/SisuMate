@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../services/game_ai/game_ai_difficulty.dart';
+import '../../../../services/game_ai/game_ai_persona.dart';
 import '../../../../services/lan/game_lan_service.dart';
 import '../../../../services/lan/lan_providers.dart';
 import 'helpers.dart';
@@ -38,6 +40,10 @@ class Player {
   final List<int> dice;
   final int counters;
   final bool isConnected;
+  /// GAI1: seat skill (meaningful when [isAI]).
+  final GameAiDifficulty aiDifficulty;
+  /// GAI5: seat style (meaningful when [isAI]).
+  final GameAiPersona aiPersona;
 
   const Player({
     required this.id,
@@ -46,6 +52,8 @@ class Player {
     this.dice = const [1, 1, 1, 1, 1],
     this.counters = 10,
     this.isConnected = true,
+    this.aiDifficulty = GameAiDifficulty.normal,
+    this.aiPersona = GameAiPersona.balanced,
   });
 
   Player copyWith({
@@ -55,6 +63,8 @@ class Player {
     List<int>? dice,
     int? counters,
     bool? isConnected,
+    GameAiDifficulty? aiDifficulty,
+    GameAiPersona? aiPersona,
   }) {
     return Player(
       id: id ?? this.id,
@@ -63,6 +73,8 @@ class Player {
       dice: dice ?? this.dice,
       counters: counters ?? this.counters,
       isConnected: isConnected ?? this.isConnected,
+      aiDifficulty: aiDifficulty ?? this.aiDifficulty,
+      aiPersona: aiPersona ?? this.aiPersona,
     );
   }
 
@@ -73,6 +85,8 @@ class Player {
         'dice': dice,
         'counters': counters,
         'isConnected': isConnected,
+        if (isAI) 'aiDifficulty': aiDifficulty.wire,
+        if (isAI) 'aiPersona': aiPersona.wire,
       };
 
   factory Player.fromJson(Map<String, dynamic> j) => Player(
@@ -82,6 +96,8 @@ class Player {
         dice: (j['dice'] as List).cast<int>(),
         counters: j['counters'] as int,
         isConnected: j['isConnected'] as bool? ?? true,
+        aiDifficulty: GameAiDifficulty.fromWire(j['aiDifficulty'] as String?),
+        aiPersona: GameAiPersona.fromWire(j['aiPersona'] as String?),
       );
 }
 
@@ -182,6 +198,7 @@ class GameState {
 class GameStateNotifier extends Notifier<GameState> {
   bool _isHostMode = false;
   bool _isClientMode = false;
+  GameAiDifficulty _aiDifficulty = GameAiDifficulty.normal;
 
   bool get isClientMode => _isClientMode;
 
@@ -210,6 +227,7 @@ class GameStateNotifier extends Notifier<GameState> {
   void initHostMode(List<LobbyPlayer> lobbyPlayers) {
     _isHostMode = true;
     _isClientMode = false;
+    _aiDifficulty = maxAiDifficulty(lobbyPlayers);
     _sessionGeneration++;
     _remoteSub?.cancel();
     _moveSub?.cancel();
@@ -220,7 +238,13 @@ class GameStateNotifier extends Notifier<GameState> {
     _leaveSub = lan.playerLeaves.listen(_handleDisconnect);
 
     final players = lobbyPlayers
-        .map((lp) => Player(id: lp.id, name: lp.name, isAI: lp.isAI))
+        .map((lp) => Player(
+              id: lp.id,
+              name: lp.name,
+              isAI: lp.isAI,
+              aiDifficulty: lp.aiDifficulty,
+              aiPersona: lp.aiPersona,
+            ))
         .toList();
     state = GameState(
       currentState: GameStateEnum.start,
@@ -546,84 +570,45 @@ class GameStateNotifier extends Notifier<GameState> {
     _broadcastIfHost();
   }
 
-  // ── AI helpers ────────────────────────────────────────────────────────────
+  // ── AI helpers (GAI4 pure logic lives in helpers.dart) ────────────────────
 
-  /// Approximate real-world probability of rolling each hand rank on 5 fair
-  /// d6 dice (standard "poker dice" combinatorics; the two straight ranks
-  /// split the usual combined "straight" probability in half since this game
-  /// tracks 2-6 and 1-5 as separate ranks). Used so the AI's bluffing and
-  /// challenge decisions reason about how implausible a claim is on its own,
-  /// not just relative to what's currently visible on one hand's dice.
-  static const Map<DiceRank, double> _rankProbability = {
-    DiceRank.fiveOfAKind: 6 / 7776,
-    DiceRank.fourOfAKind: 150 / 7776,
-    DiceRank.fullHouse: 300 / 7776,
-    DiceRank.straightHigh: 120 / 7776,
-    DiceRank.straightLow: 120 / 7776,
-    DiceRank.threeOfAKind: 1200 / 7776,
-    DiceRank.twoPair: 1800 / 7776,
-    DiceRank.onePair: 3600 / 7776,
-    DiceRank.highCard: 480 / 7776,
-  };
-
-  /// Bid based on the AI's actual hand, escalating to better ranks only when
-  /// the honest hand won't clear the last declared bid. Within whichever rank
-  /// it lands on, picks the *smallest* valid face rather than the largest —
-  /// previously this searched faces high-to-low and returned the first hit,
-  /// so the AI always overbid to the maximum face for its claimed rank (e.g.
-  /// declaring "Two Pair of 6s" even when nothing about its dice or the
-  /// table called for it), needlessly burning escalation room and reading as
-  /// an obvious tell. Searching low-to-high makes every bid the minimum
-  /// needed to clear the last one.
-  Bid getAIBid() {
-    final lastBid = state.lastDeclaredBid;
-    final myDice = state.players[state.currentTurn].dice;
-    final myRank = evaluateHand(myDice);
-
-    // Try actual rank first (lowest face → highest), then escalate to better ranks.
-    for (int ri = myRank.index; ri >= 0; ri--) {
-      for (int face = 1; face <= 6; face++) {
-        final bid = Bid(DiceRank.values[ri], face);
-        if (isValidBid(bid, lastBid)) return bid;
-      }
-    }
-
-    // Own hand (and every rank better than it) is already exhausted against
-    // lastBid — only possible if lastBid is already the maximum bid in the
-    // game (Five of a Kind, face 6). No valid bid exists; this is a purely
-    // defensive fallback, not a normal bluffing path.
-    return Bid(DiceRank.fiveOfAKind, 6);
+  GameAiDifficulty _difficultyFor(int playerIndex) {
+    final p = state.players[playerIndex];
+    if (p.isAI) return p.aiDifficulty;
+    return _aiDifficulty;
   }
 
-  /// Returns true if the AI should accept the declared hand, false to challenge.
-  /// Decision blends two signals: how the declared rank compares to the AI's
-  /// own (possibly stale) dice, and how implausible the declared rank is in
-  /// absolute terms — a claimed "Five of a Kind" is worth doubting even if it
-  /// doesn't directly contradict what's on our own dice, since it's true on
-  /// fewer than 1 in 1000 honest rolls.
+  GameAiPersona _personaFor(int playerIndex) {
+    final p = state.players[playerIndex];
+    if (p.isAI) return p.aiPersona;
+    return GameAiPersona.balanced;
+  }
+
+  /// Bid based on the AI's actual hand; forced bluffs prefer higher-prior ranks.
+  Bid getAIBid() {
+    final seat = state.players[state.currentTurn];
+    return computeLiarDiceAiBid(
+      seat.dice,
+      state.lastDeclaredBid,
+      difficulty: _difficultyFor(state.currentTurn),
+      persona: _personaFor(state.currentTurn),
+      rng: _rng,
+    );
+  }
+
+  /// Accept or challenge using rank priors + bid-history escalation (GAI4).
   bool getAIAccept() {
     final declared = state.lastDeclaredBid;
     if (declared == null) return true;
-
-    final myDice = state.players[state.oppositionPlayer].dice;
-    final myRank = evaluateHand(myDice);
-
-    // rankDiff > 0 means the declared hand is better (lower index) than ours.
-    final rankDiff = myRank.index - declared.rank.index;
-    if (rankDiff <= 0) return true; // our hand matches or beats declared → accept
-
-    final declaredRarity = _rankProbability[declared.rank] ?? 0.05;
-
-    // Declared far exceeds what we can see, or is inherently a long-shot
-    // claim (fewer than 1 in 50 honest rolls) → almost certainly a bluff.
-    if (rankDiff >= 3 || declaredRarity < 0.02) return false;
-
-    // A small, plausible escalation over a hand we can't rule out → mostly
-    // trust it; a hand that's already fairly rare gets the flatter default.
-    if (rankDiff == 1 && declaredRarity > 0.1) {
-      return _rng.nextInt(100) >= 15; // 85 % accept, 15 % challenge
-    }
-    return _rng.nextInt(100) >= 30; // mid-range default: 70 % accept, 30 % challenge
+    final seat = state.players[state.oppositionPlayer];
+    return computeLiarDiceAiAccept(
+      declared: declared,
+      myDice: seat.dice,
+      bidHistory: state.bidHistory,
+      rng: _rng,
+      difficulty: _difficultyFor(state.oppositionPlayer),
+      persona: _personaFor(state.oppositionPlayer),
+    );
   }
 
   void resetGame() {

@@ -3,6 +3,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class AdHelper {
+  /// Google sample app id used when the host is not Android/iOS (unit tests).
+  static const _testAppId = 'ca-app-pub-3940256099942544~3347511713';
+  static const _testBanner = 'ca-app-pub-3940256099942544/6300978111';
+  static const _testInterstitial = 'ca-app-pub-3940256099942544/1033173712';
+  static const _testNative = 'ca-app-pub-3940256099942544/5224354917';
+
   static String get deviceId {
     if (Platform.isAndroid) {
       return kDebugMode
@@ -12,9 +18,9 @@ class AdHelper {
       return kDebugMode
           ? 'ca-app-pub-3940256099942544~1458002511' //  Debug mode - Test Ads
           : 'ca-app-pub-1941448979345601~3437747519'; // Release mode - Real-time
-    } else {
-      throw UnsupportedError('Unsupported platform');
     }
+    // Host unit tests (macOS/Linux/Windows) — never used for live ads.
+    return _testAppId;
   }
 
   static String get bannerAdUnitId {
@@ -26,9 +32,8 @@ class AdHelper {
       return kDebugMode
           ? 'ca-app-pub-3940256099942544/2934735716' //  Debug mode - Test Ads
           : 'ca-app-pub-1941448979345601/2479889062'; // Release mode - Real-time
-    } else {
-      throw UnsupportedError('Unsupported platform');
     }
+    return _testBanner;
   }
 
   static String get interstitialAdUnitId {
@@ -40,9 +45,8 @@ class AdHelper {
       return kDebugMode
           ? "ca-app-pub-3940256099942544/4411468910" // Debug mode - Test Ads
           : "ca-app-pub-1941448979345601/7516593325"; // Release mode - Real-time
-    } else {
-      throw UnsupportedError("Unsupported platform");
     }
+    return _testInterstitial;
   }
 
   static String get nativeAdUnitId {
@@ -54,8 +58,7 @@ class AdHelper {
       return kDebugMode
           ? "ca-app-pub-3940256099942544/1712485313" // Debug mode - Test Ads
           : "ca-app-pub-1941448979345601/6753303850"; // Release mode - Real-time
-    } else {
-      throw UnsupportedError("Unsupported platform");
     }
+    return _testNative;
   }
 }

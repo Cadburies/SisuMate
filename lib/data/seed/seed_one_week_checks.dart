@@ -59,7 +59,7 @@ Future<void> seedOneWeekChecks(String defaultBoatSupabaseId) async {
   add(
     oneWeekId,
     'PFD Cartridges',
-    'Inspect inflatable PFD CO₂ cartridges and auto-inflation bobbins; verify they are within expiry date and undamaged.',
+    'Inspect inflatable PFD CO2 cartridges and auto-inflation bobbins; verify they are within expiry date and undamaged.',
     'lib/assets/lists/OneWeek/Cartridges.jpg',
   );
   add(

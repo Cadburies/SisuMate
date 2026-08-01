@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../services/game_ai/game_ai_difficulty.dart';
+import '../../../../services/game_ai/game_ai_persona.dart';
 import '../../../../services/lan/game_lan_service.dart';
 import '../../../../services/lan/lan_providers.dart';
 import 'helpers.dart';
@@ -24,6 +26,10 @@ class DudoPlayer {
   final List<int> dice;
   final int diceCount;
   final bool isConnected;
+  /// GAI1: seat skill (meaningful when [isAI]).
+  final GameAiDifficulty aiDifficulty;
+  /// GAI5: seat style (meaningful when [isAI]).
+  final GameAiPersona aiPersona;
 
   const DudoPlayer({
     required this.id,
@@ -32,6 +38,8 @@ class DudoPlayer {
     this.dice = const [1, 1, 1, 1, 1],
     this.diceCount = 5,
     this.isConnected = true,
+    this.aiDifficulty = GameAiDifficulty.normal,
+    this.aiPersona = GameAiPersona.balanced,
   });
 
   bool get isEliminated => diceCount <= 0;
@@ -43,6 +51,8 @@ class DudoPlayer {
     List<int>? dice,
     int? diceCount,
     bool? isConnected,
+    GameAiDifficulty? aiDifficulty,
+    GameAiPersona? aiPersona,
   }) {
     return DudoPlayer(
       id: id ?? this.id,
@@ -51,6 +61,8 @@ class DudoPlayer {
       dice: dice ?? this.dice,
       diceCount: diceCount ?? this.diceCount,
       isConnected: isConnected ?? this.isConnected,
+      aiDifficulty: aiDifficulty ?? this.aiDifficulty,
+      aiPersona: aiPersona ?? this.aiPersona,
     );
   }
 
@@ -61,6 +73,8 @@ class DudoPlayer {
         'dice': dice,
         'diceCount': diceCount,
         'isConnected': isConnected,
+        if (isAI) 'aiDifficulty': aiDifficulty.wire,
+        if (isAI) 'aiPersona': aiPersona.wire,
       };
 
   factory DudoPlayer.fromJson(Map<String, dynamic> j) => DudoPlayer(
@@ -70,6 +84,8 @@ class DudoPlayer {
         dice: (j['dice'] as List).cast<int>(),
         diceCount: j['diceCount'] as int,
         isConnected: j['isConnected'] as bool? ?? true,
+        aiDifficulty: GameAiDifficulty.fromWire(j['aiDifficulty'] as String?),
+        aiPersona: GameAiPersona.fromWire(j['aiPersona'] as String?),
       );
 }
 
@@ -172,6 +188,8 @@ class DudoGameNotifier extends Notifier<DudoGameState> {
   bool _isClientMode = false;
 
   bool get isClientMode => _isClientMode;
+  /// Fallback when a seat has no per-player skill (solo / legacy).
+  GameAiDifficulty _aiDifficulty = GameAiDifficulty.normal;
 
   StreamSubscription<Map<String, dynamic>>? _remoteSub;
   StreamSubscription<({String peerId, String action, Map<String, dynamic> data})>?
@@ -198,6 +216,7 @@ class DudoGameNotifier extends Notifier<DudoGameState> {
   void initHostMode(List<LobbyPlayer> lobbyPlayers) {
     _isHostMode = true;
     _isClientMode = false;
+    _aiDifficulty = maxAiDifficulty(lobbyPlayers);
     _sessionGeneration++;
     _remoteSub?.cancel();
     _moveSub?.cancel();
@@ -208,7 +227,13 @@ class DudoGameNotifier extends Notifier<DudoGameState> {
     _leaveSub = lan.playerLeaves.listen(_handleDisconnect);
 
     final players = lobbyPlayers
-        .map((lp) => DudoPlayer(id: lp.id, name: lp.name, isAI: lp.isAI))
+        .map((lp) => DudoPlayer(
+              id: lp.id,
+              name: lp.name,
+              isAI: lp.isAI,
+              aiDifficulty: lp.aiDifficulty,
+              aiPersona: lp.aiPersona,
+            ))
         .toList();
     state = DudoGameState(
       currentState: DudoStateEnum.start,
@@ -594,19 +619,37 @@ class DudoGameNotifier extends Notifier<DudoGameState> {
     );
   }
 
-  // ── AI helpers ────────────────────────────────────────────────────────────
+  // ── AI helpers (per-seat difficulty + persona when multi-AI) ──────────────
+
+  GameAiDifficulty _difficultyFor(int playerIndex) {
+    final p = state.players[playerIndex];
+    if (p.isAI) return p.aiDifficulty;
+    return _aiDifficulty;
+  }
+
+  GameAiPersona _personaFor(int playerIndex) {
+    final p = state.players[playerIndex];
+    if (p.isAI) return p.aiPersona;
+    return GameAiPersona.balanced;
+  }
 
   DudoBid computeAIBid() => getAIBid(
       state.players, state.activePlayer, state.currentBid,
-      isPalafico: state.isPalaficoRound);
+      isPalafico: state.isPalaficoRound,
+      difficulty: _difficultyFor(state.activePlayer),
+      persona: _personaFor(state.activePlayer));
 
   bool shouldAIDudo() => getAIShouldDudo(
       state.players, state.activePlayer, state.currentBid!,
-      isPalafico: state.isPalaficoRound);
+      isPalafico: state.isPalaficoRound,
+      difficulty: _difficultyFor(state.activePlayer),
+      persona: _personaFor(state.activePlayer));
 
   bool shouldAISpotOn() => getAIShouldSpotOn(
       state.players, state.activePlayer, state.currentBid!,
-      isPalafico: state.isPalaficoRound);
+      isPalafico: state.isPalaficoRound,
+      difficulty: _difficultyFor(state.activePlayer),
+      persona: _personaFor(state.activePlayer));
 }
 
 final dudoGameProvider =

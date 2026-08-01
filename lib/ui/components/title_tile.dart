@@ -140,10 +140,11 @@ class _TitleTileState extends ConsumerState<TitleTile> {
                 ),
                 const SizedBox(height: 1), // Reduced spacing
                 // Second line: the mandatory status line.
+                // Full opacity — alpha < 1 failed WCAG 4.5:1 on dark theme (TEST10).
                 Text(
                   secondLine,
                   style: TextStyle(
-                    color: textColor.withValues(alpha: 0.9),
+                    color: textColor,
                     fontSize: 11, // Reduced font size
                   ),
                   overflow: TextOverflow.ellipsis,

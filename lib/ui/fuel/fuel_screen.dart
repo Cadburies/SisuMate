@@ -10,6 +10,7 @@ import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../core/units.dart';
 import '../../models/models.dart';
+import '../../services/fuel_burn_estimator.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/import_service.dart';
 
@@ -93,6 +94,8 @@ class FuelScreen extends ConsumerWidget {
                     return Column(
                       children: [
                         _SummaryStrip(entries: entries, unitSystem: unitSystem),
+                        _BurnEstimateStrip(
+                            entries: entries, unitSystem: unitSystem),
                         Expanded(
                           child: GridView.builder(
                             padding:
@@ -385,6 +388,165 @@ class _SummaryItem extends StatelessWidget {
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
+  }
+}
+
+/// BAI4: burn rate + ETA empty from fill history (optional hours/NM fields).
+class _BurnEstimateStrip extends StatefulWidget {
+  final List<FuelLogEntry> entries;
+  final UnitSystem unitSystem;
+  const _BurnEstimateStrip({
+    required this.entries,
+    required this.unitSystem,
+  });
+
+  @override
+  State<_BurnEstimateStrip> createState() => _BurnEstimateStripState();
+}
+
+class _BurnEstimateStripState extends State<_BurnEstimateStrip> {
+  final _hoursCtrl = TextEditingController();
+  final _nmCtrl = TextEditingController();
+  bool _expanded = false;
+
+  @override
+  void dispose() {
+    _hoursCtrl.dispose();
+    _nmCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hours = double.tryParse(_hoursCtrl.text.trim());
+    final nm = double.tryParse(_nmCtrl.text.trim());
+    final estimates = const FuelBurnEstimator().estimate(
+      entries: widget.entries,
+      hoursMotored: hours != null && hours > 0 ? hours : null,
+      distanceNm: nm != null && nm > 0 ? nm : null,
+    );
+    if (estimates.isEmpty) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final urgent = estimates.any(
+        (e) => e.daysUntilEmpty != null && e.daysUntilEmpty! <= 3);
+
+    return Material(
+      color: urgent
+          ? theme.colorScheme.errorContainer.withValues(alpha: 0.35)
+          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.hourglass_bottom_outlined,
+                  size: 18,
+                  color: urgent
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Burn & range',
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  child: Text(_expanded ? 'Hide opts' : 'Hours / NM'),
+                ),
+              ],
+            ),
+            if (_expanded) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _hoursCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Hours motored',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _nmCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Distance (NM)',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
+            for (final e in estimates)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  _formatEstimate(e, widget.unitSystem),
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+            Text(
+              'Assumes top-ups to full; capacity = largest fill unless overridden.',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatEstimate(TankBurnEstimate e, UnitSystem system) {
+    // Prefer unit-aware remaining / rates when available.
+    final parts = <String>[e.type];
+    if (e.litersPerDay != null) {
+      parts.add(
+          '${UnitConverter.formatLiters(e.litersPerDay!, system)}/day');
+    }
+    if (e.litersPerHour != null) {
+      parts.add(
+          '${UnitConverter.formatLiters(e.litersPerHour!, system)}/h');
+    }
+    if (e.litersPerNm != null) {
+      parts.add(
+          '${UnitConverter.formatLiters(e.litersPerNm!, system)}/NM');
+    }
+    if (e.estimatedRemainingLiters != null) {
+      parts.add(
+          '${UnitConverter.formatLiters(e.estimatedRemainingLiters!, system)} est. left');
+    } else if (e.sampleFills < 2) {
+      // No burn rate yet — remaining is unknown, not full capacity.
+      parts.add('unknown — log another fill');
+    }
+    if (e.daysUntilEmpty != null) {
+      if (e.daysUntilEmpty! <= 0) {
+        parts.add('empty / fill now');
+      } else {
+        parts.add('~${e.daysUntilEmpty}d to empty');
+      }
+    }
+    return parts.join(' · ');
   }
 }
 

@@ -296,7 +296,7 @@ After all dice are consumed or no moves remain:
 
 - Exact match: if a piece is on point X and the die value equals X, it may be borne off exactly.
 - Overshoot: a die larger than needed may only bear off from the highest occupied point — if a checker remains on any higher point, that overshoot is rejected and the higher checker must move/bear off first.
-- In code: `dest = from - die`. `dest == -1` (exact) is always valid once `humanAllHome()`. `dest < -1` (overshoot) additionally checks `board[from+1..5]` for an occupied higher point, rejecting the move if one exists (fixed 2026-07-15 — see Known Gaps history in changelog.md; previously any overshoot was accepted unconditionally).
+- In code: `dest = from - die`. `dest == -1` (exact) is always valid once `humanAllHome()`. `dest < -1` (overshoot) additionally checks `board[from+1..5]` for an occupied higher point, rejecting the move if one exists (fixed 2026-07-15 — history in `.ai_context/archive/changelog-full-through-2026-07-16.md`; previously any overshoot was accepted unconditionally).
 - Bear-off advances `humanBornOff` or `aiBornOff` by 1.
 - At 15 borne off: game over.
 

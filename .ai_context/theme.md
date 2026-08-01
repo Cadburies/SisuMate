@@ -1,6 +1,6 @@
 # Sisu Mate — Theme & GUI Consistency Standard
 
-> **THE GOLDEN RULE:** Read this file **before changing the colours or layout of any GUI** — every screen, tile, list, title bar, drawer, dialog, or detail view, in **every** module **including Games**. All apps inside Sisu Mate must look and behave as one app. If a change would make a screen diverge from what's below, either bring the screen into line or update this file first (and note it in `changelog.md`). Colours come **only** from `SisuColors` in `lib/core/colors.dart` — never hard-code hex or redefine colours in a widget.
+> **THE GOLDEN RULE:** Read this file **before changing the colours or layout of any GUI** — every screen, tile, list, title bar, drawer, dialog, or detail view, in **every** module **including Games**. All apps inside Sisu Mate must look and behave as one app. If a change would make a screen diverge from what's below, either bring the screen into line or update this file first (and record it in the commit + relevant GitHub issue). Colours come **only** from `SisuColors` in `lib/core/colors.dart` — never hard-code hex or redefine colours in a widget.
 >
 > This standard was set by the product owner (2026-07-07) after finding widespread inconsistency: divergent layouts, non-uniform swipe actions, inconsistent title bars, missing drawer buttons, title overflows, and screens ignoring the dark theme. Treat consistency as a feature.
 

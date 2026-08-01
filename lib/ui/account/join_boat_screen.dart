@@ -6,8 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/di.dart';
-import '../../models/models.dart';
 import '../../providers/shopping_provider.dart';
+import '../../services/join_boat_service.dart';
 
 /// Crew join-a-boat flow: enter the share code the captain gave you. Signs in
 /// anonymously, redeems the code (server-side membership), and makes the boat
@@ -42,27 +42,17 @@ class _JoinBoatScreenState extends ConsumerState<JoinBoatScreen> {
     });
 
     try {
-      final auth = ref.read(authServiceProvider);
-      final joined = await auth.joinBoat(code);
+      final flow = JoinBoatService(
+        auth: ref.read(authServiceProvider),
+        boats: ref.read(boatRepositoryProvider),
+        settings: ref.read(userSettingsRepositoryProvider),
+        enrollment: ref.read(boatEnrollmentServiceProvider),
+        sync: ref.read(syncServiceProvider),
+      );
+      final joined = await flow.join(code);
 
-      // Local-only insert so we never push the owner's boat back.
-      final boat = Boat()
-        ..supabaseId = joined.boatId
-        ..name = joined.name
-        ..isSynced = true
-        ..lastModified = DateTime.now().toUtc();
-      await ref.read(boatRepositoryProvider).upsertLocal(boat);
-
-      final settings = await ref.read(userSettingsProvider.future);
-      if (settings != null) {
-        settings.activeBoatSupabaseId = joined.boatId;
-        await ref.read(userSettingsRepositoryProvider).updateSettings(settings);
-      }
       ref.invalidate(userSettingsProvider);
       ref.invalidate(activeBoatProvider);
-
-      // Flip sync on now that we're an authenticated crew member.
-      await ref.read(syncServiceProvider).ensureStarted();
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -70,16 +60,10 @@ class _JoinBoatScreenState extends ConsumerState<JoinBoatScreen> {
       );
       context.go(AppRoutes.home);
     } catch (e) {
-      setState(() => _error = _friendly(e));
+      setState(() => _error = JoinBoatService.friendlyError(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  String _friendly(Object e) {
-    final s = e.toString();
-    if (s.contains('Invalid boat code')) return 'That code didn’t match a boat.';
-    return 'Could not join: $s';
   }
 
   @override

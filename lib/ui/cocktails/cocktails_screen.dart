@@ -14,6 +14,7 @@ import '../components/ingredient_list_sort.dart';
 import '../components/photo_source_picker.dart';
 import '../../providers/recipe_provider.dart';
 import '../../providers/bar_ingredient_provider.dart';
+import '../../providers/pantry_ingredient_provider.dart';
 import '../../services/import_service.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/mixologist_service.dart';
@@ -141,6 +142,9 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
                                 fileBaseName: 'sisu_cocktails',
                                 exportCurrent: () =>
                                     _exportRecipes(cocktailRecipes),
+                                existingNames: () async => cocktailRecipes
+                                    .map((r) => r.name)
+                                    .toList(),
                                 persist: (batch) =>
                                     _importRecipes(batch, 'cocktail'),
                               ),
@@ -1547,7 +1551,7 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
             barIngredients.any(
                 (b) => b.name.toLowerCase().trim() == nameLower && b.inMyBar);
 
-        // Check if covered by a stocked ingredient's substitute hierarchy
+        // MIX2: catalog substitute1/2 OR static substitute graph.
         final viaIngredient = (!inBar && !ingredient.isGarnish)
             ? barIngredients.where((b) {
                 if (!b.inMyBar) return false;
@@ -1555,7 +1559,13 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
                     b.substitute2?.toLowerCase().trim() == nameLower;
               }).firstOrNull
             : null;
-        final inBarViaSub = viaIngredient != null;
+        final graphSub = (!inBar && !ingredient.isGarnish && viaIngredient == null)
+            ? MixologistService.bestCountingSubstitute(
+                neededName: ingredient.name,
+                barIngredients: barIngredients,
+              )
+            : null;
+        final inBarViaSub = viaIngredient != null || graphSub != null;
         final inShopping = shoppingNames.contains(nameLower);
 
         final barIngredient = barIngredients
@@ -1611,6 +1621,10 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
           if (ingredient.isOptional) 'Optional',
           if (ingredient.isGarnish && ingredient.garnishNotes != null)
             ingredient.garnishNotes!,
+          if (viaIngredient != null)
+            'Sub: ${viaIngredient.name}',
+          if (graphSub != null)
+            'Sub: ${graphSub.using} (${(graphSub.confidence * 100).round()}% — ${graphSub.note})',
           if (!inBar && !inBarViaSub && ingredient.substitute != null)
             'Try: ${ingredient.substitute}',
         ];
@@ -1622,6 +1636,11 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
           if (idx < 0 && viaIngredient != null) {
             idx = list.indexWhere(
                 (b) => b.supabaseId == viaIngredient.supabaseId);
+          }
+          if (idx < 0 && graphSub != null) {
+            idx = list.indexWhere(
+                (b) => b.name.toLowerCase().trim() ==
+                    graphSub.using.toLowerCase().trim());
           }
           if (idx < 0) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1792,6 +1811,48 @@ class _BarTabState extends ConsumerState<_BarTab> {
                   ),
             ),
           ),
+        ),
+        // MIX4: low-stock / stale purchase heads-up
+        barAsync.when(
+          data: (ingredients) {
+            final low = MixologistService.lowStockBarItems(
+              barIngredients: ingredients,
+            );
+            if (low.isEmpty) return const SizedBox.shrink();
+            final top = low.take(3).toList();
+            return Material(
+              color: Theme.of(context).colorScheme.errorContainer
+                  .withValues(alpha: 0.35),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bar may be low',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    for (final item in top)
+                      Text(
+                        '${item.ingredient.name}: ${item.reason}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    if (low.length > 3)
+                      Text(
+                        '+${low.length - 3} more',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
         ),
         Expanded(
           child: barAsync.when(
@@ -2449,8 +2510,38 @@ class _MixologistTab extends ConsumerStatefulWidget {
 class _MixologistTabState extends ConsumerState<_MixologistTab> {
   final Set<String> _selectedVibes = {};
   String? _selectedOccasion;
+  CocktailStrength _strength = CocktailStrength.session;
+  String _glassware = 'Auto';
+  int _servings = 1;
   CocktailSuggestion? _suggestion;
   bool _isGenerating = false;
+  List<MakeableRecipeScore>? _makeable;
+  bool _loadingMakeable = false;
+
+  Future<void> _loadMakeable(
+    List<BarIngredient> bar,
+    List<PantryIngredient> pantry,
+  ) async {
+    setState(() => _loadingMakeable = true);
+    final cocktails =
+        ref.read(recipesProvider('cocktail')).asData?.value ?? const [];
+    final repo = ref.read(recipeRepositoryProvider);
+    final map = <String, List<RecipeIngredient>>{};
+    for (final r in cocktails) {
+      map[r.supabaseId] = await repo.getIngredientsOnce(r.supabaseId);
+    }
+    if (!mounted) return;
+    final ranked = MixologistService.rankMakeableTonight(
+      recipes: cocktails,
+      ingredientsByRecipeId: map,
+      barIngredients: bar,
+      pantryIngredients: pantry,
+    );
+    setState(() {
+      _makeable = ranked;
+      _loadingMakeable = false;
+    });
+  }
 
   void _generate(List<BarIngredient> allIngredients) {
     final vibes = _selectedVibes.isEmpty ? ['fresh'] : _selectedVibes.toList();
@@ -2466,6 +2557,9 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
     final result = MixologistService.suggest(
       vibes: vibes,
       barIngredients: allIngredients,
+      strength: _strength,
+      glassware: _glassware,
+      servings: _servings,
     );
     setState(() {
       _suggestion = result;
@@ -2511,17 +2605,115 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
   @override
   Widget build(BuildContext context) {
     final barAsync = ref.watch(barIngredientsProvider);
+    final pantryAsync = ref.watch(pantryIngredientsProvider);
 
     return barAsync.when(
       data: (allIngredients) {
         final inBar = allIngredients.where((i) => i.inMyBar).toList();
+        final pantry = pantryAsync.asData?.value ?? const <PantryIngredient>[];
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('What vibe are you after?',
+              // MIX1: what can I make tonight
+              Text('What can I make tonight?',
                   style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                'Ranked by stock on hand; close substitutes count (with notes)',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Colors.grey),
+              ),
+              const SizedBox(height: 8),
+              if (inBar.isEmpty)
+                Text(
+                  'Mark bottles in My Bar to see makeable drinks.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                )
+              else ...[
+                OutlinedButton.icon(
+                  onPressed: _loadingMakeable
+                      ? null
+                      : () => _loadMakeable(allIngredients, pantry),
+                  icon: _loadingMakeable
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.checklist),
+                  label: Text(
+                    _makeable == null ? 'Rank my cocktails' : 'Refresh ranking',
+                  ),
+                ),
+                if (_makeable != null) ...[
+                  const SizedBox(height: 8),
+                  if (_makeable!.isEmpty)
+                    const Text('No cocktail recipes with ingredients found.')
+                  else
+                    ..._makeable!.take(8).map((s) {
+                      final withSubs = s.isMakeableWithSubs;
+                      final badge = s.isMakeable
+                          ? (withSubs ? 'Ready*' : 'Ready')
+                          : 'Need ${s.missingCount}';
+                      final subLine = s.substitutesUsed.isEmpty
+                          ? null
+                          : s.substitutesUsed
+                              .take(2)
+                              .map((u) =>
+                                  '${u.using}→${u.needed} (${(u.confidence * 100).round()}%)')
+                              .join(' · ');
+                      final body = s.isMakeable
+                          ? (withSubs
+                              ? 'On hand with substitutes: $subLine'
+                              : 'All ${s.haveCount} ingredients on hand')
+                          : 'Have ${s.haveCount} · missing: ${s.missingNames.take(3).join(', ')}'
+                              '${s.missingNames.length > 3 ? '...' : ''}'
+                              '${subLine == null ? '' : '\nSubs: $subLine'}';
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          s.isMakeable
+                              ? (withSubs
+                                  ? Icons.swap_horiz
+                                  : Icons.check_circle)
+                              : Icons.radio_button_unchecked,
+                          color: s.isMakeable
+                              ? SisuColors.completedBackground
+                              : Colors.grey,
+                        ),
+                        title: Text(s.recipe.name),
+                        subtitle: Text(
+                          body,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Text(
+                          badge,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            color: s.isMakeable
+                                ? SisuColors.completedBackground
+                                : Colors.orange.shade800,
+                          ),
+                        ),
+                      );
+                    }),
+                ],
+              ],
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 12),
+              Text('Invent a drink',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text('What vibe are you after?',
+                  style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -2567,6 +2759,62 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                 }).toList(),
               ),
               const SizedBox(height: 16),
+              // MIX3: strength / glassware / crew size
+              Text('Strength',
+                  style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 6),
+              SegmentedButton<CocktailStrength>(
+                segments: CocktailStrength.values
+                    .map((s) => ButtonSegment(
+                          value: s,
+                          label: Text(s.label),
+                        ))
+                    .toList(),
+                selected: {_strength},
+                onSelectionChanged: (set) =>
+                    setState(() => _strength = set.first),
+              ),
+              const SizedBox(height: 12),
+              Text('Glassware',
+                  style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: MixologistService.glasswareOptions.map((g) {
+                  final selected = _glassware == g;
+                  return FilterChip(
+                    label: Text(g),
+                    selected: selected,
+                    selectedColor:
+                        Colors.blueGrey.withValues(alpha: 0.2),
+                    onSelected: (_) => setState(() => _glassware = g),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Text('Servings',
+                      style: Theme.of(context).textTheme.titleSmall),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: _servings > 1
+                        ? () => setState(() => _servings--)
+                        : null,
+                  ),
+                  Text('$_servings',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    onPressed: _servings < 12
+                        ? () => setState(() => _servings++)
+                        : null,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               if (inBar.isEmpty)
                 Card(
                   child: Padding(
@@ -2686,6 +2934,38 @@ class _CocktailSuggestionCard extends ConsumerWidget {
                         color: Colors.deepPurple),
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(suggestion.glassware,
+                      style: const TextStyle(fontSize: 11)),
+                  avatar: const Icon(Icons.local_bar_outlined, size: 14),
+                ),
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(suggestion.strengthLabel,
+                      style: const TextStyle(fontSize: 11)),
+                ),
+                if (suggestion.servings > 1)
+                  Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text('${suggestion.servings} servings',
+                        style: const TextStyle(fontSize: 11)),
+                  ),
+                if (suggestion.estimatedAbvPercent != null)
+                  Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text(
+                      '~${suggestion.estimatedAbvPercent!.toStringAsFixed(0)}% ABV',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 12),

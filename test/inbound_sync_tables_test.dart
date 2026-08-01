@@ -185,5 +185,46 @@ void main() {
       expect(await db.select(db.documents).get(), isEmpty);
       expect(await db.select(db.crewMembers).get(), isEmpty);
     });
+
+    test(
+        'empty remote snapshot does not wipe bundled seed recipes/bar '
+        '(SEED-SYNC factory isSynced + empty stream)', () async {
+      // Simulates factory seed: bundled + isSynced true (markFactoryBaseline).
+      await db.into(db.recipes).insert(
+            RecipesCompanion.insert(
+              supabaseId: const Value('cocktail_mai_tai'),
+              name: const Value('Mai Tai'),
+              recipeType: const Value('cocktail'),
+              isBundled: const Value(true),
+              isSynced: const Value(true),
+            ),
+          );
+      await db.into(db.barIngredients).insert(
+            BarIngredientsCompanion.insert(
+              supabaseId: const Value('bar_gin'),
+              name: const Value('Gin'),
+              isBundled: const Value(true),
+              isSynced: const Value(true),
+            ),
+          );
+      await db.into(db.checklistGroups).insert(
+            ChecklistGroupsCompanion.insert(
+              supabaseId: const Value('group_watch'),
+              title: const Value('Watch checks'),
+              isBundled: const Value(true),
+              isSynced: const Value(true),
+            ),
+          );
+
+      // Pro realtime first snapshot is often empty for a boat that never
+      // uploaded seed content — must not hard-delete factory rows.
+      await sync.processIncomingChanges('recipes', []);
+      await sync.processIncomingChanges('bar_ingredients', []);
+      await sync.processIncomingChanges('checklist_groups', []);
+
+      expect(await db.select(db.recipes).get(), hasLength(1));
+      expect(await db.select(db.barIngredients).get(), hasLength(1));
+      expect(await db.select(db.checklistGroups).get(), hasLength(1));
+    });
   });
 }

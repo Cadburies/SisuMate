@@ -7,6 +7,7 @@ import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
 import '../components/import_export.dart';
 import '../../providers/shopping_provider.dart';
+import '../../providers/pantry_ingredient_provider.dart';
 import '../../models/models.dart';
 import '../components/swipeable_list_item.dart';
 import '../components/themed_state_tile.dart';
@@ -17,8 +18,9 @@ import '../../core/units.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/import_service.dart';
 import '../../services/email_service.dart';
+import '../../services/smart_shopping_service.dart';
 
-enum SortOption { original, name, completed, price }
+enum SortOption { original, name, completed, price, priority }
 
 class ShoppingScreen extends ConsumerStatefulWidget {
   const ShoppingScreen({super.key});
@@ -66,6 +68,20 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
       items,
       unitSystem: ref.read(unitSystemProvider),
     );
+  }
+
+  /// Current item names for the pre-import "did you mean X?" check (BAI6) —
+  /// same visibility filter as the dedupe scan in [_importShopping].
+  Future<List<String>> _existingShoppingNames() async {
+    final repo = ref.read(shoppingRepositoryProvider);
+    final cats = await repo.watchCategories().first;
+    final names = <String>[];
+    for (final c in cats) {
+      names.addAll((await repo.watchItems(c.supabaseId).first)
+          .where((i) => !i.isHidden)
+          .map((i) => i.name));
+    }
+    return names;
   }
 
   Future<ImportPersistResult> _importShopping(ImportBatch batch) async {
@@ -147,6 +163,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
                         label: 'Shopping',
                         fileBaseName: 'sisu_shopping',
                         exportCurrent: _exportShopping,
+                        existingNames: _existingShoppingNames,
                         persist: _importShopping,
                       ),
                       isPro: isPro,
@@ -218,6 +235,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
       ),
       floatingActionButton: isProAsync.when(
         data: (isPro) => FloatingActionButton(
+          tooltip: 'Add item',
           onPressed: () {
             if (!isPro) {
               _showProRequiredDialog(context);
@@ -228,10 +246,12 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
           child: const Icon(Icons.add),
         ),
         loading: () => const FloatingActionButton(
+          tooltip: 'Add item',
           onPressed: null,
           child: CircularProgressIndicator(),
         ),
         error: (error, stack) => const FloatingActionButton(
+          tooltip: 'Add item',
           onPressed: null,
           child: Icon(Icons.error),
         ),
@@ -390,8 +410,61 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
       return const Center(child: Text('No shopping items yet'));
     }
 
+    final allItems = _allVisibleItems(categories);
+    final ranked = _rankPassage(allItems);
+    final scoreById = <String, int>{
+      for (final r in ranked)
+        if (r.item.supabaseId.isNotEmpty) r.item.supabaseId: r.score,
+    };
+    final topPending =
+        ranked.where((r) => !r.item.isBought && r.score > 0).take(5).toList();
+
     return Column(
       children: [
+        // BAI2: buy-before-passage heads-up from pantry / meal plan / season.
+        if (topPending.isNotEmpty)
+          Material(
+            color: Theme.of(context)
+                .colorScheme
+                .tertiaryContainer
+                .withValues(alpha: 0.45),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.sailing_outlined,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Buy before passage',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _sortOption = SortOption.priority;
+                          _sortAscending = false;
+                        }),
+                        child: const Text('Sort by priority'),
+                      ),
+                    ],
+                  ),
+                  for (final r in topPending)
+                    Text(
+                      '${r.item.name}'
+                      '${r.reasons.isEmpty ? '' : ' — ${r.reasons.first}'}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+          ),
         // Trip cost strip — predicted spend for outstanding items.
         Material(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -443,6 +516,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
                 searchQuery: _searchQuery,
                 sortOption: _sortOption,
                 sortAscending: _sortAscending,
+                priorityScores: scoreById,
               );
             },
           ),
@@ -504,7 +578,39 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
         return _sortAscending ? 'Needed First' : 'Bought First';
       case SortOption.price:
         return _sortAscending ? 'Price Low-High' : 'Price High-Low';
+      case SortOption.priority:
+        return 'Passage priority';
     }
+  }
+
+  /// Flat cart across categories for BAI2 ranking (visible items only).
+  List<ShoppingItem> _allVisibleItems(List<ShoppingCategory> categories) {
+    final out = <ShoppingItem>[];
+    for (final category in categories) {
+      final items = ref
+              .watch(shoppingItemsByCategoryProvider(category.supabaseId))
+              .asData
+              ?.value ??
+          const <ShoppingItem>[];
+      for (final item in items) {
+        if (!item.isHidden) out.add(item);
+      }
+    }
+    return out;
+  }
+
+  List<RankedShoppingItem> _rankPassage(List<ShoppingItem> items) {
+    final pantry =
+        ref.watch(pantryIngredientsProvider).asData?.value ?? const [];
+    final plans = ref.watch(mealPlansProvider).asData?.value ?? const [];
+    final ings =
+        ref.watch(mealPlanIngredientsMapProvider).asData?.value ?? const {};
+    return SmartShoppingService.rankForPassage(
+      items: items,
+      pantry: pantry,
+      mealPlans: plans,
+      ingredientsByRecipe: ings,
+    );
   }
 
   void _showProRequiredDialog(BuildContext context) {
@@ -699,6 +805,8 @@ class ShoppingOriginTile extends ConsumerWidget {
   final String searchQuery;
   final SortOption sortOption;
   final bool sortAscending;
+  /// BAI2 passage scores keyed by shopping item supabaseId.
+  final Map<String, int> priorityScores;
 
   // ignore: prefer_const_constructors_in_immutables
   ShoppingOriginTile({
@@ -709,6 +817,7 @@ class ShoppingOriginTile extends ConsumerWidget {
     required this.searchQuery,
     required this.sortOption,
     required this.sortAscending,
+    this.priorityScores = const {},
   });
 
   @override
@@ -744,6 +853,11 @@ class ShoppingOriginTile extends ConsumerWidget {
               break;
             case SortOption.price:
               comparison = (a.lastPurchasePrice ?? 0).compareTo(b.lastPurchasePrice ?? 0);
+              break;
+            case SortOption.priority:
+              final sa = priorityScores[a.supabaseId] ?? 0;
+              final sb = priorityScores[b.supabaseId] ?? 0;
+              comparison = sa.compareTo(sb);
               break;
           }
           return sortAscending ? comparison : -comparison;

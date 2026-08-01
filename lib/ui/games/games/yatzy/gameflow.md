@@ -490,7 +490,7 @@ bool isGameOver(YatzyState s) => s.phase == YatzyPhase.gameOver;
 
 | Gap | Notes |
 |---|---|
-| Yatzy bonus / joker rule | Classic Yatzy/Yahtzee rule, not implemented: once a player has scored a genuine Yatzy (the `yatzy` category holds 50, not 0), rolling a **second** (or later) Yatzy traditionally earns a flat bonus (commonly +100) on top of normal scoring, and the roll may be used as a "joker" to fill *any* other open category at full value (with the matching upper-section box required first if it is still open). `scoreFor`/`scoreCategory`/`_aiTurn` treat a repeat Yatzy exactly like any other roll — it is simply scored into whichever open category the player/AI picks, with no extra bonus and no joker flexibility. This silently removes one of the signature "big moment" mechanics of the real game. Logging this in `outstanding.md` as a candidate enhancement, not fixing in `logic.dart` here (doc-accuracy pass only). |
+| Yatzy bonus / joker rule | **Implemented (GB1).** Once the `yatzy` category holds 50, a repeat Yatzy earns a flat +100 bonus (`Scorecard.yatzyBonusCount`) and jokers lower-section categories to full value — see `jokerScoreFor` in `logic.dart` and its call sites in `scoreCategory` / `_aiTurn` / AI policy. (This row previously claimed "not implemented" — stale; verified against `logic.dart`.) |
 | 13 categories vs. 15-category "Scandinavian Yatzy" | This implementation uses the 13-category American Yahtzee category set (no "One Pair" / "Two Pairs" boxes found in the traditional Nordic 15-category Yatzy scorecard). Documented here for awareness only — this is a scope/variant choice, not a bug, and changing it would be a much larger rework than a doc fix. |
 
 ---

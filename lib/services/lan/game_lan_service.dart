@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:bonsoir/bonsoir.dart';
 
+import '../game_ai/game_ai_difficulty.dart';
+import '../game_ai/game_ai_persona.dart';
 import 'lan_engine.dart';
 import 'lan_message.dart';
 
@@ -26,16 +28,61 @@ class LobbyPlayer {
   final String id;
   final String name;
   final bool isAI;
+  /// GAI1: only meaningful when [isAI] is true.
+  final GameAiDifficulty aiDifficulty;
+  /// GAI5: play style (bluff / tight / chaos) — only meaningful when [isAI].
+  final GameAiPersona aiPersona;
 
-  const LobbyPlayer({required this.id, required this.name, this.isAI = false});
+  const LobbyPlayer({
+    required this.id,
+    required this.name,
+    this.isAI = false,
+    this.aiDifficulty = GameAiDifficulty.normal,
+    this.aiPersona = GameAiPersona.balanced,
+  });
 
   factory LobbyPlayer.fromJson(Map<String, dynamic> json) => LobbyPlayer(
         id: json['id'] as String,
         name: json['name'] as String,
         isAI: json['isAI'] as bool? ?? false,
+        aiDifficulty: GameAiDifficulty.fromWire(json['aiDifficulty'] as String?),
+        aiPersona: GameAiPersona.fromWire(json['aiPersona'] as String?),
       );
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'isAI': isAI};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'isAI': isAI,
+        if (isAI) 'aiDifficulty': aiDifficulty.wire,
+        if (isAI) 'aiPersona': aiPersona.wire,
+      };
+
+  LobbyPlayer copyWith({
+    String? id,
+    String? name,
+    bool? isAI,
+    GameAiDifficulty? aiDifficulty,
+    GameAiPersona? aiPersona,
+  }) =>
+      LobbyPlayer(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        isAI: isAI ?? this.isAI,
+        aiDifficulty: aiDifficulty ?? this.aiDifficulty,
+        aiPersona: aiPersona ?? this.aiPersona,
+      );
+}
+
+/// Prefer the strongest AI seat's difficulty for games with a single bot brain.
+GameAiDifficulty maxAiDifficulty(Iterable<LobbyPlayer> players) {
+  var best = GameAiDifficulty.easy;
+  var any = false;
+  for (final p in players) {
+    if (!p.isAI) continue;
+    any = true;
+    if (p.aiDifficulty.index > best.index) best = p.aiDifficulty;
+  }
+  return any ? best : GameAiDifficulty.normal;
 }
 
 /// Game-specific protocol layer on top of [LanEngine].
@@ -68,6 +115,12 @@ class GameLanService {
   bool _gameInProgress = false;
   Map<String, dynamic>? _lastBroadcastState;
 
+  /// Client-side cache of the most recent state snapshot. Replayed to late
+  /// [remoteStates] subscribers so a mid-game rejoin (LT7) still lands: the
+  /// host pushes its last broadcast immediately after the rejoin welcome,
+  /// which can arrive before the game screen has subscribed.
+  Map<String, dynamic>? _lastReceivedState;
+
   /// peerId → LobbyPlayer for seats that disconnected mid-game and are still
   /// within the reconnect grace window.
   final Map<String, LobbyPlayer> _pendingReconnectByPeerId = {};
@@ -83,8 +136,13 @@ class GameLanService {
   final _rejoinCtrl = StreamController<LobbyPlayer>.broadcast();
 
   /// State snapshots pushed by the host; clients replace their local state
-  /// with each value received here.
-  Stream<Map<String, dynamic>> get remoteStates => _remoteStateCtrl.stream;
+  /// with each value received here. Replays the most recent snapshot to a
+  /// new subscriber (see [_lastReceivedState]).
+  Stream<Map<String, dynamic>> get remoteStates async* {
+    final last = _lastReceivedState;
+    if (last != null) yield last;
+    yield* _remoteStateCtrl.stream;
+  }
 
   /// Move commands sent by remote players; host listens and applies them.
   Stream<({String peerId, String action, Map<String, dynamic> data})>
@@ -202,6 +260,9 @@ class GameLanService {
   }) async {
     _isHost = false;
     _myPlayerName = playerName;
+    // Fresh join: drop any snapshot cached from a previous game in this
+    // process so it can't replay into the new session.
+    _lastReceivedState = null;
     await _engine.connectToService(service);
     _engine.sendToHost(LanMessage(
       channel: _kChannel,
@@ -262,6 +323,7 @@ class GameLanService {
     _myPlayerName = null;
     _gameInProgress = false;
     _lastBroadcastState = null;
+    _lastReceivedState = null;
     _clearGraceState();
     await _engine.dispose();
   }
@@ -370,7 +432,10 @@ class GameLanService {
         LanMessage(
           channel: _kChannel,
           type: _T.welcome,
-          payload: {'yourId': idForWelcome},
+          // inProgress tells the client this is a mid-game rejoin, not a
+          // pre-game lobby join: no second 'start' broadcast is coming, so
+          // the client must enter the game screen off this welcome.
+          payload: {'yourId': idForWelcome, 'inProgress': true},
         ),
       );
 
@@ -426,6 +491,13 @@ class GameLanService {
       case _T.welcome:
         if (!_isHost) {
           _myAssignedId = msg.payload['yourId'] as String?;
+          // LT7 mid-game rejoin: no second 'start' broadcast is coming, so
+          // fire gameStarted off the welcome itself — this is what routes
+          // the lobby back into the game screen.
+          if (msg.payload['inProgress'] == true) {
+            _gameInProgress = true;
+            _startCtrl.add(null);
+          }
         }
 
       case _T.lobby:
@@ -442,6 +514,7 @@ class GameLanService {
         }
 
       case _T.state:
+        _lastReceivedState = msg.payload;
         _remoteStateCtrl.add(msg.payload);
 
       case _T.move:

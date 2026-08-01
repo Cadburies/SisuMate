@@ -413,8 +413,8 @@ class UserSettingsTable extends Table {
   TextColumn get selectedBoatId => text().nullable()();
   TextColumn get userId => text().nullable()();
   BoolColumn get isDarkMode => boolean().withDefault(const Constant(true))();
-  /// UI/export preference only — stored measurements stay metric.
-  BoolColumn get useImperial => boolean().withDefault(const Constant(false))();
+  /// JSON [AppUnitPrefs]: volume, temperature, speed, depth, distance.
+  TextColumn get unitPrefsJson => text().withDefault(const Constant(''))();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
@@ -532,19 +532,17 @@ class AppDatabase extends _$AppDatabase {
   /// against an isolated DB. Not for production use.
   static void setInstanceForTesting(AppDatabase db) => _instance = db;
 
-  // No install base yet (dev phone + sims only, CLAUDE.md § Mandatory
-  // rules) — schemaVersion stays at 1 and onUpgrade is a no-op. A fresh
-  // install always goes through onCreate/createAll, which already builds the
-  // current full schema; there's no old-version data to migrate. If you bump
-  // this for a future change, wipe local test devices' app data rather than
-  // writing an upgrade branch.
+  // No install base (dev/sim only). schemaVersion tracks changes; wipe local
+  // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async => m.createAll(),
-        onUpgrade: (m, from, to) async {},
+        onUpgrade: (m, from, to) async {
+          // Wipe/reinstall test devices if this fires on an old schema.
+        },
       );
 
   /// Hard reset: close the current connection, delete the on-disk sqlite file,

@@ -99,41 +99,18 @@ class CollectionsScreen extends ConsumerWidget {
 
   void _showEditDialog(
       BuildContext context, WidgetRef ref, RecipeCollection? existing) {
-    final nameCtrl = TextEditingController(text: existing?.name ?? '');
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(existing == null ? 'New Collection' : 'Rename Collection'),
-        content: TextField(
-          controller: nameCtrl,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            hintText: 'e.g. Boat Party Menu',
-            border: OutlineInputBorder(),
-          ),
-          textCapitalization: TextCapitalization.words,
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final name = nameCtrl.text.trim();
-              if (name.isEmpty) return;
-              final navigator = Navigator.of(dialogContext);
-              final repo = ref.read(collectionRepositoryProvider);
-              if (existing == null) {
-                await repo.addCollection(RecipeCollection()..name = name);
-              } else {
-                await repo.updateCollection(existing..name = name);
-              }
-              navigator.pop();
-            },
-            child: Text(existing == null ? 'Create' : 'Save'),
-          ),
-        ],
+      builder: (dialogContext) => AddEditCollectionDialog(
+        existing: existing,
+        onSave: (name) async {
+          final repo = ref.read(collectionRepositoryProvider);
+          if (existing == null) {
+            await repo.addCollection(RecipeCollection()..name = name);
+          } else {
+            await repo.updateCollection(existing..name = name);
+          }
+        },
       ),
     );
   }
@@ -161,6 +138,76 @@ class CollectionsScreen extends ConsumerWidget {
     if (confirmed == true) {
       await ref.read(collectionRepositoryProvider).deleteCollection(collection);
     }
+  }
+}
+
+/// Create / rename collection (public for widget tests).
+class AddEditCollectionDialog extends StatefulWidget {
+  final RecipeCollection? existing;
+  final Future<void> Function(String name) onSave;
+
+  const AddEditCollectionDialog({
+    super.key,
+    this.existing,
+    required this.onSave,
+  });
+
+  @override
+  State<AddEditCollectionDialog> createState() =>
+      _AddEditCollectionDialogState();
+}
+
+class _AddEditCollectionDialogState extends State<AddEditCollectionDialog> {
+  late final TextEditingController _nameCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.existing?.name ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) return;
+    final navigator = Navigator.of(context);
+    await widget.onSave(name);
+    navigator.pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        widget.existing == null ? 'New Collection' : 'Rename Collection',
+      ),
+      content: TextField(
+        controller: _nameCtrl,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: 'Name',
+          hintText: 'e.g. Boat Party Menu',
+          border: OutlineInputBorder(),
+        ),
+        textCapitalization: TextCapitalization.words,
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          child: Text(widget.existing == null ? 'Create' : 'Save'),
+        ),
+      ],
+    );
   }
 }
 

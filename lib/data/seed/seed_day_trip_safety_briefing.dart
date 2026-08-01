@@ -79,7 +79,7 @@ Future<void> seedDayTripSafetyBriefing(String defaultBoatSupabaseId) async {
   add(
     dayTripId,
     'All Taps Are Pure RO Drinking Water',
-    'We make our own freshwater through reverse osmosis, where we convert seawater into freshwater. This is the purest of water — every tap on board serves this same pure RO drinking water.',
+    'We make our own freshwater through reverse osmosis, where we convert seawater into freshwater. This is the purest of water - every tap on board serves this same pure RO drinking water.',
     'watermaker',
   );
   add(

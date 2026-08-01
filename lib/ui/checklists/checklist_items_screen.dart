@@ -14,6 +14,7 @@ import '../../services/admob_service.dart';
 import '../../services/import_service.dart';
 import '../components/import_export.dart';
 import '../../core/di.dart';
+import '../../core/factory_reset.dart';
 import '../../models/models.dart';
 
 /// Dedicated screen for displaying checklist items for a specific group
@@ -72,6 +73,8 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
                       fileBaseName: 'sisu_checklist',
                       exportCurrent: () async =>
                           ImportService.exportChecklist(currentItems),
+                      existingNames: () async =>
+                          currentItems.map((e) => e.title).toList(),
                       persist: (batch) async {
                         final repo = ref.read(checklistRepositoryProvider);
                         final existing = await repo
@@ -474,6 +477,7 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
                 Navigator.of(dialogContext).pop();
                 final dbService = ref.read(databaseServiceProvider);
                 await dbService.factoryReset();
+                invalidateAfterFactoryReset(ref);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

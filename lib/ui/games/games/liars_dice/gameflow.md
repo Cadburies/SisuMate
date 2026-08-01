@@ -237,7 +237,7 @@ consistent with holding a strong partial hand from the initial roll).
 
 | Gap | Notes |
 |---|---|
-| Reconnection is limited, not absent | Client-side: 3 retries, 2s apart, then the session ends cleanly (`_handleHostDisconnect`). Host-side: a disconnected player is dropped, game continues if ≥2 remain (`_handleDisconnect`). No resume-into-an-existing-game after the retry window lapses. |
+| Reconnection is limited, not absent | Transient socket drop, app alive: client retries 3×, 2s apart, then the session ends cleanly (`_handleHostDisconnect`). App killed mid-game: relaunch → scan → join under the **same name** within `kMidGameReconnectGrace` (15 s) rebinds the same seat and re-enters the game screen (LT7, end-to-end since TEST18). After the grace the seat is released and rejoin is refused. Host-side: a disconnected player whose grace lapses is dropped, game continues if ≥2 remain (`_handleDisconnect`). |
 | AI across multiple players | `getAIBid` / `getAIAccept` use the single current player's dice; a smarter AI could account for how many dice total are on the table |
 | Tie re-roll display | Tied players' dice are re-rolled in place; no animated "re-rolling" indication for each tied player |
 
@@ -316,7 +316,7 @@ Android) so platform mix is exercised throughout setup; actual turn order
 within the game is dice-luck-determined by `determineStarter`, not join order
 — that's expected and matches the real game rules, not something to control.
 
-### Play-through checklist (log any divergence per outstanding.md Rule 3)
+### Play-through checklist (log any divergence as a GitHub issue, label `test-gap`)
 
 - [x] Step 0: 2-device connectivity smoke test — confirmed cross-platform
       (iOS↔Android) discovery/join works on this machine; the one NAT-isolated
@@ -370,17 +370,53 @@ exception, so it *looked* fixed (clean navigation, no crash) while never
 actually running. Caught only by checking OS-level ground truth (`lsof -nP
 -iTCP:<port>` still showed the server bound) rather than trusting a
 screenshot. Real fix: `late final GameLanService _lan = ref.read(...)` —
-resolved once, safe to reuse in `dispose()`. See changelog for the full story.
+resolved once, safe to reuse in `dispose()`. See
+`.ai_context/archive/changelog-full-through-2026-07-16.md` for the full story.
 
-**Not implemented** (scoped as `LT7` in outstanding.md, not attempted here):
-mid-game reconnect into your *same* seat. A peer that disconnects mid-game
-and reconnects gets a brand-new `peer_N` id with no path back into
-`GameState.players` — needs a deliberate name/token-matching design that
-crosses the generic-transport/game-specific-state boundary, not a quick patch.
+**Implemented (LT7)** — mid-game reconnect into your *same* seat: the host
+reserves the seat on disconnect and rebinds the same peer id on rejoin, so the
+player keeps their identity in `GameState.players` (see `lan_engine.dart`,
+`game_lan_service.dart`; coverage in `test/lan_reconnect_test.dart` and
+`test/games_multiplayer_lan_test.dart`). **Client-side entry fixed
+(2026-08-01, TEST18):** the rejoin welcome now carries `inProgress: true`,
+which fires `gameStarted` on the client — that is what routes the lobby back
+into the game screen (no second `start` broadcast exists), and the client's
+`remoteStates` replays the last cached snapshot so the state the host pushes
+right after the welcome can't be missed by a not-yet-subscribed game screen.
+The window is `kMidGameReconnectGrace` (15 s) from host-detected disconnect —
+after it the seat is released and the same name is treated as a stranger.
 
 ### After the test
 
-`outstanding.md` LT6 marked done for Liar's Dice; `LT7` added for the
-mid-game-reconnect gap. `changelog.md` has the full narrative including the
-first-fix-attempt correction. Reusable setup for next time:
+`LT6` was marked done for Liar's Dice and `LT7` logged for the
+mid-game-reconnect gap; `.ai_context/archive/changelog-full-through-2026-07-16.md`
+has the full narrative including the first-fix-attempt correction. Reusable
+setup for next time:
 `scripts/liars_dice_4sim_setup.sh` + `live_test_setup.md` (same directory).
+
+### TEST18 release-candidate run (2026-08-01, GitHub issue #4)
+
+Full unattended pass with `scripts/liars_dice_4sim_setup.sh` +
+`scripts/test18_rc_play.sh` (2 iOS sims + 2 Android emulators + 2 AI seats):
+
+- [x] Full round with host + 3 real clients (roll → declare → accept →
+      acceptReveal → next round), plus three further cycles in which every
+      real client declared and accepted in turn
+- [x] `acceptChallenge(accept: true)` → `acceptReveal` verified live ×3
+      (One-box inheritance itself still only unit-covered)
+- [x] AI bot as declarer vs a real remote opponent (IOS-2 accepted an AI
+      declare in the first driven round)
+- [x] Mid-game client kill → **LT7 same-seat rejoin verified end-to-end**:
+      client relaunched, re-scanned, joined under the same name at +9 s
+      (grace 15 s), was rebound to its original seat, auto-navigated back
+      into the game (new `inProgress` welcome + client-side state replay),
+      and immediately took its turn (roll + declare as the rebound seat)
+- [ ] Game to natural `gameOver` (still not run to completion — unchanged)
+
+Harness knowledge gained (all folded back into the scripts/docs): the
+android-34 system image is broken on this machine (AVDs replaced with
+`test18_a/b` on android-36); "Add AI Player" is now "Add AI"; Flutter labels
+arrive as `content-desc` on Android 36 and as merged `"Tile\nSubtitle"` nodes
+on iOS; below-fold iOS tiles are ~3 pt slivers that eat taps; `adb_tap_text.sh
+-c` goes before the serial; discovered-game entries must be tapped by their
+`host:port` label, not the game name.

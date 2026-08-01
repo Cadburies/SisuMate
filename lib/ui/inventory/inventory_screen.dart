@@ -124,6 +124,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     allItems,
                                     unitSystem: ref.read(unitSystemProvider),
                                   ),
+                              existingNames: () async =>
+                                  allItems.map((e) => e.name).toList(),
                               persist: (batch) async {
                                 final repo =
                                     ref.read(inventoryItemRepositoryProvider);

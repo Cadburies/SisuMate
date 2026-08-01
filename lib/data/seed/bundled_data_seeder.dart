@@ -62,6 +62,6 @@ Future<void> seedBundledData() async {
 
   // Carries its own guards / stale-purge logic. Bar/pantry ingredients and
   // the rest of the catalog packs live in seed_expansion_catalog.dart, called
-  // from DatabaseService.runDeferredSeeds() — not here (one call site each).
+  // from DatabaseService.runDeferredSeeds() - not here (one call site each).
   await seedRecipes(_defaultBoatSupabaseId);
 }

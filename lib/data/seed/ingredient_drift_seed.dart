@@ -6,9 +6,9 @@ import '../drift/app_database.dart';
 /// Helpers that persist bundled BarIngredient/PantryIngredient domain objects
 /// (built by the seeders) into their Drift tables.
 ///
-/// SEED-PATCH: every row these helpers insert — whether the initial full seed
+/// SEED-PATCH: every row these helpers insert - whether the initial full seed
 /// or a later catalog patch (`insertMissing*`, run via `runDeferredSeeds` on
-/// an already-used install) — is stamped `lastModified = _factoryEpoch` /
+/// an already-used install) - is stamped `lastModified = _factoryEpoch` /
 /// `isSynced = true` at creation. Bundled content is by definition older than
 /// any user change, so this must hold regardless of whether the *rest* of the
 /// DB is pristine, which a whole-database check (`DatabaseService._isPristine`)
@@ -144,7 +144,7 @@ Future<int> patchMissingPantryMacrosInDrift(
 }
 
 /// Updates substitute1/substitute2 on existing bar rows (by name) without
-/// touching `inMyBar` state — mirrors the old `_syncBarSubstitutes`.
+/// touching `inMyBar` state - mirrors the old `_syncBarSubstitutes`.
 Future<void> syncBarSubstitutesInDrift(
     Map<String, (String?, String?)> substitutes) async {
   final db = AppDatabase.instance;

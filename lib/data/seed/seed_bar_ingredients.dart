@@ -6,8 +6,8 @@ import '../../models/models.dart';
 const _barData =
     <(String, String, List<String>, double?, double?, String?, String?)>[
 
-  // ── Rums: Blended ─────────────────────────────────────────────────────────
-  // SC Cat 1/2: Blended White/Light rum (Plantation 3 Stars, Caña Brava)
+  // -- Rums: Blended ---------------------------------------------------------
+  // SC Cat 1/2: Blended White/Light rum (Plantation 3 Stars, Cana Brava)
   ('White Blended Rum', 'spirit',
     ['fresh', 'sweet', 'light', 'tropical', 'clean'], 40.0, 20.0, '750ml', null),
   // SC Cat 3: Dark/Black blended rum (Gosling's Black Seal, Myers's)
@@ -19,11 +19,11 @@ const _barData =
   // SC Cat 5: Lightly aged blended (Banks 7, Mount Gay Eclipse)
   ('Gold Blended Rum', 'spirit',
     ['tropical', 'sweet', 'light', 'vanilla', 'caramel'], 40.0, 26.0, '750ml', null),
-  // SC Cat 7: Aged blended (Appleton Estate Signature, Flor de Caña 7yr)
+  // SC Cat 7: Aged blended (Appleton Estate Signature, Flor de Cana 7yr)
   ('Aged Blended Rum', 'spirit',
     ['tropical', 'sweet', 'rich', 'vanilla', 'caramel', 'oak'], 43.0, 32.0, '750ml', null),
 
-  // ── Rums: Demerara ────────────────────────────────────────────────────────
+  // -- Rums: Demerara --------------------------------------------------------
   // SC Cat 3 Demerara variation: Dark Demerara (El Dorado 12, Lemon Hart Dark)
   ('Dark Demerara Rum', 'spirit',
     ['tropical', 'funky', 'rich', 'molasses', 'dark', 'toffee'], 40.0, 34.0, '750ml', null),
@@ -31,18 +31,18 @@ const _barData =
   ('Overproof Demerara Rum', 'spirit',
     ['tropical', 'funky', 'fiery', 'molasses', 'strong', 'tiki'], 75.5, 36.0, '750ml', null),
 
-  // ── Rums: Agricole ────────────────────────────────────────────────────────
-  // SC Cat 1 Agricole: White/Light agricole (Clément Première Canne, Rhum J.M White)
+  // -- Rums: Agricole --------------------------------------------------------
+  // SC Cat 1 Agricole: White/Light agricole (Clement Premiere Canne, Rhum J.M White)
   ('Light Agricole Rum', 'spirit',
     ['fresh', 'grassy', 'vegetal', 'tropical', 'bright', 'agricole'], 40.0, 38.0, '750ml', null),
-  // SC Cat 6: Lightly aged agricole (Clément V.S., J.M Gold)
+  // SC Cat 6: Lightly aged agricole (Clement V.S., J.M Gold)
   ('Gold Agricole Rum', 'spirit',
     ['tropical', 'grassy', 'fresh', 'vanilla', 'agricole', 'light'], 40.0, 42.0, '750ml', null),
-  // SC Cat 8: Aged agricole (Barbancourt 8yr, Clément V.S.O.P., Rhum J.M Gold)
+  // SC Cat 8: Aged agricole (Barbancourt 8yr, Clement V.S.O.P., Rhum J.M Gold)
   ('Dark Agricole Rum', 'spirit',
     ['tropical', 'rich', 'grassy', 'agricole', 'oak', 'complex', 'dark'], 43.0, 48.0, '750ml', null),
 
-  // ── Rums: Pot Still / Jamaican ────────────────────────────────────────────
+  // -- Rums: Pot Still / Jamaican --------------------------------------------
   // SC Cat 10: Pot still unaged (Smith & Cross, Rum-Bar Gold)
   ('Pot Still Jamaican Rum', 'spirit',
     ['funky', 'tropical', 'heavy', 'ester', 'pot-still', 'tiki', 'strong'], 57.0, 38.0, '750ml', null),
@@ -50,11 +50,11 @@ const _barData =
   ('Overproof Pot Still Rum', 'spirit',
     ['funky', 'tropical', 'fiery', 'ester', 'pot-still', 'tiki', 'strong'], 63.0, 32.0, '750ml', null),
 
-  // ── Rums: Specialty ───────────────────────────────────────────────────────
+  // -- Rums: Specialty -------------------------------------------------------
   ('Spiced Rum', 'spirit',
     ['spiced', 'sweet', 'tropical', 'warm', 'vanilla', 'caramel'], 35.0, 22.0, '750ml', null),
 
-  // ── Other Spirits ─────────────────────────────────────────────────────────
+  // -- Other Spirits ---------------------------------------------------------
   ('Bourbon', 'spirit',
     ['sweet', 'vanilla', 'caramel', 'warm', 'spirit-forward', 'oak'], 40.0, 32.0, '750ml', null),
   ('Rye Whiskey', 'spirit',
@@ -80,23 +80,23 @@ const _barData =
   ('Pisco', 'spirit',
     ['fresh', 'floral', 'fruity', 'spirit-forward', 'grape'], 40.0, 28.0, '750ml', null),
 
-  // ── Liqueurs & Modifiers ──────────────────────────────────────────────────
+  // -- Liqueurs & Modifiers --------------------------------------------------
   ('Triple Sec', 'liqueur',
     ['citrus', 'sweet', 'orange', 'light'], 30.0, 16.0, '750ml', null),
   ('Cointreau', 'liqueur',
     ['citrus', 'sweet', 'orange', 'floral', 'premium'], 40.0, 38.0, '750ml', null),
-  ('Blue Curaçao', 'liqueur',
+  ('Blue Curacao', 'liqueur',
     ['citrus', 'sweet', 'orange', 'tropical', 'funky'], 25.0, 16.0, '750ml', null),
   ('Amaretto', 'liqueur',
     ['sweet', 'almond', 'nutty', 'fruity', 'warm'], 28.0, 24.0, '750ml', null),
-  ('Kahlúa', 'liqueur',
+  ('Kahlua', 'liqueur',
     ['sweet', 'coffee', 'rich', 'dark', 'creamy'], 20.0, 26.0, '750ml', null),
   ('Tia Maria', 'liqueur',
     ['sweet', 'coffee', 'vanilla', 'dark', 'smooth'], 20.0, 28.0, '750ml', null),
-  // Irish cream — Mudslide, B-52, coffee drinks
+  // Irish cream - Mudslide, B-52, coffee drinks
   ('Baileys Irish Cream', 'liqueur',
     ['sweet', 'creamy', 'chocolate', 'vanilla', 'rich'], 17.0, 28.0, '750ml', null),
-  // Fruit liqueur (distinct from grenadine syrup) — pom margs, martinis
+  // Fruit liqueur (distinct from grenadine syrup) - pom margs, martinis
   ('Pomegranate Liqueur', 'liqueur',
     ['sweet', 'fruity', 'tart', 'berry', 'pomegranate', 'bright'], 17.0, 26.0, '750ml', null),
   ('Maraschino Liqueur', 'liqueur',
@@ -109,8 +109,8 @@ const _barData =
     ['sweet', 'fruity', 'berry', 'floral', 'rich', 'raspberry'], 16.5, 30.0, '375ml', null),
   ('St-Germain Elderflower', 'liqueur',
     ['floral', 'sweet', 'fresh', 'aromatic', 'light', 'elderflower'], 20.0, 40.0, '375ml', null),
-  // Classic tiki curaçao — amber/orange, distinct from Blue Curaçao
-  ('Orange Curaçao', 'liqueur',
+  // Classic tiki curacao - amber/orange, distinct from Blue Curacao
+  ('Orange Curacao', 'liqueur',
     ['citrus', 'sweet', 'orange', 'tiki', 'tropical', 'amber'], 40.0, 22.0, '750ml', null),
   // Key tiki modifiers
   ('Allspice Dram', 'liqueur',
@@ -127,7 +127,7 @@ const _barData =
   ('Fernet-Branca', 'liqueur',
     ['bitter', 'herbal', 'menthol', 'digestif', 'dark', 'complex'], 39.0, 30.0, '750ml', null),
 
-  // ── Syrups ────────────────────────────────────────────────────────────────
+  // -- Syrups ----------------------------------------------------------------
   ('Orgeat', 'syrup',
     ['sweet', 'nutty', 'almond', 'tropical', 'floral', 'tiki'], null, 16.0, '500ml', null),
   ('Simple Syrup', 'syrup',
@@ -152,7 +152,7 @@ const _barData =
   ('Cream of Coconut', 'syrup',
     ['tropical', 'sweet', 'rich', 'creamy', 'tiki'], null, 8.0, '400ml', null),
 
-  // ── Vermouths & Wine ──────────────────────────────────────────────────────
+  // -- Vermouths & Wine ------------------------------------------------------
   ('Sweet Vermouth', 'wine',
     ['sweet', 'herbal', 'bitter', 'rich', 'aromatic', 'complex'], 15.0, 14.0, '750ml', null),
   ('Dry Vermouth', 'wine',
@@ -164,7 +164,7 @@ const _barData =
   ('Dry Sherry', 'wine',
     ['dry', 'nutty', 'saline', 'complex', 'oxidised'], 15.0, 16.0, '750ml', null),
 
-  // ── Mixers ────────────────────────────────────────────────────────────────
+  // -- Mixers ----------------------------------------------------------------
   ('Cola (Coke)', 'mixer',
     ['sweet', 'spiced', 'dark', 'fizzy', 'caramel'], null, 5.0, '2L', null),
   ('Ginger Beer', 'mixer',
@@ -178,7 +178,7 @@ const _barData =
   ('Coconut Water', 'mixer',
     ['tropical', 'light', 'fresh', 'sweet', 'natural'], null, 3.0, '330ml', null),
 
-  // ── Juices ────────────────────────────────────────────────────────────────
+  // -- Juices ----------------------------------------------------------------
   ('Fresh Lime Juice', 'juice',
     ['sour', 'citrus', 'fresh', 'tart', 'bright', 'tiki'],
     null, 4.0, '250ml',
@@ -202,7 +202,7 @@ const _barData =
   ('Papaya Juice', 'juice',
     ['tropical', 'sweet', 'fruity', 'exotic', 'tiki'], null, 5.0, '1L', null),
 
-  // ── Bitters ───────────────────────────────────────────────────────────────
+  // -- Bitters ---------------------------------------------------------------
   ('Angostura Bitters', 'bitters',
     ['bitter', 'spiced', 'aromatic', 'herbal', 'warm', 'tiki'], 44.7, 12.0, '200ml', null),
   ("Peychaud's Bitters", 'bitters',
@@ -210,7 +210,7 @@ const _barData =
   ('Orange Bitters', 'bitters',
     ['bitter', 'citrus', 'aromatic', 'dry', 'spiced'], 28.0, 12.0, '150ml', null),
 
-  // ── Garnishes ─────────────────────────────────────────────────────────────
+  // -- Garnishes -------------------------------------------------------------
   ('Fresh Mint', 'garnish',
     ['fresh', 'herbal', 'cool', 'bright', 'aromatic'],
     null, 3.0, 'bunch',
@@ -232,7 +232,7 @@ const _barData =
   ('Dehydrated Lime Wheel', 'garnish',
     ['citrus', 'tart', 'fresh', 'tiki'], null, 5.0, 'pack', null),
 
-  // ── Rim & Dusting ─────────────────────────────────────────────────────────
+  // -- Rim & Dusting ---------------------------------------------------------
   ('Kosher Salt', 'rim',
     ['salty', 'neutral', 'clean'], null, 3.0, '1kg', null),
   ('Sugar (for rimming)', 'rim',
@@ -242,11 +242,11 @@ const _barData =
   ('Ground Cinnamon', 'rim',
     ['spiced', 'warm', 'sweet', 'aromatic', 'tiki'], null, 4.0, '50g', null),
 
-  // ── Ice ───────────────────────────────────────────────────────────────────
+  // -- Ice -------------------------------------------------------------------
   ('Crushed Ice', 'ice', ['neutral', 'cold', 'tiki'], null, 3.0, '2kg bag', null),
   ('Ice Cubes', 'ice', ['neutral', 'cold', 'clean'], null, 3.0, '2kg bag', null),
 
-  // ── Added from recipe/cocktail seed usage (auto-curated 2026-07-09) ──
+  // -- Added from recipe/cocktail seed usage (auto-curated 2026-07-09) --
   ('Amaro Nonino', 'liqueur',
     ['bitter', 'herbal', 'complex'], 30.0, 35.0, '750ml', null),
   ('Amarula', 'liqueur',
@@ -263,27 +263,27 @@ const _barData =
     ['fruity', 'sweet', 'stone-fruit'], 24.0, 22.0, '750ml', null),
   ('Batavia Arrack', 'spirit',
     ['funky', 'tropical', 'spicy'], 50.0, 36.0, '750ml', null),
-  ('Bénédictine', 'liqueur',
+  ('Benedictine', 'liqueur',
     ['herbal', 'sweet', 'complex'], 40.0, 38.0, '750ml', null),
   ('Calvados', 'spirit',
     ['apple', 'oak', 'warm'], 40.0, 40.0, '750ml', null),
   ('Chartreuse', 'liqueur',
     ['herbal', 'complex', 'botanical'], 55.0, 55.0, '750ml', null),
-  ('Crème de Cacao', 'liqueur',
+  ('Creme de Cacao', 'liqueur',
     ['chocolate', 'sweet', 'rich'], 25.0, 18.0, '750ml', null),
-  ('White Crème de Cacao', 'liqueur',
+  ('White Creme de Cacao', 'liqueur',
     ['chocolate', 'sweet', 'light'], 25.0, 18.0, '750ml', null),
-  ('Crème de Cassis', 'liqueur',
+  ('Creme de Cassis', 'liqueur',
     ['berry', 'sweet', 'fruity'], 15.0, 18.0, '750ml', null),
-  ('Crème de Mûre', 'liqueur',
+  ('Creme de Mure', 'liqueur',
     ['berry', 'sweet', 'blackberry'], 16.0, 20.0, '750ml', null),
-  ('Crème de Noyaux', 'liqueur',
+  ('Creme de Noyaux', 'liqueur',
     ['nutty', 'almond', 'sweet'], 24.0, 22.0, '750ml', null),
-  ('Crème de Violette', 'liqueur',
+  ('Creme de Violette', 'liqueur',
     ['floral', 'sweet', 'violet'], 20.0, 24.0, '750ml', null),
-  ('Green Crème de Menthe', 'liqueur',
+  ('Green Creme de Menthe', 'liqueur',
     ['mint', 'sweet', 'cooling'], 24.0, 16.0, '750ml', null),
-  ('White Crème de Menthe', 'liqueur',
+  ('White Creme de Menthe', 'liqueur',
     ['mint', 'sweet', 'cooling'], 24.0, 16.0, '750ml', null),
   ('Drambuie', 'liqueur',
     ['honey', 'herbal', 'scotch'], 40.0, 35.0, '750ml', null),
@@ -301,7 +301,7 @@ const _barData =
     ['floral', 'aromatic', 'citrus'], null, 8.0, '100ml', null),
   ('Pecan Liqueur', 'liqueur',
     ['nutty', 'sweet', 'pecan'], 20.0, 28.0, '750ml', null),
-  // Peychaud's already listed under Bitters above — do not duplicate.
+  // Peychaud's already listed under Bitters above - do not duplicate.
   ('Ruby Port', 'wine',
     ['sweet', 'fruity', 'rich'], 20.0, 18.0, '750ml', null),
   ('Rosemary Syrup', 'syrup',
@@ -313,10 +313,10 @@ const _barData =
 ];
 
 // Substitute hierarchy: key ingredient can substitute FOR the listed names.
-// e.g. 'Orange Curaçao' → ('Triple Sec', 'Cointreau') means:
-// if you have Orange Curaçao stocked, recipes calling for Triple Sec or Cointreau are covered.
+// e.g. 'Orange Curacao' -> ('Triple Sec', 'Cointreau') means:
+// if you have Orange Curacao stocked, recipes calling for Triple Sec or Cointreau are covered.
 const _barSubstitutes = <String, (String?, String?)>{
-  'Orange Curaçao':        ('Triple Sec', 'Cointreau'),
+  'Orange Curacao':        ('Triple Sec', 'Cointreau'),
   'Velvet Falernum':       ('Falernum Syrup', null),
   'Honey Syrup':           ('Simple Syrup', null),
   'Demerara Syrup':        ('Simple Syrup', null),

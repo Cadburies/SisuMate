@@ -58,12 +58,18 @@ class ModuleImportExport {
   /// Persist a validated batch; returns inserted vs updated counts (SUG7).
   final Future<ImportPersistResult> Function(ImportBatch batch) persist;
 
+  /// Optional: current item display names, for the pre-import "did you mean
+  /// X?" fuzzy-duplicate heads-up (BAI6). Omit to skip the check — it's
+  /// informational only either way, never blocking.
+  final Future<List<String>> Function()? existingNames;
+
   const ModuleImportExport({
     required this.kind,
     required this.label,
     required this.fileBaseName,
     required this.exportCurrent,
     required this.persist,
+    this.existingNames,
   });
 }
 
@@ -196,12 +202,42 @@ Future<void> _runImport(
     return;
   }
 
+  var fuzzyWarnings = const <FuzzyDuplicateWarning>[];
+  if (io.existingNames != null) {
+    try {
+      final existingNames = await io.existingNames!();
+      fuzzyWarnings = ImportService.findFuzzyDuplicates(
+        incomingNames: ImportService.namesForFuzzyCheck(batch),
+        existingNames: existingNames,
+      );
+    } catch (_) {
+      // Best-effort heads-up only — never block import on this failing.
+    }
+  }
+
   if (!context.mounted) return;
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
       title: const Text('Import'),
-      content: Text('Import ${batch.count} ${io.label} item(s)?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Import ${batch.count} ${io.label} item(s)?'),
+          if (fuzzyWarnings.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('Did you mean an existing item?',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            for (final w in fuzzyWarnings)
+              Text(
+                '"${w.incomingName}" looks like "${w.existingName}"',
+                style: const TextStyle(fontSize: 13),
+              ),
+          ],
+        ],
+      ),
       actions: [
         TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),

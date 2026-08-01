@@ -67,19 +67,19 @@ ThemeData createSisuMateTheme({required Brightness brightness}) {
     onSecondary: SisuColors.completedText,
     secondaryContainer:
         isDark ? const Color(0xFF003d3d) : const Color(0xFFb2dfdb),
-    onSecondaryContainer: SisuColors.completedBackground,
+    onSecondaryContainer: SisuColors.completedText,
     // Tertiary maps to "hidden"
     tertiary: SisuColors.hiddenBackground,
     onTertiary: SisuColors.hiddenText,
     tertiaryContainer:
         isDark ? const Color(0xFF1c252b) : const Color(0xFFe0e0e0),
-    onTertiaryContainer: SisuColors.hiddenBackground,
+    onTertiaryContainer: SisuColors.hiddenText,
     // Error maps to "not available"
     error: SisuColors.notAvailableBackground,
     onError: SisuColors.notAvailableText,
     errorContainer:
         isDark ? const Color(0xFF5d1a0a) : const Color(0xFFfce8e6),
-    onErrorContainer: SisuColors.notAvailableBackground,
+    onErrorContainer: SisuColors.notAvailableText,
   );
 
   final textTheme = TextTheme(

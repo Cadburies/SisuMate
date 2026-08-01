@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
+import '../../core/units.dart';
 import '../../services/weather_service.dart';
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
@@ -21,17 +22,22 @@ class WeatherScreen extends ConsumerStatefulWidget {
 }
 
 class _WeatherScreenState extends ConsumerState<WeatherScreen> {
-  /// Fallback when GPS is unavailable (Phoenix area — legacy default).
+  /// Fallback when GPS is unavailable (Phoenix area - legacy default).
   static const _fallbackLat = 33.4484;
   static const _fallbackLon = -112.0740;
 
   final _latCtrl = TextEditingController(text: '$_fallbackLat');
   final _lonCtrl = TextEditingController(text: '$_fallbackLon');
+  final _placeCtrl = TextEditingController();
   final _service = WeatherService();
   WeatherBundle? _bundle;
   bool _loading = false;
   bool _locating = false;
+  bool _searching = false;
   String? _error;
+  String? _placeName;
+  List<WeatherPlace> _searchHits = const [];
+  List<WeatherPlace> _favorites = const [];
 
   @override
   void initState() {
@@ -43,6 +49,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   void dispose() {
     _latCtrl.dispose();
     _lonCtrl.dispose();
+    _placeCtrl.dispose();
     super.dispose();
   }
 
@@ -50,16 +57,23 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     final prefs = await SharedPreferences.getInstance();
     final lat = prefs.getDouble('weather_lat');
     final lon = prefs.getDouble('weather_lon');
+    final savedName = prefs.getString('weather_place_name');
+    final favs = await _service.loadNamedLocations();
+    if (mounted) setState(() => _favorites = favs);
     if (lat != null && lon != null) {
       _latCtrl.text = lat.toStringAsFixed(4);
       _lonCtrl.text = lon.toStringAsFixed(4);
+      if (savedName != null) _placeName = savedName;
     } else {
       // First launch: try device GPS before fixed inland default (WX1).
       await _useDeviceLocation(silent: true);
     }
     final cached = await _service.loadCache();
     if (cached != null && mounted) {
-      setState(() => _bundle = cached);
+      setState(() {
+        _bundle = cached;
+        _placeName = cached.placeName ?? _placeName;
+      });
     }
     await _load();
   }
@@ -117,7 +131,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     }
   }
 
-  Future<void> _load() async {
+  Future<void> _load({String? placeName}) async {
     final lat = double.tryParse(_latCtrl.text.trim());
     final lon = double.tryParse(_lonCtrl.text.trim());
     if (lat == null || lon == null) {
@@ -127,15 +141,25 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _searchHits = const [];
     });
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('weather_lat', lat);
       await prefs.setDouble('weather_lon', lon);
-      final b = await _service.fetch(lat: lat, lon: lon);
+      final nameHint = placeName ?? _placeName;
+      if (nameHint != null && nameHint.isNotEmpty) {
+        await prefs.setString('weather_place_name', nameHint);
+      }
+      final b = await _service.fetch(
+        lat: lat,
+        lon: lon,
+        placeName: nameHint,
+      );
       if (!mounted) return;
       setState(() {
         _bundle = b;
+        _placeName = b.placeName ?? nameHint;
         _loading = false;
       });
     } catch (e) {
@@ -145,6 +169,51 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _searchPlaces() async {
+    final q = _placeCtrl.text.trim();
+    if (q.length < 2) return;
+    setState(() => _searching = true);
+    final hits = await _service.searchPlaces(q);
+    if (!mounted) return;
+    setState(() {
+      _searchHits = hits;
+      _searching = false;
+    });
+  }
+
+  Future<void> _selectPlace(WeatherPlace p) async {
+    setState(() {
+      _latCtrl.text = p.lat.toStringAsFixed(4);
+      _lonCtrl.text = p.lon.toStringAsFixed(4);
+      _placeName = p.label;
+      _placeCtrl.text = p.name;
+      _searchHits = const [];
+    });
+    await _load(placeName: p.label);
+  }
+
+  Future<void> _saveFavorite() async {
+    final lat = double.tryParse(_latCtrl.text.trim());
+    final lon = double.tryParse(_lonCtrl.text.trim());
+    if (lat == null || lon == null) return;
+    final name = (_placeName ?? _placeCtrl.text).trim();
+    if (name.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Name this place first (search or type)')),
+      );
+      return;
+    }
+    final list = await _service.addNamedLocation(
+      WeatherPlace(name: name, lat: lat, lon: lon),
+    );
+    if (!mounted) return;
+    setState(() => _favorites = list);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Saved "$name"')),
+    );
   }
 
   @override
@@ -302,7 +371,76 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // SUG3: named place search
+            TextField(
+              controller: _placeCtrl,
+              decoration: InputDecoration(
+                labelText: 'Place name',
+                hintText: 'e.g. San Diego, Cabo',
+                isDense: true,
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: _searching
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.search),
+                  onPressed: _searching ? null : _searchPlaces,
+                ),
+              ),
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _searchPlaces(),
+            ),
+            if (_searchHits.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              ..._searchHits.map(
+                (p) => ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.place_outlined, size: 20),
+                  title: Text(
+                    p.label,
+                    style: TextStyle(
+                      color: SisuColors.getTextPrimaryColor(isDark),
+                      fontSize: 13,
+                    ),
+                  ),
+                  onTap: () => _selectPlace(p),
+                ),
+              ),
+            ],
+            if (_favorites.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Saved places',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: SisuColors.getTextSecondaryColor(isDark),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final p in _favorites)
+                    InputChip(
+                      label: Text(p.name, style: const TextStyle(fontSize: 12)),
+                      onPressed: () => _selectPlace(p),
+                      onDeleted: () async {
+                        final list = await _service.removeNamedLocation(p);
+                        if (mounted) setState(() => _favorites = list);
+                      },
+                    ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -347,11 +485,17 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                     _locating ? Icons.hourglass_top : Icons.my_location,
                     size: 18,
                   ),
-                  label: Text(_locating ? 'Locating…' : 'Use GPS'),
+                  label: Text(_locating ? 'Locating...' : 'Use GPS'),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Save place',
+                  onPressed: _loading ? null : _saveFavorite,
+                  icon: const Icon(Icons.bookmark_add_outlined),
                 ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: _loading ? null : _load,
+                  onPressed: _loading ? null : () => _load(),
                   child: const Text('Get forecast'),
                 ),
               ],
@@ -363,6 +507,11 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   }
 
   Widget _currentCard(WeatherBundle b, bool isDark) {
+    // Display only: model is always metric (C, m/s, m).
+    final prefs = ref.watch(unitPrefsProvider);
+    final units = prefs.volumeSystem;
+    final depth = b.depthLabel(units, prefs.depth);
+    final place = b.placeName ?? _placeName;
     return Material(
       color: SisuColors.getTileColor(isDark),
       elevation: 2,
@@ -372,6 +521,17 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (place != null && place.isNotEmpty) ...[
+              Text(
+                place,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: SisuColors.getTextSecondaryColor(isDark),
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
             Text(
               WeatherBundle.weatherCodeLabel(b.weatherCode),
               style: TextStyle(
@@ -393,19 +553,46 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
               spacing: 16,
               runSpacing: 8,
               children: [
-                _metric('Temp', b.tempC == null ? '—' : '${b.tempC!.round()}°C'),
                 _metric(
-                    'Wind', b.windKn == null ? '—' : '${b.windKn!.round()} kn'),
+                  'Temp',
+                  b.tempC == null
+                      ? '-'
+                      : UnitConverter.formatTempC(
+                          b.tempC!,
+                          units,
+                          temp: prefs.temperature,
+                        ),
+                ),
+                _metric(
+                  'Wind',
+                  b.windMs == null
+                      ? '-'
+                      : UnitConverter.formatSpeedFromMs(
+                          b.windMs!,
+                          prefs.windSpeed,
+                        ),
+                ),
                 _metric(
                   'Dir',
-                  b.windDirDeg == null ? '—' : '${b.windDirDeg!.round()}°',
+                  b.windDirDeg == null ? '-' : '${b.windDirDeg!.round()} deg',
                 ),
                 _metric(
                   'RH',
-                  b.humidity == null ? '—' : '${b.humidity!.round()}%',
+                  b.humidity == null ? '-' : '${b.humidity!.round()}%',
                 ),
               ],
             ),
+            if (depth != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                depth,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: SisuColors.getTextPrimaryColor(isDark),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -434,19 +621,27 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       );
 
   Widget _hourRow(HourlyWeather h, bool isDark) {
+    final prefs = ref.watch(unitPrefsProvider);
+    final units = prefs.volumeSystem;
     final t =
         '${h.time.hour.toString().padLeft(2, '0')}:${h.time.minute.toString().padLeft(2, '0')}';
+    final wind = h.windMs == null
+        ? '-'
+        : UnitConverter.formatSpeedFromMs(h.windMs!, prefs.windSpeed);
+    final temp = h.tempC == null
+        ? '-'
+        : UnitConverter.formatTempC(h.tempC!, units, temp: prefs.temperature);
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
       title: Text(t,
           style: TextStyle(color: SisuColors.getTextPrimaryColor(isDark))),
       subtitle: Text(
-        'Wind ${h.windKn?.round() ?? '—'} kn · rain ${h.precipProb?.round() ?? '—'}%',
+        'Wind $wind · rain ${h.precipProb?.round() ?? '-'}%',
         style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
       ),
       trailing: Text(
-        h.tempC == null ? '—' : '${h.tempC!.round()}°',
+        temp,
         style: TextStyle(
           fontWeight: FontWeight.w600,
           color: SisuColors.getTextPrimaryColor(isDark),
@@ -456,19 +651,29 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   }
 
   Widget _dayRow(DailyWeather d, bool isDark) {
+    final prefs = ref.watch(unitPrefsProvider);
+    final units = prefs.volumeSystem;
     final label =
         '${d.date.year}-${d.date.month.toString().padLeft(2, '0')}-${d.date.day.toString().padLeft(2, '0')}';
+    final maxWind = d.maxWindMs == null
+        ? '-'
+        : UnitConverter.formatSpeedFromMs(d.maxWindMs!, prefs.windSpeed);
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
       title: Text(label,
           style: TextStyle(color: SisuColors.getTextPrimaryColor(isDark))),
       subtitle: Text(
-        '${WeatherBundle.weatherCodeLabel(d.weatherCode)} · max wind ${d.maxWindKn?.round() ?? '—'} kn',
+        '${WeatherBundle.weatherCodeLabel(d.weatherCode)} · max wind $maxWind',
         style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
       ),
       trailing: Text(
-        '${d.minC?.round() ?? '—'}° / ${d.maxC?.round() ?? '—'}°',
+        UnitConverter.formatTempCRange(
+          d.minC,
+          d.maxC,
+          units,
+          temp: prefs.temperature,
+        ),
         style: TextStyle(
           fontWeight: FontWeight.w600,
           color: SisuColors.getTextPrimaryColor(isDark),
@@ -478,15 +683,25 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   }
 
   Widget _marineRow(HourlyMarine m, bool isDark) {
+    final prefs = ref.watch(unitPrefsProvider);
+    final units = prefs.volumeSystem;
     final t =
         '${m.time.hour.toString().padLeft(2, '0')}:${m.time.minute.toString().padLeft(2, '0')}';
+    final hs = m.waveHeightM == null
+        ? '-'
+        : UnitConverter.formatLengthM(
+            m.waveHeightM!,
+            units,
+            depth: prefs.depth,
+          );
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
       title: Text(t,
           style: TextStyle(color: SisuColors.getTextPrimaryColor(isDark))),
       subtitle: Text(
-        'Hs ${m.waveHeightM?.toStringAsFixed(1) ?? '—'} m · period ${m.wavePeriodS?.round() ?? '—'} s',
+        'Hs $hs · period ${m.wavePeriodS?.round() ?? '-'} s'
+        '${m.waveDirDeg != null ? ' · dir ${m.waveDirDeg!.round()} deg' : ''}',
         style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
       ),
     );

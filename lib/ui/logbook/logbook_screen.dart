@@ -177,7 +177,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     final messenger = ScaffoldMessenger.of(context);
     showDialog<void>(
       context: context,
-      builder: (_) => _AddEditLogDialog(
+      builder: (_) => AddEditCaptainLogDialog(
         existing: existing,
         onSave: (entry) async {
           final repo = ref.read(captainLogRepositoryProvider);
@@ -301,18 +301,23 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
   }
 }
 
-/// Add / edit dialog for a Captain's Log entry.
-class _AddEditLogDialog extends StatefulWidget {
+/// Add / edit dialog for a Captain's Log entry (public for widget tests).
+class AddEditCaptainLogDialog extends StatefulWidget {
   final CaptainLogEntry? existing;
   final Future<void> Function(CaptainLogEntry entry) onSave;
 
-  const _AddEditLogDialog({this.existing, required this.onSave});
+  const AddEditCaptainLogDialog({
+    super.key,
+    this.existing,
+    required this.onSave,
+  });
 
   @override
-  State<_AddEditLogDialog> createState() => _AddEditLogDialogState();
+  State<AddEditCaptainLogDialog> createState() =>
+      _AddEditCaptainLogDialogState();
 }
 
-class _AddEditLogDialogState extends State<_AddEditLogDialog> {
+class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _notesCtrl;
   late final TextEditingController _weatherCtrl;

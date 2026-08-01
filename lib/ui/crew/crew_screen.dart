@@ -121,6 +121,8 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
                               fileBaseName: 'sisu_crew',
                               exportCurrent: () async =>
                                   ImportService.exportCrew(allMembers),
+                              existingNames: () async =>
+                                  allMembers.map((e) => e.name).toList(),
                               persist: (batch) async {
                                 final repo =
                                     ref.read(crewMemberRepositoryProvider);

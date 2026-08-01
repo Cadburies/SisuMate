@@ -8,6 +8,7 @@ import '../../providers/package_info_provider.dart';
 import '../../providers/shopping_provider.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
+import '../../core/factory_reset.dart';
 import '../../services/revenuecat_service.dart';
 import '../conflicts/conflict_resolution_screen.dart';
 import '../settings/sync_status_screen.dart';
@@ -303,6 +304,8 @@ class DataManagementSection extends ConsumerWidget {
     }
 
     await ref.read(databaseServiceProvider).factoryReset();
+    // Always refresh FutureProviders that may hold pre-wipe rows (TEST29).
+    invalidateAfterFactoryReset(ref);
 
     if (guid != null && guid.isNotEmpty) {
       await enrollment.enroll(
@@ -312,8 +315,8 @@ class DataManagementSection extends ConsumerWidget {
         settings.activeBoatSupabaseId = guid;
         await ref.read(userSettingsRepositoryProvider).updateSettings(settings);
       }
-      ref.invalidate(userSettingsProvider);
-      ref.invalidate(activeBoatProvider);
+      // Re-invalidate after re-stamping the enrolled boat id.
+      invalidateAfterFactoryReset(ref);
     }
   }
 }

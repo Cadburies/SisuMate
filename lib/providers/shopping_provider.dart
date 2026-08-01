@@ -17,6 +17,24 @@ final shoppingItemsByCategoryProvider =
       return repository.watchItems(categoryId);
     });
 
+/// Recipe ingredient lines for every meal-plan slot (BAI2 meal-need scoring).
+final mealPlanIngredientsMapProvider =
+    FutureProvider<Map<String, List<RecipeIngredient>>>((ref) async {
+  final plans = await ref.watch(mealPlansProvider.future);
+  final repo = ref.watch(recipeRepositoryProvider);
+  final ids = <String>{};
+  for (final p in plans) {
+    for (final s in p.slots) {
+      if (s.recipeSupabaseId.isNotEmpty) ids.add(s.recipeSupabaseId);
+    }
+  }
+  final map = <String, List<RecipeIngredient>>{};
+  for (final id in ids) {
+    map[id] = await repo.getIngredientsOnce(id);
+  }
+  return map;
+});
+
 // Re-export userSettingsProvider from di.dart to avoid breaking changes if imported from here
 // Actually, better to import from di.dart in UI.
 

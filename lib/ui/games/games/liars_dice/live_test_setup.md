@@ -24,9 +24,18 @@ bash scripts/idb_tap_label.sh DCC47B42-BE62-4EBD-A6F2-B8A7E4C3A6D2 "Start Game"
 **Built from validated manual steps (2026-07-13)** — every individual step
 (toggle, host, add AI, join, cross-platform discovery) was proven live,
 step-by-step, in the session that wrote this file, including a full played
-round. The script chains those exact steps; still worth a screenshot spot
-check of the host after running before trusting it blindly in a new session,
-since it hasn't been run as one unattended script end-to-end.
+round. The script chains those exact steps. **2026-08-01: now proven end-to-end
+unattended** (TEST18) after fixing a pile of label/UI drift: poll for home
+screens instead of a fixed 8 s sleep; "Add AI Player" is now **"Add AI"**
+(GAI5 personas); the discovered-game entry must be tapped by its
+`"<game>\n<host>:<port>"` label (a plain game-name tap hits the AppBar title);
+`adb_tap_text.sh -c` takes `-c` *before* the serial (two call sites had it
+after, silently searching for the literal text `-c`); Android 36 surfaces
+Flutter labels as `content-desc`, not `text`; iOS merges tile+subtitle into
+one `"Tile\nSubtitle"` node, and below-the-fold tiles render as ~3 pt slivers
+whose centers iOS routes to the home indicator (tap only ≥44 pt frames,
+scroll-retry otherwise). `scripts/test18_rc_play.sh` continues from where this
+script stops: Start Game → a full driven round → mid-game kill + LT7 rejoin.
 
 ---
 
@@ -36,14 +45,23 @@ since it hasn't been run as one unattended script end-to-end.
 |---|---|---|
 | Host | iOS Sim — iPhone 16 | `DCC47B42-BE62-4EBD-A6F2-B8A7E4C3A6D2` |
 | Client | iOS Sim — iPhone 16e | `AB064E47-9EBD-460E-9DA4-07E552360FB5` |
-| Client | Android emulator (`sync_arm_a`) | `emulator-5554` |
-| Client | Android emulator (`sync_arm_b`) | `emulator-5556` |
+| Client | Android emulator (`test18_a`) | `emulator-5554` |
+| Client | Android emulator (`test18_b`) | `emulator-5556` |
 
 `xcrun simctl list devices` / `adb devices` to re-discover if these change.
 Boot a shutdown sim with `xcrun simctl boot <udid>`; boot a second Android AVD
-with `flutter emulators --launch sync_arm_b` (NOT `sync_arm_a` again — that's
+with `flutter emulators --launch <name>` (NOT the same AVD name twice — that's
 already `emulator-5554`, and two instances of the *same* AVD name conflict:
 `Running multiple emulators with the same AVD is an experimental feature`).
+
+**2026-08-01 — AVD replacement:** the old `sync_arm_a`/`sync_arm_b` AVDs stopped
+booting (their shared `android-34` system image wedges early in guest boot —
+qemu at 100% CPU, adb `offline` forever, surviving `wipe_android_avds.sh` +
+`-no-snapshot`). New AVDs `test18_a`/`test18_b` use the `android-36` google_apis
+arm64 image (boots in ~25 s) on the same ports, so every script that addresses
+`emulator-5554/5556` works unchanged. `avdmanager` needs
+`JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"` on
+this machine (no system JRE).
 
 ---
 
@@ -110,8 +128,7 @@ This is robust to screen size, layout changes, and scroll position.
 real**: this happens when a previous host session wasn't torn down cleanly
 (navigating back from the hosting lobby doesn't yet call
 `GameLanService.endSession()` — a known gap, see `gameflow.md`'s Live
-Multiplayer Test Plan and the "Lobby lifecycle" follow-up in
-`outstanding.md`). The zombie keeps broadcasting via mDNS indefinitely.
+Multiplayer Test Plan). The zombie keeps broadcasting via mDNS indefinitely.
 **Fix**: force-stop and relaunch the app on whichever device was hosting
 before — killing the process closes its WebSocket server and stops the
 broadcast. `liars_dice_4sim_setup.sh` does this for all 4 devices up front
@@ -176,7 +193,8 @@ issue.
 
 1. Force-stop + relaunch the app on all 4 devices first — always start clean.
 2. Host: Games tile → Multiplayer Mode toggle → Liar's Dice tile → name field
-   → type name → Host Game → Add AI Player ×2.
+   → type name → Host Game → **Add AI** ×2 (the button was "Add AI Player"
+   before GAI5 personas).
 3. Each client: Games tile → Multiplayer Mode toggle → Liar's Dice tile →
    name field → type name → **dismiss keyboard** → Join a Game → tap the one
    `Liar's Dice` entry in the list (there's only one after a clean restart).

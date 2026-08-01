@@ -84,9 +84,59 @@ flutter build apk --debug --dart-define-from-file=dart-defines.json
 
 ### Testing
 
+**After every implementation task**, run the full regression suite and require green:
+
+```bash
+./scripts/run_full_suite.sh
 ```
+
+That is the single entry point. It runs, in order:
+
+| # | Step | What |
+| --- | --- | --- |
+| 1 | **SEC3** | `scripts/scan_release_secrets.sh` — no secrets in assets/lib/APK |
+| 2 | **Analyze** | `flutter analyze` — zero issues |
+| 3 | **Host tests** | `flutter test` — unit, widget, screen+Drift, P0–P3 host gates (offline, import, crew join, AI determinism, units, a11y…) |
+| 4 | **TEST8 live RLS** | `scripts/test_supabase_rls.sh` — skips cleanly if no `dart-defines.json` / offline |
+| 5 | **TEST9 integration** | `flutter test integration_test` — default device `flutter-tester` |
+
+```bash
+# Offline / no Supabase credentials (still runs 1–3 + skips 4):
+./scripts/run_full_suite.sh --skip-live
+
+# Host-only (no integration_test):
+./scripts/run_full_suite.sh --skip-live --skip-integration
+
+# Integration on a real simulator/device:
+./scripts/run_full_suite.sh --device <device-id>
+```
+
+| Flag | When to use |
+| --- | --- |
+| `--skip-live` | No network or no `dart-defines.json` |
+| `--skip-integration` | Host unit/widget only (faster local loop) |
+| `--device <id>` | Real sim/device for `integration_test` instead of `flutter-tester` |
+
+Piecemeal equivalent (same coverage as the script):
+
+```bash
+./scripts/scan_release_secrets.sh
+flutter analyze
 flutter test
+./scripts/test_supabase_rls.sh                          # optional; skips without dart-defines
+flutter test integration_test -d flutter-tester
 ```
+
+Targeted smoke for recent P1 gates:
+
+```bash
+flutter test test/offline_persistence_test.dart \              # TEST13
+             test/import_roundtrip_test.dart \                 # TEST14
+             test/join_boat_flow_test.dart \                   # TEST15
+             test/checklist_items_screen_integration_test.dart # TEST17
+```
+
+AI agents use the same gate in `CLAUDE.md` §5. Open backlog: GitHub Issues (`test-gap` label = testing gaps). Parallel agents: `CLAUDE.md` §Parallel agents.
 
 ## Architecture
 

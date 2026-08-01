@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Process cocktails_import.json → assets/seed/cocktails_import_seed.json.
+"""Process cocktails_import.json -> assets/seed/cocktails_import_seed.json.
 
 Rules (product):
   - Single-glass servings (scale multi-serve punches down).
-  - Metric only: oz → ml snapped to standard bar volumes (no fractions).
+  - Metric only: oz -> ml snapped to standard bar volumes (no fractions).
   - Skip names already covered by the classic seeder in seed_recipes.dart.
   - Dedupe near-identical name+ingredient variants; keep true variants with
     disambiguated names.
@@ -83,7 +83,7 @@ GARNISH_NAME_HINTS = {
     "freshly grated nutmeg",
     "apple slice",
     "olive or lemon twist",
-    "jalapeño slice",
+    "jalapeno slice",
     "chili salt",
     "fresh pineapple",
     "edible flowers",
@@ -135,7 +135,7 @@ def extract_garnishes_from_instructions(text: str) -> list[str]:
     if not m:
         return []
     chunk = m.group(1).strip()
-    # "extravagantly with fruit and flowers" → fruit + flowers, drop adverb.
+    # "extravagantly with fruit and flowers" -> fruit + flowers, drop adverb.
     chunk = re.sub(
         r"^(extravagantly|generously|liberally|lightly)\s+(with\s+)?",
         "",
@@ -403,7 +403,7 @@ def convert_ingredient(ing, scale: float) -> dict:
     }
 
 
-# Liquid toppers mentioned in instructions → default metric amounts on the recipe.
+# Liquid toppers mentioned in instructions -> default metric amounts on the recipe.
 TOPPER_DEFAULTS = {
     "soda": ("Soda Water", 60, "ml"),
     "soda water": ("Soda Water", 60, "ml"),
@@ -437,7 +437,7 @@ def strip_measures_from_prose(text: str | None) -> str | None:
         r"\1 ",
         t,
     )
-    # "1 cup crushed ice" → "crushed ice" (ice is technique, not a measured ingredient)
+    # "1 cup crushed ice" -> "crushed ice" (ice is technique, not a measured ingredient)
     t = re.sub(r"(?i)\b\d+(?:\.\d+)?\s*cups?\s+(crushed ice|ice)\b", r"\1", t)
     # Stray leftover measures like "60 ml of gin" in prose
     t = re.sub(r"(?i)\b\d+(?:\.\d+)?\s*(?:ml|oz)\s+(?:of\s+)?", "", t)
@@ -496,7 +496,7 @@ def promote_toppers_to_ingredients(
     for idx, ing in enumerate(ingredients):
         ing["sortOrder"] = idx
 
-    # Normalize "top with soda" → "top with soda water"
+    # Normalize "top with soda" -> "top with soda water"
     instructions = re.sub(
         r"(?i)top with soda(\s+if desired)?",
         lambda mm: "Top with soda water"
@@ -635,7 +635,7 @@ def main() -> None:
                 )
 
         # Quantities belong on ingredients, not in prose.
-        # "Top with 60 ml soda water" → ingredient + "Top with soda water".
+        # "Top with 60 ml soda water" -> ingredient + "Top with soda water".
         final_ings, instructions = promote_toppers_to_ingredients(
             final_ings, instructions
         )
@@ -696,7 +696,7 @@ def main() -> None:
         json.dumps({"version": 1, "cocktails": out_items}, indent=2, ensure_ascii=False)
         + "\n"
     )
-    print(f"wrote {OUT} — {len(out_items)} cocktails, {len(problems)} problems")
+    print(f"wrote {OUT} - {len(out_items)} cocktails, {len(problems)} problems")
     for p in problems[:20]:
         print(" ", p)
     if problems:

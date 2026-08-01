@@ -23,7 +23,7 @@
 - **Authoritative:** RevenueCat `entitlements.active` contains `Boat Checks Pro` (`RevenueCatService.isPro()`).
 - **UI gate:** watch `isProProvider` (`StreamProvider` in `di.dart`) — re-emits on purchase/restore/login.
 - **Not authoritative:** `UserSettings.isPro` / `proExpiresAt` (legacy/local only).
-- **Debug:** `kForceProForTesting` only when `kDebugMode` (RM1) — release ignores it. See `outstanding.md`.
+- **Debug:** `kForceProForTesting` only when `kDebugMode` (RM1) — release ignores it. See GitHub issue #1.
 
 ## Sync ≠ Pro (decision 2026-07-11)
 

@@ -1,7 +1,7 @@
 /// Static Northern-Hemisphere season-to-ingredient map.
 /// Returns ingredients that are typically in season for the current month.
 class SeasonalService {
-  // month (1–12) → ingredient names in season (Northern Hemisphere)
+  // month (1-12) -> ingredient names in season (Northern Hemisphere)
   static const _nhSeasons = <int, List<String>>{
     1:  ['leeks', 'parsnips', 'kale', 'celeriac', 'blood oranges', 'clementines', 'mussels', 'oysters'],
     2:  ['leeks', 'purple sprouting broccoli', 'forced rhubarb', 'blood oranges', 'mussels', 'oysters'],
@@ -17,7 +17,7 @@ class SeasonalService {
     12: ['parsnips', 'celeriac', 'leeks', 'blood oranges', 'clementines', 'chestnuts', 'mussels', 'oysters', 'venison'],
   };
 
-  // Southern-Hemisphere: offset by 6 months — built once at class load time
+  // Southern-Hemisphere: offset by 6 months - built once at class load time
   static final _shSeasons = <int, List<String>>{
     for (int m = 1; m <= 12; m++)
       m: _nhSeasons[((m + 5) % 12) + 1]!,

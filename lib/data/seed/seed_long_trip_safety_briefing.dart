@@ -80,7 +80,7 @@ Future<void> seedLongTripSafetyBriefing(
   add(
     longTripId,
     'All Taps Are Pure RO Drinking Water',
-    'We make our own freshwater through reverse osmosis, where we convert seawater into freshwater. This is the purest of water — every tap on board serves this same pure RO drinking water.',
+    'We make our own freshwater through reverse osmosis, where we convert seawater into freshwater. This is the purest of water - every tap on board serves this same pure RO drinking water.',
     'watermaker',
   );
   add(
@@ -281,7 +281,7 @@ Future<void> seedLongTripSafetyBriefing(
   add(
     longTripId,
     'Using the VHF Radio',
-    'The VHF Radio works differently from a phone in that it has a Push To Talk (PTT) button.\nFurther, one can only talk or listen, not both at the same time. Therefore, a language was developed to assist in this awkward "one-way conversation".\nSelect the channel, normally 16, press the PTT and, while holding it in, say your sentence and end it with "over". This way everyone in range will be able to hear you — nothing is private on VHF. The other person will know you are finished with your sentence when you say "over".\nThe very first sentence must start with the name of the boat you are calling repeated three times, followed by your boat\'s name repeated three times, followed by "over".\nRelease the PTT and wait for the answer. You may have to repeat before the other person will answer.\nRemember to switch to another open channel, such as 10, to have a conversation, because 16 is reserved for distress calls and to initiate a call.',
+    'The VHF Radio works differently from a phone in that it has a Push To Talk (PTT) button.\nFurther, one can only talk or listen, not both at the same time. Therefore, a language was developed to assist in this awkward "one-way conversation".\nSelect the channel, normally 16, press the PTT and, while holding it in, say your sentence and end it with "over". This way everyone in range will be able to hear you - nothing is private on VHF. The other person will know you are finished with your sentence when you say "over".\nThe very first sentence must start with the name of the boat you are calling repeated three times, followed by your boat\'s name repeated three times, followed by "over".\nRelease the PTT and wait for the answer. You may have to repeat before the other person will answer.\nRemember to switch to another open channel, such as 10, to have a conversation, because 16 is reserved for distress calls and to initiate a call.',
     'radio',
   );
   add(

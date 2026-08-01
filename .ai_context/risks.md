@@ -60,7 +60,7 @@ Depends on Drift outbox, RC, Supabase, connectivity. Started from startup path.
 2. **Nested `Slidable`s** — outer only on header row, never whole `ExpansionTile` with child slidables.
 3. **PDF core fonts** — no U+2022; use ASCII bullets or embed a Unicode font.
 4. **Liar's Dice bid escalate path** — single bid per round in normal play; `lastDeclaredBid` escalate branches are mostly dead unless multi-bid rounds are added.
-5. **Lobby hard-wired to Liar's Dice** — GAME1 blocker for second multiplayer title.
+5. **Lobby `switch (gameId)`** — each multiplayer title needs its own `initHostMode` case + imports in `lobby_screen.dart` (GAME1 closed; still the extension point, not a single-game hard-wire).
 
 ## Do not touch lightly
 

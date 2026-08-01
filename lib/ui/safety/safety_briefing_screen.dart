@@ -14,6 +14,7 @@ import '../../services/admob_service.dart';
 import '../../services/import_service.dart';
 import '../components/import_export.dart';
 import '../../core/di.dart';
+import '../../core/factory_reset.dart';
 import '../../models/models.dart';
 
 /// Dedicated screen for displaying safety briefing items for a specific group
@@ -31,11 +32,11 @@ class SafetyBriefingItemsScreen extends ConsumerStatefulWidget {
 
 class _SafetyBriefingItemsScreenState
     extends ConsumerState<SafetyBriefingItemsScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showCompleted = true;
   bool _showIncomplete = true;
-  bool _showHidden = false;
 
   @override
   void dispose() {
@@ -51,14 +52,20 @@ class _SafetyBriefingItemsScreenState
     final isProAsync = ref.watch(isProProvider);
     final isPro = isProAsync.value ?? false;
     final currentItems = asyncItems.asData?.value ?? const <ChecklistItem>[];
+    // Match checklists: global settings flag drives hidden-item visibility.
+    final showHidden =
+        ref.watch(userSettingsProvider).asData?.value?.showHiddenItems ?? false;
 
     return Scaffold(
+      key: _scaffoldKey,
       body: SafeArea(
         child: Column(
           children: [
             // Title Tile with group name
             TitleTile(
               title: widget.group.title,
+              onMenuPressed: () =>
+                  _scaffoldKey.currentState?.openEndDrawer(),
               actionsBuilder: (color) => [
                 IconButton(
                   icon: Icon(Icons.import_export, color: color),
@@ -71,6 +78,8 @@ class _SafetyBriefingItemsScreenState
                       fileBaseName: 'sisu_safety',
                       exportCurrent: () async =>
                           ImportService.exportChecklist(currentItems),
+                      existingNames: () async =>
+                          currentItems.map((e) => e.title).toList(),
                       persist: (batch) async {
                         final repo = ref.read(checklistRepositoryProvider);
                         final existing = await repo
@@ -132,7 +141,7 @@ class _SafetyBriefingItemsScreenState
                     }
 
                     // Status filters
-                    if (item.isHidden && !_showHidden) return false;
+                    if (item.isHidden && !showHidden) return false;
                     if (item.isCompleted && !_showCompleted) return false;
                     if (!item.isCompleted && !_showIncomplete) return false;
 
@@ -285,9 +294,6 @@ class _SafetyBriefingItemsScreenState
                     subtitle: const Text('Display soft-deleted items'),
                     value: settings?.showHiddenItems ?? false,
                     onChanged: (value) async {
-                      setState(() {
-                        _showHidden = value;
-                      });
                       final updatedSettings = (settings ?? UserSettings())
                         ..showHiddenItems = value;
                       final repository = ref.read(
@@ -492,6 +498,7 @@ class _SafetyBriefingItemsScreenState
                 Navigator.of(dialogContext).pop();
                 final dbService = ref.read(databaseServiceProvider);
                 await dbService.factoryReset();
+                invalidateAfterFactoryReset(ref);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

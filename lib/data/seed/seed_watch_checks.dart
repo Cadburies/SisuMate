@@ -113,7 +113,7 @@ Future<void> seedWatchChecks(String defaultBoatSupabaseId) async {
   add(
     watchId,
     'Barometric Pressure Trend',
-    'Log barometric pressure hourly. A fall of ≥7 mb in 3 hours is a strong indicator of deteriorating weather. Wake skipper immediately.',
+    'Log barometric pressure hourly. A fall of >=7 mb in 3 hours is a strong indicator of deteriorating weather. Wake skipper immediately.',
     'lib/assets/lists/WatchChecks/BarometricPressure.jpg',
   );
   add(

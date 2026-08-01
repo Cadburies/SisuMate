@@ -53,6 +53,8 @@ PODS:
   - GoogleUserMessagingPlatform (3.1.0)
   - image_picker_ios (0.0.1):
     - Flutter
+  - integration_test (0.0.1):
+    - Flutter
   - mobile_scanner (7.0.0):
     - Flutter
     - FlutterMacOS
@@ -126,6 +128,7 @@ DEPENDENCIES:
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - google_mobile_ads (from `.symlinks/plugins/google_mobile_ads/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
   - mobile_scanner (from `.symlinks/plugins/mobile_scanner/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - printing (from `.symlinks/plugins/printing/ios`)
@@ -169,6 +172,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/google_mobile_ads/ios"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
   mobile_scanner:
     :path: ".symlinks/plugins/mobile_scanner/darwin"
   package_info_plus:
@@ -205,6 +210,7 @@ SPEC CHECKSUMS:
   google_mobile_ads: fe0e2c1764ad95323dd0e3081d0bb2d58411f957
   GoogleUserMessagingPlatform: befe603da6501006420c206222acd449bba45a9c
   image_picker_ios: 4f2f91b01abdb52842a8e277617df877e40f905b
+  integration_test: 252f60fa39af5e17c3aa9899d35d908a0721b573
   mobile_scanner: 77265f3dc8d580810e91849d4a0811a90467ed5e
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   printing: 233e1b73bd1f4a05615548e9b5a324c98588640b

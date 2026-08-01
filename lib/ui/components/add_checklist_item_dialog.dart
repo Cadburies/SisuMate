@@ -5,6 +5,94 @@ import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/revenuecat_service.dart';
 
+/// Result of [AddChecklistItemFormDialog] when the user confirms Add.
+class ChecklistItemFormResult {
+  final String title;
+  final String? notes;
+  const ChecklistItemFormResult({required this.title, this.notes});
+}
+
+/// Pure title/notes form for custom checklist / maintenance / safety items.
+/// Public for TEST5 widget tests — no Pro gate, no repository.
+class AddChecklistItemFormDialog extends StatefulWidget {
+  final String itemNoun;
+  const AddChecklistItemFormDialog({
+    super.key,
+    this.itemNoun = 'item',
+  });
+
+  @override
+  State<AddChecklistItemFormDialog> createState() =>
+      AddChecklistItemFormDialogState();
+}
+
+class AddChecklistItemFormDialogState extends State<AddChecklistItemFormDialog> {
+  final _titleCtrl = TextEditingController();
+  final _notesCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _notesCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Add ${widget.itemNoun}'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _notesCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Notes (optional)',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop<ChecklistItemFormResult>(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _titleCtrl.text.trim().isEmpty
+              ? null
+              : () {
+                  final title = _titleCtrl.text.trim();
+                  final notes = _notesCtrl.text.trim();
+                  Navigator.of(context).pop(
+                    ChecklistItemFormResult(
+                      title: title,
+                      notes: notes.isEmpty ? null : notes,
+                    ),
+                  );
+                },
+          child: const Text('Add'),
+        ),
+      ],
+    );
+  }
+}
+
 /// Pro-gated "add custom item" flow for Checklists / Maintenance / Safety.
 ///
 /// Free users are sent to the paywall. Pro users get a title (+ optional notes)
@@ -23,62 +111,14 @@ Future<void> showAddCustomChecklistItemDialog({
   }
   if (!context.mounted) return;
 
-  final titleCtrl = TextEditingController();
-  final notesCtrl = TextEditingController();
   final messenger = ScaffoldMessenger.of(context);
 
-  final saved = await showDialog<bool>(
+  final result = await showDialog<ChecklistItemFormResult>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text('Add $itemNoun'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: notesCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optional)',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (titleCtrl.text.trim().isEmpty) return;
-            Navigator.of(dialogContext).pop(true);
-          },
-          child: const Text('Add'),
-        ),
-      ],
-    ),
+    builder: (dialogContext) => AddChecklistItemFormDialog(itemNoun: itemNoun),
   );
 
-  final title = titleCtrl.text.trim();
-  final notes = notesCtrl.text.trim();
-  titleCtrl.dispose();
-  notesCtrl.dispose();
-
-  if (saved != true || title.isEmpty) return;
+  if (result == null || result.title.isEmpty) return;
 
   try {
     final existing =
@@ -93,9 +133,9 @@ Future<void> showAddCustomChecklistItemDialog({
           'custom_item_${DateTime.now().millisecondsSinceEpoch}'
       ..groupSupabaseId = group.supabaseId
       ..boatSupabaseId = group.boatSupabaseId
-      ..title = title
-      ..name = title
-      ..notes = notes.isEmpty ? null : notes
+      ..title = result.title
+      ..name = result.title
+      ..notes = result.notes
       ..isBundled = false
       ..sortOrder = maxSort + 1
       ..lastModified = DateTime.now().toUtc()
@@ -103,7 +143,7 @@ Future<void> showAddCustomChecklistItemDialog({
 
     await ref.read(checklistRepositoryProvider).addItem(item);
     messenger.showSnackBar(
-      SnackBar(content: Text('$title added')),
+      SnackBar(content: Text('${result.title} added')),
     );
   } catch (e) {
     messenger.showSnackBar(

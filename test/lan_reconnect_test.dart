@@ -1,10 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bonsoir/bonsoir.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sisu_mate/services/game_ai/game_ai_difficulty.dart';
+import 'package:sisu_mate/services/game_ai/game_ai_persona.dart';
 import 'package:sisu_mate/services/lan/game_lan_service.dart';
 import 'package:sisu_mate/services/lan/lan_engine.dart';
 import 'package:sisu_mate/services/lan/lan_message.dart';
+
+import 'test_helpers/fake_lan_engine.dart';
 
 // Covers F6 client reconnect helpers and LT7 mid-game same-seat rejoin.
 // Full mDNS discovery is not required — host binds a real WebSocket server
@@ -50,6 +55,24 @@ void main() {
     test('fromJson defaults isAI to false when the key is missing', () {
       final legacy = LobbyPlayer.fromJson({'id': 'peer_1', 'name': 'Alex'});
       expect(legacy.isAI, isFalse);
+    });
+
+    test('GAI5 aiPersona round-trips and defaults to balanced', () {
+      const bot = LobbyPlayer(
+        id: 'ai_1',
+        name: 'Bluffer 1 (Hard)',
+        isAI: true,
+        aiDifficulty: GameAiDifficulty.hard,
+        aiPersona: GameAiPersona.aggressive,
+      );
+      final round = LobbyPlayer.fromJson(bot.toJson());
+      expect(round.aiPersona, GameAiPersona.aggressive);
+      expect(round.aiDifficulty, GameAiDifficulty.hard);
+      expect(round.toJson()['aiPersona'], 'aggressive');
+
+      final legacy = LobbyPlayer.fromJson(
+          {'id': 'ai_x', 'name': 'AI', 'isAI': true});
+      expect(legacy.aiPersona, GameAiPersona.balanced);
     });
   });
 
@@ -276,5 +299,130 @@ void main() {
       await sub.cancel();
       await host.endSession();
     }, timeout: const Timeout(Duration(seconds: 25)));
+  });
+
+  group('LT7 rejoin client-side entry (TEST18)', () {
+    Future<void> flush() =>
+        Future<void>.delayed(const Duration(milliseconds: 50));
+
+    test(
+        'pre-game welcome alone does not fire gameStarted (only start does)',
+        () async {
+      final hostEngine = FakeLanEngine();
+      final clientEngine = FakeLanEngine();
+      hostEngine.connectClient(clientEngine, clientPeerId: 'peer_1');
+      final host = GameLanService(hostEngine);
+      final client = GameLanService(clientEngine);
+
+      await host.hostGame(gameName: 'LT7 Lobby', hostPlayerName: 'Skipper');
+      final dummy =
+          BonsoirService(name: 'LT7 Lobby', type: '_sisumate._tcp', port: 0);
+
+      var started = 0;
+      final sub = client.gameStarted.listen((_) => started++);
+      await client.joinGame(service: dummy, playerName: 'Alex');
+      await flush();
+      expect(started, 0,
+          reason: 'lobby welcome must not route the client into the game');
+      expect(client.myAssignedId, 'peer_1');
+
+      host.startGame();
+      await flush();
+      expect(started, 1);
+
+      await sub.cancel();
+      await host.endSession();
+    });
+
+    test(
+        'mid-game rejoin fires gameStarted off the welcome and replays the '
+        'last state to a late remoteStates subscriber', () async {
+      final hostEngine = FakeLanEngine();
+      final clientEngine = FakeLanEngine();
+      hostEngine.connectClient(clientEngine, clientPeerId: 'peer_1');
+      final host = GameLanService(hostEngine);
+      final client = GameLanService(clientEngine);
+
+      await host.hostGame(gameName: 'LT7 Rejoin', hostPlayerName: 'Skipper');
+      final dummy =
+          BonsoirService(name: 'LT7 Rejoin', type: '_sisumate._tcp', port: 0);
+      await client.joinGame(service: dummy, playerName: 'Alex');
+      await flush();
+
+      host.startGame();
+      host.broadcastState({'phase': 'declare', 'marker': 'pre-drop'});
+      await flush();
+
+      // App killed on the client: host reserves the seat; nothing but the
+      // player name carries over to the "relaunched" client below.
+      clientEngine.disconnect();
+      await flush();
+      expect(host.pendingReconnectPeerIds, contains('peer_1'));
+
+      final clientEngine2 = FakeLanEngine();
+      hostEngine.connectClient(clientEngine2, clientPeerId: 'peer_9');
+      final client2 = GameLanService(clientEngine2);
+
+      var started = 0;
+      final startSub = client2.gameStarted.listen((_) => started++);
+      await client2.joinGame(service: dummy, playerName: 'Alex');
+      await flush();
+
+      expect(started, 1,
+          reason:
+              'rejoin welcome (inProgress) must fire gameStarted — there is '
+              'no second start broadcast to wait for');
+      expect(client2.myAssignedId, 'peer_1',
+          reason: 'client must be rebound to its original seat id');
+      expect(host.pendingReconnectPeerIds, isEmpty);
+
+      // The host pushed its last broadcast immediately after the welcome,
+      // before any game notifier could have subscribed — a late subscriber
+      // must still receive it via the replay.
+      final replayed = await client2.remoteStates.first
+          .timeout(const Duration(seconds: 2));
+      expect(replayed['marker'], 'pre-drop');
+
+      await startSub.cancel();
+      await host.endSession();
+    });
+
+    test('joinGame clears a stale cached snapshot from a prior game',
+        () async {
+      final hostEngine = FakeLanEngine();
+      final clientEngine = FakeLanEngine();
+      hostEngine.connectClient(clientEngine, clientPeerId: 'peer_1');
+      final host = GameLanService(hostEngine);
+      final client = GameLanService(clientEngine);
+
+      await host.hostGame(gameName: 'Game A', hostPlayerName: 'Skipper');
+      final dummyA =
+          BonsoirService(name: 'Game A', type: '_sisumate._tcp', port: 0);
+      await client.joinGame(service: dummyA, playerName: 'Alex');
+      await flush();
+      host.startGame();
+      host.broadcastState({'marker': 'game-a-state'});
+      await flush();
+
+      // Same process joins a different host/game: no stale replay allowed.
+      final hostEngine2 = FakeLanEngine();
+      hostEngine2.connectClient(clientEngine, clientPeerId: 'peer_1');
+      final host2 = GameLanService(hostEngine2);
+      await host2.hostGame(gameName: 'Game B', hostPlayerName: 'Other');
+      final dummyB =
+          BonsoirService(name: 'Game B', type: '_sisumate._tcp', port: 0);
+      await client.joinGame(service: dummyB, playerName: 'Alex');
+      await flush();
+
+      final events = <Map<String, dynamic>>[];
+      final sub = client.remoteStates.listen(events.add);
+      await flush();
+      expect(events, isEmpty,
+          reason: 'a fresh join must not replay the previous game’s state');
+
+      await sub.cancel();
+      await host.endSession();
+      await host2.endSession();
+    });
   });
 }

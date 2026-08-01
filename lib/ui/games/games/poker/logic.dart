@@ -797,26 +797,7 @@ class PokerNotifier extends Notifier<PokerState> {
     _broadcastIfHost();
   }
 
-  List<int> _aiDiscardIndices(List<int> hand) {
-    final result = evaluateHand(hand);
-    if (result.rank.index >= HandRank.onePair.index) {
-      final ranks = hand.map(rankOf).toList();
-      final cnt = <int, int>{};
-      for (final r in ranks) {
-        cnt[r] = (cnt[r] ?? 0) + 1;
-      }
-      final keepRanks =
-          cnt.entries.where((e) => e.value >= 2).map((e) => e.key).toSet();
-      if (keepRanks.isEmpty) return [];
-      return [
-        for (int i = 0; i < hand.length; i++)
-          if (!keepRanks.contains(rankOf(hand[i]))) i
-      ];
-    }
-    final sorted = List.generate(5, (i) => i)
-      ..sort((a, b) => rankOf(hand[a]).compareTo(rankOf(hand[b])));
-    return sorted.sublist(0, 2);
-  }
+  List<int> _aiDiscardIndices(List<int> hand) => pokerAiDiscardIndices(hand);
 
   void _showdown() {
     if (state.phase != PokerPhase.showdown) return;
@@ -869,6 +850,28 @@ class PokerNotifier extends Notifier<PokerState> {
       isOpponentAI: true,
     );
   }
+}
+
+/// TEST28 / GAI: pure discard policy (no RNG) — same hand ⇒ same indices.
+List<int> pokerAiDiscardIndices(List<int> hand) {
+  final result = evaluateHand(hand);
+  if (result.rank.index >= HandRank.onePair.index) {
+    final ranks = hand.map(rankOf).toList();
+    final cnt = <int, int>{};
+    for (final r in ranks) {
+      cnt[r] = (cnt[r] ?? 0) + 1;
+    }
+    final keepRanks =
+        cnt.entries.where((e) => e.value >= 2).map((e) => e.key).toSet();
+    if (keepRanks.isEmpty) return [];
+    return [
+      for (int i = 0; i < hand.length; i++)
+        if (!keepRanks.contains(rankOf(hand[i]))) i
+    ];
+  }
+  final sorted = List.generate(5, (i) => i)
+    ..sort((a, b) => rankOf(hand[a]).compareTo(rankOf(hand[b])));
+  return sorted.sublist(0, 2);
 }
 
 final pokerStateProvider =

@@ -7,6 +7,8 @@ import '../components/common_drawer.dart';
 import '../components/group_grid.dart';
 import '../components/main_list_tile.dart';
 import '../../core/app_router.dart';
+import '../../core/di.dart';
+import '../../models/models.dart';
 import '../../providers/checklist_provider.dart';
 
 class SafetyScreen extends ConsumerStatefulWidget {
@@ -19,6 +21,9 @@ class SafetyScreen extends ConsumerStatefulWidget {
 class _SafetyScreenState extends ConsumerState<SafetyScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  /// Group-level filters (same labels as Checklists main list drawer).
+  bool _showCompleted = true;
+  bool _showIncomplete = true;
 
   @override
   void dispose() {
@@ -56,10 +61,25 @@ class _SafetyScreenState extends ConsumerState<SafetyScreen> {
                       );
                     }
                     final filtered = groups.where((g) {
-                      if (_searchQuery.isEmpty) return true;
-                      return g.title
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase());
+                      if (_searchQuery.isNotEmpty &&
+                          !g.title
+                              .toLowerCase()
+                              .contains(_searchQuery.toLowerCase())) {
+                        return false;
+                      }
+                      // Group completion from live item stream (same as tile badge).
+                      final items = ref
+                              .watch(checklistItemsProvider(g.supabaseId))
+                              .asData
+                              ?.value ??
+                          const <ChecklistItem>[];
+                      final visible = items.where((i) => !i.isHidden).toList();
+                      if (visible.isEmpty) return true;
+                      final allDone =
+                          visible.every((i) => i.isCompleted);
+                      if (allDone && !_showCompleted) return false;
+                      if (!allDone && !_showIncomplete) return false;
+                      return true;
                     }).toList();
                     if (filtered.isEmpty) {
                       return const Center(child: Text('No matching briefings'));
@@ -93,20 +113,67 @@ class _SafetyScreenState extends ConsumerState<SafetyScreen> {
     return Drawer(
       child: SafeArea(
         child: Consumer(
-          builder: (context, ref, child) => Column(
-            children: [
-              DrawerHeaderWidget(title: 'Menu'),
-              const Divider(),
-              SectionHeader(title: 'Account'),
-              AccountSection(),
-              const Divider(),
-              SectionHeader(title: 'Data Management'),
-              DataManagementSection(),
-              ProUpgradeSection(),
-              AboutSection(),
-              const Spacer(),
-              DrawerFooter(),
-            ],
+          builder: (context, ref, child) => SingleChildScrollView(
+            child: Column(
+              children: [
+                DrawerHeaderWidget(title: 'Filters & Menu'),
+                const Divider(),
+                SwitchListTile(
+                  title: const Text('Show Completed Items'),
+                  subtitle: const Text('Briefings with every point done'),
+                  value: _showCompleted,
+                  onChanged: (value) {
+                    setState(() => _showCompleted = value);
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('Show Incomplete Items'),
+                  subtitle: const Text('Briefings still in progress'),
+                  value: _showIncomplete,
+                  onChanged: (value) {
+                    setState(() => _showIncomplete = value);
+                  },
+                ),
+                Consumer(
+                  builder: (context, ref, child) {
+                    final settingsAsync = ref.watch(userSettingsProvider);
+                    return settingsAsync.when(
+                      data: (settings) => SwitchListTile(
+                        title: const Text('Show Hidden Items'),
+                        subtitle: const Text(
+                            'Display soft-deleted points inside briefings'),
+                        value: settings?.showHiddenItems ?? false,
+                        onChanged: (value) async {
+                          final updated = (settings ?? UserSettings())
+                            ..showHiddenItems = value;
+                          await ref
+                              .read(userSettingsRepositoryProvider)
+                              .updateSettings(updated);
+                          ref.invalidate(userSettingsProvider);
+                        },
+                      ),
+                      loading: () => const ListTile(
+                        title: Text('Loading settings...'),
+                        leading: CircularProgressIndicator(),
+                      ),
+                      error: (e, _) => ListTile(
+                        title: const Text('Settings Error'),
+                        subtitle: Text(e.toString()),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(),
+                SectionHeader(title: 'Account'),
+                AccountSection(),
+                const Divider(),
+                SectionHeader(title: 'Data Management'),
+                DataManagementSection(),
+                ProUpgradeSection(),
+                AboutSection(),
+                DrawerFooter(),
+              ],
+            ),
           ),
         ),
       ),

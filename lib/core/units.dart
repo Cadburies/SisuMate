@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'di.dart';
 
@@ -15,13 +17,15 @@ class MeasuredAmount {
   String toString() => '${UnitConverter.formatNumber(quantity)} $unit';
 }
 
-/// Metric-first unit conversion for recipes, fuel, and free-text temperatures.
+/// Metric-first unit conversion for recipes, fuel, weather, and free-text.
 ///
 /// Rules:
-/// - Database / seed / sync values are always metric (ml, L, g, kg, cm, m, °C).
-/// - Imperial UI displays convert on the way out; imperial imports convert on
-///   the way in.
-/// - Count / qualitative units (dash, piece, clove, whole, …) pass through.
+/// - **Database / seed / sync storage are always metric** (ml, L, g, kg, cm, m,
+///   m/s, °C, mm, …). Never write gal/°F/kn as stored values for cooking/fuel.
+/// - **Display** follows [AppUnitPrefs] (per-category: volume, temp, speed,
+///   depth, distance). Presets match common marine apps (Marine / US / Metric).
+/// - **Input:** convert display units → metric before store.
+/// - Count / qualitative units (dash, piece, clove, whole, ...) pass through.
 class UnitConverter {
   UnitConverter._();
 
@@ -433,6 +437,153 @@ class UnitConverter {
   static double _fToC(double f) => (f - 32) * 5 / 9;
   static double _cToF(double c) => c * 9 / 5 + 32;
 
+  // ── Weather / marine display (source always metric) ───────────────────────
+
+  static const double metersPerFoot = 0.3048;
+  static const double metersPerFathom = 1.8288;
+  static const double msPerKnot = 0.514444;
+  static const double mmPerInch = 25.4;
+  static const double kmPerNm = 1.852;
+  static const double miPerNm = 1.15078;
+
+  /// Stored °C → display per [temp] (or legacy [system]).
+  static String formatTempC(
+    double celsius,
+    UnitSystem system, {
+    TempUnitPref? temp,
+  }) {
+    final t = temp ??
+        (system == UnitSystem.imperial
+            ? TempUnitPref.fahrenheit
+            : TempUnitPref.celsius);
+    if (t == TempUnitPref.fahrenheit) {
+      return '${_cToF(celsius).round()} F';
+    }
+    return '${celsius.round()} C';
+  }
+
+  static String formatTempCRange(
+    double? minC,
+    double? maxC,
+    UnitSystem system, {
+    TempUnitPref? temp,
+  }) {
+    final lo = minC == null ? '-' : formatTempC(minC, system, temp: temp);
+    final hi = maxC == null ? '-' : formatTempC(maxC, system, temp: temp);
+    return '$lo / $hi';
+  }
+
+  /// Wind / boat SOG from stored m/s → preferred speed unit.
+  static String formatSpeedFromMs(double ms, SpeedUnitPref unit) {
+    switch (unit) {
+      case SpeedUnitPref.knots:
+        return '${(ms / msPerKnot).round()} kn';
+      case SpeedUnitPref.kmh:
+        return '${formatNumber(ms * 3.6)} km/h';
+      case SpeedUnitPref.mph:
+        return '${formatNumber(ms * 2.23694)} mph';
+      case SpeedUnitPref.metersPerSecond:
+        return '${formatNumber(ms)} m/s';
+    }
+  }
+
+  /// Boat speed already in knots → display unit (passage planner).
+  static String formatSpeedFromKnots(double knots, SpeedUnitPref unit) {
+    return formatSpeedFromMs(knots * msPerKnot, unit);
+  }
+
+  /// Convert a user-entered boat speed in [unit] → knots (for planPassage).
+  static double speedDisplayToKnots(double value, SpeedUnitPref unit) {
+    switch (unit) {
+      case SpeedUnitPref.knots:
+        return value;
+      case SpeedUnitPref.kmh:
+        return value / 1.852;
+      case SpeedUnitPref.mph:
+        return value / 1.15078;
+      case SpeedUnitPref.metersPerSecond:
+        return value / msPerKnot;
+    }
+  }
+
+  /// Convert knots → display value in [unit].
+  static double knotsToSpeedDisplay(double knots, SpeedUnitPref unit) {
+    switch (unit) {
+      case SpeedUnitPref.knots:
+        return knots;
+      case SpeedUnitPref.kmh:
+        return knots * 1.852;
+      case SpeedUnitPref.mph:
+        return knots * 1.15078;
+      case SpeedUnitPref.metersPerSecond:
+        return knots * msPerKnot;
+    }
+  }
+
+  static String speedUnitLabel(SpeedUnitPref unit) => switch (unit) {
+        SpeedUnitPref.knots => 'kn',
+        SpeedUnitPref.kmh => 'km/h',
+        SpeedUnitPref.mph => 'mph',
+        SpeedUnitPref.metersPerSecond => 'm/s',
+      };
+
+  /// @deprecated Prefer [formatSpeedFromMs] with [AppUnitPrefs.windSpeed].
+  static String formatWindKnotsFromMs(double ms) =>
+      formatSpeedFromMs(ms, SpeedUnitPref.knots);
+
+  static String formatKnots(double knots) => '${knots.round()} kn';
+
+  /// Stored meters → depth/wave length in preferred unit.
+  static String formatLengthM(
+    double meters,
+    UnitSystem system, {
+    DepthUnitPref? depth,
+  }) {
+    final d = depth ??
+        (system == UnitSystem.imperial
+            ? DepthUnitPref.feet
+            : DepthUnitPref.meters);
+    switch (d) {
+      case DepthUnitPref.meters:
+        return '${formatNumber(meters)} m';
+      case DepthUnitPref.feet:
+        return '${formatNumber(meters / metersPerFoot)} ft';
+      case DepthUnitPref.fathoms:
+        return '${formatNumber(meters / metersPerFathom)} fm';
+    }
+  }
+
+  /// Passage distance stored as NM → preferred unit.
+  static String formatDistanceNm(double nm, DistanceUnitPref unit) {
+    switch (unit) {
+      case DistanceUnitPref.nauticalMiles:
+        return '${formatNumber(nm)} NM';
+      case DistanceUnitPref.kilometers:
+        return '${formatNumber(nm * kmPerNm)} km';
+      case DistanceUnitPref.statuteMiles:
+        return '${formatNumber(nm * miPerNm)} mi';
+    }
+  }
+
+  static String formatPrecipMm(double mm, UnitSystem system) {
+    if (system == UnitSystem.imperial) {
+      return '${formatNumber(mm / mmPerInch)} in';
+    }
+    return '${formatNumber(mm)} mm';
+  }
+
+  static String? formatChartDepthM(
+    double? elevationM,
+    UnitSystem system, {
+    DepthUnitPref? depth,
+  }) {
+    if (elevationM == null) return null;
+    if (elevationM < 0) {
+      return 'Charted depth ~${formatLengthM(-elevationM, system, depth: depth)}';
+    }
+    return 'Land elev. ~${formatLengthM(elevationM, system, depth: depth)}';
+  }
+
   static bool _almostMultiple(double value, double base) {
     if (base <= 0) return false;
     final n = value / base;
@@ -447,43 +598,232 @@ class UnitConverter {
   }
 }
 
-// ── Preference notifier (mirrors ThemeModeNotifier) ──────────────────────────
+// ── Per-category unit preferences (marine-app style) ─────────────────────────
 
-class UnitSystemNotifier extends Notifier<UnitSystem> {
+enum VolumeUnitPref { liters, usGallons }
+
+enum TempUnitPref { celsius, fahrenheit }
+
+/// Shared enum for both wind and boat/SOG speed prefs — kept independent
+/// (SUG5): most chartplotters tie them together, but some marine apps let
+/// wind stay in knots while boat speed shows km/h, or vice versa.
+enum SpeedUnitPref { knots, kmh, mph, metersPerSecond }
+
+enum DepthUnitPref { meters, feet, fathoms }
+
+enum DistanceUnitPref { nauticalMiles, kilometers, statuteMiles }
+
+/// Named preset applied as a whole, then user can tweak rows.
+enum UnitPreset { marine, us, metric }
+
+/// Full unit profile. **Storage is always metric**; this is display/input only.
+class AppUnitPrefs {
+  final VolumeUnitPref volume;
+  final TempUnitPref temperature;
+  final SpeedUnitPref windSpeed;
+  final SpeedUnitPref boatSpeed;
+  final DepthUnitPref depth;
+  final DistanceUnitPref distance;
+
+  const AppUnitPrefs({
+    required this.volume,
+    required this.temperature,
+    required this.windSpeed,
+    required this.boatSpeed,
+    required this.depth,
+    required this.distance,
+  });
+
+  /// Default for sailors: metric cooking/fuel/temp, knots, meters, NM.
+  static const marine = AppUnitPrefs(
+    volume: VolumeUnitPref.liters,
+    temperature: TempUnitPref.celsius,
+    windSpeed: SpeedUnitPref.knots,
+    boatSpeed: SpeedUnitPref.knots,
+    depth: DepthUnitPref.meters,
+    distance: DistanceUnitPref.nauticalMiles,
+  );
+
+  /// US coastal: gallons, F, knots, feet, NM.
+  static const us = AppUnitPrefs(
+    volume: VolumeUnitPref.usGallons,
+    temperature: TempUnitPref.fahrenheit,
+    windSpeed: SpeedUnitPref.knots,
+    boatSpeed: SpeedUnitPref.knots,
+    depth: DepthUnitPref.feet,
+    distance: DistanceUnitPref.nauticalMiles,
+  );
+
+  /// Land/metric strict: L, C, km/h, m, km (less common at sea).
+  static const metric = AppUnitPrefs(
+    volume: VolumeUnitPref.liters,
+    temperature: TempUnitPref.celsius,
+    windSpeed: SpeedUnitPref.kmh,
+    boatSpeed: SpeedUnitPref.kmh,
+    depth: DepthUnitPref.meters,
+    distance: DistanceUnitPref.kilometers,
+  );
+
+  UnitSystem get volumeSystem => volume == VolumeUnitPref.usGallons
+      ? UnitSystem.imperial
+      : UnitSystem.metric;
+
+  UnitSystem get tempSystem => temperature == TempUnitPref.fahrenheit
+      ? UnitSystem.imperial
+      : UnitSystem.metric;
+
+  /// Matches a named preset, or null if custom mix.
+  UnitPreset? get matchingPreset {
+    if (this == marine) return UnitPreset.marine;
+    if (this == us) return UnitPreset.us;
+    if (this == metric) return UnitPreset.metric;
+    return null;
+  }
+
+  AppUnitPrefs copyWith({
+    VolumeUnitPref? volume,
+    TempUnitPref? temperature,
+    SpeedUnitPref? windSpeed,
+    SpeedUnitPref? boatSpeed,
+    DepthUnitPref? depth,
+    DistanceUnitPref? distance,
+  }) =>
+      AppUnitPrefs(
+        volume: volume ?? this.volume,
+        temperature: temperature ?? this.temperature,
+        windSpeed: windSpeed ?? this.windSpeed,
+        boatSpeed: boatSpeed ?? this.boatSpeed,
+        depth: depth ?? this.depth,
+        distance: distance ?? this.distance,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'volume': volume.name,
+        'temperature': temperature.name,
+        'windSpeed': windSpeed.name,
+        'boatSpeed': boatSpeed.name,
+        'depth': depth.name,
+        'distance': distance.name,
+      };
+
+  factory AppUnitPrefs.fromJson(Map<String, dynamic>? j) {
+    if (j == null || j.isEmpty) return marine;
+    T parse<T extends Enum>(List<T> values, String key, T fallback) {
+      final name = j[key] as String?;
+      if (name == null) return fallback;
+      return values.cast<T?>().firstWhere(
+            (e) => e!.name == name,
+            orElse: () => fallback,
+          )!;
+    }
+
+    return AppUnitPrefs(
+      volume: parse(VolumeUnitPref.values, 'volume', marine.volume),
+      temperature:
+          parse(TempUnitPref.values, 'temperature', marine.temperature),
+      windSpeed: parse(SpeedUnitPref.values, 'windSpeed', marine.windSpeed),
+      boatSpeed: parse(SpeedUnitPref.values, 'boatSpeed', marine.boatSpeed),
+      depth: parse(DepthUnitPref.values, 'depth', marine.depth),
+      distance: parse(DistanceUnitPref.values, 'distance', marine.distance),
+    );
+  }
+
   @override
-  UnitSystem build() => UnitSystem.metric;
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AppUnitPrefs &&
+          volume == other.volume &&
+          temperature == other.temperature &&
+          windSpeed == other.windSpeed &&
+          boatSpeed == other.boatSpeed &&
+          depth == other.depth &&
+          distance == other.distance;
 
-  void setMetric() {
-    state = UnitSystem.metric;
-    _persist(false);
+  @override
+  int get hashCode =>
+      Object.hash(volume, temperature, windSpeed, boatSpeed, depth, distance);
+}
+
+// ── Preference notifiers ─────────────────────────────────────────────────────
+
+class UnitPrefsNotifier extends Notifier<AppUnitPrefs> {
+  @override
+  AppUnitPrefs build() => AppUnitPrefs.marine;
+
+  void restore(AppUnitPrefs prefs) => state = prefs;
+
+  void restoreFromJson(String? unitPrefsJson) {
+    if (unitPrefsJson == null || unitPrefsJson.isEmpty) {
+      state = AppUnitPrefs.marine;
+      return;
+    }
+    try {
+      state = AppUnitPrefs.fromJson(
+        jsonDecode(unitPrefsJson) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      state = AppUnitPrefs.marine;
+    }
   }
 
-  void setImperial() {
-    state = UnitSystem.imperial;
-    _persist(true);
+  Future<void> applyPreset(UnitPreset preset) async {
+    state = switch (preset) {
+      UnitPreset.marine => AppUnitPrefs.marine,
+      UnitPreset.us => AppUnitPrefs.us,
+      UnitPreset.metric => AppUnitPrefs.metric,
+    };
+    await _persist();
   }
 
-  void setSystem(UnitSystem system) {
-    state = system;
-    _persist(system == UnitSystem.imperial);
+  Future<void> update(AppUnitPrefs prefs) async {
+    state = prefs;
+    await _persist();
   }
 
-  /// Restores persisted preference on startup without writing.
-  void restore(bool useImperial) {
-    state = useImperial ? UnitSystem.imperial : UnitSystem.metric;
+  Future<void> setVolume(VolumeUnitPref v) async {
+    state = state.copyWith(volume: v);
+    await _persist();
   }
 
-  Future<void> _persist(bool useImperial) async {
+  Future<void> setTemperature(TempUnitPref t) async {
+    state = state.copyWith(temperature: t);
+    await _persist();
+  }
+
+  Future<void> setWindSpeed(SpeedUnitPref s) async {
+    state = state.copyWith(windSpeed: s);
+    await _persist();
+  }
+
+  Future<void> setBoatSpeed(SpeedUnitPref s) async {
+    state = state.copyWith(boatSpeed: s);
+    await _persist();
+  }
+
+  Future<void> setDepth(DepthUnitPref d) async {
+    state = state.copyWith(depth: d);
+    await _persist();
+  }
+
+  Future<void> setDistance(DistanceUnitPref d) async {
+    state = state.copyWith(distance: d);
+    await _persist();
+  }
+
+  Future<void> _persist() async {
     try {
       final settings = await ref.read(userSettingsProvider.future);
       if (settings == null) return;
-      settings.useImperial = useImperial;
+      settings.unitPrefsJson = jsonEncode(state.toJson());
       await ref.read(userSettingsRepositoryProvider).updateSettings(settings);
-    } catch (_) {
-      // Best-effort
-    }
+    } catch (_) {}
   }
 }
 
-final unitSystemProvider =
-    NotifierProvider<UnitSystemNotifier, UnitSystem>(UnitSystemNotifier.new);
+final unitPrefsProvider =
+    NotifierProvider<UnitPrefsNotifier, AppUnitPrefs>(UnitPrefsNotifier.new);
+
+/// Volume/cooking/fuel system derived from [unitPrefsProvider] (not a separate store).
+final unitSystemProvider = Provider<UnitSystem>((ref) {
+  return ref.watch(unitPrefsProvider).volumeSystem;
+});

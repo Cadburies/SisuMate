@@ -1,7 +1,142 @@
-# AI Context Changelog (hot window)
+# AI Context Changelog — archived batch (2026-07-21 through 2026-07-30)
 
-> Newest first. **≤ ~250 lines total. ≤ ~10 lines per new entry.**  
-> Full history through 2026-07-16: `archive/changelog-full-through-2026-07-16.md` (**never session-load**).
+> Cold history. **Never session-load.** Continues from `changelog-full-through-2026-07-16.md`.
+> Hot working changelog: `../changelog.md`.
+
+## [2026-07-30] — BAI1 passage readiness score
+- `SuggestionEngine.passageReadiness`: combines unchecked safety checklist items, overdue maintenance (reuses `build`'s same due logic so the two never disagree), cached weather wind ≥25kn, and fuel/water ≤2 days-to-empty (via BAI4's `FuelBurnEstimator`) into a single "Ready for passage" / "Fix N things first" verdict + blocker list.
+- New `lib/providers/passage_readiness_provider.dart`: combines safety items across all `appType=='safety'` groups, reads weather from local cache only (`WeatherService.loadCache()`, no network fetch), reuses `fuelLogEntriesProvider`.
+- Home: new `_PassageReadinessCard`, always shown (unlike the S4 tip banner) above it — a clean "Ready" is itself useful, not just warnings.
+- Files: `suggestion_engine.dart`, `passage_readiness_provider.dart` (new), `home_screen.dart`, `test/suggestion_engine_test.dart` (+6 tests).
+- Risks: none; 997 tests green, analyzer clean. Live-verified the "Ready" render path on-device; "not ready" path covered by unit tests only (sim DB had no safety data to toggle).
+
+## [2026-07-30] — BAI2 fix: exclude finished meal plans from passage priority
+- `SmartShoppingService.rankForPassage` summed ingredient needs across *every* meal plan passed in, with no check that the plan's date window had actually ended — a trip from months ago kept boosting "On meal plan" forever. Now skips plans where `startDate + numberOfDays` is before `now`.
+- Files: `smart_shopping_service.dart`, `test/smart_shopping_service_test.dart` (+1 regression test).
+- Context: found while reviewing another session's BAI2 landing; also reverted my own parallel (redundant) BAI2 implementation once I found theirs already shipped.
+- Risks: none; 972 tests green, analyzer clean.
+
+## [2026-07-30] — GAI7 Backgammon practice mode (auto Hard-AI review)
+- After each human turn (play out / pass / win), emit `CoachHint` for the **post-roll** position via Hard `coachHint` — does not move pieces.
+- UI: model_training icon toggles practice; auto bottom sheet “Practice review”.
+- Complements GAI6 on-demand Hint. Solo / vs local AI only.
+- Files: backgammon logic + screen, tests; outstanding.
+- Risks: none.
+
+## [2026-07-30] — Safety drawer parity with Checklists (live-test find)
+- Safety **list**: Filters & Menu drawer — show completed/incomplete briefings + show-hidden settings (was bare Account-only drawer).
+- Safety **items**: end-drawer filters existed but **menu button missing** — wired `onMenuPressed` + scaffold key (same bug on Maintenance items).
+- Files: safety_screen, safety_briefing_screen, maintenance_items_screen.
+- Risks: none.
+
+## [2026-07-30] — GAI6 Backgammon coach / hints
+- `BackgammonAi.bestHumanPlay` / `coachHint`: human-side beam search + plain-language reasons (hit, bear-off, blots, points, pip race); does not mutate state.
+- UI: coach toggle (school icon) in app bar; **Hint** button on your turn; bottom sheet “suggestion only”.
+- Solo / vs local AI only (not multiplayer human-vs-human).
+- Files: backgammon logic + screen, backgammon_test; outstanding.
+- Risks: none.
+
+## [2026-07-30] — SEED-SYNC: empty realtime snapshot was wiping factory seed
+- Root cause: seed stamps `isSynced=true` + factory epoch; Pro Supabase `.stream()` first emits empty tables → `_reconcileRemoteDeletes` hard-deleted all bundled checklists/recipes/bar/pantry.
+- Fix: `listLocalSyncedIds` excludes `isBundled` rows and factory-epoch `lastModified` (never treat seed as remote-deletes).
+- Regression test; wiped sim DB and re-seeded (15 groups, 388 recipes, 125 bar, 243 pantry — stable after sync).
+- Files: inbound_sync_applier.dart, inbound_sync_tables_test.dart.
+- Risks: none; real user hard-deletes of non-bundled rows still reconcile.
+
+## [2026-07-30] — GAI1 difficulty levels + TEST7 multi-seat LAN
+- GAI1: `GameAiDifficulty` easy/normal/hard; lobby chip for next AI; `LobbyPlayer.aiDifficulty` on wire.
+- Backgammon beam width + noise; Dudo binomial thresholds; Liar's Dice bid/accept bias; notifiers take max AI difficulty from lobby.
+- TEST7: `FakeLanEngine` multi-client fan-out; 3-client join, broadcast, dual moves, AI+human lobby tests.
+- Files: game_ai_difficulty, game_lan_service, lobby, backgammon/dudo/liars AI, fake_lan_engine, tests; outstanding.
+- Risks: none.
+
+## [2026-07-30] — MIX3 strength / glassware / crew scaling on invent-a-drink
+- `CocktailStrength` light|session|strong; glassware Auto + vessel list; servings 1–12 scale pours.
+- `suggest()` sets glassware/technique, estimates ~ABV, instructions mention vessel/crew.
+- Mixologist UI: strength segmented control, glassware chips, servings stepper; suggestion card chips.
+- Files: mixologist_service, cocktails_screen, tests; outstanding.
+- Risks: none.
+
+## [2026-07-30] — MIX5 leftover / pantry ranking on suggestDish
+- `pantryPriorityScore` + `rankPantryForLeftovers`: expiry urgency, low qty, protein bias, stale stock.
+- `suggestDish` ranks buckets by leftover score, folds expiring produce onto the plate, `DishSuggestion.leftoverNotes`.
+- Chef UI: richer Use soon banner; leftover notes on dish card + recipe leftover sheet.
+- Files: mixologist_service, chef_screen, tests; outstanding.
+- Risks: none.
+
+## [2026-07-30] — MIX2 substitute graph with confidence notes
+- `MixologistService.findSubstitutes` / `bestCountingSubstitute`: static bidirectional graph (citrus, orange liqueurs, syrups, rum, whiskey, tequila, …) + catalog `substitute1/2`.
+- Confidence ≥ 0.6 counts as have in `rankMakeableTonight`; `MakeableRecipeScore.substitutesUsed` + `isMakeableWithSubs`.
+- UI: Mixologist ranking shows Ready* / sub lines; recipe ingredient tiles show graph sub notes.
+- Files: mixologist_service, cocktails_screen, mixologist_service_test; outstanding.
+- Risks: none.
+
+## [2026-07-30] — TEST5 complete: remaining AddEdit dialog widget tests
+- Exported `AddEditMealPlanDialog`, `AddEditGuestProfileDialog`; extracted `AddChecklistItemFormDialog` (checklists/maintenance/safety custom items).
+- Widget tests: meal plan, guest profile, checklist form (+ prior log/collection). Existing: crew, fuel, inventory, documents, recipe.
+- Small UX fix: name fields re-enable Save/Add via `onChanged` setState.
+- Files: meal_planner, guest_profiles, add_checklist_item_dialog, 3 new tests; outstanding TEST5 closed.
+- Risks: none. (TEST6 full screen+DB pumps still open.)
+
+## [2026-07-30] — Weather units: metric storage, convert at display
+- Rule: DB metric for mass/volume/temp/length; UI converts for imperial. Wind/boat speed prefs separate.
+- Weather: wind stored m/s; display via unit prefs; passage fuel L/gal.
+- Files: `units.dart`, `weather_service.dart`, `weather_screen.dart`, tests.
+- Risks: none; old weather cache key invalidated.
+
+## [2026-07-30] — Multi-category unit prefs (no legacy useImperial)
+- Settings Units: Marine / US / Metric presets + per-row volume, temp, speed, depth, distance.
+- Only `unitPrefsJson` on UserSettings; dropped `useImperial`. `unitSystemProvider` derives from prefs.volume.
+- schemaVersion 3; wipe local DBs. Storage always metric.
+- Files: units, user_settings, drift, repo, settings, home, weather, passage, startup, tests.
+- Risks: wipe test devices once.
+
+## [2026-07-30] — MIX1/MIX4 + TEST5 log/collection dialogs
+- MIX1: `rankMakeableTonight` ranks cocktails by missing bar/pantry ingredients; Mixologist tab UI.
+- MIX4: `lowStockBarItems` (stale purchase / never bought); My Bar banner.
+- TEST5: exported `AddEditCaptainLogDialog` + `AddEditCollectionDialog` with widget tests.
+- Files: mixologist_service, cocktails_screen, logbook_screen, collections_screen, tests; outstanding.
+- Risks: none.
+
+## [2026-07-30] — BAI6 fuzzy "did you mean X?" import dedupe heads-up
+- `ImportService`: added `nameSimilarity` (normalized Levenshtein, case/whitespace-insensitive), `findFuzzyDuplicates` (flags close-but-not-exact name matches, threshold 0.82, names <4 chars skipped as noise), `namesForFuzzyCheck` (per-kind name extractor). Purely informational — never blocks/auto-merges; exact matches stay on the existing `matchExisting` contentKey path.
+- `import_export.dart`: `ModuleImportExport` gained optional `existingNames` fetcher; `_runImport`'s confirm dialog now lists any fuzzy hits ("X" looks like "Y") above the normal "Import N item(s)?" prompt.
+- Wired `existingNames` into all 9 content-key-dedupe screens (inventory, crew, documents, maintenance, checklist, safety briefing, shopping, chef, cocktails) — fuel intentionally excluded (no dedupe concept, identical fill-ups are valid).
+- Files: `import_service.dart`, `import_export.dart`, 9 module screens, `test/import_service_test.dart` (+11 tests).
+- Risks: none; analyzer clean, full suite green (933 tests). Live-verified the sheet renders correctly (Inventory, on-device); did not click through an actual OS file-picker import (no `UIFileSharingEnabled` seam to stage a picker-visible file — felt disproportionate to build for this check).
+
+## [2026-07-30] — BAI4 burn ETA + BAI2 shopping rank (MIX4 already shipped)
+- BAI4: `FuelBurnEstimator` from fill logs (+ optional hours/NM) → L/day, remaining, days-to-empty; Fuel screen Burn & range strip.
+- BAI2: `SmartShoppingService.rankForPassage` (meal plan + pantry + seasonal + origin + price); Shopping “Buy before passage” banner + Passage priority sort.
+- MIX4: already in `lowStockBarItems` + My Bar banner (prior session).
+- Files: fuel_burn_estimator, smart_shopping_service, fuel_screen, shopping_screen, shopping_provider, tests; outstanding.
+- Risks: none.
+
+## [2026-07-30] — SEC1: stop shipping Google Play SA key in app assets
+- Removed `assets/service-account-google-play.json` from `pubspec.yaml` flutter assets (was extractable from every APK/IPA).
+- Moved local key to `secrets/google-play-service-account.json` (gitignored); `secrets/README.md` documents CI-only use.
+- No Dart/`rootBundle` consumers. **Rotate the Play SA key** if any prior build shipped with the old asset path.
+- Files: pubspec.yaml, .gitignore, secrets/, outstanding.
+- Risks: none for app runtime; key rotation is operator follow-up.
+
+## [2026-07-30] — SUG3 weather named places, depth, imperial fuel
+- Weather: Open-Meteo place search, Nominatim reverse name, GEBCO charted depth, saved places chips; imperial temp F + wave ft.
+- Passage planner: fuel burn/total follows `unitSystemProvider` (L/h vs gal/h).
+- Files: `weather_service.dart`, `weather_screen.dart`, `passage_planner_screen.dart`, tests; removed SUG3.
+- Risks: reverse/depth best-effort (forecast still works if they fail).
+
+## [2026-07-30] — GAI4 Dudo + Liar's Dice probability AI
+- **Dudo:** binomial match model (p=2/6 wild / p=1/6 ace·palafico); bid scores survival+own support; Dudo/Spot-On from survival & exact mass.
+- **Liar's Dice:** pure `computeLiarDiceAiBid` / `computeLiarDiceAiAccept` — honest min-face, forced bluffs prefer high prior; accept uses rank prior + bid-history escalation.
+- Files: `dudo/helpers.dart`, `liars_dice/helpers.dart`, `liars_dice/logic.dart`, tests.
+- Context: removed GAI4 from outstanding.
+- Risks: none; palafico + F7 min-face contracts preserved.
+
+## [2026-07-30] — GAI2 Checkers minimax/alpha-beta AI
+- Replaced the greedy `_pickAiMove` heuristic (random among multi-capture > capture > king > any) with true minimax + alpha-beta, searched over whole forced-chain "turns" (a chain jump stays the same side to move, so each search node explores every complete capture sequence, not a single hop) at depth 6, eval = material (kings 1.5x) + advancement.
+- Files: `checkers/logic.dart` (new pure `_fullTurnOutcomes`/`_evaluateBoard`/`_minimaxValue`/`_selectAiTurn`, removed `_pickAiMove`/`_applyAiChain`; `debugRunAiMove()` test hook), `test/checkers_test.dart` (new tactical regression: AI prefers a free capture over a same-value capture that gets recaptured).
+- Context: deleted GAI2 from outstanding; INDEX NEXT.
+- Risks: none; opening-position search measured <100ms on-device (well under the existing 600ms AI "thinking" delay).
 
 ## [2026-07-30] — No-install-base policy + seed consolidation + schema/migration reset
 - Policy: `CLAUDE.md` now says schema/model changes don't need back-compat migrations (dev phone + sims only, no real installs) — still cascade every DB change through model/repo/Supabase/sync/UI in one change.
@@ -10,6 +145,40 @@
 - Supabase: local `supabase/migrations/` (9 files, already stale vs. the live project's 12 applied migrations) squashed into one `20260730120000_baseline.sql`, derived by introspecting the live schema via MCP (no local CLI link existed). Live project's `schema_migrations` bookkeeping table repointed to this one version — no application table/row/policy/function touched (verified row counts unchanged).
 - Files: `CLAUDE.md`, `risks.md`, `data_models.md`, `lib/data/seed/seed_expansion_catalog.dart` (new), `bundled_data_seeder.dart`, `database_service.dart`, `app_database.dart`, `supabase/migrations/*`, `test/seed_bundled_data_test.dart`.
 - Risks: none to app logic (893 tests green, analyzer clean). Manual step outstanding — see above.
+
+## [2026-07-30] — ML2 expand offline barcode catalog
+- `BarcodeService`: ~35 spirits → **100+** codes across rum/whiskey/gin/vodka/tequila/brandy, liqueurs, vermouth/wine, syrups, juices, mixers, bitters; suggested names align with seed bar catalog.
+- Lookup normalizes hyphens/spaces; UPC-A ↔ EAN-13 leading-zero variants.
+- Files: `barcode_service.dart`, `barcode_service_test.dart`; removed ML2 from outstanding.
+- Risks: none; unknown codes still return null → manual entry.
+
+## [2026-07-30] — Seed text ASCII normalize (search-safe)
+- Stripped fancy punctuation/accents from seed + barcode user-facing strings so search matches keyboard typing: curly quotes -> ' / ", em/en dash -> -, accents (e/c/n...) stripped, CO2/>=/1/2 etc.
+- JSON seeds re-encoded with proper escaping; box-drawing comment lines flattened to `-`.
+- Files: `lib/data/seed/*`, `assets/seed/*_import_seed.json`, `barcode_service.dart`, `mixologist_service.dart`, `seasonal_service.dart`, seed generators under `tool/`.
+- Risks: existing installs keep old strings until wipe/reseed (no install base - fine).
+
+## [2026-07-30] — BAI5 conflict field-level prefer mine/theirs
+- `ConflictResolutionService.buildConflictDiff`: per-field kind + suggestion (mergeable / prefer mine / cloud); overall Keep mine|Keep cloud|Merge from merge shape + LWW.
+- UI: suggestion banner, field diff rows, primary button follows suggestion.
+- Files: `conflict_resolution_service.dart`, `conflict_resolution_screen.dart`, tests; removed BAI5 from outstanding.
+- Risks: none (advisory UX only; resolve still user-driven).
+
+## [2026-07-30] — Backgammon pip dice faces
+- Score-bar roll shows classic dotted die faces (1-6) instead of only numbers; spent faces dim; doubles show remaining move count.
+- Files: `backgammon/screen.dart`.
+- Risks: none (UI only).
+
+## [2026-07-30] — Backgammon board: checkers on points
+- Pieces were stacked in a strip *below/above* triangles; now each point is a full-half **Stack** with triangle fill + overlapping checkers from the outer edge (on-board look). Gradients, stack overflow `+N`, mid-hinge line.
+- Files: `backgammon/screen.dart`.
+- Risks: none (layout-only).
+
+## [2026-07-30] — GAI3 Backgammon full-turn AI
+- Replaced greedy per-die BG bot with `BackgammonAi`: beam search over complete plays + pip/blot/prime/bar eval; cube accept/offer uses same eval.
+- Files: `backgammon/logic.dart`, `test/backgammon_test.dart`.
+- Context: deleted GAI3 from outstanding; INDEX NEXT.
+- Risks: none; beamWidth=14 caps doubles fan-out on device.
 
 ## [2026-07-30] — Outstanding: local AI + online LLM backlog
 - Captured product map of free local “clever AI” vs paid online LLM into `outstanding.md`.
@@ -167,7 +336,7 @@
 - Risks: none new. Removed stale schemaVersion/B8 mirrors by deleting mirrored claims.
 - Dropped: model field tables, screen inventory, Pro code snippets, risks strikethroughs, outstanding build snapshot.
 
-## Recent (detail in archive only)
+## Older (pre-2026-07-21, detail in the other archive file)
 
 | Date | Title |
 | --- | --- |
@@ -177,6 +346,4 @@
 | 2026-07-13 | Liar's Dice live multiplayer; iOS AdMob plist crash; SYN4; SEED-PATCH; UX7; GAME1 scoped |
 | 2026-07-12 | CONTEXT-EFF audit; FREE-EDITS; STALE-*; SHARE4/5; title-bar standard |
 | 2026-07-11 | Pro sync sharing phases; WIRE-PREFIX; SHARE-ENROLL; RLS cutover; SUG1 |
-| earlier | May–July history in archive |
-
-When hot grows past ~250 lines: move older `##` entries into `archive/`, leave a one-line index row here.
+| earlier | May–July history in `changelog-full-through-2026-07-16.md` |

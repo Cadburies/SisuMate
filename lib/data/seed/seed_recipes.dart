@@ -11,11 +11,11 @@ import 'seed_menus_import.dart';
 /// Seeds classic cocktails, menus, syrups, and expansion packs.
 ///
 /// Called on **first install and factory reset only** (via [seedBundledData]),
-/// not on every healthy restart — so bar/pantry stock and user favourites
+/// not on every healthy restart - so bar/pantry stock and user favourites
 /// survive normal app restarts. Purges known classic bundled ids then inserts
 /// current source (images, tags, seed favourites, metric ingredients).
 Future<void> seedRecipes(String defaultBoatSupabaseId) async {
-  // ── Purge classic bundled recipes so a factory reseed is clean ───────────
+  // -- Purge classic bundled recipes so a factory reseed is clean -----------
   const seededCocktailIds = [
     'cocktail_mai_tai', 'cocktail_zombie', 'cocktail_painkiller',
     'cocktail_navy_grog', 'cocktail_suffering_bastard', 'cocktail_fog_cutter',
@@ -47,7 +47,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   await purgeSeededRecipesFromDrift(classicIds);
 
   // ===================================================================
-  // COCKTAILS — Top 10 Tiki from Smuggler's Cove
+  // COCKTAILS - Top 10 Tiki from Smuggler's Cove
   // ===================================================================
 
   final cocktails = <Recipe>[
@@ -61,7 +61,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Rocks glass'
       ..prepMinutes = 5
-      ..story = 'Victor "Trader Vic" Bergeron mixed the first Mai Tai in 1944 in Oakland for two visiting Tahitians. They exclaimed "Mai Tai — Roa Ae!" — Tahitian for "out of this world, the best!" Don the Beachcomber claimed his own version predated it; the two men argued about it until their dying days. Both were probably right in their own way.',
+      ..story = 'Victor "Trader Vic" Bergeron mixed the first Mai Tai in 1944 in Oakland for two visiting Tahitians. They exclaimed "Mai Tai - Roa Ae!" - Tahitian for "out of this world, the best!" Don the Beachcomber claimed his own version predated it; the two men argued about it until their dying days. Both were probably right in their own way.',
     Recipe()
       ..supabaseId = 'cocktail_zombie'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -72,7 +72,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Zombie glass'
       ..prepMinutes = 7
-      ..story = 'Don the Beachcomber created the Zombie around 1934 at his Hollywood bar. A regular returned three days after his first glass, claiming it had turned him into a zombie for his entire business trip. Alarmed, Don limited customers to two per visit and encoded the recipe in a cipher — keeping the formula secret for decades to foil rival bartenders.',
+      ..story = 'Don the Beachcomber created the Zombie around 1934 at his Hollywood bar. A regular returned three days after his first glass, claiming it had turned him into a zombie for his entire business trip. Alarmed, Don limited customers to two per visit and encoded the recipe in a cipher - keeping the formula secret for decades to foil rival bartenders.',
     Recipe()
       ..supabaseId = 'cocktail_painkiller'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -83,7 +83,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Rocks glass'
       ..prepMinutes = 5
-      ..story = 'Born at the Soggy Dollar Bar on Jost Van Dyke, BVI — named because boats anchored offshore and guests swam in with waterlogged cash. Pusser\'s Rum trademarked the name in 1989, requiring any bar to use their brand to legally call it a Painkiller. The original bartender reportedly used whatever rum was to hand. The trademark dispute is ongoing.',
+      ..story = 'Born at the Soggy Dollar Bar on Jost Van Dyke, BVI - named because boats anchored offshore and guests swam in with waterlogged cash. Pusser\'s Rum trademarked the name in 1989, requiring any bar to use their brand to legally call it a Painkiller. The original bartender reportedly used whatever rum was to hand. The trademark dispute is ongoing.',
     Recipe()
       ..supabaseId = 'cocktail_navy_grog'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -94,7 +94,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Rocks glass'
       ..prepMinutes = 5
-      ..story = 'An homage to the Royal Navy\'s daily rum ration issued since 1740, when Admiral Edward Vernon ordered watered rum instead of neat spirit. Vernon wore a grogram coat, earning him the nickname "Old Grog" — giving us the word groggy. Don the Beachcomber transformed the sailors\' daily medicine into something worth celebrating on dry land.',
+      ..story = 'An homage to the Royal Navy\'s daily rum ration issued since 1740, when Admiral Edward Vernon ordered watered rum instead of neat spirit. Vernon wore a grogram coat, earning him the nickname "Old Grog" - giving us the word groggy. Don the Beachcomber transformed the sailors\' daily medicine into something worth celebrating on dry land.',
     Recipe()
       ..supabaseId = 'cocktail_suffering_bastard'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -105,7 +105,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Rocks glass'
       ..prepMinutes = 5
-      ..story = 'Created by Joe Scialom at Cairo\'s Shepheard\'s Hotel as a hangover cure for British officers the morning after the Battle of El Alamein in 1942. Trader Vic later adapted it with tropical flavours. One of the few cocktails with documented military history — reportedly served for breakfast to officers before they returned to their commands.',
+      ..story = 'Created by Joe Scialom at Cairo\'s Shepheard\'s Hotel as a hangover cure for British officers the morning after the Battle of El Alamein in 1942. Trader Vic later adapted it with tropical flavours. One of the few cocktails with documented military history - reportedly served for breakfast to officers before they returned to their commands.',
     Recipe()
       ..supabaseId = 'cocktail_fog_cutter'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -116,7 +116,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Tall glass'
       ..prepMinutes = 5
-      ..story = 'Trader Vic warned drinkers bluntly: "Fog Cutter, hell! After two of these, you won\'t even see the stuff." The Amontillado float was Vic\'s signature touch — a nutty cap that cuts through the citrus fog before you can see what hit you. One of his most popular 1940s creations, it remains a favourite for watching expressions change mid-drink.',
+      ..story = 'Trader Vic warned drinkers bluntly: "Fog Cutter, hell! After two of these, you won\'t even see the stuff." The Amontillado float was Vic\'s signature touch - a nutty cap that cuts through the citrus fog before you can see what hit you. One of his most popular 1940s creations, it remains a favourite for watching expressions change mid-drink.',
     Recipe()
       ..supabaseId = 'cocktail_scorpion_bowl'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -127,7 +127,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Scorpion bowl'
       ..prepMinutes = 8
-      ..story = 'Designed by Trader Vic in the 1950s as a communal ceremony for two to four people. The flaming rum float — ignited tableside — became the defining image of Polynesian restaurant culture. Vic imported genuine scorpion bowls from Hawaii; the long straws kept guests safe from the flame while maintaining the theatre of sharing.',
+      ..story = 'Designed by Trader Vic in the 1950s as a communal ceremony for two to four people. The flaming rum float - ignited tableside - became the defining image of Polynesian restaurant culture. Vic imported genuine scorpion bowls from Hawaii; the long straws kept guests safe from the flame while maintaining the theatre of sharing.',
     Recipe()
       ..supabaseId = 'cocktail_three_dots_and_a_dash'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -138,7 +138,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Rocks glass'
       ..prepMinutes = 5
-      ..story = 'Named after Morse code for V (···-), created by Trader Vic during World War II as a toast to Allied forces. The garnish encodes the message: three cherry dots, one pineapple-frond dash. Served at Vic\'s restaurants throughout the war. Chicago\'s celebrated Three Dots and a Dash bar, opened 2013, took its name and spirit directly from this cocktail.',
+      ..story = 'Named after Morse code for V (----), created by Trader Vic during World War II as a toast to Allied forces. The garnish encodes the message: three cherry dots, one pineapple-frond dash. Served at Vic\'s restaurants throughout the war. Chicago\'s celebrated Three Dots and a Dash bar, opened 2013, took its name and spirit directly from this cocktail.',
     Recipe()
       ..supabaseId = 'cocktail_missionarys_downfall'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -149,7 +149,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Rocks glass'
       ..prepMinutes = 5
-      ..story = 'Don the Beachcomber created this deceptively gentle drink in the 1940s, naming it for its ability to lead the pious astray. The peach brandy and mint make it taste like a garden party rather than a rum cocktail — which was precisely the point. Donn reportedly kept close watch on missionary guests and quietly refilled their glasses more than most.',
+      ..story = 'Don the Beachcomber created this deceptively gentle drink in the 1940s, naming it for its ability to lead the pious astray. The peach brandy and mint make it taste like a garden party rather than a rum cocktail - which was precisely the point. Donn reportedly kept close watch on missionary guests and quietly refilled their glasses more than most.',
     Recipe()
       ..supabaseId = 'cocktail_beachbums_own'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -160,34 +160,34 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..glassware = 'Rocks glass'
       ..prepMinutes = 5
-      ..story = 'Jeff "Beachbum" Berry spent years decoding Don the Beachcomber\'s secret recipes, tracking down coded ingredient names through former employees and informants. His books rescued tiki\'s lost canon from obscurity. This cocktail — named for Berry himself — is his tribute to the masters whose work he preserved. One rum, one citrus, one sweetener: tiki distilled to its essence.',
+      ..story = 'Jeff "Beachbum" Berry spent years decoding Don the Beachcomber\'s secret recipes, tracking down coded ingredient names through former employees and informants. His books rescued tiki\'s lost canon from obscurity. This cocktail - named for Berry himself - is his tribute to the masters whose work he preserved. One rum, one citrus, one sweetener: tiki distilled to its essence.',
     Recipe()
       ..supabaseId = 'cocktail_jet_pilot'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Jet Pilot'
-      ..description = 'Don the Beachcomber\'s turbo-charged Zombie variant — complex, boozy, and unforgettable'
+      ..description = 'Don the Beachcomber\'s turbo-charged Zombie variant - complex, boozy, and unforgettable'
       ..instructions = 'Combine all ingredients except absinthe in a blender with crushed ice. Flash blend briefly (just to integrate, not to froth). Pour into a tiki mug or chimney glass. Add a few more ice cubes. Drop the absinthe on top as a float. Garnish with a bushy mint sprig.'
       ..recipeType = 'cocktail'
       ..isBundled = true
       ..glassware = 'Tiki mug or chimney glass'
       ..prepMinutes = 7
-      ..story = 'Donn Beach developed the Jet Pilot in the 1950s as a more refined, concentrated Zombie — same DNA, shorter pour, more layered spice. It uses three different rums (white, aged Jamaican, and overproof) alongside Don\'s Mix and Velvet Falernum. The name riffs on the aviation spirit of the post-war decade. At Smuggler\'s Cove, it\'s described as "the Zombie\'s dangerous little brother."',
+      ..story = 'Donn Beach developed the Jet Pilot in the 1950s as a more refined, concentrated Zombie - same DNA, shorter pour, more layered spice. It uses three different rums (white, aged Jamaican, and overproof) alongside Don\'s Mix and Velvet Falernum. The name riffs on the aviation spirit of the post-war decade. At Smuggler\'s Cove, it\'s described as "the Zombie\'s dangerous little brother."',
     Recipe()
       ..supabaseId = 'cocktail_jungle_bird'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Jungle Bird'
-      ..description = 'Bitter, boozy, and tropical — the one tiki cocktail that requires Campari'
+      ..description = 'Bitter, boozy, and tropical - the one tiki cocktail that requires Campari'
       ..instructions = 'Combine all ingredients in a cocktail shaker with ice. Shake vigorously for 15 seconds. Strain over fresh ice into a double rocks glass or tiki mug. Garnish with a fresh pineapple wedge and a maraschino cherry.'
       ..recipeType = 'cocktail'
       ..isBundled = true
       ..glassware = 'Double rocks glass or tiki mug'
       ..prepMinutes = 5
-      ..story = 'Created by bartender Iain Marshall at the Kuala Lumpur Hilton\'s Aviary Bar in 1978, the Jungle Bird lay largely forgotten until Jeff Berry published it in his 2002 book "Intoxica!" It became a sensation virtually overnight — a tiki cocktail that\'s simultaneously bitter, sweet, sour, and tropical. The Campari is the key: do not substitute it. It is now one of the most-ordered tiki drinks in the world.',
+      ..story = 'Created by bartender Iain Marshall at the Kuala Lumpur Hilton\'s Aviary Bar in 1978, the Jungle Bird lay largely forgotten until Jeff Berry published it in his 2002 book "Intoxica!" It became a sensation virtually overnight - a tiki cocktail that\'s simultaneously bitter, sweet, sour, and tropical. The Campari is the key: do not substitute it. It is now one of the most-ordered tiki drinks in the world.',
     Recipe()
       ..supabaseId = 'cocktail_saturn'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Saturn'
-      ..description = 'Gin-based tiki cocktail — fruity, floral, and surprisingly light for something so complex'
+      ..description = 'Gin-based tiki cocktail - fruity, floral, and surprisingly light for something so complex'
       ..instructions = 'Combine all ingredients in a cocktail shaker with crushed ice. Shake well for 10 seconds. Open-pour (with ice) into a tiki glass or coupe. Garnish with a lemon wheel and a slapped mint sprig.'
       ..recipeType = 'cocktail'
       ..isBundled = true
@@ -198,35 +198,35 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..supabaseId = 'cocktail_test_pilot'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Test Pilot'
-      ..description = 'Don the Beachcomber original — a more nuanced, slightly less potent sibling of the Zombie'
+      ..description = 'Don the Beachcomber original - a more nuanced, slightly less potent sibling of the Zombie'
       ..instructions = 'Combine all ingredients in a cocktail shaker with crushed ice. Shake for 10 seconds. Pour (with ice) into a rocks glass or tiki mug. Garnish with mint and a maraschino cherry.'
       ..recipeType = 'cocktail'
       ..isBundled = true
       ..glassware = 'Rocks glass or tiki mug'
       ..prepMinutes = 6
-      ..story = 'Donn Beach created the Test Pilot in the early 1940s as a tribute to the aviators of the era. Where the Zombie is a blunt instrument, the Test Pilot uses two of Don\'s Mix formulas side by side — the cinnamon-forward Mix #1 and the honeyed Mix #2 — to create a layered citrus complexity that reveals itself slowly across the drink. It is often described as the drink that proves Don was a genius, not just a showman.',
+      ..story = 'Donn Beach created the Test Pilot in the early 1940s as a tribute to the aviators of the era. Where the Zombie is a blunt instrument, the Test Pilot uses two of Don\'s Mix formulas side by side - the cinnamon-forward Mix #1 and the honeyed Mix #2 - to create a layered citrus complexity that reveals itself slowly across the drink. It is often described as the drink that proves Don was a genius, not just a showman.',
     Recipe()
       ..supabaseId = 'cocktail_doctor_funk'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Doctor Funk'
-      ..description = 'Stevenson-era Samoan rum drink with absinthe — refreshing despite its eccentric pedigree'
+      ..description = 'Stevenson-era Samoan rum drink with absinthe - refreshing despite its eccentric pedigree'
       ..instructions = 'Combine rum, lime juice, lemon juice, simple syrup, grenadine, and absinthe in a shaker with ice. Shake well. Strain into a highball glass over ice. Top with soda water. Garnish with a lime wheel.'
       ..recipeType = 'cocktail'
       ..isBundled = true
       ..glassware = 'Highball glass'
       ..prepMinutes = 5
-      ..story = 'Dr. Bernard Funk was Robert Louis Stevenson\'s physician in Samoa in the 1890s, and by all accounts also his dedicated drinking companion. Stevenson reportedly credited the Doctor\'s rum concoction with keeping him alive through his tuberculosis. The absinthe is a small but essential ingredient — it appeared in bar culture long before tiki, and Donn Beach adopted it as a flavoring agent throughout his work. The name "Funk" has given this drink an enduringly subversive reputation.',
+      ..story = 'Dr. Bernard Funk was Robert Louis Stevenson\'s physician in Samoa in the 1890s, and by all accounts also his dedicated drinking companion. Stevenson reportedly credited the Doctor\'s rum concoction with keeping him alive through his tuberculosis. The absinthe is a small but essential ingredient - it appeared in bar culture long before tiki, and Donn Beach adopted it as a flavoring agent throughout his work. The name "Funk" has given this drink an enduringly subversive reputation.',
     Recipe()
       ..supabaseId = 'cocktail_cobras_fang'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = "Cobra's Fang"
-      ..description = "Don the Beachcomber's allspice-and-absinthe rum punch — exotic, complex, and slightly dangerous"
+      ..description = "Don the Beachcomber's allspice-and-absinthe rum punch - exotic, complex, and slightly dangerous"
       ..instructions = 'Combine all ingredients in a shaker with crushed ice. Shake briskly for 10 seconds. Pour (unstrained) into a tiki mug or coupe. Garnish with a lime wheel and maraschino cherry.'
       ..recipeType = 'cocktail'
       ..isBundled = true
       ..glassware = 'Tiki mug or coupe'
       ..prepMinutes = 6
-      ..story = "Cobra's Fang appeared on Don the Beachcomber's menu sometime in the 1940s. Like many of his originals it used coded ingredient names — the allspice dram was called \"St. Elizabeth Allspice Dram\" and Absinthe appeared under its own name only in the master copy. Jeff Berry's sleuthing uncovered the full recipe. The allspice-absinthe combination is the cocktail's fang — it bites back just enough.",
+      ..story = "Cobra's Fang appeared on Don the Beachcomber's menu sometime in the 1940s. Like many of his originals it used coded ingredient names - the allspice dram was called \"St. Elizabeth Allspice Dram\" and Absinthe appeared under its own name only in the master copy. Jeff Berry's sleuthing uncovered the full recipe. The allspice-absinthe combination is the cocktail's fang - it bites back just enough.",
   ];
 
   for (final c in cocktails) {
@@ -272,7 +272,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_mai_tai', 'White Blended Rum', 60, 'ml');
   addCocktail('cocktail_mai_tai', 'Dark Blended Rum', 30, 'ml');
   addCocktail('cocktail_mai_tai', 'Fresh Lime Juice', 30, 'ml');
-  addCocktail('cocktail_mai_tai', 'Orange Curaçao', 15, 'ml');
+  addCocktail('cocktail_mai_tai', 'Orange Curacao', 15, 'ml');
   addCocktail('cocktail_mai_tai', 'Orgeat', 15, 'ml');
   addCocktail('cocktail_mai_tai', 'Fresh Mint', null, null, isGarnish: true, garnishNotes: 'Slap a generous sprig between your palms to release the oils, then tuck it upright behind the ice so the aroma rises with every sip.');
   addCocktail('cocktail_mai_tai', 'Pineapple Spears', null, null, isGarnish: true, garnishNotes: 'Cut a wedge from a fresh pineapple, skewer it on a cocktail pick and rest it across the rim. The flag should face forward.');
@@ -295,7 +295,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_painkiller', 'Pineapple Juice', 30, 'ml');
   addCocktail('cocktail_painkiller', 'Orange Juice', 30, 'ml');
   addCocktail('cocktail_painkiller', 'Cream of Coconut', 30, 'ml');
-  addCocktail('cocktail_painkiller', 'Freshly Grated Nutmeg', null, null, isGarnish: true, garnishNotes: 'Grate whole nutmeg directly over the surface of the drink just before serving — the warmth of the foam carries the spice. Pre-ground nutmeg loses most of its punch.');
+  addCocktail('cocktail_painkiller', 'Freshly Grated Nutmeg', null, null, isGarnish: true, garnishNotes: 'Grate whole nutmeg directly over the surface of the drink just before serving - the warmth of the foam carries the spice. Pre-ground nutmeg loses most of its punch.');
 
   // Navy Grog
   addCocktail('cocktail_navy_grog', 'White Blended Rum', 30, 'ml');
@@ -312,7 +312,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_suffering_bastard', 'Fresh Lime Juice', 20, 'ml');
   addCocktail('cocktail_suffering_bastard', 'Angostura Bitters', 2.0, 'dash');
   addCocktail('cocktail_suffering_bastard', 'Ginger Beer', null, null, isOptional: true);
-  addCocktail('cocktail_suffering_bastard', 'Fresh Mint Sprig', null, null, isGarnish: true, garnishNotes: 'Slap the sprig and tuck it into the neck of the tiki mug or alongside the ice. A cucumber slice on the rim is a classic British Cairo-era touch — add one if available.');
+  addCocktail('cocktail_suffering_bastard', 'Fresh Mint Sprig', null, null, isGarnish: true, garnishNotes: 'Slap the sprig and tuck it into the neck of the tiki mug or alongside the ice. A cucumber slice on the rim is a classic British Cairo-era touch - add one if available.');
   addCocktail('cocktail_suffering_bastard', 'Lime Wedge', null, null, isGarnish: true, garnishNotes: 'Squeeze the wedge over the top and drop it in. The fresh citrus brightens the ginger beer finish.');
 
   // Fog Cutter
@@ -323,7 +323,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_fog_cutter', 'Fresh Lemon Juice', 30, 'ml');
   addCocktail('cocktail_fog_cutter', 'Orgeat', 15, 'ml');
   addCocktail('cocktail_fog_cutter', 'Dry Sherry', 15, 'ml');
-  addCocktail('cocktail_fog_cutter', 'Orange Wheel', null, null, isGarnish: true, garnishNotes: 'Float a thin half-wheel of orange on the surface. The sherry float on top of the drink means this garnish is purely visual — keep it pristine.');
+  addCocktail('cocktail_fog_cutter', 'Orange Wheel', null, null, isGarnish: true, garnishNotes: 'Float a thin half-wheel of orange on the surface. The sherry float on top of the drink means this garnish is purely visual - keep it pristine.');
 
   // Scorpion Bowl
   addCocktail('cocktail_scorpion_bowl', 'White Blended Rum', 60, 'ml');
@@ -332,8 +332,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_scorpion_bowl', 'Orange Juice', 60, 'ml');
   addCocktail('cocktail_scorpion_bowl', 'Fresh Lime Juice', 30, 'ml');
   addCocktail('cocktail_scorpion_bowl', 'Orgeat', 15, 'ml');
-  addCocktail('cocktail_scorpion_bowl', 'Fresh Orchid', null, null, isGarnish: true, garnishNotes: 'Place an edible orchid or gardenia bloom on the crushed ice mound in the center of the bowl. The theatrical presentation is part of the Scorpion Bowl experience — serve with long straws for the whole table.');
-  addCocktail('cocktail_scorpion_bowl', 'Pineapple Wedges', null, null, isGarnish: true, garnishNotes: 'Fan 2–3 pineapple wedges around the rim of the bowl. Each diner gets a wedge to nibble between sips.');
+  addCocktail('cocktail_scorpion_bowl', 'Fresh Orchid', null, null, isGarnish: true, garnishNotes: 'Place an edible orchid or gardenia bloom on the crushed ice mound in the center of the bowl. The theatrical presentation is part of the Scorpion Bowl experience - serve with long straws for the whole table.');
+  addCocktail('cocktail_scorpion_bowl', 'Pineapple Wedges', null, null, isGarnish: true, garnishNotes: 'Fan 2-3 pineapple wedges around the rim of the bowl. Each diner gets a wedge to nibble between sips.');
 
   // Three Dots and a Dash (Trader Vic / Smuggler's Cove version)
   addCocktail('cocktail_three_dots_and_a_dash', 'Aged Blended Rum', 45, 'ml');
@@ -344,8 +344,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_three_dots_and_a_dash', 'Allspice Dram', 15, 'ml');
   addCocktail('cocktail_three_dots_and_a_dash', 'Orange Juice', 15, 'ml');
   addCocktail('cocktail_three_dots_and_a_dash', 'Angostura Bitters', 2.0, 'dash');
-  addCocktail('cocktail_three_dots_and_a_dash', 'Maraschino Cherries', null, null, isGarnish: true, garnishNotes: 'Skewer three maraschino cherries in a row on a cocktail pick — these are the three dots of the Morse code V (···). Place the pick across the rim.');
-  addCocktail('cocktail_three_dots_and_a_dash', 'Pineapple Spears', null, null, isGarnish: true, garnishNotes: 'Add one pineapple spear or frond alongside the cherry pick — this is the dash (—) completing the V (···—). Together they toast Allied forces.');
+  addCocktail('cocktail_three_dots_and_a_dash', 'Maraschino Cherries', null, null, isGarnish: true, garnishNotes: 'Skewer three maraschino cherries in a row on a cocktail pick - these are the three dots of the Morse code V (---). Place the pick across the rim.');
+  addCocktail('cocktail_three_dots_and_a_dash', 'Pineapple Spears', null, null, isGarnish: true, garnishNotes: 'Add one pineapple spear or frond alongside the cherry pick - this is the dash (-) completing the V (----). Together they toast Allied forces.');
 
   // Missionary's Downfall (Don the Beachcomber original)
   addCocktail('cocktail_missionarys_downfall', 'White Blended Rum', 45, 'ml');
@@ -361,7 +361,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_beachbums_own', 'Honey Syrup', 20, 'ml');
   addCocktail('cocktail_beachbums_own', 'Orange Bitters', 2.0, 'dash');
   addCocktail('cocktail_beachbums_own', 'Peychaud\'s Bitters', 2.0, 'dash');
-  addCocktail('cocktail_beachbums_own', 'Lime Wheel', null, null, isGarnish: true, garnishNotes: 'Nick a thin lime wheel and perch it on the rim. The simplicity of the garnish mirrors the elegance of this understated cocktail — keep it clean.');
+  addCocktail('cocktail_beachbums_own', 'Lime Wheel', null, null, isGarnish: true, garnishNotes: 'Nick a thin lime wheel and perch it on the rim. The simplicity of the garnish mirrors the elegance of this understated cocktail - keep it clean.');
 
   // Jet Pilot
   addCocktail('cocktail_jet_pilot', 'Dark Blended Rum', 45, 'ml');
@@ -372,7 +372,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_jet_pilot', 'Velvet Falernum', 15, 'ml');
   addCocktail('cocktail_jet_pilot', 'Angostura Bitters', 1.0, 'dash');
   addCocktail('cocktail_jet_pilot', 'Absinthe', 1.0, 'dash');
-  addCocktail('cocktail_jet_pilot', 'Fresh Mint', null, null, isGarnish: true, garnishNotes: 'Plant a bushy mint sprig in the center of the crushed ice so it rises above the rim. The herbal aroma meets the nose before the first sip — that contrast is the point.');
+  addCocktail('cocktail_jet_pilot', 'Fresh Mint', null, null, isGarnish: true, garnishNotes: 'Plant a bushy mint sprig in the center of the crushed ice so it rises above the rim. The herbal aroma meets the nose before the first sip - that contrast is the point.');
 
   // Jungle Bird
   addCocktail('cocktail_jungle_bird', 'Dark Rum', 45, 'ml', substitute: 'Aged Jamaican Rum');
@@ -398,11 +398,11 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_test_pilot', 'Velvet Falernum', 15, 'ml');
   addCocktail('cocktail_test_pilot', "Don's Mix #1", 15, 'ml');
   addCocktail('cocktail_test_pilot', "Don's Mix #2", 5, 'ml');
-  addCocktail('cocktail_test_pilot', 'Cointreau', 5, 'ml', substitute: 'Orange Curaçao');
+  addCocktail('cocktail_test_pilot', 'Cointreau', 5, 'ml', substitute: 'Orange Curacao');
   addCocktail('cocktail_test_pilot', 'Angostura Bitters', 2.0, 'dash');
   addCocktail('cocktail_test_pilot', 'Absinthe', 1.0, 'dash');
   addCocktail('cocktail_test_pilot', 'Maraschino Cherries', null, null, isGarnish: true, garnishNotes: 'Skewer two cherries on a short cocktail pick and lay across the rim. A simple, classic finish for a serious cocktail.');
-  addCocktail('cocktail_test_pilot', 'Fresh Mint Sprig', null, null, isGarnish: true, garnishNotes: 'Slap a small sprig and tuck it behind the cherries. The aviator theme calls for something crisp and upright — keep it tidy.');
+  addCocktail('cocktail_test_pilot', 'Fresh Mint Sprig', null, null, isGarnish: true, garnishNotes: 'Slap a small sprig and tuck it behind the cherries. The aviator theme calls for something crisp and upright - keep it tidy.');
 
   // Doctor Funk
   addCocktail('cocktail_doctor_funk', 'Dark Jamaican Rum', 60, 'ml', substitute: 'White Blended Rum');
@@ -412,7 +412,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_doctor_funk', 'Pomegranate Grenadine', 5, 'ml');
   addCocktail('cocktail_doctor_funk', 'Absinthe', 15, 'ml');
   addCocktail('cocktail_doctor_funk', 'Soda Water', 60, 'ml');
-  addCocktail('cocktail_doctor_funk', 'Lime Wheel', null, null, isGarnish: true, garnishNotes: 'Nick a thin wheel and perch it on the highball rim. The drink is long and refreshing — keep the garnish clean and simple to match.');
+  addCocktail('cocktail_doctor_funk', 'Lime Wheel', null, null, isGarnish: true, garnishNotes: 'Nick a thin wheel and perch it on the highball rim. The drink is long and refreshing - keep the garnish clean and simple to match.');
 
   // Cobra's Fang
   addCocktail('cocktail_cobras_fang', 'Dark Blended Rum', 30, 'ml');
@@ -423,15 +423,15 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_cobras_fang', 'Allspice Dram', 5, 'ml');
   addCocktail('cocktail_cobras_fang', 'Angostura Bitters', 2.0, 'dash');
   addCocktail('cocktail_cobras_fang', 'Absinthe', 2.0, 'dash');
-  addCocktail('cocktail_cobras_fang', 'Lime Wheel', null, null, isGarnish: true, garnishNotes: 'Nick a lime wheel and rest it on the rim. The pop of green against the amber drink is visually striking — serve immediately, the ice melts fast.');
-  addCocktail('cocktail_cobras_fang', 'Maraschino Cherry', null, null, isGarnish: true, garnishNotes: 'Drop a single cherry into the drink to sink to the bottom — a small surprise at the end of the glass, Don\'s signature theatrical touch.');
+  addCocktail('cocktail_cobras_fang', 'Lime Wheel', null, null, isGarnish: true, garnishNotes: 'Nick a lime wheel and rest it on the rim. The pop of green against the amber drink is visually striking - serve immediately, the ice melts fast.');
+  addCocktail('cocktail_cobras_fang', 'Maraschino Cherry', null, null, isGarnish: true, garnishNotes: 'Drop a single cherry into the drink to sink to the bottom - a small surprise at the end of the glass, Don\'s signature theatrical touch.');
 
   await seedRecipeIngredientsToDrift(cocktailIngredients);
 
   // Expansion pack from cocktails_import.json (metric, one-glass, garnishes).
   await seedCocktailsImport(defaultBoatSupabaseId);
   await seedMenusImport(defaultBoatSupabaseId);
-  // Bar-catalog coverage: every bar ingredient appears in ≥2 cocktails.
+  // Bar-catalog coverage: every bar ingredient appears in >=2 cocktails.
   await seedCoverageCocktails(defaultBoatSupabaseId);
 
   // Recompute availability against (possibly empty) My Bar so "Can make now"
@@ -440,7 +440,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       .syncMissingIngredientCounts();
 
   // ===================================================================
-  // MENUS — Top 10 Super Yacht Dinner Menus (base = 2 people)
+  // MENUS - Top 10 Super Yacht Dinner Menus (base = 2 people)
   // ===================================================================
 
   final menus = <Recipe>[
@@ -456,7 +456,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Pan-fry'
       ..prepMinutes = 30
       ..cookMinutes = 25
-      ..story = 'Scaled for two at sea — use servings to scale for more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Caribbean substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).',
+      ..story = 'Scaled for two at sea - use servings to scale for more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Caribbean substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).',
     Recipe()
       ..supabaseId = 'menu_asian_fusion_yacht_dinner'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -469,7 +469,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Wok'
       ..prepMinutes = 25
       ..cookMinutes = 20
-      ..story = 'Scaled for two. Off-dry Gewürztraminer or Riesling calms chilli heat; a cold lager also works. Caribbean substitute: slightly sweet white (Riesling / Gewürztraminer style) or ice-cold lager.',
+      ..story = 'Scaled for two. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works. Caribbean substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.',
     Recipe()
       ..supabaseId = 'menu_classic_french_bistro'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -508,7 +508,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Grill'
       ..prepMinutes = 15
       ..cookMinutes = 30
-      ..story = 'Scaled for two. Ice-cold lager or a rum highball with lime; for wine, off-dry Riesling or rosé. Caribbean substitute: any cold lager or dry rosé; keep spirits light with ice and citrus.',
+      ..story = 'Scaled for two. Ice-cold lager or a rum highball with lime; for wine, off-dry Riesling or rose. Caribbean substitute: any cold lager or dry rose; keep spirits light with ice and citrus.',
     Recipe()
       ..supabaseId = 'menu_modern_australian_cuisine'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -526,7 +526,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..supabaseId = 'menu_spanish_tapas_yacht_party'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Spanish Tapas Yacht Party'
-      ..description = 'Social Spanish small plates for two — easy to scale for guests'
+      ..description = 'Social Spanish small plates for two - easy to scale for guests'
       ..instructions = 'Prepare tapas in batches. Serve at room temperature or warm.'
       ..recipeType = 'menu'
       ..isBundled = true
@@ -573,7 +573,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Wok'
       ..prepMinutes = 25
       ..cookMinutes = 25
-      ..story = 'Scaled for two. Off-dry Gewürztraminer or Riesling calms chilli heat; cold lager also works. Caribbean substitute: slightly sweet white or ice-cold lager.',
+      ..story = 'Scaled for two. Off-dry Gewurztraminer or Riesling calms chilli heat; cold lager also works. Caribbean substitute: slightly sweet white or ice-cold lager.',
   ];
 
   await seedRecipesToDrift(menus);
@@ -715,7 +715,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   await seedRecipeIngredientsToDrift(menuIngredients);
 
   // ===================================================================
-  // SYRUPS & HOUSE MIXES — BC22
+  // SYRUPS & HOUSE MIXES - BC22
   // ===================================================================
 
   final syrups = <Recipe>[
@@ -723,57 +723,57 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..supabaseId = 'syrup_demerara_21'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Demerara Syrup 2:1'
-      ..description = 'Rich molasses-forward syrup — the backbone of most tiki cocktails'
-      ..instructions = 'Combine 2 cups Demerara sugar with 1 cup hot (not boiling) water. Stir until fully dissolved. Cool, pour into a bottle, refrigerate. Keeps 3–4 weeks.'
+      ..description = 'Rich molasses-forward syrup - the backbone of most tiki cocktails'
+      ..instructions = 'Combine 2 cups Demerara sugar with 1 cup hot (not boiling) water. Stir until fully dissolved. Cool, pour into a bottle, refrigerate. Keeps 3-4 weeks.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 5
       ..cookMinutes = 5
-      ..story = 'Donn Beach (Don the Beachcomber) insisted on Demerara sugar in place of white sugar for its deep molasses notes — a decision that quietly separated his drinks from everyone else\'s. The 2:1 ratio produces a viscous, shelf-stable syrup that carries the spirit of the cane from field to glass.',
+      ..story = 'Donn Beach (Don the Beachcomber) insisted on Demerara sugar in place of white sugar for its deep molasses notes - a decision that quietly separated his drinks from everyone else\'s. The 2:1 ratio produces a viscous, shelf-stable syrup that carries the spirit of the cane from field to glass.',
     Recipe()
       ..supabaseId = 'syrup_cinnamon'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Cinnamon Syrup'
       ..description = 'Warm, aromatic spiced syrup used in Zombies, Don\'s Mix, and countless tiki builds'
-      ..instructions = 'Simmer 4 cinnamon sticks in 1 cup water for 10 minutes. Add 2 cups white sugar, stir until dissolved. Cool, strain out sticks, bottle. Keeps 2–3 weeks refrigerated.'
+      ..instructions = 'Simmer 4 cinnamon sticks in 1 cup water for 10 minutes. Add 2 cups white sugar, stir until dissolved. Cool, strain out sticks, bottle. Keeps 2-3 weeks refrigerated.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 2
       ..cookMinutes = 15
-      ..story = 'Cinnamon syrup is the quiet workhorse of the tiki pantry — appearing in Trader Vic\'s originals and Don the Beachcomber\'s coded formulae alike. Don used it under cipher names like "mix #4" to guard his recipes from rival barkeeps who sent spies to sit at his bar.',
+      ..story = 'Cinnamon syrup is the quiet workhorse of the tiki pantry - appearing in Trader Vic\'s originals and Don the Beachcomber\'s coded formulae alike. Don used it under cipher names like "mix #4" to guard his recipes from rival barkeeps who sent spies to sit at his bar.',
     Recipe()
       ..supabaseId = 'syrup_orgeat'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'House Orgeat'
-      ..description = 'Fresh almond syrup — the heart of the Mai Tai and a tiki essential'
-      ..instructions = 'Blend 1 cup blanched almonds with 1½ cups water. Strain through cheesecloth, squeezing firmly. Heat almond milk with 1 cup sugar until dissolved. Off heat, add ½ tsp orange flower water and 1 tbsp vodka as preservative. Bottle and refrigerate up to 2 weeks.'
+      ..description = 'Fresh almond syrup - the heart of the Mai Tai and a tiki essential'
+      ..instructions = 'Blend 1 cup blanched almonds with 11/2 cups water. Strain through cheesecloth, squeezing firmly. Heat almond milk with 1 cup sugar until dissolved. Off heat, add 1/2 tsp orange flower water and 1 tbsp vodka as preservative. Bottle and refrigerate up to 2 weeks.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 25
       ..cookMinutes = 10
-      ..story = 'Trader Vic called orgeat "the most important ingredient" in the Mai Tai — a bold claim for a syrup. The word comes from the French "orge" (barley), because medieval orgeat was barley-water sweetened with almonds. By the 19th century almonds had taken over entirely. Vic sourced it from a local Oakland confectioner before eventually bottling his own.',
+      ..story = 'Trader Vic called orgeat "the most important ingredient" in the Mai Tai - a bold claim for a syrup. The word comes from the French "orge" (barley), because medieval orgeat was barley-water sweetened with almonds. By the 19th century almonds had taken over entirely. Vic sourced it from a local Oakland confectioner before eventually bottling his own.',
     Recipe()
       ..supabaseId = 'syrup_velvet_falernum'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'House Velvet Falernum'
-      ..description = 'Rum-based lime-almond-spice liqueur from Barbados — a cornerstone of tiki'
-      ..instructions = 'Zest 6 limes and steep zest with 10 cloves, 5 allspice berries, 2 oz fresh ginger (sliced), and ¼ cup blanched almonds in 1 cup white rum for 24 hours. Strain, press solids. Combine with 1 cup simple syrup and ¼ tsp vanilla extract. Bottle. Keeps 1 month refrigerated.'
+      ..description = 'Rum-based lime-almond-spice liqueur from Barbados - a cornerstone of tiki'
+      ..instructions = 'Zest 6 limes and steep zest with 10 cloves, 5 allspice berries, 2 oz fresh ginger (sliced), and 1/4 cup blanched almonds in 1 cup white rum for 24 hours. Strain, press solids. Combine with 1 cup simple syrup and 1/4 tsp vanilla extract. Bottle. Keeps 1 month refrigerated.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 30
       ..cookMinutes = 0
-      ..story = 'John D. Taylor\'s Velvet Falernum has been produced in Barbados since 1890. The commercial version is 11% ABV and sweetly spiced — but bartenders who make their own can dial up the rum, lime, or spice to match their bar. The name "falernum" likely traces to Falernian wine, the most celebrated wine of ancient Rome.',
+      ..story = 'John D. Taylor\'s Velvet Falernum has been produced in Barbados since 1890. The commercial version is 11% ABV and sweetly spiced - but bartenders who make their own can dial up the rum, lime, or spice to match their bar. The name "falernum" likely traces to Falernian wine, the most celebrated wine of ancient Rome.',
     Recipe()
       ..supabaseId = 'syrup_grenadine'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'House Grenadine'
-      ..description = 'Real pomegranate grenadine — nothing like the artificial red dye version'
-      ..instructions = 'Combine 2 cups pomegranate juice and 2 cups white sugar in a saucepan. Heat over medium, stirring, until sugar dissolves — do not boil. Remove from heat, add 1 tsp orange flower water (optional) and 1 oz pomegranate molasses for depth. Cool, bottle. Keeps 1 month refrigerated.'
+      ..description = 'Real pomegranate grenadine - nothing like the artificial red dye version'
+      ..instructions = 'Combine 2 cups pomegranate juice and 2 cups white sugar in a saucepan. Heat over medium, stirring, until sugar dissolves - do not boil. Remove from heat, add 1 tsp orange flower water (optional) and 1 oz pomegranate molasses for depth. Cool, bottle. Keeps 1 month refrigerated.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 5
       ..cookMinutes = 10
-      ..story = 'Grenadine takes its name from "grenade" — French for pomegranate. Nineteenth-century bartenders made it from actual pomegranates. Somewhere in the 20th century food manufacturers replaced the fruit with high-fructose corn syrup and red dye #40. When Smuggler\'s Cove opened in 2009, they put house-made pomegranate grenadine back on the bar. It changed everything.',
+      ..story = 'Grenadine takes its name from "grenade" - French for pomegranate. Nineteenth-century bartenders made it from actual pomegranates. Somewhere in the 20th century food manufacturers replaced the fruit with high-fructose corn syrup and red dye #40. When Smuggler\'s Cove opened in 2009, they put house-made pomegranate grenadine back on the bar. It changed everything.',
     Recipe()
       ..supabaseId = 'syrup_dons_mix_1'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -785,79 +785,79 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..prepMinutes = 2
       ..cookMinutes = 0
       ..story = "Don the Beachcomber used coded ingredient names on his recipe cards so employees couldn't recreate his drinks after leaving. \"Mix #1\" appears in the Zombie and several other originals. Tiki historian Jeff \"Beachbum\" Berry spent years tracking down former staff to decode the cipher. Mix #1 turned out to be this elegant two-ingredient blend that makes grapefruit taste like a spirit.",
-    // ── New Smuggler's Cove / Trader Vic / Don the Beachcomber syrups ────────
+    // -- New Smuggler's Cove / Trader Vic / Don the Beachcomber syrups --------
     Recipe()
       ..supabaseId = 'syrup_honey'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Honey Syrup'
       ..description = 'Liquid honey diluted for easy pouring and consistent measuring'
-      ..instructions = 'Warm 1 cup raw honey gently over low heat until it thins. Remove from heat and stir in ½ cup hot water until fully combined. Cool, bottle. Keeps 1 month refrigerated. For rich honey syrup (2:1) skip the extra water and use ½ cup water to 1 cup honey.'
+      ..instructions = 'Warm 1 cup raw honey gently over low heat until it thins. Remove from heat and stir in 1/2 cup hot water until fully combined. Cool, bottle. Keeps 1 month refrigerated. For rich honey syrup (2:1) skip the extra water and use 1/2 cup water to 1 cup honey.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 5
       ..cookMinutes = 5
-      ..story = 'Honey syrup is the ingredient that lets bartenders use honey with precision — undiluted honey clumps in cold drinks. Smuggler\'s Cove uses it in the Three Dots and a Dash, Navy Grog, and many others. Donn Beach favored Hawaiian raw honey; any unfiltered wildflower or clover honey works beautifully.',
+      ..story = 'Honey syrup is the ingredient that lets bartenders use honey with precision - undiluted honey clumps in cold drinks. Smuggler\'s Cove uses it in the Three Dots and a Dash, Navy Grog, and many others. Donn Beach favored Hawaiian raw honey; any unfiltered wildflower or clover honey works beautifully.',
     Recipe()
       ..supabaseId = 'syrup_passion_fruit'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Passion Fruit Syrup'
       ..description = 'Intensely tropical, sweet-tart syrup from one of the most evocative fruits in the Pacific'
-      ..instructions = 'Halve 12 ripe passion fruits and scoop pulp (seeds and all) into a blender. Pulse 5 seconds — just enough to free the juice, not to break the seeds. Strain through a fine-mesh sieve. Measure the resulting juice and add an equal volume of 1:1 simple syrup. Stir, bottle, refrigerate. Use within 5 days fresh, or freeze for 3 months. Frozen Goya passion fruit purée works well when fresh fruit is out of season — mix 1:1 with simple syrup.'
+      ..instructions = 'Halve 12 ripe passion fruits and scoop pulp (seeds and all) into a blender. Pulse 5 seconds - just enough to free the juice, not to break the seeds. Strain through a fine-mesh sieve. Measure the resulting juice and add an equal volume of 1:1 simple syrup. Stir, bottle, refrigerate. Use within 5 days fresh, or freeze for 3 months. Frozen Goya passion fruit puree works well when fresh fruit is out of season - mix 1:1 with simple syrup.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 15
       ..cookMinutes = 0
-      ..story = 'The passion fruit is native to South America but was transplanted across the Pacific Islands — and into the tiki pantheon — during the 20th century. Jeff Berry\'s Saturn (1967) brought it into cocktail culture. Smuggler\'s Cove uses house-made passion fruit syrup in seven different drinks on their menu, making it one of their most essential house preparations.',
+      ..story = 'The passion fruit is native to South America but was transplanted across the Pacific Islands - and into the tiki pantheon - during the 20th century. Jeff Berry\'s Saturn (1967) brought it into cocktail culture. Smuggler\'s Cove uses house-made passion fruit syrup in seven different drinks on their menu, making it one of their most essential house preparations.',
     Recipe()
       ..supabaseId = 'syrup_coconut_cream'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Fresh Coconut Cream'
-      ..description = 'Unsweetened coconut cream — richer and cleaner than canned cream of coconut'
-      ..instructions = 'Open 2 mature coconuts, drain the water (drink it). Crack shells, peel brown skin, and cube the white flesh. Blend coconut flesh with 1½ cups warm water until very smooth, about 2 minutes. Strain through several layers of cheesecloth, squeezing firmly. Refrigerate the liquid overnight — the cream rises to the top. Skim it off. Use within 3 days. Alternatively: buy full-fat canned coconut cream (not cream of coconut) — shake well before use.'
+      ..description = 'Unsweetened coconut cream - richer and cleaner than canned cream of coconut'
+      ..instructions = 'Open 2 mature coconuts, drain the water (drink it). Crack shells, peel brown skin, and cube the white flesh. Blend coconut flesh with 11/2 cups warm water until very smooth, about 2 minutes. Strain through several layers of cheesecloth, squeezing firmly. Refrigerate the liquid overnight - the cream rises to the top. Skim it off. Use within 3 days. Alternatively: buy full-fat canned coconut cream (not cream of coconut) - shake well before use.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 30
       ..cookMinutes = 0
-      ..story = 'Smuggler\'s Cove makes a careful distinction between cream of coconut (the sweetened Coco López product used in Painkillers) and fresh coconut cream — the unsweetened fat extracted from fresh coconut flesh. The latter has a cleaner, less cloying tropical flavour and is the base of their more refined coconut preparations.',
+      ..story = 'Smuggler\'s Cove makes a careful distinction between cream of coconut (the sweetened Coco Lopez product used in Painkillers) and fresh coconut cream - the unsweetened fat extracted from fresh coconut flesh. The latter has a cleaner, less cloying tropical flavour and is the base of their more refined coconut preparations.',
     Recipe()
       ..supabaseId = 'syrup_dons_spices_2'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = "Don's Spices #2"
-      ..description = "Don the Beachcomber's vanilla-anise blend — the ghost flavor in many of his originals"
-      ..instructions = "Combine 2 oz Pernod (or pastis) with 2 tsp pure vanilla extract. Stir to combine. Store in a small dropper bottle. Use in dashes — 1 dash = roughly 3 ml. This is a flavoring blend, not a syrup; use sparingly. Keeps indefinitely."
+      ..description = "Don the Beachcomber's vanilla-anise blend - the ghost flavor in many of his originals"
+      ..instructions = "Combine 2 oz Pernod (or pastis) with 2 tsp pure vanilla extract. Stir to combine. Store in a small dropper bottle. Use in dashes - 1 dash = roughly 3 ml. This is a flavoring blend, not a syrup; use sparingly. Keeps indefinitely."
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 2
       ..cookMinutes = 0
-      ..story = "Don the Beachcomber numbered his secret blends to obscure them from rival bartenders. Spices #2 is a marriage of pastis (anise-forward) and vanilla — two flavors that shouldn't work together but somehow elevate everything around them. Jeff Berry decoded it by tracking down Don's former bar manager. It appears in the Jet Pilot and the Cobra's Fang.",
+      ..story = "Don the Beachcomber numbered his secret blends to obscure them from rival bartenders. Spices #2 is a marriage of pastis (anise-forward) and vanilla - two flavors that shouldn't work together but somehow elevate everything around them. Jeff Berry decoded it by tracking down Don's former bar manager. It appears in the Jet Pilot and the Cobra's Fang.",
     Recipe()
       ..supabaseId = 'syrup_gardenia_mix'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Gardenia Mix'
       ..description = 'Butter-honey emulsion that adds a silky, tropical richness to grogs and punches'
-      ..instructions = 'Melt 4 tbsp unsalted butter in a small saucepan over very low heat. Add 4 tbsp raw honey and stir gently until fully emulsified. Remove from heat and store at room temperature in a small jar — it will set to a spreadable consistency when cold, which is fine. Warm briefly before use if needed. Use within 1 week.'
+      ..instructions = 'Melt 4 tbsp unsalted butter in a small saucepan over very low heat. Add 4 tbsp raw honey and stir gently until fully emulsified. Remove from heat and store at room temperature in a small jar - it will set to a spreadable consistency when cold, which is fine. Warm briefly before use if needed. Use within 1 week.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 5
       ..cookMinutes = 5
-      ..story = 'Gardenia Mix is one of the most unusual ingredients in the tiki canon — a warm butter-honey emulsion that melts into a drink and adds an extraordinary mouthfeel. It appears in Trader Vic\'s Navy Grog and several Don the Beachcomber originals. The name comes from the gardenia flowers that traditionally garnished the bowls it was used in.',
+      ..story = 'Gardenia Mix is one of the most unusual ingredients in the tiki canon - a warm butter-honey emulsion that melts into a drink and adds an extraordinary mouthfeel. It appears in Trader Vic\'s Navy Grog and several Don the Beachcomber originals. The name comes from the gardenia flowers that traditionally garnished the bowls it was used in.',
     Recipe()
       ..supabaseId = 'syrup_dons_mix_2'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = "Don's Mix #2"
-      ..description = "Don the Beachcomber's honey-grapefruit blend — lighter and more floral than Mix #1"
+      ..description = "Don the Beachcomber's honey-grapefruit blend - lighter and more floral than Mix #1"
       ..instructions = "Combine 2 parts fresh white grapefruit juice with 1 part honey syrup. Whisk until the honey is fully incorporated. Use within 3 days refrigerated. Unlike Mix #1, Mix #2 uses honey rather than cinnamon syrup, giving it a floral top note instead of a spiced one."
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 3
       ..cookMinutes = 0
-      ..story = "Don the Beachcomber used a numerical coding system on his recipe cards — Mix #1 through #4 were his essential pre-blended bases, each a different ratio of juice and sweetener. Mix #2 (grapefruit and honey) appears in the Test Pilot alongside its sibling Mix #1. Together they give the drink an extraordinary citrus complexity that no single juice can replicate.",
+      ..story = "Don the Beachcomber used a numerical coding system on his recipe cards - Mix #1 through #4 were his essential pre-blended bases, each a different ratio of juice and sweetener. Mix #2 (grapefruit and honey) appears in the Test Pilot alongside its sibling Mix #1. Together they give the drink an extraordinary citrus complexity that no single juice can replicate.",
     Recipe()
       ..supabaseId = 'syrup_hibiscus_grenadine'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Hibiscus Grenadine'
-      ..description = "Smuggler's Cove variant — pomegranate grenadine steeped with dried hibiscus for deeper floral tartness"
-      ..instructions = 'Steep 3 tbsp dried hibiscus flowers (flor de Jamaica) in 2 cups pomegranate juice for 30 minutes. Strain out flowers. Heat juice over medium, add 2 cups sugar, stir until dissolved — do not boil. Off heat, add 1 tsp orange flower water. Cool, bottle. Keeps 1 month refrigerated. The hibiscus adds a brilliant ruby color and a cranberry-adjacent tartness.'
+      ..description = "Smuggler's Cove variant - pomegranate grenadine steeped with dried hibiscus for deeper floral tartness"
+      ..instructions = 'Steep 3 tbsp dried hibiscus flowers (flor de Jamaica) in 2 cups pomegranate juice for 30 minutes. Strain out flowers. Heat juice over medium, add 2 cups sugar, stir until dissolved - do not boil. Off heat, add 1 tsp orange flower water. Cool, bottle. Keeps 1 month refrigerated. The hibiscus adds a brilliant ruby color and a cranberry-adjacent tartness.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 35
@@ -867,13 +867,13 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..supabaseId = 'syrup_macadamia_orgeat'
       ..boatSupabaseId = defaultBoatSupabaseId
       ..name = 'Macadamia Nut Orgeat'
-      ..description = "Trader Vic's Pacific twist on classic orgeat — butterier and more tropical than the almond original"
-      ..instructions = 'Blend 1 cup raw unsalted macadamia nuts with 1½ cups warm water until smooth. Strain through cheesecloth, squeezing firmly. Heat nut milk with 1 cup sugar until dissolved. Off heat, add ½ tsp pure vanilla extract (no orange flower water — macadamia is already floral) and 1 tbsp vodka as preservative. Bottle and refrigerate up to 2 weeks.'
+      ..description = "Trader Vic's Pacific twist on classic orgeat - butterier and more tropical than the almond original"
+      ..instructions = 'Blend 1 cup raw unsalted macadamia nuts with 11/2 cups warm water until smooth. Strain through cheesecloth, squeezing firmly. Heat nut milk with 1 cup sugar until dissolved. Off heat, add 1/2 tsp pure vanilla extract (no orange flower water - macadamia is already floral) and 1 tbsp vodka as preservative. Bottle and refrigerate up to 2 weeks.'
       ..recipeType = 'syrup'
       ..isBundled = true
       ..prepMinutes = 20
       ..cookMinutes = 10
-      ..story = "Trader Vic Bergeron grew up in Oakland but fell in love with the Pacific and Hawaii — macadamia nuts were his way of rooting orgeat in the Islands rather than the Mediterranean. His macadamia orgeat appeared on the menu at Trader Vic's in the 1960s and was a signature of the Polynesian pop era. It is buttery, vanilla-forward, and undeniably tropical.",
+      ..story = "Trader Vic Bergeron grew up in Oakland but fell in love with the Pacific and Hawaii - macadamia nuts were his way of rooting orgeat in the Islands rather than the Mediterranean. His macadamia orgeat appeared on the menu at Trader Vic's in the 1960s and was a signature of the Polynesian pop era. It is buttery, vanilla-forward, and undeniably tropical.",
   ];
 
   await seedRecipesToDrift(syrups);

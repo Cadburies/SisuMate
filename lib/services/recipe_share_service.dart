@@ -6,6 +6,9 @@ import '../models/models.dart';
 
 /// Print/share a styled recipe card as a PDF. Shared by Chef (CF12) and
 /// Cocktails (BC11) recipe detail screens.
+///
+/// [buildRecipeCardPdf] is pure (returns bytes) so it can be unit tested;
+/// [shareRecipeCard] wraps it with `Printing.layoutPdf` (platform share sheet).
 class RecipeShareService {
   static Future<void> shareRecipeCard({
     required Recipe recipe,
@@ -13,12 +16,16 @@ class RecipeShareService {
   }) async {
     await Printing.layoutPdf(
       name: recipe.name,
-      onLayout: (format) => _buildPdf(recipe, ingredients, format),
+      onLayout: (format) => buildRecipeCardPdf(recipe, ingredients, format),
     );
   }
 
-  static Future<Uint8List> _buildPdf(
-      Recipe recipe, List<RecipeIngredient> ingredients, PdfPageFormat format) async {
+  /// Builds a recipe-card PDF without touching the platform share sheet (TEST3).
+  static Future<Uint8List> buildRecipeCardPdf(
+    Recipe recipe,
+    List<RecipeIngredient> ingredients, [
+    PdfPageFormat format = PdfPageFormat.a4,
+  ]) async {
     final doc = pw.Document();
 
     doc.addPage(
@@ -64,7 +71,7 @@ class RecipeShareService {
             pw.Divider(thickness: 0.5),
             ...ingredients.map((i) => pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 4),
-                  child: pw.Text('-  ${_formatIngredient(i)}',
+                  child: pw.Text('-  ${formatIngredient(i)}',
                       style: const pw.TextStyle(fontSize: 11)),
                 )),
             if (recipe.instructions != null) ...[
@@ -83,7 +90,8 @@ class RecipeShareService {
     return doc.save();
   }
 
-  static String _formatIngredient(RecipeIngredient i) {
+  /// Formats one ingredient line for the PDF card (public for unit tests).
+  static String formatIngredient(RecipeIngredient i) {
     final parts = <String>[];
     if (i.quantity != null) {
       parts.add(i.quantity! == i.quantity!.roundToDouble()

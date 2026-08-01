@@ -498,6 +498,78 @@ void main() {
     });
   });
 
+  group('ImportService BAI6 — nameSimilarity', () {
+    test('identical names (case/whitespace aside) score 1.0', () {
+      expect(ImportService.nameSimilarity('Fenders', ' fenders '), 1.0);
+    });
+
+    test('plural/typo variants score above the fuzzy threshold', () {
+      expect(ImportService.nameSimilarity('Fender', 'Fenders'),
+          greaterThanOrEqualTo(ImportService.fuzzyDuplicateThreshold));
+      expect(ImportService.nameSimilarity('Life Jacket', 'Life Jackets'),
+          greaterThanOrEqualTo(ImportService.fuzzyDuplicateThreshold));
+    });
+
+    test('unrelated names score well below the fuzzy threshold', () {
+      expect(ImportService.nameSimilarity('Anchor', 'Life Jacket'),
+          lessThan(ImportService.fuzzyDuplicateThreshold));
+    });
+  });
+
+  group('ImportService BAI6 — findFuzzyDuplicates', () {
+    test('flags a close-but-not-exact name against existing items', () {
+      final warnings = ImportService.findFuzzyDuplicates(
+        incomingNames: ['Fender'],
+        existingNames: ['Fenders', 'Anchor'],
+      );
+      expect(warnings, hasLength(1));
+      expect(warnings.single.incomingName, 'Fender');
+      expect(warnings.single.existingName, 'Fenders');
+    });
+
+    test('does not flag an exact match — that is matchExisting\'s job', () {
+      final warnings = ImportService.findFuzzyDuplicates(
+        incomingNames: ['Fenders'],
+        existingNames: ['Fenders'],
+      );
+      expect(warnings, isEmpty);
+    });
+
+    test('does not flag genuinely different names', () {
+      final warnings = ImportService.findFuzzyDuplicates(
+        incomingNames: ['Anchor'],
+        existingNames: ['Life Jacket', 'Fenders'],
+      );
+      expect(warnings, isEmpty);
+    });
+
+    test('skips names shorter than the noise-floor length', () {
+      final warnings = ImportService.findFuzzyDuplicates(
+        incomingNames: ['Oar'],
+        existingNames: ['Oar '], // would trivially "match" if not skipped
+      );
+      expect(warnings, isEmpty);
+    });
+
+    test('namesForFuzzyCheck extracts the right field per kind', () {
+      final batch = ImportService.parse('''
+        { "sisuMateImport": 1, "kind": "inventory", "items": [
+          { "name": "Fenders", "quantity": 4 }
+        ] }
+      ''');
+      expect(ImportService.namesForFuzzyCheck(batch), ['Fenders']);
+    });
+
+    test('fuel logs have no fuzzy-check names (no dedupe concept)', () {
+      final batch = ImportService.parse('''
+        { "sisuMateImport": 1, "kind": "fuelLog", "items": [
+          { "type": "Fuel", "liters": 10 }
+        ] }
+      ''');
+      expect(ImportService.namesForFuzzyCheck(batch), isEmpty);
+    });
+  });
+
   group('ImportService.parse — SYN3 active boat id', () {
     test('defaults to zero-UUID placeholder without boatSupabaseId', () {
       final batch = ImportService.parse('''
