@@ -5,6 +5,12 @@
 # virtual camera. Kill→relaunch uses a shortened wait (~90 s); the OS
 # session-restore mechanism is duration-independent.
 #
+# Android 36 emulator quirks (both handled below): the "Try out your stylus"
+# onboarding sheet covers dialogs when a text field is focused (disabled via
+# settings + dismissed with BACK), and runtime-permission prompts are system
+# dialogs whose buttons may need coordinate taps — the script reports, verify
+# those steps against the screenshots in /tmp/test19/ if a check fails.
+#
 # Usage:
 #   bash scripts/test19_permissions_smoke.sh ios <udid>
 #   bash scripts/test19_permissions_smoke.sh and <serial>
@@ -82,6 +88,7 @@ if hit: print(f'{hit[0]} {hit[1]}')
   perm_revoke() { xcrun simctl privacy "$DEV" revoke "$1" "$PKG" 2>>"$LOG" || xcrun simctl privacy "$DEV" reset "$1" "$PKG" 2>>"$LOG" || true; }
   perm_grant()  { xcrun simctl privacy "$DEV" grant "$1" "$PKG" 2>>"$LOG" || true; }
   set_location() { xcrun simctl location "$DEV" set 59.9139,10.7522 2>>"$LOG" || true; }
+  dismiss_stylus_sheet() { :; }   # Android-only quirk
 else
   kill_app()  { adb -s "$DEV" shell am force-stop "$PKG"; }
   start_app() { adb -s "$DEV" shell am start -n "$PKG/.MainActivity" >/dev/null; }
@@ -116,6 +123,15 @@ else
       location) adb -s "$DEV" shell pm grant "$PKG" android.permission.ACCESS_FINE_LOCATION; adb -s "$DEV" shell pm grant "$PKG" android.permission.ACCESS_COARSE_LOCATION ;;
     esac; }
   set_location() { adb -s "$DEV" emu geo fix 10.7522 59.9139 >/dev/null 2>&1 || true; }
+  dismiss_stylus_sheet() {
+    # android-36 onboarding overlay steals all dialog taps — disable + dismiss.
+    adb -s "$DEV" shell settings put secure stylus_handwriting_enabled 0 >/dev/null 2>&1
+    adb -s "$DEV" shell settings put secure stylus_ever_used 1 >/dev/null 2>&1
+    if labels | grep -qF "Try out your stylus"; then
+      adb -s "$DEV" shell input keyevent 4
+      sleep 1
+    fi
+  }
 fi
 
 go_home_fresh() { kill_app; sleep 1; start_app; wait_label "Shopping" 25 || wait_label "Sisu Mate" 10; }
@@ -132,6 +148,7 @@ tap_scroll "Cocktails" || ok=0
 [ $ok = 1 ] && { tap_c "My Bar" || ok=0; sleep 1.5; }
 [ $ok = 1 ] && { tap "Add custom ingredient" || ok=0; sleep 1.5; }
 [ $ok = 1 ] && wait_label "Add Ingredient" 6 || ok=0
+[ $ok = 1 ] && dismiss_stylus_sheet
 [ $ok = 1 ] && { tap "Scan barcode" || ok=0; sleep 3; }
 if [ $ok = 1 ] && alive; then
   shot "$EVIDENCE/${PLATFORM}_1_scanner_denied.png"
@@ -155,8 +172,23 @@ perm_revoke location
 go_home_fresh
 ok=1
 tap_scroll "Weather" || ok=0
-[ $ok = 1 ] && wait_label "Use GPS" 10 || ok=0
-[ $ok = 1 ] && { tap "Use GPS" || ok=0; sleep 3; }
+[ $ok = 1 ] && wait_label "Use GPS" 25 || ok=0
+[ $ok = 1 ] && { tap "Use GPS" || ok=0; sleep 2; }
+# Android: first tap raises the system permission prompt — deny it by coords.
+if [ "$PLATFORM" = "and" ] && labels | grep -qF "allow"; then
+  B=$(adb -s "$DEV" exec-out uiautomator dump /dev/tty 2>/dev/null | python3 -c "
+import re, sys
+xml = sys.stdin.read()
+m = re.search(r'text=\"Don.t allow\"[^/]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"', xml)
+if not m:
+    m = re.search(r'bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"[^/]*text=\"Don.t allow\"', xml)
+if m:
+    x1, y1, x2, y2 = map(int, m.groups())
+    print((x1 + x2) // 2, (y1 + y2) // 2)
+")
+  [ -n "$B" ] && adb -s "$DEV" shell input tap $B
+  sleep 2
+fi
 shot "$EVIDENCE/${PLATFORM}_2a_weather_denied.png"
 if [ $ok = 1 ] && alive && labels | grep -qF "Location permission denied"; then
   record "PASS check2a: denial snackbar shown, no crash"
@@ -171,8 +203,14 @@ perm_grant location
 set_location
 sleep 1
 ok=1
-tap "Use GPS" || ok=0
-sleep 5
+wait_label "Use GPS" 25 || ok=0
+[ $ok = 1 ] && { tap "Use GPS" || ok=0; }
+# locating takes a few seconds; let it settle
+for _ in 1 2 3 4 5 6 7 8; do
+  labels | grep -qF "Locating..." || break
+  sleep 1
+done
+sleep 1
 shot "$EVIDENCE/${PLATFORM}_2b_weather_allowed.png"
 if [ $ok = 1 ] && alive && ! labels | grep -qF "Location permission denied"; then
   record "PASS check2b: no denial after grant (screenshot shows result)"
@@ -188,6 +226,7 @@ tap_scroll "Cocktails" || ok=0
 [ $ok = 1 ] && wait_label "My Bar" 8 || ok=0
 [ $ok = 1 ] && { tap_c "My Bar" || ok=0; sleep 1.5; }
 [ $ok = 1 ] && { tap "Add custom ingredient" || ok=0; sleep 1.5; }
+[ $ok = 1 ] && dismiss_stylus_sheet
 if [ $ok = 1 ] && wait_label "Add Ingredient" 6 && alive; then
   shot "$EVIDENCE/${PLATFORM}_3_add_ingredient.png"
   record "PASS check3: dialog renders photo placeholder (missing path → errorBuilder placeholder by construction), no crash"

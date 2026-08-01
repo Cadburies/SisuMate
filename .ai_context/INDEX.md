@@ -5,10 +5,10 @@
 
 ## NEXT
 
-- **Last:** #11 SUG5 closed (Claude); #6 TEST20 closed (Claude) — AdMob real-device smoke found 3 real bugs, filed as #123 (P1, interstitial never shows — `AdMobService` not a singleton), #124 (P2, native ads never render — no `NativeAdFactory` registered), #125 (P1, Pro-gate bypass in `check_page_viewer.dart`); added `scripts/test20_admob_smoke.sh` + `adb_swipe_reveal_action.sh` (on-demand GUI test drivers, see CLAUDE.md)
-- **Doing:** Kimi on #5 TEST19 + #7 TEST21; next unclaimed ready work: #9, #123, #124, #125
+- **Last:** #4 TEST18 (Kimi — LAN RC smoke PASS incl. LT7 rejoin fix in `game_lan_service.dart`), #5 TEST19 (Kimi — permissions/cold-resume PASS), #7 TEST21 (Kimi — perf numbers), #9 TEST23 (Kimi — scheme registration was missing; deep-link cold start now works), #6 TEST20 (Claude — 3 ad bugs filed #123/#124/#125), #8/#10 (Claude). Error-tracking issues filed: #121 (infra), #122 (audit, depends on #121)
+- **Doing:** nothing claimed; open ready work: #123 (P1), #124 (P2), #125 (P1)
 - **Open game bugs:** none
-- **Blockers:** rotate Play SA key if prior builds shipped
+- **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.
 
@@ -16,7 +16,7 @@
 
 | Task | Load |
 | --- | --- |
-| Backlog / pick next work | GitHub Issues: `gh issue list --label ready` ("do all TEST issues" = `--label test-gap`; protocol in `Claude.md` §Issue kickoff) |
+| Backlog / pick next work | GitHub Issues: `gh issue list --state open` (skip `agent:*`-claimed, placeholder-Touches, unresolved `Depends on #N`; "do all TEST issues" adds `--label test-gap`; protocol in `Claude.md` §Issue kickoff) |
 | Parallel agents | `Claude.md` §Parallel agents (issue labels + worktrees) |
 | Full test suite (post every task) | **`./scripts/run_full_suite.sh`** (SEC3 → analyze → `flutter test` → live RLS → integration). Flags: `--skip-live`, `--skip-integration`, `--device <id>`. Detail: `Claude.md` §5 + `README.md` Testing + `test-gap` issues on GitHub |
 | GUI / colour / layout | `theme.md` → `lib/core/colors.dart` |
