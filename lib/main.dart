@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'services/revenuecat_service.dart';
 import 'services/admob_service.dart';
+import 'services/error_log_service.dart';
 import 'core/theme.dart';
 import 'core/app_router.dart';
 import 'core/di.dart';
@@ -21,6 +23,25 @@ final appRouter = createAppRouter();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // #121: capture every framework error / uncaught async error to the local
+  // error log from the very first frame onward. Chains the previous handler
+  // (there isn't one today, but this must never silently replace one added
+  // later) so the normal debug red-screen/console output is unaffected —
+  // this only adds capture. Cheap + synchronous; does not touch RT1 timing.
+  final previousOnError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    unawaited(ErrorLogService().logFlutterError(details));
+    previousOnError?.call(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    unawaited(
+      ErrorLogService().logException(error, stack, context: 'uncaught async error'),
+    );
+    return true;
+  };
+  ErrorLogService.routeHintProvider =
+      () => appRouter.routerDelegate.currentConfiguration.uri.toString();
 
   assert(
     _supabaseUrl.isNotEmpty && _supabaseAnonKey.isNotEmpty,
@@ -52,6 +73,12 @@ Future<void> _initDeferredSdks() async {
     RevenueCatService().init(),
     AdMobService().init(),
   ]);
+  // #123: preload an interstitial right after init so the free-tier Complete
+  // gate never races a fresh 500ms load (and the singleton keeps it alive).
+  AdMobService().createInterstitialAd();
+  // #121: app version + Pro status for error-log context — deferred so
+  // RevenueCatService's internal init() doesn't run during first paint.
+  ErrorLogService().initDeferredContext();
 }
 
 class SisuMateApp extends ConsumerWidget {

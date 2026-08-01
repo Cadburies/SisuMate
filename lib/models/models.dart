@@ -12,6 +12,7 @@ part 'shopping_item.dart';
 part 'user_settings.dart';
 part 'sync_outbox.dart';
 part 'conflict_log.dart';
+part 'error_log_entry.dart';
 part 'community_template.dart';
 part 'fuel_log_entry.dart';
 part 'captain_log_entry.dart';

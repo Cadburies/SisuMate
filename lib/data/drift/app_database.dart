@@ -490,6 +490,34 @@ class ConflictLogs extends Table {
   DateTimeColumn get resolvedAt => dateTime().nullable()();
 }
 
+/// App error/exception/warning telemetry (#121) — captured globally via
+/// `FlutterError.onError` / `PlatformDispatcher.onError` and explicit
+/// `ErrorLogService` calls, then read by `scripts/triage_error_logs.sh` to
+/// file one deduped GitHub issue per [fingerprint]. Local-only; never synced
+/// to Supabase (no `boatSupabaseId`/`isSynced` columns).
+@DataClassName('ErrorLogRow')
+class ErrorLogs extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  /// `warning` | `error` | `exception`
+  TextColumn get level => text().withDefault(const Constant('error'))();
+  TextColumn get message => text().withDefault(const Constant(''))();
+  TextColumn get stackTrace => text().nullable()();
+  /// Top app-frame parsed from the stack, e.g. `lib/services/sync_service.dart`.
+  TextColumn get sourceFile => text().nullable()();
+  TextColumn get routeHint => text().nullable()();
+  TextColumn get appVersion => text().withDefault(const Constant(''))();
+  TextColumn get platform => text().withDefault(const Constant(''))();
+  BoolColumn get isPro => boolean().withDefault(const Constant(false))();
+  /// Dedupe key: hash of level + sourceFile + a digit-normalized message.
+  TextColumn get fingerprint => text().withDefault(const Constant(''))();
+  IntColumn get occurrences => integer().withDefault(const Constant(1))();
+  /// Set once `scripts/triage_error_logs.sh` has filed/updated a GitHub issue
+  /// for this fingerprint.
+  DateTimeColumn get processedAt => dateTime().nullable()();
+  TextColumn get issueUrl => text().nullable()();
+}
+
 /// The app's Drift database — the sole local store. Every table the app
 /// persists is registered in the `@DriftDatabase(tables: [...])` list below.
 @DriftDatabase(tables: [
@@ -515,6 +543,7 @@ class ConflictLogs extends Table {
   CommunityTemplates,
   SyncOutboxItems,
   ConflictLogs,
+  ErrorLogs,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
@@ -535,7 +564,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

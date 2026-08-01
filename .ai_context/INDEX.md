@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #4 TEST18 (Kimi — LAN RC smoke PASS incl. LT7 rejoin fix in `game_lan_service.dart`), #5 TEST19 (Kimi — permissions/cold-resume PASS), #7 TEST21 (Kimi — perf numbers), #9 TEST23 (Kimi — scheme registration was missing; deep-link cold start now works), #6 TEST20 (Claude — 3 ad bugs filed #123/#124/#125), #8/#10 (Claude). Error-tracking issues filed: #121 (infra), #122 (audit, depends on #121)
-- **Doing:** nothing claimed; open ready work: #123 (P1), #124 (P2), #125 (P1)
+- **Last:** #121 closed (Claude) — `ErrorLogTable` (schemaVersion 4) + `ErrorLogService` singleton (FlutterError/async capture from `main.dart`, fingerprint dedupe, secret redaction) + `scripts/triage_error_logs.sh` (auto-files one GH issue per fingerprint, Android only). #123 in progress (Kimi — AdMobService singleton).
+- **Doing:** Claude on #122 (sweep `lib/` catch/print/throw → `ErrorLogService`, depends on #121 ✓ landed); Kimi on #123. Open: #124 (P2), #125 (P1)
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 
@@ -56,7 +56,7 @@ lib/ui/       home, modules…, games/, community/, account/, components/
 
 ## Global singletons
 
-`AppDatabase` · `DatabaseService` · `RevenueCatService` (`isPro()` authoritative for features) · `SyncService` (Pro **or** anonymous crew) · `AuthService` · `AdMobService`
+`AppDatabase` · `DatabaseService` · `RevenueCatService` (`isPro()` authoritative for features) · `SyncService` (Pro **or** anonymous crew) · `AuthService` · `AdMobService` · `ErrorLogService` (#121 — FlutterError/async capture, fingerprint dedupe, never syncs)
 
 ## Rules (short)
 

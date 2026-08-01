@@ -18225,6 +18225,815 @@ class ConflictLogsCompanion extends UpdateCompanion<ConflictLogRow> {
   }
 }
 
+class $ErrorLogsTable extends ErrorLogs
+    with TableInfo<$ErrorLogsTable, ErrorLogRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ErrorLogsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _levelMeta = const VerificationMeta('level');
+  @override
+  late final GeneratedColumn<String> level = GeneratedColumn<String>(
+    'level',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('error'),
+  );
+  static const VerificationMeta _messageMeta = const VerificationMeta(
+    'message',
+  );
+  @override
+  late final GeneratedColumn<String> message = GeneratedColumn<String>(
+    'message',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _stackTraceMeta = const VerificationMeta(
+    'stackTrace',
+  );
+  @override
+  late final GeneratedColumn<String> stackTrace = GeneratedColumn<String>(
+    'stack_trace',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceFileMeta = const VerificationMeta(
+    'sourceFile',
+  );
+  @override
+  late final GeneratedColumn<String> sourceFile = GeneratedColumn<String>(
+    'source_file',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _routeHintMeta = const VerificationMeta(
+    'routeHint',
+  );
+  @override
+  late final GeneratedColumn<String> routeHint = GeneratedColumn<String>(
+    'route_hint',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _appVersionMeta = const VerificationMeta(
+    'appVersion',
+  );
+  @override
+  late final GeneratedColumn<String> appVersion = GeneratedColumn<String>(
+    'app_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _platformMeta = const VerificationMeta(
+    'platform',
+  );
+  @override
+  late final GeneratedColumn<String> platform = GeneratedColumn<String>(
+    'platform',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _isProMeta = const VerificationMeta('isPro');
+  @override
+  late final GeneratedColumn<bool> isPro = GeneratedColumn<bool>(
+    'is_pro',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pro" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _fingerprintMeta = const VerificationMeta(
+    'fingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> fingerprint = GeneratedColumn<String>(
+    'fingerprint',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _occurrencesMeta = const VerificationMeta(
+    'occurrences',
+  );
+  @override
+  late final GeneratedColumn<int> occurrences = GeneratedColumn<int>(
+    'occurrences',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _processedAtMeta = const VerificationMeta(
+    'processedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> processedAt = GeneratedColumn<DateTime>(
+    'processed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _issueUrlMeta = const VerificationMeta(
+    'issueUrl',
+  );
+  @override
+  late final GeneratedColumn<String> issueUrl = GeneratedColumn<String>(
+    'issue_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    level,
+    message,
+    stackTrace,
+    sourceFile,
+    routeHint,
+    appVersion,
+    platform,
+    isPro,
+    fingerprint,
+    occurrences,
+    processedAt,
+    issueUrl,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'error_logs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ErrorLogRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('level')) {
+      context.handle(
+        _levelMeta,
+        level.isAcceptableOrUnknown(data['level']!, _levelMeta),
+      );
+    }
+    if (data.containsKey('message')) {
+      context.handle(
+        _messageMeta,
+        message.isAcceptableOrUnknown(data['message']!, _messageMeta),
+      );
+    }
+    if (data.containsKey('stack_trace')) {
+      context.handle(
+        _stackTraceMeta,
+        stackTrace.isAcceptableOrUnknown(data['stack_trace']!, _stackTraceMeta),
+      );
+    }
+    if (data.containsKey('source_file')) {
+      context.handle(
+        _sourceFileMeta,
+        sourceFile.isAcceptableOrUnknown(data['source_file']!, _sourceFileMeta),
+      );
+    }
+    if (data.containsKey('route_hint')) {
+      context.handle(
+        _routeHintMeta,
+        routeHint.isAcceptableOrUnknown(data['route_hint']!, _routeHintMeta),
+      );
+    }
+    if (data.containsKey('app_version')) {
+      context.handle(
+        _appVersionMeta,
+        appVersion.isAcceptableOrUnknown(data['app_version']!, _appVersionMeta),
+      );
+    }
+    if (data.containsKey('platform')) {
+      context.handle(
+        _platformMeta,
+        platform.isAcceptableOrUnknown(data['platform']!, _platformMeta),
+      );
+    }
+    if (data.containsKey('is_pro')) {
+      context.handle(
+        _isProMeta,
+        isPro.isAcceptableOrUnknown(data['is_pro']!, _isProMeta),
+      );
+    }
+    if (data.containsKey('fingerprint')) {
+      context.handle(
+        _fingerprintMeta,
+        fingerprint.isAcceptableOrUnknown(
+          data['fingerprint']!,
+          _fingerprintMeta,
+        ),
+      );
+    }
+    if (data.containsKey('occurrences')) {
+      context.handle(
+        _occurrencesMeta,
+        occurrences.isAcceptableOrUnknown(
+          data['occurrences']!,
+          _occurrencesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('processed_at')) {
+      context.handle(
+        _processedAtMeta,
+        processedAt.isAcceptableOrUnknown(
+          data['processed_at']!,
+          _processedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('issue_url')) {
+      context.handle(
+        _issueUrlMeta,
+        issueUrl.isAcceptableOrUnknown(data['issue_url']!, _issueUrlMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ErrorLogRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ErrorLogRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      level: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}level'],
+      )!,
+      message: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}message'],
+      )!,
+      stackTrace: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stack_trace'],
+      ),
+      sourceFile: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_file'],
+      ),
+      routeHint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}route_hint'],
+      ),
+      appVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}app_version'],
+      )!,
+      platform: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}platform'],
+      )!,
+      isPro: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pro'],
+      )!,
+      fingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fingerprint'],
+      )!,
+      occurrences: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}occurrences'],
+      )!,
+      processedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}processed_at'],
+      ),
+      issueUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}issue_url'],
+      ),
+    );
+  }
+
+  @override
+  $ErrorLogsTable createAlias(String alias) {
+    return $ErrorLogsTable(attachedDatabase, alias);
+  }
+}
+
+class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
+  final int id;
+  final DateTime createdAt;
+
+  /// `warning` | `error` | `exception`
+  final String level;
+  final String message;
+  final String? stackTrace;
+
+  /// Top app-frame parsed from the stack, e.g. `lib/services/sync_service.dart`.
+  final String? sourceFile;
+  final String? routeHint;
+  final String appVersion;
+  final String platform;
+  final bool isPro;
+
+  /// Dedupe key: hash of level + sourceFile + a digit-normalized message.
+  final String fingerprint;
+  final int occurrences;
+
+  /// Set once `scripts/triage_error_logs.sh` has filed/updated a GitHub issue
+  /// for this fingerprint.
+  final DateTime? processedAt;
+  final String? issueUrl;
+  const ErrorLogRow({
+    required this.id,
+    required this.createdAt,
+    required this.level,
+    required this.message,
+    this.stackTrace,
+    this.sourceFile,
+    this.routeHint,
+    required this.appVersion,
+    required this.platform,
+    required this.isPro,
+    required this.fingerprint,
+    required this.occurrences,
+    this.processedAt,
+    this.issueUrl,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['level'] = Variable<String>(level);
+    map['message'] = Variable<String>(message);
+    if (!nullToAbsent || stackTrace != null) {
+      map['stack_trace'] = Variable<String>(stackTrace);
+    }
+    if (!nullToAbsent || sourceFile != null) {
+      map['source_file'] = Variable<String>(sourceFile);
+    }
+    if (!nullToAbsent || routeHint != null) {
+      map['route_hint'] = Variable<String>(routeHint);
+    }
+    map['app_version'] = Variable<String>(appVersion);
+    map['platform'] = Variable<String>(platform);
+    map['is_pro'] = Variable<bool>(isPro);
+    map['fingerprint'] = Variable<String>(fingerprint);
+    map['occurrences'] = Variable<int>(occurrences);
+    if (!nullToAbsent || processedAt != null) {
+      map['processed_at'] = Variable<DateTime>(processedAt);
+    }
+    if (!nullToAbsent || issueUrl != null) {
+      map['issue_url'] = Variable<String>(issueUrl);
+    }
+    return map;
+  }
+
+  ErrorLogsCompanion toCompanion(bool nullToAbsent) {
+    return ErrorLogsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      level: Value(level),
+      message: Value(message),
+      stackTrace: stackTrace == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stackTrace),
+      sourceFile: sourceFile == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceFile),
+      routeHint: routeHint == null && nullToAbsent
+          ? const Value.absent()
+          : Value(routeHint),
+      appVersion: Value(appVersion),
+      platform: Value(platform),
+      isPro: Value(isPro),
+      fingerprint: Value(fingerprint),
+      occurrences: Value(occurrences),
+      processedAt: processedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(processedAt),
+      issueUrl: issueUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(issueUrl),
+    );
+  }
+
+  factory ErrorLogRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ErrorLogRow(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      level: serializer.fromJson<String>(json['level']),
+      message: serializer.fromJson<String>(json['message']),
+      stackTrace: serializer.fromJson<String?>(json['stackTrace']),
+      sourceFile: serializer.fromJson<String?>(json['sourceFile']),
+      routeHint: serializer.fromJson<String?>(json['routeHint']),
+      appVersion: serializer.fromJson<String>(json['appVersion']),
+      platform: serializer.fromJson<String>(json['platform']),
+      isPro: serializer.fromJson<bool>(json['isPro']),
+      fingerprint: serializer.fromJson<String>(json['fingerprint']),
+      occurrences: serializer.fromJson<int>(json['occurrences']),
+      processedAt: serializer.fromJson<DateTime?>(json['processedAt']),
+      issueUrl: serializer.fromJson<String?>(json['issueUrl']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'level': serializer.toJson<String>(level),
+      'message': serializer.toJson<String>(message),
+      'stackTrace': serializer.toJson<String?>(stackTrace),
+      'sourceFile': serializer.toJson<String?>(sourceFile),
+      'routeHint': serializer.toJson<String?>(routeHint),
+      'appVersion': serializer.toJson<String>(appVersion),
+      'platform': serializer.toJson<String>(platform),
+      'isPro': serializer.toJson<bool>(isPro),
+      'fingerprint': serializer.toJson<String>(fingerprint),
+      'occurrences': serializer.toJson<int>(occurrences),
+      'processedAt': serializer.toJson<DateTime?>(processedAt),
+      'issueUrl': serializer.toJson<String?>(issueUrl),
+    };
+  }
+
+  ErrorLogRow copyWith({
+    int? id,
+    DateTime? createdAt,
+    String? level,
+    String? message,
+    Value<String?> stackTrace = const Value.absent(),
+    Value<String?> sourceFile = const Value.absent(),
+    Value<String?> routeHint = const Value.absent(),
+    String? appVersion,
+    String? platform,
+    bool? isPro,
+    String? fingerprint,
+    int? occurrences,
+    Value<DateTime?> processedAt = const Value.absent(),
+    Value<String?> issueUrl = const Value.absent(),
+  }) => ErrorLogRow(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    level: level ?? this.level,
+    message: message ?? this.message,
+    stackTrace: stackTrace.present ? stackTrace.value : this.stackTrace,
+    sourceFile: sourceFile.present ? sourceFile.value : this.sourceFile,
+    routeHint: routeHint.present ? routeHint.value : this.routeHint,
+    appVersion: appVersion ?? this.appVersion,
+    platform: platform ?? this.platform,
+    isPro: isPro ?? this.isPro,
+    fingerprint: fingerprint ?? this.fingerprint,
+    occurrences: occurrences ?? this.occurrences,
+    processedAt: processedAt.present ? processedAt.value : this.processedAt,
+    issueUrl: issueUrl.present ? issueUrl.value : this.issueUrl,
+  );
+  ErrorLogRow copyWithCompanion(ErrorLogsCompanion data) {
+    return ErrorLogRow(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      level: data.level.present ? data.level.value : this.level,
+      message: data.message.present ? data.message.value : this.message,
+      stackTrace: data.stackTrace.present
+          ? data.stackTrace.value
+          : this.stackTrace,
+      sourceFile: data.sourceFile.present
+          ? data.sourceFile.value
+          : this.sourceFile,
+      routeHint: data.routeHint.present ? data.routeHint.value : this.routeHint,
+      appVersion: data.appVersion.present
+          ? data.appVersion.value
+          : this.appVersion,
+      platform: data.platform.present ? data.platform.value : this.platform,
+      isPro: data.isPro.present ? data.isPro.value : this.isPro,
+      fingerprint: data.fingerprint.present
+          ? data.fingerprint.value
+          : this.fingerprint,
+      occurrences: data.occurrences.present
+          ? data.occurrences.value
+          : this.occurrences,
+      processedAt: data.processedAt.present
+          ? data.processedAt.value
+          : this.processedAt,
+      issueUrl: data.issueUrl.present ? data.issueUrl.value : this.issueUrl,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ErrorLogRow(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('level: $level, ')
+          ..write('message: $message, ')
+          ..write('stackTrace: $stackTrace, ')
+          ..write('sourceFile: $sourceFile, ')
+          ..write('routeHint: $routeHint, ')
+          ..write('appVersion: $appVersion, ')
+          ..write('platform: $platform, ')
+          ..write('isPro: $isPro, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('occurrences: $occurrences, ')
+          ..write('processedAt: $processedAt, ')
+          ..write('issueUrl: $issueUrl')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    createdAt,
+    level,
+    message,
+    stackTrace,
+    sourceFile,
+    routeHint,
+    appVersion,
+    platform,
+    isPro,
+    fingerprint,
+    occurrences,
+    processedAt,
+    issueUrl,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ErrorLogRow &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.level == this.level &&
+          other.message == this.message &&
+          other.stackTrace == this.stackTrace &&
+          other.sourceFile == this.sourceFile &&
+          other.routeHint == this.routeHint &&
+          other.appVersion == this.appVersion &&
+          other.platform == this.platform &&
+          other.isPro == this.isPro &&
+          other.fingerprint == this.fingerprint &&
+          other.occurrences == this.occurrences &&
+          other.processedAt == this.processedAt &&
+          other.issueUrl == this.issueUrl);
+}
+
+class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<String> level;
+  final Value<String> message;
+  final Value<String?> stackTrace;
+  final Value<String?> sourceFile;
+  final Value<String?> routeHint;
+  final Value<String> appVersion;
+  final Value<String> platform;
+  final Value<bool> isPro;
+  final Value<String> fingerprint;
+  final Value<int> occurrences;
+  final Value<DateTime?> processedAt;
+  final Value<String?> issueUrl;
+  const ErrorLogsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.level = const Value.absent(),
+    this.message = const Value.absent(),
+    this.stackTrace = const Value.absent(),
+    this.sourceFile = const Value.absent(),
+    this.routeHint = const Value.absent(),
+    this.appVersion = const Value.absent(),
+    this.platform = const Value.absent(),
+    this.isPro = const Value.absent(),
+    this.fingerprint = const Value.absent(),
+    this.occurrences = const Value.absent(),
+    this.processedAt = const Value.absent(),
+    this.issueUrl = const Value.absent(),
+  });
+  ErrorLogsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.level = const Value.absent(),
+    this.message = const Value.absent(),
+    this.stackTrace = const Value.absent(),
+    this.sourceFile = const Value.absent(),
+    this.routeHint = const Value.absent(),
+    this.appVersion = const Value.absent(),
+    this.platform = const Value.absent(),
+    this.isPro = const Value.absent(),
+    this.fingerprint = const Value.absent(),
+    this.occurrences = const Value.absent(),
+    this.processedAt = const Value.absent(),
+    this.issueUrl = const Value.absent(),
+  });
+  static Insertable<ErrorLogRow> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<String>? level,
+    Expression<String>? message,
+    Expression<String>? stackTrace,
+    Expression<String>? sourceFile,
+    Expression<String>? routeHint,
+    Expression<String>? appVersion,
+    Expression<String>? platform,
+    Expression<bool>? isPro,
+    Expression<String>? fingerprint,
+    Expression<int>? occurrences,
+    Expression<DateTime>? processedAt,
+    Expression<String>? issueUrl,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (level != null) 'level': level,
+      if (message != null) 'message': message,
+      if (stackTrace != null) 'stack_trace': stackTrace,
+      if (sourceFile != null) 'source_file': sourceFile,
+      if (routeHint != null) 'route_hint': routeHint,
+      if (appVersion != null) 'app_version': appVersion,
+      if (platform != null) 'platform': platform,
+      if (isPro != null) 'is_pro': isPro,
+      if (fingerprint != null) 'fingerprint': fingerprint,
+      if (occurrences != null) 'occurrences': occurrences,
+      if (processedAt != null) 'processed_at': processedAt,
+      if (issueUrl != null) 'issue_url': issueUrl,
+    });
+  }
+
+  ErrorLogsCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime>? createdAt,
+    Value<String>? level,
+    Value<String>? message,
+    Value<String?>? stackTrace,
+    Value<String?>? sourceFile,
+    Value<String?>? routeHint,
+    Value<String>? appVersion,
+    Value<String>? platform,
+    Value<bool>? isPro,
+    Value<String>? fingerprint,
+    Value<int>? occurrences,
+    Value<DateTime?>? processedAt,
+    Value<String?>? issueUrl,
+  }) {
+    return ErrorLogsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      level: level ?? this.level,
+      message: message ?? this.message,
+      stackTrace: stackTrace ?? this.stackTrace,
+      sourceFile: sourceFile ?? this.sourceFile,
+      routeHint: routeHint ?? this.routeHint,
+      appVersion: appVersion ?? this.appVersion,
+      platform: platform ?? this.platform,
+      isPro: isPro ?? this.isPro,
+      fingerprint: fingerprint ?? this.fingerprint,
+      occurrences: occurrences ?? this.occurrences,
+      processedAt: processedAt ?? this.processedAt,
+      issueUrl: issueUrl ?? this.issueUrl,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (level.present) {
+      map['level'] = Variable<String>(level.value);
+    }
+    if (message.present) {
+      map['message'] = Variable<String>(message.value);
+    }
+    if (stackTrace.present) {
+      map['stack_trace'] = Variable<String>(stackTrace.value);
+    }
+    if (sourceFile.present) {
+      map['source_file'] = Variable<String>(sourceFile.value);
+    }
+    if (routeHint.present) {
+      map['route_hint'] = Variable<String>(routeHint.value);
+    }
+    if (appVersion.present) {
+      map['app_version'] = Variable<String>(appVersion.value);
+    }
+    if (platform.present) {
+      map['platform'] = Variable<String>(platform.value);
+    }
+    if (isPro.present) {
+      map['is_pro'] = Variable<bool>(isPro.value);
+    }
+    if (fingerprint.present) {
+      map['fingerprint'] = Variable<String>(fingerprint.value);
+    }
+    if (occurrences.present) {
+      map['occurrences'] = Variable<int>(occurrences.value);
+    }
+    if (processedAt.present) {
+      map['processed_at'] = Variable<DateTime>(processedAt.value);
+    }
+    if (issueUrl.present) {
+      map['issue_url'] = Variable<String>(issueUrl.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ErrorLogsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('level: $level, ')
+          ..write('message: $message, ')
+          ..write('stackTrace: $stackTrace, ')
+          ..write('sourceFile: $sourceFile, ')
+          ..write('routeHint: $routeHint, ')
+          ..write('appVersion: $appVersion, ')
+          ..write('platform: $platform, ')
+          ..write('isPro: $isPro, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('occurrences: $occurrences, ')
+          ..write('processedAt: $processedAt, ')
+          ..write('issueUrl: $issueUrl')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -18263,6 +19072,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $ConflictLogsTable conflictLogs = $ConflictLogsTable(this);
+  late final $ErrorLogsTable errorLogs = $ErrorLogsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -18290,6 +19100,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     communityTemplates,
     syncOutboxItems,
     conflictLogs,
+    errorLogs,
   ];
 }
 
@@ -26857,6 +27668,383 @@ typedef $$ConflictLogsTableProcessedTableManager =
       ConflictLogRow,
       PrefetchHooks Function()
     >;
+typedef $$ErrorLogsTableCreateCompanionBuilder =
+    ErrorLogsCompanion Function({
+      Value<int> id,
+      Value<DateTime> createdAt,
+      Value<String> level,
+      Value<String> message,
+      Value<String?> stackTrace,
+      Value<String?> sourceFile,
+      Value<String?> routeHint,
+      Value<String> appVersion,
+      Value<String> platform,
+      Value<bool> isPro,
+      Value<String> fingerprint,
+      Value<int> occurrences,
+      Value<DateTime?> processedAt,
+      Value<String?> issueUrl,
+    });
+typedef $$ErrorLogsTableUpdateCompanionBuilder =
+    ErrorLogsCompanion Function({
+      Value<int> id,
+      Value<DateTime> createdAt,
+      Value<String> level,
+      Value<String> message,
+      Value<String?> stackTrace,
+      Value<String?> sourceFile,
+      Value<String?> routeHint,
+      Value<String> appVersion,
+      Value<String> platform,
+      Value<bool> isPro,
+      Value<String> fingerprint,
+      Value<int> occurrences,
+      Value<DateTime?> processedAt,
+      Value<String?> issueUrl,
+    });
+
+class $$ErrorLogsTableFilterComposer
+    extends Composer<_$AppDatabase, $ErrorLogsTable> {
+  $$ErrorLogsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get level => $composableBuilder(
+    column: $table.level,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stackTrace => $composableBuilder(
+    column: $table.stackTrace,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceFile => $composableBuilder(
+    column: $table.sourceFile,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get routeHint => $composableBuilder(
+    column: $table.routeHint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPro => $composableBuilder(
+    column: $table.isPro,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get occurrences => $composableBuilder(
+    column: $table.occurrences,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get processedAt => $composableBuilder(
+    column: $table.processedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get issueUrl => $composableBuilder(
+    column: $table.issueUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ErrorLogsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ErrorLogsTable> {
+  $$ErrorLogsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get level => $composableBuilder(
+    column: $table.level,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stackTrace => $composableBuilder(
+    column: $table.stackTrace,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceFile => $composableBuilder(
+    column: $table.sourceFile,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get routeHint => $composableBuilder(
+    column: $table.routeHint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPro => $composableBuilder(
+    column: $table.isPro,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get occurrences => $composableBuilder(
+    column: $table.occurrences,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get processedAt => $composableBuilder(
+    column: $table.processedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get issueUrl => $composableBuilder(
+    column: $table.issueUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ErrorLogsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ErrorLogsTable> {
+  $$ErrorLogsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get level =>
+      $composableBuilder(column: $table.level, builder: (column) => column);
+
+  GeneratedColumn<String> get message =>
+      $composableBuilder(column: $table.message, builder: (column) => column);
+
+  GeneratedColumn<String> get stackTrace => $composableBuilder(
+    column: $table.stackTrace,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceFile => $composableBuilder(
+    column: $table.sourceFile,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get routeHint =>
+      $composableBuilder(column: $table.routeHint, builder: (column) => column);
+
+  GeneratedColumn<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get platform =>
+      $composableBuilder(column: $table.platform, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPro =>
+      $composableBuilder(column: $table.isPro, builder: (column) => column);
+
+  GeneratedColumn<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get occurrences => $composableBuilder(
+    column: $table.occurrences,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get processedAt => $composableBuilder(
+    column: $table.processedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get issueUrl =>
+      $composableBuilder(column: $table.issueUrl, builder: (column) => column);
+}
+
+class $$ErrorLogsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ErrorLogsTable,
+          ErrorLogRow,
+          $$ErrorLogsTableFilterComposer,
+          $$ErrorLogsTableOrderingComposer,
+          $$ErrorLogsTableAnnotationComposer,
+          $$ErrorLogsTableCreateCompanionBuilder,
+          $$ErrorLogsTableUpdateCompanionBuilder,
+          (
+            ErrorLogRow,
+            BaseReferences<_$AppDatabase, $ErrorLogsTable, ErrorLogRow>,
+          ),
+          ErrorLogRow,
+          PrefetchHooks Function()
+        > {
+  $$ErrorLogsTableTableManager(_$AppDatabase db, $ErrorLogsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ErrorLogsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ErrorLogsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ErrorLogsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<String> level = const Value.absent(),
+                Value<String> message = const Value.absent(),
+                Value<String?> stackTrace = const Value.absent(),
+                Value<String?> sourceFile = const Value.absent(),
+                Value<String?> routeHint = const Value.absent(),
+                Value<String> appVersion = const Value.absent(),
+                Value<String> platform = const Value.absent(),
+                Value<bool> isPro = const Value.absent(),
+                Value<String> fingerprint = const Value.absent(),
+                Value<int> occurrences = const Value.absent(),
+                Value<DateTime?> processedAt = const Value.absent(),
+                Value<String?> issueUrl = const Value.absent(),
+              }) => ErrorLogsCompanion(
+                id: id,
+                createdAt: createdAt,
+                level: level,
+                message: message,
+                stackTrace: stackTrace,
+                sourceFile: sourceFile,
+                routeHint: routeHint,
+                appVersion: appVersion,
+                platform: platform,
+                isPro: isPro,
+                fingerprint: fingerprint,
+                occurrences: occurrences,
+                processedAt: processedAt,
+                issueUrl: issueUrl,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<String> level = const Value.absent(),
+                Value<String> message = const Value.absent(),
+                Value<String?> stackTrace = const Value.absent(),
+                Value<String?> sourceFile = const Value.absent(),
+                Value<String?> routeHint = const Value.absent(),
+                Value<String> appVersion = const Value.absent(),
+                Value<String> platform = const Value.absent(),
+                Value<bool> isPro = const Value.absent(),
+                Value<String> fingerprint = const Value.absent(),
+                Value<int> occurrences = const Value.absent(),
+                Value<DateTime?> processedAt = const Value.absent(),
+                Value<String?> issueUrl = const Value.absent(),
+              }) => ErrorLogsCompanion.insert(
+                id: id,
+                createdAt: createdAt,
+                level: level,
+                message: message,
+                stackTrace: stackTrace,
+                sourceFile: sourceFile,
+                routeHint: routeHint,
+                appVersion: appVersion,
+                platform: platform,
+                isPro: isPro,
+                fingerprint: fingerprint,
+                occurrences: occurrences,
+                processedAt: processedAt,
+                issueUrl: issueUrl,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ErrorLogsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ErrorLogsTable,
+      ErrorLogRow,
+      $$ErrorLogsTableFilterComposer,
+      $$ErrorLogsTableOrderingComposer,
+      $$ErrorLogsTableAnnotationComposer,
+      $$ErrorLogsTableCreateCompanionBuilder,
+      $$ErrorLogsTableUpdateCompanionBuilder,
+      (
+        ErrorLogRow,
+        BaseReferences<_$AppDatabase, $ErrorLogsTable, ErrorLogRow>,
+      ),
+      ErrorLogRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -26905,4 +28093,6 @@ class $AppDatabaseManager {
       $$SyncOutboxItemsTableTableManager(_db, _db.syncOutboxItems);
   $$ConflictLogsTableTableManager get conflictLogs =>
       $$ConflictLogsTableTableManager(_db, _db.conflictLogs);
+  $$ErrorLogsTableTableManager get errorLogs =>
+      $$ErrorLogsTableTableManager(_db, _db.errorLogs);
 }

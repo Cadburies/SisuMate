@@ -16,7 +16,7 @@ Drift (SQLite) → repository (*_impl row↔domain) → Riverpod provider → Co
 
 ## Equality (S2)
 
-All 25 models have hand-written `==` / `hashCode` / `toString` (lists use `listEquals` / `Object.hashAll`). **Not** freezed: still mutable, no `copyWith`. Full immutability would be a new product decision (~340 `SomeModel()..field =` sites).
+All 26 models have hand-written `==` / `hashCode` / `toString` (lists use `listEquals` / `Object.hashAll`). **Not** freezed: still mutable, no `copyWith`. Full immutability would be a new product decision (~340 `SomeModel()..field =` sites).
 
 ## Providers
 
@@ -47,6 +47,7 @@ Full list: `lib/services/`. Notes that are not obvious from names:
 | `RecipeShareService` | PDF bullets use `-` not `•` — Helvetica has no U+2022 glyph |
 | `CalorieCalculator` | Weight units only (g/kg/oz/lb); partial results when macros missing |
 | `CsvExportService` | Exists; **not wired to UI** |
+| `ErrorLogService` | Singleton (#121); `FlutterError.onError`/`PlatformDispatcher.onError` capture from `main.dart`; fingerprint dedupe in-memory per run; `initDeferredContext()` (app version/Pro) called post-first-frame like RevenueCat/AdMob — do **not** call `RevenueCatService().isPro()` from its constructor, that reintroduced RT1 jank once already |
 
 ## Model / table exceptions
 
@@ -63,6 +64,7 @@ Open the `.dart` file for fields. Only cross-cutting traps:
 | `ChecklistGroup` | `communityTemplateId` / `communityTemplateVersion` for S5 link + merge |
 | `ConflictLog` | T5 concurrent dirty local + newer remote |
 | `SyncOutbox` | Column is `targetTable` (not `tableName` — reserved on Drift `Table`) |
+| `ErrorLog` | Local-only (#121), **never synced** — no `boatSupabaseId`/`isSynced`; `fingerprint` dedupes; read by `scripts/triage_error_logs.sh` (Android only so far), never by app UI |
 | Drift rows | `@DataClassName('XRow')` avoids clashing with domain class names |
 
 **schemaVersion / migrations:** only `AppDatabase.schemaVersion` + migration steps in `app_database.dart`. Do not copy the number into other context files. No install base yet — see `CLAUDE.md` § Mandatory rules: schema changes don't need backward-compatible migrations.

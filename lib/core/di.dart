@@ -38,6 +38,8 @@ import '../data/repositories/community_repository_impl.dart';
 import '../data/repositories/maintenance_repository_impl.dart';
 import '../domain/repositories/document_repository.dart';
 import '../data/repositories/document_repository_impl.dart';
+import '../domain/repositories/error_log_repository.dart';
+import '../data/repositories/error_log_repository_impl.dart';
 import '../domain/repositories/crew_member_repository.dart';
 import '../data/repositories/crew_member_repository_impl.dart';
 import '../domain/repositories/inventory_item_repository.dart';
@@ -230,6 +232,10 @@ final boatRepositoryProvider = Provider<BoatRepository>((ref) {
 
 final boatEnrollmentServiceProvider = Provider<BoatEnrollmentService>((ref) {
   return BoatEnrollmentService(ref.watch(appDatabaseProvider));
+});
+
+final errorLogRepositoryProvider = Provider<ErrorLogRepository>((ref) {
+  return ErrorLogRepositoryImpl(ref.watch(appDatabaseProvider));
 });
 
 final maintenanceRepositoryProvider = Provider<MaintenanceRepository>((ref) {

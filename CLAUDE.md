@@ -135,6 +135,7 @@ flutter test integration_test -d flutter-tester
 | Live Supabase (TEST8) | Auth/RLS smoke | `test/live_supabase_rls_test.dart`, `scripts/test_supabase_rls.sh` |
 | Integration (TEST9) | App smoke under IntegrationTest binding | `integration_test/` |
 | A11y / perf / channels (TEST10) | Guidelines, first paint, safe fallbacks | `test/accessibility_test.dart`, `performance_smoke_test.dart`, `platform_channel_fallback_test.dart` |
+| Error-log capture/dedupe/redaction (#121) | FlutterError/async capture, fingerprint dedupe, secret redaction | `test/error_log_service_test.dart`, `lib/services/error_log_service.dart` |
 
 Also: human **README.md → Testing**; open backlog = GitHub Issues (`test-gap` label for testing gaps); parallel-agent protocol in §Parallel agents below.
 
@@ -240,6 +241,12 @@ These exercise flows the automatic suite can't (real ad units, real permission d
 | `lt_module_crud_sweep.sh` | LT2–LT4 module CRUD / side-action / reuse sweep |
 | `lt_ui_helpers.sh` | Shared adb/idb helpers for LT scripts |
 | `sync_conflict_2device_setup.sh` | 2-device offline-edit sync-conflict smoke test (SUG2); see `lib/services/sync_conflict_2device_setup.md` |
+
+### Ops automation — run on demand only (real device required; NOT part of `run_full_suite.sh`)
+
+| Script | Purpose |
+| --- | --- |
+| `triage_error_logs.sh` | #121: pulls the app's local error log (`ErrorLogTable`) off a connected **Android** device, files one deduped GitHub issue per new fingerprint (idempotent — searches issue bodies for the fingerprint marker before creating), pushes `processedAt`/`issueUrl` back. Stop the app on-device first. Uses `tool/error_log_admin.dart` (raw sqlite3, not Drift — plain `dart run` can't resolve `dart:ui`, which `app_database.dart` pulls in transitively via `path_provider`) + `scripts/_error_log_issue_body.py` (issue title/body template, not a standalone script). iOS not yet supported (`run-as` pull/push is Android-specific). |
 
 New operator-heavy patterns → new script + row here.
 
