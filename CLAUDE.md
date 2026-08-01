@@ -200,25 +200,43 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 - No `cd … && … > relative`; use absolute out paths for captures.
 - Do not inline shell operators (`&`, `|`, `&&`, `$(…)`, redirects) in agent-invoked commands — put them in `scripts/*.sh`.
 
+### Automatic suite (every task, via §6)
+
+| Script | Purpose |
+| --- | --- |
+| `run_full_suite.sh` | **Default post-task gate** — SEC3 → analyze → `flutter test` → TEST8 live RLS → `integration_test/`. Flags: `--skip-live`, `--skip-integration`, `--device <id>`. See §6 above. |
+| `scan_release_secrets.sh` | SEC3: scan pubspec/assets/lib (+ optional APK/IPA) for leaked credentials |
+| `test_supabase_rls.sh` | TEST8: live Supabase auth/RLS smoke (`dart-defines.json`; skips if missing) |
+
+### Dev / device helpers (primitives — no assertions of their own)
+
 | Script | Purpose |
 | --- | --- |
 | `ios_run.sh` / `android_run.sh` | Background `flutter run` |
-| `stop_flutter.sh` | Kill flutter run |
+| `stop_flutter.sh` | Kill flutter run **by name** — kills every agent's `flutter run`, not just yours. In a shared working tree, prefer `kill <pid>` against the pid `android_run.sh`/`ios_run.sh` printed. |
 | `screencap.sh` | adb screenshot → abs path |
 | `wait_for_flutter.sh` | Poll run log |
 | `supabase_cli.sh` | Auth/REST/RPC checks (credentials from dart-defines) |
-| `idb_tap_label.sh` / `adb_tap_text.sh` | UI tap by label/text |
+| `idb_tap_label.sh` / `adb_tap_text.sh` | UI tap by label/text (iOS / Android) — semantic match, not hand-computed pixel coords |
+| `adb_swipe_reveal_action.sh` | Android: swipe a list card to reveal its `SwipeableListItem` action pane, then tap the named action (e.g. swipe + tap "Complete") — bounds computed live from `uiautomator dump`, never hardcoded |
+| `wipe_android_avds.sh` | Factory-wipe all local Android AVD userdata/snapshots (keeps AVD defs; does not touch physical phones) |
+
+### GUI test drivers — run on demand only (real device/sim required; NOT part of `run_full_suite.sh`)
+
+These exercise flows the automatic suite can't (real ad units, real permission dialogs, real timing, multi-device LAN). Run them when working the matching TEST issue or investigating a report in that area — not on every task.
+
+| Script | Purpose |
+| --- | --- |
 | `liars_dice_4sim_setup.sh` | 4-device multiplayer harness (Liar's Dice) |
 | `test18_rc_play.sh` | TEST18 live driver: full LAN round + mid-game same-seat rejoin (after `liars_dice_4sim_setup.sh`) |
+| `test19_permissions_smoke.sh` | TEST19 permissions + cold-resume smoke: `ios <udid>` \| `and <serial>` (sim quirks documented in header) |
+| `test20_admob_smoke.sh` | TEST20 AdMob smoke (Android): drives Home banner, a checklist's native-ad+FAB list, and the free-tier Complete swipe (interstitial path); screenshots + ad-state log lines to `/tmp/test20/`. Needs `kForceProForTesting = false` for the run — flip it back before finishing (see header comment for known ad bugs already filed, don't re-discover blind) |
+| `test21_perf_smoke.sh` | TEST21 perf smoke: cold-open timing ×3 + long-list fling scroll (`and <serial>` \| `ios <udid>`) |
 | `mp_multiseat_stress_setup.sh` | LT6 multi-seat stress for roster games (`liars_dice` \| `dudo`) |
 | `lt_mirror_harness.sh` | LT1 dual-device same-boat bootstrap (driver + mirror) |
 | `lt_module_crud_sweep.sh` | LT2–LT4 module CRUD / side-action / reuse sweep |
 | `lt_ui_helpers.sh` | Shared adb/idb helpers for LT scripts |
 | `sync_conflict_2device_setup.sh` | 2-device offline-edit sync-conflict smoke test (SUG2); see `lib/services/sync_conflict_2device_setup.md` |
-| `wipe_android_avds.sh` | Factory-wipe all local Android AVD userdata/snapshots (keeps AVD defs; does not touch physical phones) |
-| `run_full_suite.sh` | **Default post-task gate** — SEC3 → analyze → `flutter test` → TEST8 live RLS → `integration_test/`. Flags: `--skip-live`, `--skip-integration`, `--device <id>`. See §6 above. |
-| `scan_release_secrets.sh` | SEC3: scan pubspec/assets/lib (+ optional APK/IPA) for leaked credentials |
-| `test_supabase_rls.sh` | TEST8: live Supabase auth/RLS smoke (`dart-defines.json`; skips if missing) |
 
 New operator-heavy patterns → new script + row here.
 

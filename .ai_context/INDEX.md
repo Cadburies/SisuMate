@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #10 TEST24 closed (Claude); #11 SUG5 closed (Claude) — split `AppUnitPrefs.speed` into independent `windSpeed`/`boatSpeed` (weather = wind, passage planner = boat; settings has two rows now)
-- **Doing:** Kimi on #5 TEST19 (real-device permissions/cold-resume); next unclaimed ready work: #6/#7/#9
+- **Last:** #11 SUG5 closed (Claude); #6 TEST20 closed (Claude) — AdMob real-device smoke found 3 real bugs, filed as #123 (P1, interstitial never shows — `AdMobService` not a singleton), #124 (P2, native ads never render — no `NativeAdFactory` registered), #125 (P1, Pro-gate bypass in `check_page_viewer.dart`); added `scripts/test20_admob_smoke.sh` + `adb_swipe_reveal_action.sh` (on-demand GUI test drivers, see CLAUDE.md)
+- **Doing:** Kimi on #5 TEST19 + #7 TEST21; next unclaimed ready work: #9, #123, #124, #125
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped
 
