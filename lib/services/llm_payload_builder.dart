@@ -56,4 +56,23 @@ class LlmPayloadBuilder {
         'destinationCountry': destinationCountry,
         'nationalities': nationalities.toList(),
       };
+
+  /// Warranty/manual coverage check (#222): breakage description + a
+  /// user-pasted excerpt of their own manual/warranty terms/wiring diagram
+  /// labels. Unlike the other builders above, [manualExcerpt] is not a
+  /// domain-object field being whitelisted out of a larger record — there is
+  /// no `Document` text-extraction pipeline (#222's scope note), so the only
+  /// thing this builder ever sees is exactly what the user typed/pasted into
+  /// the dialog for this one query. It is capped for token-budget reasons
+  /// (BYOK — the user pays per token), not as a privacy filter.
+  static Map<String, dynamic> warrantyQuery({
+    required String breakageDescription,
+    required String manualExcerpt,
+  }) =>
+      {
+        'breakageDescription': breakageDescription,
+        'manualExcerpt': manualExcerpt.length > 4000
+            ? manualExcerpt.substring(0, 4000)
+            : manualExcerpt,
+      };
 }

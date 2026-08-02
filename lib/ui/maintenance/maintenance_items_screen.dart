@@ -9,6 +9,7 @@ import '../components/ad_slots.dart';
 import '../components/add_checklist_item_dialog.dart';
 import '../checklists/check_page_viewer.dart';
 import 'maintenance_ai_explainer_dialog.dart';
+import 'warranty_check_dialog.dart';
 
 import '../../providers/checklist_provider.dart';
 import '../../providers/package_info_provider.dart';
@@ -187,11 +188,7 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                               elevation: 2,
                               child: InkWell(
                                 customBorder: const CircleBorder(),
-                                onTap: () => showDialog(
-                                  context: context,
-                                  builder: (_) =>
-                                      MaintenanceAiExplainerDialog(item: item),
-                                ),
+                                onTap: () => _showAiMenu(item),
                                 child: const Padding(
                                   padding: EdgeInsets.all(6),
                                   child: Icon(
@@ -244,6 +241,44 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
           allItems.indexWhere((i) => i.supabaseId == item.supabaseId),
       groupName: widget.group.title,
       routePath: AppRoutes.maintenanceItemDetail,
+    );
+  }
+
+  /// #222: a second AI action (warranty check) joins #18's explainer on the
+  /// same per-tile badge — one distinct purple `auto_awesome` entry point
+  /// per item rather than two competing badges, per #208 separation from
+  /// the tile's offline Complete/Hide actions above.
+  void _showAiMenu(ChecklistItem item) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.auto_awesome, color: Colors.deepPurple),
+              title: const Text('Explain this task'),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (_) => MaintenanceAiExplainerDialog(item: item),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_awesome, color: Colors.deepPurple),
+              title: const Text('Check warranty coverage'),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (_) => const WarrantyCheckDialog(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 

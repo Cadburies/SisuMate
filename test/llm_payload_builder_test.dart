@@ -81,4 +81,28 @@ void main() {
     expect(encoded, isNot(contains(poisonPhone)));
     expect(encoded, isNot(contains(poisonNotes)));
   });
+
+  test('warrantyQuery carries the breakage description and pasted excerpt '
+      'verbatim (no domain-object whitelist applies to user-pasted text)',
+      () {
+    final payload = LlmPayloadBuilder.warrantyQuery(
+      breakageDescription: 'Bilge pump stopped cycling',
+      manualExcerpt: 'Electrical components warranted for 12 months.',
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('Bilge pump stopped cycling'));
+    expect(encoded, contains('Electrical components warranted'));
+    expect(payload.keys, {'breakageDescription', 'manualExcerpt'});
+  });
+
+  test('warrantyQuery caps an oversized pasted excerpt at 4000 chars', () {
+    final huge = 'x' * 5000;
+    final payload = LlmPayloadBuilder.warrantyQuery(
+      breakageDescription: 'Engine won\'t start',
+      manualExcerpt: huge,
+    );
+
+    expect((payload['manualExcerpt'] as String).length, 4000);
+  });
 }
