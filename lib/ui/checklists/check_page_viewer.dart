@@ -375,6 +375,14 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
             ),
           ];
         }
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        // #185: background must hint the state this tap moves *into*, not
+        // the current one — using the current state's color here is exactly
+        // what made "Uncomplete" invisible against the completed (green)
+        // sticky bar, since both were the same green.
+        final destinationState = item.isCompleted
+            ? SisuColors.itemStateColors(isDark, ItemListState.defaults)
+            : SisuColors.itemStateColors(isDark, ItemListState.stocked);
         return [
           DetailAction(
             icon: item.isCompleted
@@ -382,7 +390,8 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
                 : Icons.check_circle_outline,
             label: item.isCompleted ? 'Uncomplete' : 'Complete',
             onPressed: () => _toggleCompletion(index),
-            color: item.isCompleted ? SisuColors.completedBackground : null,
+            color: destinationState.bg,
+            onColor: destinationState.title,
           ),
           if (!item.isHidden)
             DetailAction(

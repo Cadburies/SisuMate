@@ -8,15 +8,32 @@ class DetailAction {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
+  /// Background hinting the state this item moves *into* if tapped (e.g.
+  /// the completed-state color for a "Complete" action). Null falls back to
+  /// a neutral tile background.
   final Color? color;
+  /// Text/icon color paired with [color] (theme.md §6.5 state title tokens
+  /// pair naturally with state background tokens). Null auto-derives a
+  /// readable color from [color]'s luminance.
+  final Color? onColor;
 
   const DetailAction({
     required this.icon,
     required this.label,
     required this.onPressed,
     this.color,
+    this.onColor,
   });
 }
+
+/// Readable icon/label color for an arbitrary background — used when a
+/// [DetailAction] doesn't pair its [DetailAction.color] with an explicit
+/// [DetailAction.onColor] (theme.md §6.5 state tokens already come in pairs;
+/// this is the fallback for the handful of actions that don't).
+Color _autoOnColor(Color background) =>
+    ThemeData.estimateBrightnessForColor(background) == Brightness.dark
+        ? Colors.white
+        : Colors.black87;
 
 /// Shared swipeable item-detail shell (theme.md §7).
 ///
@@ -268,8 +285,10 @@ class _ItemDetailShellState extends ConsumerState<ItemDetailShell> {
                           icon: a.icon,
                           label: a.label,
                           onPressed: a.onPressed,
-                          color: a.color ??
-                              SisuColors.getTextPrimaryColor(isDark),
+                          color: a.color ?? SisuColors.getTileColor(isDark),
+                          onColor: a.onColor ??
+                              _autoOnColor(
+                                  a.color ?? SisuColors.getTileColor(isDark)),
                         ),
                     ],
                   ),
@@ -328,33 +347,60 @@ class _ItemDetailShellState extends ConsumerState<ItemDetailShell> {
   }
 }
 
+/// A framed, elevated chip-button — background hints the state this action
+/// moves the item into, so it reads as a button on its own rather than
+/// blending into a sticky bar that may share the same background color as
+/// the *current* state (the #185 bug: a green "Uncomplete" on a green
+/// completed-state bar was nearly invisible).
 class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
   final Color color;
+  final Color onColor;
 
   const _ActionButton({
     required this.icon,
     required this.label,
     required this.onPressed,
     required this.color,
+    required this.onColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(color: color, fontSize: 11)),
-          ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Material(
+        color: color,
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: onColor.withValues(alpha: 0.3)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: onColor, size: 20),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: onColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
