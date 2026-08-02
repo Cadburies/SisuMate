@@ -34,6 +34,12 @@ class _SafetyScreenState extends ConsumerState<SafetyScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncGroups = ref.watch(checklistGroupsProvider('safety'));
+    // #210: one join query for both the completion-state filter below and
+    // the item-content search match — replaces the N-per-group
+    // checklistItemsProvider watch this screen used to do here (the exact
+    // cascade #207 fixed elsewhere; watchItemsForAppType avoids it).
+    final itemsByGroup = groupItemsByGroup(
+        ref.watch(checklistItemsForAppTypeProvider('safety')));
 
     return Scaffold(
       body: SafeArea(
@@ -60,19 +66,20 @@ class _SafetyScreenState extends ConsumerState<SafetyScreen> {
                         ),
                       );
                     }
+                    final matchHints = <String, String>{};
                     final filtered = groups.where((g) {
-                      if (_searchQuery.isNotEmpty &&
-                          !g.title
-                              .toLowerCase()
-                              .contains(_searchQuery.toLowerCase())) {
-                        return false;
+                      final items = itemsByGroup[g.supabaseId] ??
+                          const <ChecklistItem>[];
+                      final result = matchGroupSearch(
+                        group: g,
+                        query: _searchQuery,
+                        itemsInGroup: items,
+                      );
+                      if (!result.matches) return false;
+                      if (result.matchedItemText != null) {
+                        matchHints[g.supabaseId] = result.matchedItemText!;
                       }
                       // Group completion from live item stream (same as tile badge).
-                      final items = ref
-                              .watch(checklistItemsProvider(g.supabaseId))
-                              .asData
-                              ?.value ??
-                          const <ChecklistItem>[];
                       final visible = items.where((i) => !i.isHidden).toList();
                       if (visible.isEmpty) return true;
                       final allDone =
@@ -89,6 +96,7 @@ class _SafetyScreenState extends ConsumerState<SafetyScreen> {
                       icon: Icons.health_and_safety,
                       iconColor: Colors.red,
                       countNoun: 'points',
+                      matchHints: matchHints,
                       onTap: (group) => context.push(
                         AppRoutes.safetyItems,
                         extra: group,

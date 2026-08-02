@@ -40,6 +40,8 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncGroups = ref.watch(checklistGroupsProvider('checklist'));
+    final itemsByGroup = groupItemsByGroup(
+        ref.watch(checklistItemsForAppTypeProvider('checklist')));
     final autopilot = ref.watch(checklistAutopilotProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -67,13 +69,18 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
                       return const Center(child: Text('No checklists available'));
                     }
 
+                    final matchHints = <String, String>{};
                     final filteredGroups = groups.where((group) {
-                      if (_searchQuery.isNotEmpty) {
-                        return group.title
-                            .toLowerCase()
-                            .contains(_searchQuery.toLowerCase());
+                      final result = matchGroupSearch(
+                        group: group,
+                        query: _searchQuery,
+                        itemsInGroup: itemsByGroup[group.supabaseId] ??
+                            const [],
+                      );
+                      if (result.matchedItemText != null) {
+                        matchHints[group.supabaseId] = result.matchedItemText!;
                       }
-                      return true;
+                      return result.matches;
                     }).toList();
 
                     if (filteredGroups.isEmpty) {
@@ -85,6 +92,7 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
                       icon: Icons.checklist,
                       iconColor: Colors.blue,
                       countNoun: 'items',
+                      matchHints: matchHints,
                       onTap: (group) => context.push(
                         AppRoutes.checklistItems,
                         extra: group,

@@ -12,6 +12,10 @@ class GroupGrid extends StatelessWidget {
   final Color iconColor;
   final void Function(ChecklistGroup group) onTap;
   final String countNoun; // e.g. 'items', 'tasks', 'points'
+  /// #210: groupSupabaseId -> a short "why this matched" hint, shown when
+  /// the group matched an active search by item content rather than its
+  /// own title. Null/absent entries show no hint.
+  final Map<String, String>? matchHints;
 
   const GroupGrid({
     super.key,
@@ -20,6 +24,7 @@ class GroupGrid extends StatelessWidget {
     required this.iconColor,
     required this.onTap,
     this.countNoun = 'items',
+    this.matchHints,
   });
 
   @override
@@ -41,6 +46,7 @@ class GroupGrid extends StatelessWidget {
           icon: icon,
           iconColor: iconColor,
           countNoun: countNoun,
+          matchHint: matchHints?[group.supabaseId],
           onTap: () => onTap(group),
         );
       },
@@ -53,6 +59,7 @@ class _GroupMainListTile extends ConsumerWidget {
   final IconData icon;
   final Color iconColor;
   final String countNoun;
+  final String? matchHint;
   final VoidCallback onTap;
 
   const _GroupMainListTile({
@@ -60,6 +67,7 @@ class _GroupMainListTile extends ConsumerWidget {
     required this.icon,
     required this.iconColor,
     required this.countNoun,
+    this.matchHint,
     required this.onTap,
   });
 
@@ -128,6 +136,7 @@ class _GroupMainListTile extends ConsumerWidget {
       countLine: stats.count,
       metaLine: stats.meta,
       attentionLine: stats.attention,
+      matchLine: matchHint,
       badges: stats.badges,
     );
   }

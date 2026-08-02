@@ -15,6 +15,10 @@ class MainListTile extends StatelessWidget {
   final String? countLine;
   final String? metaLine;
   final String? attentionLine;
+  /// #210: "why this tile matched" when a search matched item content
+  /// rather than the tile's own [title] — neutral/informational, unlike
+  /// [attentionLine] which is styled as a warning.
+  final String? matchLine;
   final List<String> badges;
   final Widget? headerOverlay;
 
@@ -28,6 +32,7 @@ class MainListTile extends StatelessWidget {
     this.countLine,
     this.metaLine,
     this.attentionLine,
+    this.matchLine,
     this.badges = const [],
     this.headerOverlay,
   });
@@ -142,6 +147,28 @@ class MainListTile extends StatelessWidget {
                                   ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      if (matchLine != null) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            const Icon(Icons.search,
+                                size: 12, color: SisuColors.completedText),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                'Matched: $matchLine',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  height: 1.1,
+                                  color: SisuColors.completedText,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                       if (attentionLine != null) ...[

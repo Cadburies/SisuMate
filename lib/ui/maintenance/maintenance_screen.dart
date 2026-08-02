@@ -31,6 +31,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncGroups = ref.watch(checklistGroupsProvider('maintenance'));
+    final itemsByGroup = groupItemsByGroup(
+        ref.watch(checklistItemsForAppTypeProvider('maintenance')));
 
     return Scaffold(
       body: SafeArea(
@@ -54,13 +56,18 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                           child: Text('No maintenance lists available'));
                     }
 
+                    final matchHints = <String, String>{};
                     final filteredGroups = groups.where((group) {
-                      if (_searchQuery.isNotEmpty) {
-                        return group.title
-                            .toLowerCase()
-                            .contains(_searchQuery.toLowerCase());
+                      final result = matchGroupSearch(
+                        group: group,
+                        query: _searchQuery,
+                        itemsInGroup: itemsByGroup[group.supabaseId] ??
+                            const [],
+                      );
+                      if (result.matchedItemText != null) {
+                        matchHints[group.supabaseId] = result.matchedItemText!;
                       }
-                      return true;
+                      return result.matches;
                     }).toList();
 
                     if (filteredGroups.isEmpty) {
@@ -72,6 +79,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                       icon: Icons.build,
                       iconColor: Colors.orange,
                       countNoun: 'tasks',
+                      matchHints: matchHints,
                       onTap: (group) => context.push(
                         AppRoutes.maintenanceItems,
                         extra: group,
