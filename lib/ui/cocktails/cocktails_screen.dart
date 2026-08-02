@@ -44,6 +44,7 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
   String _searchQuery = '';
   bool _sortByAvailability = false;
   bool _favouritesOnly = false;
+
   /// My Bar list sort (drawer). Sticky order until sort mode changes.
   final IngredientListOrder _barOrder = IngredientListOrder();
 
@@ -66,7 +67,8 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
     final imported = <ImportedRecipe>[];
     for (final r in recipes) {
       imported.add(
-          ImportedRecipe(r, await repo.getIngredientsOnce(r.supabaseId)));
+        ImportedRecipe(r, await repo.getIngredientsOnce(r.supabaseId)),
+      );
     }
     return ImportService.exportRecipes(
       imported,
@@ -75,7 +77,9 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
   }
 
   Future<ImportPersistResult> _importRecipes(
-      ImportBatch batch, String recipeType) async {
+    ImportBatch batch,
+    String recipeType,
+  ) async {
     final repo = ref.read(recipeRepositoryProvider);
     final existing = await repo.watchRecipes().first;
     var inserted = 0;
@@ -133,30 +137,29 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
                 actionsBuilder: _tabController.index == 0
                     ? (color) => [
-                          IconButton(
-                            icon: Icon(Icons.import_export, color: color),
-                            tooltip: 'Import / Export cocktails',
-                            onPressed: () => showImportExportSheet(
-                              context,
-                              ModuleImportExport(
-                                kind: ImportService.kindRecipe,
-                                label: 'Cocktails',
-                                fileBaseName: 'sisu_cocktails',
-                                exportCurrent: () =>
-                                    _exportRecipes(cocktailRecipes),
-                                existingNames: () async => cocktailRecipes
-                                    .map((r) => r.name)
-                                    .toList(),
-                                persist: (batch) =>
-                                    _importRecipes(batch, 'cocktail'),
-                              ),
-                              isPro: isPro,
-                              onProRequired: () =>
-                                  RevenueCatService().showPaywall(context),
-                              ref: ref,
+                        IconButton(
+                          icon: Icon(Icons.import_export, color: color),
+                          tooltip: 'Import / Export cocktails',
+                          onPressed: () => showImportExportSheet(
+                            context,
+                            ModuleImportExport(
+                              kind: ImportService.kindRecipe,
+                              label: 'Cocktails',
+                              fileBaseName: 'sisu_cocktails',
+                              exportCurrent: () =>
+                                  _exportRecipes(cocktailRecipes),
+                              existingNames: () async =>
+                                  cocktailRecipes.map((r) => r.name).toList(),
+                              persist: (batch) =>
+                                  _importRecipes(batch, 'cocktail'),
                             ),
+                            isPro: isPro,
+                            onProRequired: () =>
+                                RevenueCatService().showPaywall(context),
+                            ref: ref,
                           ),
-                        ]
+                        ),
+                      ]
                     : null,
               ),
               TabBar(
@@ -214,8 +217,10 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
               heroTag: 'syrup_fab',
               onPressed: () => isPro
                   ? _showAddSyrupDialog(context)
-                  : _showProRequiredDialog(context,
-                      feature: 'custom house recipes'),
+                  : _showProRequiredDialog(
+                      context,
+                      feature: 'custom house recipes',
+                    ),
               tooltip: 'Add house recipe',
               child: const Icon(Icons.add),
             );
@@ -224,16 +229,22 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
             heroTag: 'bar_fab',
             onPressed: () => isPro
                 ? _showAddBarIngredientDialog(context)
-                : _showProRequiredDialog(context,
-                    feature: 'custom bar ingredients'),
+                : _showProRequiredDialog(
+                    context,
+                    feature: 'custom bar ingredients',
+                  ),
             tooltip: 'Add custom ingredient',
             child: const Icon(Icons.add),
           );
         },
-        loading: () =>
-            const FloatingActionButton(onPressed: null, child: CircularProgressIndicator()),
-        error: (e, _) =>
-            const FloatingActionButton(onPressed: null, child: Icon(Icons.error)),
+        loading: () => const FloatingActionButton(
+          onPressed: null,
+          child: CircularProgressIndicator(),
+        ),
+        error: (e, _) => const FloatingActionButton(
+          onPressed: null,
+          child: Icon(Icons.error),
+        ),
       ),
       endDrawer: Drawer(
         child: SafeArea(
@@ -247,29 +258,36 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
                       children: [
                         const Divider(),
                         ListTile(
-                          leading:
-                              const Icon(Icons.collections_bookmark_outlined),
+                          leading: const Icon(
+                            Icons.collections_bookmark_outlined,
+                          ),
                           title: const Text('Collections'),
                           onTap: () => context.push(AppRoutes.collections),
                         ),
-                        const Divider(),
-                        SectionHeader(title: 'My Bar sort'),
-                        for (final mode in IngredientListSort.values)
-                          ListTile(
-                            dense: true,
-                            leading: Icon(
-                              _barOrder.sort == mode
-                                  ? Icons.radio_button_checked
-                                  : Icons.radio_button_off,
-                              size: 20,
+                        // #136: only shown on My Bar — it's the only tab that
+                        // reads _barOrder, so it silently no-op'd elsewhere.
+                        if (_tabController.index == 1) ...[
+                          const Divider(),
+                          SectionHeader(title: 'My Bar sort'),
+                          for (final mode in IngredientListSort.values)
+                            ListTile(
+                              dense: true,
+                              leading: Icon(
+                                _barOrder.sort == mode
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_off,
+                                size: 20,
+                              ),
+                              title: Text(
+                                mode.label,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              onTap: () {
+                                setState(() => _barOrder.setSort(mode));
+                                Navigator.of(context).pop();
+                              },
                             ),
-                            title: Text(mode.label,
-                                style: const TextStyle(fontSize: 14)),
-                            onTap: () {
-                              setState(() => _barOrder.setSort(mode));
-                              Navigator.of(context).pop();
-                            },
-                          ),
+                        ],
                         const Divider(),
                         SectionHeader(title: 'Account'),
                         AccountSection(),
@@ -291,18 +309,22 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
     );
   }
 
-  void _showProRequiredDialog(BuildContext context,
-      {String feature = 'custom cocktails'}) {
+  void _showProRequiredDialog(
+    BuildContext context, {
+    String feature = 'custom cocktails',
+  }) {
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Sisu Mate Pro Required'),
         content: Text(
-            'Creating $feature is a Pro feature. Upgrade to unlock editing and unlimited entries.'),
+          'Creating $feature is a Pro feature. Upgrade to unlock editing and unlimited entries.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -331,7 +353,8 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
           if (mounted) {
             navigator.pop();
             messenger.showSnackBar(
-                SnackBar(content: Text('${recipe.name} added')));
+              SnackBar(content: Text('${recipe.name} added')),
+            );
           }
         },
       ),
@@ -358,7 +381,8 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
           if (mounted) {
             navigator.pop();
             messenger.showSnackBar(
-                SnackBar(content: Text('${recipe.name} added')));
+              SnackBar(content: Text('${recipe.name} added')),
+            );
           }
         },
       ),
@@ -449,8 +473,9 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
             decoration: InputDecoration(
               hintText: 'Search cocktails...',
               prefixIcon: const Icon(Icons.search),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               filled: true,
               fillColor: Theme.of(context).cardColor,
             ),
@@ -467,8 +492,9 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
                 label: const Text('Sort by availability'),
                 avatar: const Icon(Icons.sort, size: 16),
                 selected: widget.sortByAvailability,
-                selectedColor:
-                    SisuColors.completedBackground.withValues(alpha: 0.2),
+                selectedColor: SisuColors.completedBackground.withValues(
+                  alpha: 0.2,
+                ),
                 checkmarkColor: SisuColors.completedBackground,
                 onSelected: widget.onSortByAvailabilityChanged,
               ),
@@ -532,8 +558,7 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
                     child: FilterChip(
                       label: Text(f, style: const TextStyle(fontSize: 12)),
                       selected: _flavorFilters.contains(f),
-                      selectedColor:
-                          Colors.orange.withValues(alpha: 0.25),
+                      selectedColor: Colors.orange.withValues(alpha: 0.25),
                       checkmarkColor: Colors.orange[700],
                       onSelected: (v) => setState(() {
                         if (v) {
@@ -564,31 +589,28 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
         final cuisineOptions = <String>{
           ..._libraryCuisine,
           for (final r in recipes) ...r.cuisine,
-        }.toList()
-          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        }.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
         final flavorOptions = <String>{
           ..._libraryFlavor,
           for (final r in recipes) ...r.flavorProfiles,
-        }.toList()
-          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        }.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
         final filtered = recipes.where((r) {
-          final matchesSearch = widget.searchQuery.isEmpty ||
+          final matchesSearch =
+              widget.searchQuery.isEmpty ||
               r.name.toLowerCase().contains(widget.searchQuery) ||
               (r.description?.toLowerCase().contains(widget.searchQuery) ??
                   false) ||
-              r.cuisine
-                  .any((t) => t.toLowerCase().contains(widget.searchQuery)) ||
-              r.flavorProfiles
-                  .any((t) => t.toLowerCase().contains(widget.searchQuery));
+              r.cuisine.any(
+                (t) => t.toLowerCase().contains(widget.searchQuery),
+              ) ||
+              r.flavorProfiles.any(
+                (t) => t.toLowerCase().contains(widget.searchQuery),
+              );
           final matchesFav = !widget.favouritesOnly || r.isFavourite;
           final matchesCuisine = _hasAllTags(r.cuisine, _cuisineFilters);
-          final matchesFlavor =
-              _hasAllTags(r.flavorProfiles, _flavorFilters);
-          return matchesSearch &&
-              matchesFav &&
-              matchesCuisine &&
-              matchesFlavor;
+          final matchesFlavor = _hasAllTags(r.flavorProfiles, _flavorFilters);
+          return matchesSearch && matchesFav && matchesCuisine && matchesFlavor;
         }).toList();
 
         final header = _buildHeader(
@@ -608,7 +630,8 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
                 child: Padding(
                   padding: EdgeInsets.all(32),
                   child: Center(
-                      child: Text('No cocktails match your filters.')),
+                    child: Text('No cocktails match your filters.'),
+                  ),
                 ),
               ),
             ],
@@ -641,20 +664,19 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
         return CustomScrollView(
           slivers: [
             headerSliver,
-            _sectionHeaderSliver(
-                'Can make now · ${canMake.length}/$total'),
-            if (canMake.isNotEmpty)
-              _cocktailGridSliver(canMake, withAds: true),
-            _sectionHeaderSliver(
-                'Almost there · ${almost.length}/$total'),
+            _sectionHeaderSliver('Can make now · ${canMake.length}/$total'),
+            if (canMake.isNotEmpty) _cocktailGridSliver(canMake, withAds: true),
+            _sectionHeaderSliver('Almost there · ${almost.length}/$total'),
             if (almost.isNotEmpty)
-              _cocktailGridSliver(almost,
-                  withAds: canMake.isEmpty),
+              _cocktailGridSliver(almost, withAds: canMake.isEmpty),
             _sectionHeaderSliver(
-                'Need ingredients · ${needMore.length}/$total'),
+              'Need ingredients · ${needMore.length}/$total',
+            ),
             if (needMore.isNotEmpty)
-              _cocktailGridSliver(needMore,
-                  withAds: canMake.isEmpty && almost.isEmpty),
+              _cocktailGridSliver(
+                needMore,
+                withAds: canMake.isEmpty && almost.isEmpty,
+              ),
           ],
         );
       },
@@ -679,18 +701,15 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
           mainAxisSpacing: 16,
           childAspectRatio: 0.55,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (_, i) {
-            if (isNativeAdSlot(i, slots)) {
-              return const NativeAdWidget(
-                  style: NativeAdTileStyle.cocktailTile,
-                  contextHint: 'cocktails');
-            }
-            return _CocktailCard(
-                recipe: recipes[nativeAdContentIndex(i, slots)]);
-          },
-          childCount: count,
-        ),
+        delegate: SliverChildBuilderDelegate((_, i) {
+          if (isNativeAdSlot(i, slots)) {
+            return const NativeAdWidget(
+              style: NativeAdTileStyle.cocktailTile,
+              contextHint: 'cocktails',
+            );
+          }
+          return _CocktailCard(recipe: recipes[nativeAdContentIndex(i, slots)]);
+        }, childCount: count),
       ),
     );
   }
@@ -710,9 +729,9 @@ class _SectionDivider extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(width: 8),
             const Expanded(child: Divider()),
@@ -735,10 +754,7 @@ class _CocktailCard extends ConsumerWidget {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => context.push(
-          AppRoutes.cocktailRecipe,
-          extra: recipe,
-        ),
+        onTap: () => context.push(AppRoutes.cocktailRecipe, extra: recipe),
         borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,8 +763,9 @@ class _CocktailCard extends ConsumerWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12)),
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
                   child: SizedBox(
                     height: 90,
                     width: double.infinity,
@@ -760,8 +777,11 @@ class _CocktailCard extends ConsumerWidget {
                       fit: BoxFit.cover,
                       customFallback: Container(
                         color: Colors.deepPurple.withValues(alpha: 0.12),
-                        child: const Icon(Icons.local_bar,
-                            size: 36, color: Colors.deepPurple),
+                        child: const Icon(
+                          Icons.local_bar,
+                          size: 36,
+                          color: Colors.deepPurple,
+                        ),
                       ),
                     ),
                   ),
@@ -798,11 +818,11 @@ class _CocktailCard extends ConsumerWidget {
                     Text(
                       recipe.name,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: SisuColors.getTextPrimaryColor(
-                              Theme.of(context).brightness == Brightness.dark,
-                            ),
-                          ),
+                        fontWeight: FontWeight.bold,
+                        color: SisuColors.getTextPrimaryColor(
+                          Theme.of(context).brightness == Brightness.dark,
+                        ),
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -824,8 +844,9 @@ class _CocktailCard extends ConsumerWidget {
                         children: [
                           for (final t in recipe.cuisine.take(2))
                             _TagChip(
-                                label: t,
-                                color: SisuColors.completedBackground),
+                              label: t,
+                              color: SisuColors.completedBackground,
+                            ),
                           for (final t in recipe.flavorProfiles.take(2))
                             _TagChip(label: t, color: flavorColor),
                         ],
@@ -836,20 +857,20 @@ class _CocktailCard extends ConsumerWidget {
                       Text(
                         'Missing ${recipe.missingIngredientCount}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              // Same red as not-in-stock tiles (theme.md §6.5).
-                              color: SisuColors.itemStateColors(
-                                Theme.of(context).brightness == Brightness.dark,
-                                ItemListState.unavailable,
-                              ).desc,
-                            ),
+                          // Same red as not-in-stock tiles (theme.md §6.5).
+                          color: SisuColors.itemStateColors(
+                            Theme.of(context).brightness == Brightness.dark,
+                            ItemListState.unavailable,
+                          ).desc,
+                        ),
                       ),
                     ] else ...[
                       const SizedBox(height: 4),
                       Text(
                         'Can make',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: SisuColors.completedBackground,
-                            ),
+                          color: SisuColors.completedBackground,
+                        ),
                       ),
                     ],
                   ],
@@ -878,7 +899,11 @@ class _TagChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 10,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -897,13 +922,9 @@ class _FeaturedCocktailBanner extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: () => context.push(
-            AppRoutes.cocktailRecipe,
-            extra: recipe,
-          ),
+          onTap: () => context.push(AppRoutes.cocktailRecipe, extra: recipe),
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
                 ClipRRect(
@@ -917,8 +938,11 @@ class _FeaturedCocktailBanner extends StatelessWidget {
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,
-                      customFallback: const Icon(Icons.today,
-                          color: Colors.deepPurple, size: 24),
+                      customFallback: const Icon(
+                        Icons.today,
+                        color: Colors.deepPurple,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
@@ -930,23 +954,22 @@ class _FeaturedCocktailBanner extends StatelessWidget {
                       Text(
                         'Today\'s cocktail',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w600),
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       Text(
                         recipe.name,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       if (recipe.glassware != null)
                         Text(
                           recipe.glassware!,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: Colors.grey),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                         ),
                     ],
                   ),
@@ -974,10 +997,12 @@ List<RecipeIngredient> _missingRecipeIngredients(
       .map((b) => b.name.toLowerCase().trim())
       .toSet();
   return ingredients
-      .where((i) =>
-          !i.isGarnish &&
-          !i.isOptional &&
-          !barNames.contains(i.name.toLowerCase().trim()))
+      .where(
+        (i) =>
+            !i.isGarnish &&
+            !i.isOptional &&
+            !barNames.contains(i.name.toLowerCase().trim()),
+      )
       .toList();
 }
 
@@ -990,13 +1015,15 @@ class CocktailRecipeDetailScreen extends ConsumerStatefulWidget {
       CocktailRecipeDetailScreenState();
 }
 
-class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetailScreen> {
+class CocktailRecipeDetailScreenState
+    extends ConsumerState<CocktailRecipeDetailScreen> {
   int _servings = 1;
 
   @override
   Widget build(BuildContext context) {
-    final ingredientsAsync =
-        ref.watch(recipeIngredientsProvider(widget.recipe.supabaseId));
+    final ingredientsAsync = ref.watch(
+      recipeIngredientsProvider(widget.recipe.supabaseId),
+    );
     final barAsync = ref.watch(barIngredientsProvider);
     final isProAsync = ref.watch(isProProvider);
 
@@ -1007,17 +1034,14 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
             Builder(
               builder: (tileContext) => TitleTile(
                 title: widget.recipe.name,
-                onMenuPressed: () =>
-                    Scaffold.of(tileContext).openEndDrawer(),
+                onMenuPressed: () => Scaffold.of(tileContext).openEndDrawer(),
                 actionsBuilder: (iconColor) => [
                   IconButton(
                     icon: Icon(
                       widget.recipe.isFavourite
                           ? Icons.favorite
                           : Icons.favorite_border,
-                      color: widget.recipe.isFavourite
-                          ? Colors.red
-                          : iconColor,
+                      color: widget.recipe.isFavourite ? Colors.red : iconColor,
                     ),
                     tooltip: 'Favourite',
                     onPressed: () async {
@@ -1031,9 +1055,12 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                   IconButton(
                     icon: Icon(Icons.ios_share, color: iconColor),
                     tooltip: 'Print / Share',
-                    onPressed: () => ingredientsAsync.whenData((ingredients) =>
-                        RecipeShareService.shareRecipeCard(
-                            recipe: widget.recipe, ingredients: ingredients)),
+                    onPressed: () => ingredientsAsync.whenData(
+                      (ingredients) => RecipeShareService.shareRecipeCard(
+                        recipe: widget.recipe,
+                        ingredients: ingredients,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1059,26 +1086,36 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                           customFallback: Container(
                             color: Colors.deepPurple.withValues(alpha: 0.12),
                             alignment: Alignment.center,
-                            child: const Icon(Icons.local_bar,
-                                size: 56, color: Colors.deepPurple),
+                            child: const Icon(
+                              Icons.local_bar,
+                              size: 56,
+                              color: Colors.deepPurple,
+                            ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
                     if (widget.recipe.description != null) ...[
-                      Text(widget.recipe.description!,
-                          style: Theme.of(context).textTheme.bodyLarge),
+                      Text(
+                        widget.recipe.description!,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
                       const SizedBox(height: 16),
                     ],
                     if (widget.recipe.glassware != null) ...[
                       Row(
                         children: [
-                          const Icon(Icons.wine_bar,
-                              size: 16, color: Colors.deepPurple),
+                          const Icon(
+                            Icons.wine_bar,
+                            size: 16,
+                            color: Colors.deepPurple,
+                          ),
                           const SizedBox(width: 6),
-                          Text(widget.recipe.glassware!,
-                              style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            widget.recipe.glassware!,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -1091,29 +1128,35 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                         children: [
                           for (final t in widget.recipe.cuisine)
                             Chip(
-                              label: Text(t,
-                                  style: const TextStyle(fontSize: 12)),
+                              label: Text(
+                                t,
+                                style: const TextStyle(fontSize: 12),
+                              ),
                               visualDensity: VisualDensity.compact,
                               backgroundColor: SisuColors.completedBackground
                                   .withValues(alpha: 0.15),
                             ),
                           for (final t in widget.recipe.flavorProfiles)
                             Chip(
-                              label: Text(t,
-                                  style: const TextStyle(fontSize: 12)),
+                              label: Text(
+                                t,
+                                style: const TextStyle(fontSize: 12),
+                              ),
                               visualDensity: VisualDensity.compact,
-                              backgroundColor:
-                                  Colors.orange.withValues(alpha: 0.18),
+                              backgroundColor: Colors.orange.withValues(
+                                alpha: 0.18,
+                              ),
                             ),
                         ],
                       ),
                       const SizedBox(height: 12),
                     ],
-                    Text('Technique',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      'Technique',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 8,
@@ -1121,22 +1164,25 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                         for (final t in ['Shake', 'Stir', 'Build'])
                           ActionChip(
                             label: Text(t),
-                            onPressed: () =>
-                                _showTechniqueSheet(context, t),
+                            onPressed: () => _showTechniqueSheet(context, t),
                           ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Text('Ingredients',
-                        style: Theme.of(context).textTheme.headlineSmall),
+                    Text(
+                      'Ingredients',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
                     const SizedBox(height: 8),
                     // Wrap of chips — 7 options must not use SegmentedButton
                     // (that overflows on narrow phones).
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Servings:',
-                            style: TextStyle(fontWeight: FontWeight.w500)),
+                        const Text(
+                          'Servings:',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 6,
@@ -1152,7 +1198,8 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 labelPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8),
+                                  horizontal: 8,
+                                ),
                               ),
                           ],
                         ),
@@ -1162,39 +1209,48 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                     ingredientsAsync.when(
                       data: (ingredients) => Column(
                         children: ingredients
-                            .map((i) => _IngredientAvailabilityTile(
+                            .map(
+                              (i) => _IngredientAvailabilityTile(
                                 ingredient: i,
-                                servingsMultiplier: _servings))
+                                servingsMultiplier: _servings,
+                              ),
+                            )
                             .toList(),
                       ),
                       loading: () => const CircularProgressIndicator(),
                       error: (e, _) => Text('Error: $e'),
                     ),
-                    if (ingredientsAsync.asData != null && barAsync.asData != null)
-                      Builder(builder: (_) {
-                        final missing = _missingRecipeIngredients(
-                          ingredientsAsync.asData!.value,
-                          barAsync.asData!.value,
-                        );
-                        if (missing.isEmpty) return const SizedBox.shrink();
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.add_shopping_cart,
-                                  size: 16),
-                              label: Text(
-                                'Add ${missing.length} missing to shopping',
-                              ),
-                              onPressed: () => _addMissingToShopping(
+                    if (ingredientsAsync.asData != null &&
+                        barAsync.asData != null)
+                      Builder(
+                        builder: (_) {
+                          final missing = _missingRecipeIngredients(
+                            ingredientsAsync.asData!.value,
+                            barAsync.asData!.value,
+                          );
+                          if (missing.isEmpty) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                icon: const Icon(
+                                  Icons.add_shopping_cart,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  'Add ${missing.length} missing to shopping',
+                                ),
+                                onPressed: () => _addMissingToShopping(
                                   context,
                                   ingredientsAsync.asData!.value,
-                                  barAsync.asData!.value),
+                                  barAsync.asData!.value,
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                      }),
+                          );
+                        },
+                      ),
                     if (widget.recipe.recipeType == 'cocktail')
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
@@ -1212,22 +1268,25 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                       ),
                     if (widget.recipe.instructions != null) ...[
                       const SizedBox(height: 16),
-                      Text('Instructions',
-                          style: Theme.of(context).textTheme.headlineSmall),
+                      Text(
+                        'Instructions',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                       const SizedBox(height: 8),
-                      Text(UnitConverter.convertTemperaturesInText(
-                        widget.recipe.instructions!,
-                        ref.watch(unitSystemProvider),
-                      )),
+                      Text(
+                        UnitConverter.convertTemperaturesInText(
+                          widget.recipe.instructions!,
+                          ref.watch(unitSystemProvider),
+                        ),
+                      ),
                     ],
                     if (widget.recipe.story != null) ...[
                       const SizedBox(height: 20),
                       Text(
                         'Barman\'s Tale',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Container(
@@ -1236,17 +1295,23 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                           color: Colors.amber.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: Colors.amber.withValues(alpha: 0.3)),
+                            color: Colors.amber.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.format_quote,
-                                color: Colors.amber, size: 20),
+                            const Icon(
+                              Icons.format_quote,
+                              color: Colors.amber,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(widget.recipe.story!,
-                                  style: Theme.of(context).textTheme.bodyMedium),
+                              child: Text(
+                                widget.recipe.story!,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
                             ),
                           ],
                         ),
@@ -1259,19 +1324,18 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                         Expanded(
                           child: Text(
                             'My Tasting Log',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
+                            style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ),
                         if (widget.recipe.tastingLog.isNotEmpty)
                           _StarRow(
-                            rating: (widget.recipe.tastingLog
-                                        .map((r) => r.rating)
-                                        .reduce((a, b) => a + b) /
-                                    widget.recipe.tastingLog.length)
-                                .round(),
+                            rating:
+                                (widget.recipe.tastingLog
+                                            .map((r) => r.rating)
+                                            .reduce((a, b) => a + b) /
+                                        widget.recipe.tastingLog.length)
+                                    .round(),
                             size: 16,
                           ),
                       ],
@@ -1280,10 +1344,9 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                     if (widget.recipe.tastingLog.isEmpty)
                       Text(
                         'No tasting notes yet. Add one after your next pour.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Colors.grey),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                       ),
                     ...widget.recipe.tastingLog.reversed.map((record) {
                       final date = record.tastedAt;
@@ -1296,46 +1359,46 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             border: Border.all(
-                                color: Theme.of(context)
-                                    .dividerColor),
+                              color: Theme.of(context).dividerColor,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
                                   _StarRow(rating: record.rating, size: 14),
                                   const Spacer(),
                                   if (dateStr.isNotEmpty)
-                                    Text(dateStr,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                                color: Colors.grey)),
+                                    Text(
+                                      dateStr,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(color: Colors.grey),
+                                    ),
                                 ],
                               ),
                               if (record.location != null &&
                                   record.location!.isNotEmpty) ...[
                                 const SizedBox(height: 4),
-                                Text(record.location!,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                            color: Colors.grey,
-                                            fontStyle:
-                                                FontStyle.italic)),
+                                Text(
+                                  record.location!,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Colors.grey,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                ),
                               ],
                               if (record.notes != null &&
                                   record.notes!.isNotEmpty) ...[
                                 const SizedBox(height: 4),
-                                Text(record.notes!,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall),
+                                Text(
+                                  record.notes!,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
                               ],
                             ],
                           ),
@@ -1357,12 +1420,18 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.red, size: 16),
-                          label: const Text('Delete recipe',
-                              style: TextStyle(color: Colors.red)),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                            size: 16,
+                          ),
+                          label: const Text(
+                            'Delete recipe',
+                            style: TextStyle(color: Colors.red),
+                          ),
                           style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red)),
+                            side: const BorderSide(color: Colors.red),
+                          ),
                           onPressed: () => _confirmDelete(context),
                         ),
                       ),
@@ -1406,20 +1475,26 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content:
-                                        Text('Editing requires Sisu Mate Pro')),
+                                  content: Text(
+                                    'Editing requires Sisu Mate Pro',
+                                  ),
+                                ),
                               );
                             }
                           });
                         },
                       ),
                       ListTile(
-                        leading: Icon(widget.recipe.isFavourite
-                            ? Icons.favorite
-                            : Icons.favorite_border),
-                        title: Text(widget.recipe.isFavourite
-                            ? 'Remove favourite'
-                            : 'Add favourite'),
+                        leading: Icon(
+                          widget.recipe.isFavourite
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                        ),
+                        title: Text(
+                          widget.recipe.isFavourite
+                              ? 'Remove favourite'
+                              : 'Add favourite',
+                        ),
                         onTap: () async {
                           Navigator.pop(context);
                           widget.recipe.isFavourite =
@@ -1435,10 +1510,12 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                         title: const Text('Print / Share'),
                         onTap: () {
                           Navigator.pop(context);
-                          ingredientsAsync.whenData((ingredients) =>
-                              RecipeShareService.shareRecipeCard(
-                                  recipe: widget.recipe,
-                                  ingredients: ingredients));
+                          ingredientsAsync.whenData(
+                            (ingredients) => RecipeShareService.shareRecipeCard(
+                              recipe: widget.recipe,
+                              ingredients: ingredients,
+                            ),
+                          );
                         },
                       ),
                       ListTile(
@@ -1452,18 +1529,23 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('Ingredient counts updated'),
-                                  duration: Duration(seconds: 1)),
+                                content: Text('Ingredient counts updated'),
+                                duration: Duration(seconds: 1),
+                              ),
                             );
                           }
                         },
                       ),
                       if (!widget.recipe.isBundled)
                         ListTile(
-                          leading: const Icon(Icons.delete_forever,
-                              color: Colors.red),
-                          title: const Text('Delete recipe',
-                              style: TextStyle(color: Colors.red)),
+                          leading: const Icon(
+                            Icons.delete_forever,
+                            color: Colors.red,
+                          ),
+                          title: const Text(
+                            'Delete recipe',
+                            style: TextStyle(color: Colors.red),
+                          ),
                           onTap: () {
                             Navigator.pop(context);
                             _confirmDelete(context);
@@ -1505,12 +1587,13 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
         content: Text('Delete "${widget.recipe.name}"? This cannot be undone.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child:
-                  const Text('Delete', style: TextStyle(color: Colors.red))),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
@@ -1552,7 +1635,9 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final repo = ref.read(recipeRepositoryProvider);
-    final existingIngredients = await repo.getIngredientsOnce(widget.recipe.supabaseId);
+    final existingIngredients = await repo.getIngredientsOnce(
+      widget.recipe.supabaseId,
+    );
     if (!context.mounted) return;
     context.push(
       AppRoutes.recipeEditor,
@@ -1575,7 +1660,8 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
           if (mounted) {
             navigator.pop();
             messenger.showSnackBar(
-                SnackBar(content: Text('${recipe.name} updated')));
+              SnackBar(content: Text('${recipe.name} updated')),
+            );
           }
         },
       ),
@@ -1597,15 +1683,19 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final barAsync = ref.watch(barIngredientsProvider);
-    final shoppingNames = ref.watch(shoppingItemNamesProvider).asData?.value ?? {};
+    final shoppingNames =
+        ref.watch(shoppingItemNamesProvider).asData?.value ?? {};
     return barAsync.when(
       data: (barIngredients) {
         final nameLower = ingredient.name.toLowerCase().trim();
-        final existsInSeed = barIngredients
-            .any((b) => b.name.toLowerCase().trim() == nameLower);
-        final inBar = existsInSeed &&
+        final existsInSeed = barIngredients.any(
+          (b) => b.name.toLowerCase().trim() == nameLower,
+        );
+        final inBar =
+            existsInSeed &&
             barIngredients.any(
-                (b) => b.name.toLowerCase().trim() == nameLower && b.inMyBar);
+              (b) => b.name.toLowerCase().trim() == nameLower && b.inMyBar,
+            );
 
         // MIX2: catalog substitute1/2 OR static substitute graph.
         final viaIngredient = (!inBar && !ingredient.isGarnish)
@@ -1615,7 +1705,8 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
                     b.substitute2?.toLowerCase().trim() == nameLower;
               }).firstOrNull
             : null;
-        final graphSub = (!inBar && !ingredient.isGarnish && viaIngredient == null)
+        final graphSub =
+            (!inBar && !ingredient.isGarnish && viaIngredient == null)
             ? MixologistService.bestCountingSubstitute(
                 neededName: ingredient.name,
                 barIngredients: barIngredients,
@@ -1664,7 +1755,8 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
         }();
 
         // Flavor profiles from the matching bar catalog row (or via-sub).
-        final profiles = (barIngredient?.flavorProfiles.isNotEmpty == true
+        final profiles =
+            (barIngredient?.flavorProfiles.isNotEmpty == true
                 ? barIngredient!.flavorProfiles
                 : viaIngredient?.flavorProfiles) ??
             const <String>[];
@@ -1677,8 +1769,7 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
           if (ingredient.isOptional) 'Optional',
           if (ingredient.isGarnish && ingredient.garnishNotes != null)
             ingredient.garnishNotes!,
-          if (viaIngredient != null)
-            'Sub: ${viaIngredient.name}',
+          if (viaIngredient != null) 'Sub: ${viaIngredient.name}',
           if (graphSub != null)
             'Sub: ${graphSub.using} (${(graphSub.confidence * 100).round()}% — ${graphSub.note})',
           if (!inBar && !inBarViaSub && ingredient.substitute != null)
@@ -1688,22 +1779,29 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
         void openInBar() {
           final list = barIngredients;
           var idx = list.indexWhere(
-              (b) => b.name.toLowerCase().trim() == nameLower);
+            (b) => b.name.toLowerCase().trim() == nameLower,
+          );
           if (idx < 0 && viaIngredient != null) {
             idx = list.indexWhere(
-                (b) => b.supabaseId == viaIngredient.supabaseId);
+              (b) => b.supabaseId == viaIngredient.supabaseId,
+            );
           }
           if (idx < 0 && graphSub != null) {
             idx = list.indexWhere(
-                (b) => b.name.toLowerCase().trim() ==
-                    graphSub.using.toLowerCase().trim());
+              (b) =>
+                  b.name.toLowerCase().trim() ==
+                  graphSub.using.toLowerCase().trim(),
+            );
           }
           if (idx < 0) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(
-                  '${ingredient.name} is not in My Bar — swipe Track to add it'),
-              duration: const Duration(seconds: 2),
-            ));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '${ingredient.name} is not in My Bar — swipe Track to add it',
+                ),
+                duration: const Duration(seconds: 2),
+              ),
+            );
             return;
           }
           context.push(
@@ -1750,9 +1848,7 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
                           .toggleInMyBar(barIngredient),
                       backgroundColor: SisuColors.completedBackground,
                       foregroundColor: Colors.white,
-                      icon: inBar
-                          ? Icons.remove_circle_outline
-                          : Icons.check,
+                      icon: inBar ? Icons.remove_circle_outline : Icons.check,
                       label: inBar ? 'Remove' : 'In Bar',
                     ),
                   ],
@@ -1784,26 +1880,29 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
         );
       },
       loading: () => ListTile(
-          title: Text(ingredient.name),
-          subtitle: const Text('Checking bar...')),
+        title: Text(ingredient.name),
+        subtitle: const Text('Checking bar...'),
+      ),
       error: (e, _) =>
           ListTile(title: Text(ingredient.name), subtitle: Text('Error: $e')),
     );
   }
 
-  Future<void> _addSingleToShopping(
-      BuildContext context, WidgetRef ref) async {
-    final added = await ref.read(shoppingRepositoryProvider).ensureInShopping(
-          name: ingredient.name,
-          origin: 'bar',
-        );
+  Future<void> _addSingleToShopping(BuildContext context, WidgetRef ref) async {
+    final added = await ref
+        .read(shoppingRepositoryProvider)
+        .ensureInShopping(name: ingredient.name, origin: 'bar');
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(added
-            ? '${ingredient.name} added to shopping'
-            : '${ingredient.name} is already on the shopping list'),
-        duration: const Duration(seconds: 1),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            added
+                ? '${ingredient.name} added to shopping'
+                : '${ingredient.name} is already on the shopping list',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
     }
   }
 }
@@ -1849,8 +1948,9 @@ class _BarTabState extends ConsumerState<_BarTab> {
             decoration: InputDecoration(
               hintText: 'Search ingredients...',
               prefixIcon: const Icon(Icons.search),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               filled: true,
               fillColor: Theme.of(context).cardColor,
             ),
@@ -1864,8 +1964,8 @@ class _BarTabState extends ConsumerState<_BarTab> {
             child: Text(
               'Sorted: ${widget.order.sort.shortLabel}',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
         ),
@@ -1878,19 +1978,22 @@ class _BarTabState extends ConsumerState<_BarTab> {
             if (low.isEmpty) return const SizedBox.shrink();
             final top = low.take(3).toList();
             return Material(
-              color: Theme.of(context).colorScheme.errorContainer
-                  .withValues(alpha: 0.35),
+              color: Theme.of(
+                context,
+              ).colorScheme.errorContainer.withValues(alpha: 0.35),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Bar may be low',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     for (final item in top)
@@ -1927,9 +2030,10 @@ class _BarTabState extends ConsumerState<_BarTab> {
               final filtered = _searchQuery.isEmpty
                   ? ordered
                   : ordered
-                      .where((i) =>
-                          i.name.toLowerCase().contains(_searchQuery))
-                      .toList();
+                        .where(
+                          (i) => i.name.toLowerCase().contains(_searchQuery),
+                        )
+                        .toList();
               if (filtered.isEmpty) {
                 return const Center(child: Text('No ingredients found.'));
               }
@@ -1972,21 +2076,23 @@ class _BarIngredientTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cocktailsAsync =
-        ref.watch(cocktailRecipesForIngredientProvider(ingredient.name));
+    final cocktailsAsync = ref.watch(
+      cocktailRecipesForIngredientProvider(ingredient.name),
+    );
     // Drift stream of pending shopping names — drives blue "in cart" tile state.
     final shoppingNames =
         ref.watch(shoppingItemNamesProvider).asData?.value ?? {};
 
     final inBar = ingredient.inMyBar;
-    final inShopping =
-        shoppingNames.contains(ingredient.name.toLowerCase().trim());
+    final inShopping = shoppingNames.contains(
+      ingredient.name.toLowerCase().trim(),
+    );
     // Colour tells state (theme.md §6.5): green stocked > blue shopping > grey.
     final state = inBar
         ? ItemListState.stocked
         : inShopping
-            ? ItemListState.shopping
-            : ItemListState.defaults;
+        ? ItemListState.shopping
+        : ItemListState.defaults;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = SisuColors.itemStateColors(isDark, state);
 
@@ -2018,16 +2124,18 @@ class _BarIngredientTile extends ConsumerWidget {
           ref.read(barIngredientRepositoryProvider).toggleInMyBar(ingredient),
       onAddToShopping: () => _addToShopping(context, ref),
       onMarkShoppingDone: () => _markShoppingDone(context, ref),
-      onDelete:
-          ingredient.isBundled ? null : () => _confirmDelete(context, ref),
+      onDelete: ingredient.isBundled
+          ? null
+          : () => _confirmDelete(context, ref),
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         color: c.bg,
         elevation: 3,
         child: InkWell(
           onTap: () {
-            final idx = allIngredients
-                .indexWhere((b) => b.supabaseId == ingredient.supabaseId);
+            final idx = allIngredients.indexWhere(
+              (b) => b.supabaseId == ingredient.supabaseId,
+            );
             context.push(
               AppRoutes.barIngredientDetail,
               extra: (items: allIngredients, initialIndex: idx < 0 ? 0 : idx),
@@ -2040,8 +2148,7 @@ class _BarIngredientTile extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    _IngredientLeading(
-                        ingredient: ingredient, color: c.desc),
+                    _IngredientLeading(ingredient: ingredient, color: c.desc),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -2084,10 +2191,7 @@ class _BarIngredientTile extends ConsumerWidget {
                 ],
                 if (tertiary.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    tertiary,
-                    style: TextStyle(color: c.desc, fontSize: 12),
-                  ),
+                  Text(tertiary, style: TextStyle(color: c.desc, fontSize: 12)),
                 ],
               ],
             ),
@@ -2098,17 +2202,20 @@ class _BarIngredientTile extends ConsumerWidget {
   }
 
   Future<void> _addToShopping(BuildContext context, WidgetRef ref) async {
-    final added = await ref.read(shoppingRepositoryProvider).ensureInShopping(
-          name: ingredient.name,
-          origin: 'bar',
-        );
+    final added = await ref
+        .read(shoppingRepositoryProvider)
+        .ensureInShopping(name: ingredient.name, origin: 'bar');
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(added
-            ? '${ingredient.name} added to shopping list'
-            : '${ingredient.name} is already on the shopping list'),
-        duration: const Duration(seconds: 1),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            added
+                ? '${ingredient.name} added to shopping list'
+                : '${ingredient.name} is already on the shopping list',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
     }
   }
 
@@ -2117,12 +2224,16 @@ class _BarIngredientTile extends ConsumerWidget {
         .read(shoppingRepositoryProvider)
         .markPendingBoughtByName(ingredient.name);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(n > 0
-            ? '${ingredient.name} marked bought'
-            : 'No pending shopping line for ${ingredient.name}'),
-        duration: const Duration(seconds: 1),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            n > 0
+                ? '${ingredient.name} marked bought'
+                : 'No pending shopping line for ${ingredient.name}',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
     }
   }
 
@@ -2134,8 +2245,9 @@ class _BarIngredientTile extends ConsumerWidget {
         content: Text('Remove "${ingredient.name}" from the list?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: SisuColors.notAvailableBackground,
@@ -2196,7 +2308,10 @@ class _IngredientLeading extends StatelessWidget {
 
 // ── Bar ingredient edit dialog ────────────────────────────────────────────────
 
-void _showBarIngredientEditDialog(BuildContext context, BarIngredient? existing) {
+void _showBarIngredientEditDialog(
+  BuildContext context,
+  BarIngredient? existing,
+) {
   showDialog<void>(
     context: context,
     builder: (dialogContext) => _BarIngredientEditDialog(existing: existing),
@@ -2256,7 +2371,9 @@ class _BarIngredientEditDialogState
     final match = BarcodeService.lookup(result);
     if (match != null) {
       setState(() {
-        if (_nameCtrl.text.isEmpty) _nameCtrl.text = match.suggestedIngredientName;
+        if (_nameCtrl.text.isEmpty) {
+          _nameCtrl.text = match.suggestedIngredientName;
+        }
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2282,7 +2399,9 @@ class _BarIngredientEditDialogState
   Widget build(BuildContext context) {
     final hasPhoto = _localPhotoPath != null && _localPhotoPath!.isNotEmpty;
     return AlertDialog(
-      title: Text(widget.existing == null ? 'Add Ingredient' : 'Edit Ingredient'),
+      title: Text(
+        widget.existing == null ? 'Add Ingredient' : 'Edit Ingredient',
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2319,7 +2438,9 @@ class _BarIngredientEditDialogState
                 Expanded(
                   child: TextField(
                     controller: _nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Ingredient name'),
+                    decoration: const InputDecoration(
+                      labelText: 'Ingredient name',
+                    ),
                     autofocus: widget.existing == null,
                   ),
                 ),
@@ -2332,8 +2453,10 @@ class _BarIngredientEditDialogState
               ],
             ),
             const SizedBox(height: 12),
-            const Text('Price & Purchase',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            const Text(
+              'Price & Purchase',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
             const SizedBox(height: 4),
             Row(
               children: [
@@ -2341,17 +2464,21 @@ class _BarIngredientEditDialogState
                   child: TextField(
                     controller: _priceCtrl,
                     decoration: const InputDecoration(
-                        labelText: 'Price (USD)', prefixText: '\$'),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                      labelText: 'Price (USD)',
+                      prefixText: '\$',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _placeCtrl,
-                    decoration:
-                        const InputDecoration(labelText: 'Where bought'),
+                    decoration: const InputDecoration(
+                      labelText: 'Where bought',
+                    ),
                   ),
                 ),
               ],
@@ -2364,7 +2491,8 @@ class _BarIngredientEditDialogState
                     _showPurchaseHistory(context, widget.existing!),
                 icon: const Icon(Icons.history, size: 16),
                 label: Text(
-                    'View ${widget.existing!.purchaseHistory.length} purchase records'),
+                  'View ${widget.existing!.purchaseHistory.length} purchase records',
+                ),
               ),
             ],
             const SizedBox(height: 12),
@@ -2380,8 +2508,9 @@ class _BarIngredientEditDialogState
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         ElevatedButton(
           onPressed: _isSaving ? null : _save,
           child: const Text('Save'),
@@ -2391,11 +2520,11 @@ class _BarIngredientEditDialogState
   }
 
   Widget _photoPlaceholder() => Container(
-        width: 100,
-        height: 100,
-        color: Colors.grey[200],
-        child: const Icon(Icons.liquor, size: 40, color: Colors.grey),
-      );
+    width: 100,
+    height: 100,
+    color: Colors.grey[200],
+    child: const Icon(Icons.liquor, size: 40, color: Colors.grey),
+  );
 
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
@@ -2406,8 +2535,9 @@ class _BarIngredientEditDialogState
     final navigator = Navigator.of(context);
     final price = double.tryParse(_priceCtrl.text.trim());
     final place = _placeCtrl.text.trim();
-    final imageUrl =
-        _imageCtrl.text.trim().isEmpty ? null : _imageCtrl.text.trim();
+    final imageUrl = _imageCtrl.text.trim().isEmpty
+        ? null
+        : _imageCtrl.text.trim();
 
     try {
       if (widget.existing == null) {
@@ -2512,10 +2642,9 @@ class BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             child: Center(
               child: Text(
                 'Point camera at the barcode on the bottle',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.white),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white),
               ),
             ),
           ),
@@ -2537,8 +2666,10 @@ void _showPurchaseHistory(BuildContext context, BarIngredient ingredient) {
           itemCount: ingredient.purchaseHistory.length,
           separatorBuilder: (_, _) => const Divider(),
           itemBuilder: (_, i) {
-            final record = ingredient.purchaseHistory[
-                ingredient.purchaseHistory.length - 1 - i]; // newest first
+            final record =
+                ingredient.purchaseHistory[ingredient.purchaseHistory.length -
+                    1 -
+                    i]; // newest first
             final date = record.purchaseDate;
             final dateStr = date != null
                 ? '${date.day}/${date.month}/${date.year}'
@@ -2547,7 +2678,8 @@ void _showPurchaseHistory(BuildContext context, BarIngredient ingredient) {
               dense: true,
               leading: const Icon(Icons.receipt_long, size: 20),
               title: Text(
-                  '\$${record.price?.toStringAsFixed(2) ?? '?'} ${record.currency}'),
+                '\$${record.price?.toStringAsFixed(2) ?? '?'} ${record.currency}',
+              ),
               subtitle: Text('${record.place ?? 'Unknown'} · $dateStr'),
             );
           },
@@ -2555,8 +2687,9 @@ void _showPurchaseHistory(BuildContext context, BarIngredient ingredient) {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
       ],
     ),
   );
@@ -2565,8 +2698,18 @@ void _showPurchaseHistory(BuildContext context, BarIngredient ingredient) {
 // ── Mixologist tab ────────────────────────────────────────────────────────────
 
 const _cocktailVibes = [
-  'tropical', 'tiki', 'fresh', 'citrus', 'sour',
-  'smoky', 'bitter', 'spirit-forward', 'floral', 'herbal', 'spiced', 'fizzy',
+  'tropical',
+  'tiki',
+  'fresh',
+  'citrus',
+  'sour',
+  'smoky',
+  'bitter',
+  'spirit-forward',
+  'floral',
+  'herbal',
+  'spiced',
+  'fizzy',
 ];
 
 class _MixologistTab extends ConsumerStatefulWidget {
@@ -2615,7 +2758,8 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
   void _generate(List<BarIngredient> allIngredients) {
     final vibes = _selectedVibes.isEmpty ? ['fresh'] : _selectedVibes.toList();
     if (_selectedOccasion != null) {
-      for (final v in MixologistService.occasionVibes[_selectedOccasion] ?? []) {
+      for (final v
+          in MixologistService.occasionVibes[_selectedOccasion] ?? []) {
         if (!vibes.contains(v)) vibes.add(v);
       }
     }
@@ -2640,12 +2784,14 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
     final s = _suggestion;
     if (s == null) return;
     final unitSystem = ref.read(unitSystemProvider);
-    final ingredientList = s.ingredients.map((i) {
-      final qty = i.quantity > 0
-          ? '${UnitConverter.format(i.quantity, i.unit, unitSystem, preferBarUnits: true)} '
-          : '';
-      return '$qty${i.name}${i.optional ? " (optional)" : ""}';
-    }).join('\n');
+    final ingredientList = s.ingredients
+        .map((i) {
+          final qty = i.quantity > 0
+              ? '${UnitConverter.format(i.quantity, i.unit, unitSystem, preferBarUnits: true)} '
+              : '';
+          return '$qty${i.name}${i.optional ? " (optional)" : ""}';
+        })
+        .join('\n');
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     context.push(
@@ -2663,8 +2809,9 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
           }
           if (mounted) {
             navigator.pop();
-            messenger.showSnackBar(SnackBar(
-                content: Text('${recipe.name} saved to Cocktails')));
+            messenger.showSnackBar(
+              SnackBar(content: Text('${recipe.name} saved to Cocktails')),
+            );
           }
         },
       ),
@@ -2686,15 +2833,16 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // MIX1: what can I make tonight
-              Text('What can I make tonight?',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'What can I make tonight?',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 4),
               Text(
                 'Ranked by stock on hand; close substitutes count (with notes)',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.grey),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
               ),
               const SizedBox(height: 8),
               if (inBar.isEmpty)
@@ -2731,17 +2879,19 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                       final subLine = s.substitutesUsed.isEmpty
                           ? null
                           : s.substitutesUsed
-                              .take(2)
-                              .map((u) =>
-                                  '${u.using}→${u.needed} (${(u.confidence * 100).round()}%)')
-                              .join(' · ');
+                                .take(2)
+                                .map(
+                                  (u) =>
+                                      '${u.using}→${u.needed} (${(u.confidence * 100).round()}%)',
+                                )
+                                .join(' · ');
                       final body = s.isMakeable
                           ? (withSubs
-                              ? 'On hand with substitutes: $subLine'
-                              : 'All ${s.haveCount} ingredients on hand')
+                                ? 'On hand with substitutes: $subLine'
+                                : 'All ${s.haveCount} ingredients on hand')
                           : 'Have ${s.haveCount} · missing: ${s.missingNames.take(3).join(', ')}'
-                              '${s.missingNames.length > 3 ? '...' : ''}'
-                              '${subLine == null ? '' : '\nSubs: $subLine'}';
+                                '${s.missingNames.length > 3 ? '...' : ''}'
+                                '${subLine == null ? '' : '\nSubs: $subLine'}';
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
@@ -2752,8 +2902,8 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                         leading: Icon(
                           s.isMakeable
                               ? (withSubs
-                                  ? Icons.swap_horiz
-                                  : Icons.check_circle)
+                                    ? Icons.swap_horiz
+                                    : Icons.check_circle)
                               : Icons.radio_button_unchecked,
                           color: s.isMakeable
                               ? SisuColors.completedBackground
@@ -2782,11 +2932,15 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
               const SizedBox(height: 20),
               const Divider(),
               const SizedBox(height: 12),
-              Text('Invent a drink',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Invent a drink',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
-              Text('What vibe are you after?',
-                  style: Theme.of(context).textTheme.titleSmall),
+              Text(
+                'What vibe are you after?',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -2796,23 +2950,24 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                   return FilterChip(
                     label: Text(vibe),
                     selected: selected,
-                    selectedColor:
-                        SisuColors.completedBackground.withValues(alpha: 0.25),
+                    selectedColor: SisuColors.completedBackground.withValues(
+                      alpha: 0.25,
+                    ),
                     checkmarkColor: SisuColors.completedBackground,
-                    onSelected: (v) =>
-                        setState(() => v
-                            ? _selectedVibes.add(vibe)
-                            : _selectedVibes.remove(vibe)),
+                    onSelected: (v) => setState(
+                      () => v
+                          ? _selectedVibes.add(vibe)
+                          : _selectedVibes.remove(vibe),
+                    ),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 12),
               Text(
                 'Occasion (optional)',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.grey),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
               ),
               const SizedBox(height: 4),
               Wrap(
@@ -2823,8 +2978,7 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                   return FilterChip(
                     label: Text(occ),
                     selected: selected,
-                    selectedColor:
-                        Colors.deepPurple.withValues(alpha: 0.15),
+                    selectedColor: Colors.deepPurple.withValues(alpha: 0.15),
                     checkmarkColor: Colors.deepPurple,
                     onSelected: (v) =>
                         setState(() => _selectedOccasion = v ? occ : null),
@@ -2833,23 +2987,18 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
               ),
               const SizedBox(height: 16),
               // MIX3: strength / glassware / crew size
-              Text('Strength',
-                  style: Theme.of(context).textTheme.titleSmall),
+              Text('Strength', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 6),
               SegmentedButton<CocktailStrength>(
                 segments: CocktailStrength.values
-                    .map((s) => ButtonSegment(
-                          value: s,
-                          label: Text(s.label),
-                        ))
+                    .map((s) => ButtonSegment(value: s, label: Text(s.label)))
                     .toList(),
                 selected: {_strength},
                 onSelectionChanged: (set) =>
                     setState(() => _strength = set.first),
               ),
               const SizedBox(height: 12),
-              Text('Glassware',
-                  style: Theme.of(context).textTheme.titleSmall),
+              Text('Glassware', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
@@ -2859,8 +3008,7 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                   return FilterChip(
                     label: Text(g),
                     selected: selected,
-                    selectedColor:
-                        Colors.blueGrey.withValues(alpha: 0.2),
+                    selectedColor: Colors.blueGrey.withValues(alpha: 0.2),
                     onSelected: (_) => setState(() => _glassware = g),
                   );
                 }).toList(),
@@ -2868,8 +3016,10 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Text('Servings',
-                      style: Theme.of(context).textTheme.titleSmall),
+                  Text(
+                    'Servings',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline),
@@ -2877,8 +3027,10 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                         ? () => setState(() => _servings--)
                         : null,
                   ),
-                  Text('$_servings',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    '$_servings',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline),
                     onPressed: _servings < 12
@@ -2894,18 +3046,24 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        const Icon(Icons.liquor_outlined,
-                            size: 40, color: Colors.grey),
+                        const Icon(
+                          Icons.liquor_outlined,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 8),
-                        Text('Add ingredients to your bar first',
-                            style: Theme.of(context).textTheme.bodyMedium),
+                        Text(
+                          'Add ingredients to your bar first',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                         const SizedBox(height: 4),
-                        Text('Swipe right on any ingredient in the My Bar tab',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: Colors.grey),
-                            textAlign: TextAlign.center),
+                        Text(
+                          'Swipe right on any ingredient in the My Bar tab',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
                       ],
                     ),
                   ),
@@ -2913,21 +3071,23 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
               else ...[
                 Text(
                   '${inBar.length} ingredient${inBar.length == 1 ? "" : "s"} in your bar',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed:
-                        _isGenerating ? null : () => _generate(allIngredients),
+                    onPressed: _isGenerating
+                        ? null
+                        : () => _generate(allIngredients),
                     icon: const Icon(Icons.auto_fix_high),
-                    label: Text(_suggestion == null
-                        ? 'Suggest a Cocktail'
-                        : 'Try Another'),
+                    label: Text(
+                      _suggestion == null
+                          ? 'Suggest a Cocktail'
+                          : 'Try Another',
+                    ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       backgroundColor: SisuColors.completedBackground,
@@ -2989,12 +3149,15 @@ class _CocktailSuggestionCard extends ConsumerWidget {
                   child: Text(
                     suggestion.name,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.deepPurple.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -3002,9 +3165,10 @@ class _CocktailSuggestionCard extends ConsumerWidget {
                   child: Text(
                     suggestion.technique.toUpperCase(),
                     style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
                   ),
                 ),
               ],
@@ -3016,20 +3180,26 @@ class _CocktailSuggestionCard extends ConsumerWidget {
               children: [
                 Chip(
                   visualDensity: VisualDensity.compact,
-                  label: Text(suggestion.glassware,
-                      style: const TextStyle(fontSize: 11)),
+                  label: Text(
+                    suggestion.glassware,
+                    style: const TextStyle(fontSize: 11),
+                  ),
                   avatar: const Icon(Icons.local_bar_outlined, size: 14),
                 ),
                 Chip(
                   visualDensity: VisualDensity.compact,
-                  label: Text(suggestion.strengthLabel,
-                      style: const TextStyle(fontSize: 11)),
+                  label: Text(
+                    suggestion.strengthLabel,
+                    style: const TextStyle(fontSize: 11),
+                  ),
                 ),
                 if (suggestion.servings > 1)
                   Chip(
                     visualDensity: VisualDensity.compact,
-                    label: Text('${suggestion.servings} servings',
-                        style: const TextStyle(fontSize: 11)),
+                    label: Text(
+                      '${suggestion.servings} servings',
+                      style: const TextStyle(fontSize: 11),
+                    ),
                   ),
                 if (suggestion.estimatedAbvPercent != null)
                   Chip(
@@ -3042,11 +3212,12 @@ class _CocktailSuggestionCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Text('Ingredients',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'Ingredients',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
             ...suggestion.ingredients.map((i) {
               final unitSystem = ref.watch(unitSystemProvider);
@@ -3059,35 +3230,41 @@ class _CocktailSuggestionCard extends ConsumerWidget {
                     )
                   : '';
               return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.circle, size: 6, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      if (qtyLabel.isNotEmpty)
-                        Text(
-                          '$qtyLabel  ',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 13),
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    const Icon(Icons.circle, size: 6, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    if (qtyLabel.isNotEmpty)
+                      Text(
+                        '$qtyLabel  ',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
-                      Expanded(child: Text(i.name)),
-                      if (i.optional)
-                        Text('optional',
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.grey[500])),
-                    ],
-                  ),
-                );
+                      ),
+                    Expanded(child: Text(i.name)),
+                    if (i.optional)
+                      Text(
+                        'optional',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      ),
+                  ],
+                ),
+              );
             }),
             const SizedBox(height: 12),
-            Text('Instructions',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'Instructions',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
-            Text(suggestion.instructions,
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              suggestion.instructions,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
@@ -3100,8 +3277,10 @@ class _CocktailSuggestionCard extends ConsumerWidget {
                   const Icon(Icons.info_outline, size: 16, color: Colors.amber),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(suggestion.rationale,
-                        style: Theme.of(context).textTheme.bodySmall),
+                    child: Text(
+                      suggestion.rationale,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ),
                 ],
               ),
@@ -3109,28 +3288,32 @@ class _CocktailSuggestionCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               'Pairs well with',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
               runSpacing: 4,
-              children: MixologistService.foodPairings(
-                suggestion.ingredients.isNotEmpty
-                    ? suggestion.ingredients.first.name
-                    : '',
-              )
-                  .map((food) => Chip(
-                        label: Text(food,
-                            style: const TextStyle(fontSize: 12)),
-                        visualDensity: VisualDensity.compact,
-                        materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
-                      ))
-                  .toList(),
+              children:
+                  MixologistService.foodPairings(
+                        suggestion.ingredients.isNotEmpty
+                            ? suggestion.ingredients.first.name
+                            : '',
+                      )
+                      .map(
+                        (food) => Chip(
+                          label: Text(
+                            food,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      )
+                      .toList(),
             ),
             const SizedBox(height: 12),
             Row(
@@ -3165,15 +3348,24 @@ class _CocktailSuggestionCard extends ConsumerWidget {
 
 // ── Syrups & House Mixes tab ──────────────────────────────────────────────────
 
-class _SyrupsTab extends ConsumerWidget {
+class _SyrupsTab extends ConsumerStatefulWidget {
   const _SyrupsTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SyrupsTab> createState() => _SyrupsTabState();
+}
+
+class _SyrupsTabState extends ConsumerState<_SyrupsTab> {
+  // #136: House had no sort of any kind; a simple local A-Z/Z-A toggle
+  // matches the level of functionality My Bar/Cocktails already have.
+  bool _sortAscending = true;
+
+  @override
+  Widget build(BuildContext context) {
     final recipesAsync = ref.watch(recipesProvider('syrup'));
     return recipesAsync.when(
-      data: (recipes) {
-        if (recipes.isEmpty) {
+      data: (recipesData) {
+        if (recipesData.isEmpty) {
           return const Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -3190,33 +3382,72 @@ class _SyrupsTab extends ConsumerWidget {
             ),
           );
         }
-        return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 80),
-          itemCount: recipes.length,
-          itemBuilder: (_, i) => Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: ListTile(
-              leading: const Icon(Icons.science,
-                  size: 36, color: Colors.deepPurple),
-              title: Text(recipes[i].name),
-              subtitle: Text(
-                recipes[i].description ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: recipes[i].prepMinutes != null
-                  ? Text(
-                      '${recipes[i].prepMinutes}m',
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey[600]),
-                    )
-                  : null,
-              onTap: () => context.push(
-                AppRoutes.cocktailRecipe,
-                extra: recipes[i],
+        final recipes = List.of(recipesData)
+          ..sort(
+            (a, b) => _sortAscending
+                ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
+                : b.name.toLowerCase().compareTo(a.name.toLowerCase()),
+          );
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  const Spacer(),
+                  ActionChip(
+                    avatar: Icon(
+                      _sortAscending
+                          ? Icons.arrow_upward
+                          : Icons.arrow_downward,
+                      size: 16,
+                    ),
+                    label: Text(_sortAscending ? 'Name A–Z' : 'Name Z–A'),
+                    onPressed: () =>
+                        setState(() => _sortAscending = !_sortAscending),
+                  ),
+                ],
               ),
             ),
-          ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount: recipes.length,
+                itemBuilder: (_, i) => Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.science,
+                      size: 36,
+                      color: Colors.deepPurple,
+                    ),
+                    title: Text(recipes[i].name),
+                    subtitle: Text(
+                      recipes[i].description ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: recipes[i].prepMinutes != null
+                        ? Text(
+                            '${recipes[i].prepMinutes}m',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          )
+                        : null,
+                    onTap: () => context.push(
+                      AppRoutes.cocktailRecipe,
+                      extra: recipes[i],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -3231,8 +3462,12 @@ class _SyrupsTab extends ConsumerWidget {
 /// GoRouter's `extra` to the shared `recipeEditor` named route.
 class AddEditRecipeArgs {
   final RecipeType recipeType;
-  final void Function(Recipe recipe, List<RecipeIngredient> ingredients,
-      List<RecipeIngredient> removedIngredients) onSave;
+  final void Function(
+    Recipe recipe,
+    List<RecipeIngredient> ingredients,
+    List<RecipeIngredient> removedIngredients,
+  )
+  onSave;
   final Recipe? existingRecipe;
   final List<RecipeIngredient> existingIngredients;
   final String? prefillName;
@@ -3250,8 +3485,12 @@ class AddEditRecipeArgs {
 
 class AddEditRecipeDialog extends StatefulWidget {
   final RecipeType recipeType;
-  final void Function(Recipe recipe, List<RecipeIngredient> ingredients,
-      List<RecipeIngredient> removedIngredients) onSave;
+  final void Function(
+    Recipe recipe,
+    List<RecipeIngredient> ingredients,
+    List<RecipeIngredient> removedIngredients,
+  )
+  onSave;
   final Recipe? existingRecipe;
   final List<RecipeIngredient> existingIngredients;
   final String? prefillName;
@@ -3287,8 +3526,17 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
   String? _imageAsset;
 
   static const _methodOptions = [
-    'Stovetop', 'Grill', 'Oven', 'Pan-fry', 'Wok', 'Steam',
-    'One-pot', 'Slow-cook', 'Pressure-cook', 'Raw / No-cook', 'Deep-fry',
+    'Stovetop',
+    'Grill',
+    'Oven',
+    'Pan-fry',
+    'Wok',
+    'Steam',
+    'One-pot',
+    'Slow-cook',
+    'Pressure-cook',
+    'Raw / No-cook',
+    'Deep-fry',
   ];
 
   @override
@@ -3386,12 +3634,7 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
           tooltip: 'Cancel',
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: const Text('Save'),
-          ),
-        ],
+        actions: [TextButton(onPressed: _save, child: const Text('Save'))],
       ),
       body: SafeArea(
         child: Form(
@@ -3490,8 +3733,7 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
                     border: OutlineInputBorder(),
                   ),
                   items: _methodOptions
-                      .map((m) =>
-                          DropdownMenuItem(value: m, child: Text(m)))
+                      .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                       .toList(),
                   onChanged: (v) => setState(() => _cookingMethod = v),
                 ),
@@ -3531,8 +3773,10 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Text('Ingredients',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Ingredients',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const Spacer(),
                   IconButton(
                     tooltip: 'Add ingredient',
@@ -3547,7 +3791,8 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
                   child: Text(
                     'No ingredients yet — tap + to add',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.outline),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ),
               for (var i = 0; i < _ingredients.length; i++)
@@ -3575,10 +3820,12 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
 
   void _addIngredient() {
     setState(() {
-      _ingredients.add(RecipeIngredient()
-        ..supabaseId = 'temp_${DateTime.now().millisecondsSinceEpoch}'
-        ..recipeSupabaseId = 'temp'
-        ..name = '');
+      _ingredients.add(
+        RecipeIngredient()
+          ..supabaseId = 'temp_${DateTime.now().millisecondsSinceEpoch}'
+          ..recipeSupabaseId = 'temp'
+          ..name = '',
+      );
     });
   }
 
@@ -3587,14 +3834,17 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
     final isCocktail = widget.recipeType == RecipeType.cocktail;
     final isMenu = widget.recipeType == RecipeType.menu;
     final recipe = Recipe()
-      ..supabaseId = widget.existingRecipe?.supabaseId ??
+      ..supabaseId =
+          widget.existingRecipe?.supabaseId ??
           'user_${DateTime.now().millisecondsSinceEpoch}'
       ..boatSupabaseId = '00000000-0000-0000-0000-000000000000'
       ..name = _nameController.text
-      ..description =
-          _descriptionController.text.isEmpty ? null : _descriptionController.text
-      ..instructions =
-          _instructionsController.text.isEmpty ? null : _instructionsController.text
+      ..description = _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text
+      ..instructions = _instructionsController.text.isEmpty
+          ? null
+          : _instructionsController.text
       ..cuisine = (isCocktail || isMenu)
           ? dedupeStrings(_selectedCuisineTags)
           : (widget.existingRecipe?.cuisine ?? [])
@@ -3623,8 +3873,10 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
 
     // Persist any selected tags into the shared library for next session.
     TagLibraryService.instance.rememberAll(TagKind.cuisine, recipe.cuisine);
-    TagLibraryService.instance
-        .rememberAll(TagKind.flavor, recipe.flavorProfiles);
+    TagLibraryService.instance.rememberAll(
+      TagKind.flavor,
+      recipe.flavorProfiles,
+    );
 
     widget.onSave(recipe, List.of(_ingredients), List.of(_removedIngredients));
   }
@@ -3775,56 +4027,59 @@ class _AddTastingDialogState extends State<_AddTastingDialog> {
 }
 
 void _showTechniqueSheet(BuildContext context, String technique) {
-  final guides = <String,
-      ({
-        IconData icon,
-        String equipment,
-        List<String> steps,
-        List<String> tips
-      })>{
-    'Shake': (
-      icon: Icons.water_drop_outlined,
-      equipment: 'Cocktail shaker · strainer · ice',
-      steps: [
-        'Fill shaker two-thirds with ice',
-        'Add all ingredients',
-        'Shake hard for 10–15 seconds until the shaker is frosty',
-        'Double-strain into a chilled glass',
-      ],
-      tips: [
-        'Dilution is a feature — shake until you feel the cold',
-        'Never shake sparkling ingredients — add them after pouring',
-      ],
-    ),
-    'Stir': (
-      icon: Icons.rotate_right,
-      equipment: 'Mixing glass · bar spoon · Hawthorne strainer · ice',
-      steps: [
-        'Fill mixing glass with ice',
-        'Add all ingredients',
-        'Stir smoothly for 20–30 rotations (about 30 seconds)',
-        'Strain into a chilled glass',
-      ],
-      tips: [
-        'Stirring chills without aeration — keeps spirits silky and clear',
-        'Over-stirring dilutes; under-stirring leaves it too cold and harsh',
-      ],
-    ),
-    'Build': (
-      icon: Icons.layers_outlined,
-      equipment: 'Serving glass · ice · bar spoon',
-      steps: [
-        'Add ice to the serving glass',
-        'Pour spirits first, then mixers',
-        'Stir briefly to combine',
-        'Garnish and serve',
-      ],
-      tips: [
-        'Add carbonated mixers last — pour gently down the inside of the glass',
-        'For layered drinks, pour over the back of a spoon',
-      ],
-    ),
-  };
+  final guides =
+      <
+        String,
+        ({
+          IconData icon,
+          String equipment,
+          List<String> steps,
+          List<String> tips,
+        })
+      >{
+        'Shake': (
+          icon: Icons.water_drop_outlined,
+          equipment: 'Cocktail shaker · strainer · ice',
+          steps: [
+            'Fill shaker two-thirds with ice',
+            'Add all ingredients',
+            'Shake hard for 10–15 seconds until the shaker is frosty',
+            'Double-strain into a chilled glass',
+          ],
+          tips: [
+            'Dilution is a feature — shake until you feel the cold',
+            'Never shake sparkling ingredients — add them after pouring',
+          ],
+        ),
+        'Stir': (
+          icon: Icons.rotate_right,
+          equipment: 'Mixing glass · bar spoon · Hawthorne strainer · ice',
+          steps: [
+            'Fill mixing glass with ice',
+            'Add all ingredients',
+            'Stir smoothly for 20–30 rotations (about 30 seconds)',
+            'Strain into a chilled glass',
+          ],
+          tips: [
+            'Stirring chills without aeration — keeps spirits silky and clear',
+            'Over-stirring dilutes; under-stirring leaves it too cold and harsh',
+          ],
+        ),
+        'Build': (
+          icon: Icons.layers_outlined,
+          equipment: 'Serving glass · ice · bar spoon',
+          steps: [
+            'Add ice to the serving glass',
+            'Pour spirits first, then mixers',
+            'Stir briefly to combine',
+            'Garnish and serve',
+          ],
+          tips: [
+            'Add carbonated mixers last — pour gently down the inside of the glass',
+            'For layered drinks, pour over the back of a spoon',
+          ],
+        ),
+      };
 
   final guide = guides[technique];
   if (guide == null) return;
@@ -3846,33 +4101,37 @@ void _showTechniqueSheet(BuildContext context, String technique) {
               Text(
                 technique,
                 style: const TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.bold),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Text('Equipment',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Equipment',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
           Text(guide.equipment),
           const SizedBox(height: 16),
-          const Text('Steps',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Steps', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           ...guide.steps.asMap().entries.map(
-                (e) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${e.key + 1}.  ',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600)),
-                      Expanded(child: Text(e.value)),
-                    ],
+            (e) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${e.key + 1}.  ',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                ),
+                  Expanded(child: Text(e.value)),
+                ],
               ),
+            ),
+          ),
           const SizedBox(height: 16),
           const Text('Tips', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
@@ -3882,10 +4141,13 @@ void _showTechniqueSheet(BuildContext context, String technique) {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('•  ',
-                      style: TextStyle(
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.bold)),
+                  const Text(
+                    '•  ',
+                    style: TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   Expanded(child: Text(t)),
                 ],
               ),
@@ -3927,8 +4189,9 @@ class _IngredientFormFieldState extends State<_IngredientFormField> {
   void initState() {
     super.initState();
     _nameCtrl.text = widget.ingredient.name;
-    _qtyCtrl.text =
-        widget.ingredient.quantity != null ? '${widget.ingredient.quantity}' : '';
+    _qtyCtrl.text = widget.ingredient.quantity != null
+        ? '${widget.ingredient.quantity}'
+        : '';
     _unit = widget.ingredient.unit ?? '';
   }
 
@@ -3959,14 +4222,16 @@ class _IngredientFormFieldState extends State<_IngredientFormField> {
                 Expanded(
                   child: TextFormField(
                     controller: _nameCtrl,
-                    decoration:
-                        const InputDecoration(labelText: 'Ingredient Name'),
+                    decoration: const InputDecoration(
+                      labelText: 'Ingredient Name',
+                    ),
                     onChanged: (v) => widget.ingredient.name = v,
                   ),
                 ),
                 IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: widget.onRemove),
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: widget.onRemove,
+                ),
               ],
             ),
             Row(
@@ -4007,7 +4272,8 @@ class _IngredientFormFieldState extends State<_IngredientFormField> {
                       visualDensity: VisualDensity.compact,
                       value: widget.ingredient.isOptional,
                       onChanged: (v) => setState(
-                          () => widget.ingredient.isOptional = v ?? false),
+                        () => widget.ingredient.isOptional = v ?? false,
+                      ),
                     ),
                     const Text('Optional'),
                   ],
@@ -4019,7 +4285,8 @@ class _IngredientFormFieldState extends State<_IngredientFormField> {
                       visualDensity: VisualDensity.compact,
                       value: widget.ingredient.isGarnish,
                       onChanged: (v) => setState(
-                          () => widget.ingredient.isGarnish = v ?? false),
+                        () => widget.ingredient.isGarnish = v ?? false,
+                      ),
                     ),
                     const Text('Garnish'),
                   ],
@@ -4040,7 +4307,8 @@ class CocktailBatchScreen extends ConsumerStatefulWidget {
   const CocktailBatchScreen({super.key, required this.recipe});
 
   @override
-  ConsumerState<CocktailBatchScreen> createState() => CocktailBatchScreenState();
+  ConsumerState<CocktailBatchScreen> createState() =>
+      CocktailBatchScreenState();
 }
 
 class CocktailBatchScreenState extends ConsumerState<CocktailBatchScreen> {
@@ -4056,8 +4324,9 @@ class CocktailBatchScreenState extends ConsumerState<CocktailBatchScreen> {
   @override
   Widget build(BuildContext context) {
     final recipesAsync = ref.watch(recipesProvider('cocktail'));
-    final ingredientsAsync =
-        ref.watch(recipeIngredientsProvider(_selectedRecipe.supabaseId));
+    final ingredientsAsync = ref.watch(
+      recipeIngredientsProvider(_selectedRecipe.supabaseId),
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Build a Round')),
@@ -4071,8 +4340,10 @@ class CocktailBatchScreenState extends ConsumerState<CocktailBatchScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Cocktail',
                   border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                 ),
                 child: DropdownButton<Recipe>(
                   value: recipes.firstWhere(
@@ -4082,8 +4353,9 @@ class CocktailBatchScreenState extends ConsumerState<CocktailBatchScreen> {
                   isExpanded: true,
                   underline: const SizedBox.shrink(),
                   items: recipes
-                      .map((r) =>
-                          DropdownMenuItem(value: r, child: Text(r.name)))
+                      .map(
+                        (r) => DropdownMenuItem(value: r, child: Text(r.name)),
+                      )
                       .toList(),
                   onChanged: (r) {
                     if (r != null) setState(() => _selectedRecipe = r);
@@ -4099,7 +4371,10 @@ class CocktailBatchScreenState extends ConsumerState<CocktailBatchScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                const Text('Drinks:', style: TextStyle(fontWeight: FontWeight.w500)),
+                const Text(
+                  'Drinks:',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(width: 16),
                 IconButton.outlined(
                   icon: const Icon(Icons.remove),
@@ -4114,15 +4389,16 @@ class CocktailBatchScreenState extends ConsumerState<CocktailBatchScreen> {
                 ),
                 IconButton.outlined(
                   icon: const Icon(Icons.add),
-                  onPressed: _count < 50 ? () => setState(() => _count++) : null,
+                  onPressed: _count < 50
+                      ? () => setState(() => _count++)
+                      : null,
                 ),
                 const Spacer(),
                 Text(
                   'Total batch',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                 ),
               ],
             ),
@@ -4132,31 +4408,37 @@ class CocktailBatchScreenState extends ConsumerState<CocktailBatchScreen> {
           Expanded(
             child: ingredientsAsync.when(
               data: (ingredients) {
-                final nonGarnish =
-                    ingredients.where((i) => !i.isGarnish).toList();
-                final garnishes =
-                    ingredients.where((i) => i.isGarnish).toList();
+                final nonGarnish = ingredients
+                    .where((i) => !i.isGarnish)
+                    .toList();
+                final garnishes = ingredients
+                    .where((i) => i.isGarnish)
+                    .toList();
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
                     if (nonGarnish.isNotEmpty) ...[
-                      Text('Ingredients',
-                          style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        'Ingredients',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 8),
-                      ...nonGarnish.map((i) => _BatchIngredientRow(
-                            ingredient: i,
-                            count: _count,
-                          )),
+                      ...nonGarnish.map(
+                        (i) =>
+                            _BatchIngredientRow(ingredient: i, count: _count),
+                      ),
                     ],
                     if (garnishes.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      Text('Garnishes',
-                          style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        'Garnishes',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 8),
-                      ...garnishes.map((i) => _BatchIngredientRow(
-                            ingredient: i,
-                            count: _count,
-                          )),
+                      ...garnishes.map(
+                        (i) =>
+                            _BatchIngredientRow(ingredient: i, count: _count),
+                      ),
                     ],
                   ],
                 );
@@ -4195,17 +4477,18 @@ class _BatchIngredientRow extends ConsumerWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(ingredient.name,
-                style: ingredient.isOptional
-                    ? TextStyle(color: Colors.grey[600])
-                    : null),
+            child: Text(
+              ingredient.name,
+              style: ingredient.isOptional
+                  ? TextStyle(color: Colors.grey[600])
+                  : null,
+            ),
           ),
           Text(
             qtyText,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
