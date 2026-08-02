@@ -498,6 +498,12 @@ class _IngredientDetailScreenState
         }
         final onList = shoppingNames
             .contains(_name(index).toLowerCase().trim());
+        // #204: preview the destination state (in-stock -> green, removed ->
+        // the normal/default row colour), matching the pattern #185 already
+        // established — was always green regardless of direction.
+        final stockDestination = SisuColors.itemStateColors(
+            isDark,
+            _inStock(index) ? ItemListState.defaults : ItemListState.stocked);
         return [
           DetailAction(
             icon: _inStock(index)
@@ -505,7 +511,8 @@ class _IngredientDetailScreenState
                 : Icons.check_circle_outline,
             label: _inStock(index) ? 'Remove' : 'In stock',
             onPressed: () => _toggleStock(index),
-            color: SisuColors.completedBackground,
+            color: stockDestination.bg,
+            onColor: stockDestination.title,
           ),
           DetailAction(
             icon: onList ? Icons.done : Icons.add_shopping_cart,

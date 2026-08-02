@@ -1101,11 +1101,15 @@ class _ShoppingItemDetailScreenState
     _placeCtrl.text = it.lastPurchasePlace ?? '';
   }
 
-  ItemListState _state(ShoppingItem it) => it.isHidden
-      ? ItemListState.hidden
-      : it.isBought
-          ? ItemListState.stocked
-          : ItemListState.shopping;
+  // #204: optional overrides let action buttons compute the *destination*
+  // state's color (what a tap would move the item to) instead of the
+  // current one, without duplicating this hidden/bought precedence logic.
+  ItemListState _state(ShoppingItem it, {bool? isHidden, bool? isBought}) =>
+      (isHidden ?? it.isHidden)
+          ? ItemListState.hidden
+          : (isBought ?? it.isBought)
+              ? ItemListState.stocked
+              : ItemListState.shopping;
 
   @override
   Widget build(BuildContext context) {
@@ -1286,6 +1290,11 @@ class _ShoppingItemDetailScreenState
             ),
           ];
         }
+        // #204: each toggle's button previews the state the tap moves *into*.
+        final boughtDestination = SisuColors.itemStateColors(
+            isDark, _state(it, isBought: !it.isBought));
+        final hideDestination = SisuColors.itemStateColors(
+            isDark, _state(it, isHidden: !it.isHidden));
         return [
           DetailAction(
             icon: it.isBought ? Icons.remove_shopping_cart : Icons.shopping_cart,
@@ -1294,7 +1303,8 @@ class _ShoppingItemDetailScreenState
               await repo.toggleBought(it);
               if (mounted) setState(() {});
             },
-            color: SisuColors.completedBackground,
+            color: boughtDestination.bg,
+            onColor: boughtDestination.title,
           ),
           if (!it.isHidden)
             DetailAction(
@@ -1304,7 +1314,8 @@ class _ShoppingItemDetailScreenState
                 await repo.hideItem(it);
                 if (mounted) setState(() {});
               },
-              color: SisuColors.hideAction,
+              color: hideDestination.bg,
+              onColor: hideDestination.title,
             )
           else ...[
             DetailAction(
@@ -1314,7 +1325,8 @@ class _ShoppingItemDetailScreenState
                 await repo.unhideItem(it);
                 if (mounted) setState(() {});
               },
-              color: SisuColors.hideAction,
+              color: hideDestination.bg,
+              onColor: hideDestination.title,
             ),
             DetailAction(
               icon: Icons.delete_forever,

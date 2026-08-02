@@ -383,6 +383,13 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
         final destinationState = item.isCompleted
             ? SisuColors.itemStateColors(isDark, ItemListState.defaults)
             : SisuColors.itemStateColors(isDark, ItemListState.stocked);
+        // #204: same rule as #185 above, applied to Hide/Unhide — the button
+        // must preview the state the tap moves *into*. Both used to share
+        // one static SisuColors.hideAction regardless of direction.
+        final hideDestination =
+            SisuColors.itemStateColors(isDark, ItemListState.hidden);
+        final unhideDestination =
+            SisuColors.itemStateColors(isDark, ItemListState.defaults);
         return [
           DetailAction(
             icon: item.isCompleted
@@ -398,14 +405,16 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
               icon: Icons.visibility_off,
               label: 'Hide',
               onPressed: () => _toggleHidden(index),
-              color: SisuColors.hideAction,
+              color: hideDestination.bg,
+              onColor: hideDestination.title,
             )
           else ...[
             DetailAction(
               icon: Icons.undo,
               label: 'Unhide',
               onPressed: () => _toggleHidden(index),
-              color: SisuColors.hideAction,
+              color: unhideDestination.bg,
+              onColor: unhideDestination.title,
             ),
             DetailAction(
               icon: Icons.delete_forever,

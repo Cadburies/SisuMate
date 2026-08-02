@@ -47,7 +47,7 @@ void main() {
   late AppDatabase db;
   const itemId = 'item-contrast-1';
 
-  Future<void> seed({required bool isCompleted}) async {
+  Future<void> seed({required bool isCompleted, bool isHidden = false}) async {
     await db.into(db.checklistItems).insert(
           ChecklistItemsCompanion.insert(
             supabaseId: const Value(itemId),
@@ -56,21 +56,25 @@ void main() {
             title: const Value('Check bilge pump'),
             name: const Value('Check bilge pump'),
             isCompleted: Value(isCompleted),
+            isHidden: Value(isHidden),
           ),
         );
   }
 
-  ChecklistItem viewerItem({required bool isCompleted}) => ChecklistItem()
-    ..supabaseId = itemId
-    ..groupSupabaseId = 'g1'
-    ..boatSupabaseId = 'b1'
-    ..title = 'Check bilge pump'
-    ..name = 'Check bilge pump'
-    ..isCompleted = isCompleted;
+  ChecklistItem viewerItem({required bool isCompleted, bool isHidden = false}) =>
+      ChecklistItem()
+        ..supabaseId = itemId
+        ..groupSupabaseId = 'g1'
+        ..boatSupabaseId = 'b1'
+        ..title = 'Check bilge pump'
+        ..name = 'Check bilge pump'
+        ..isCompleted = isCompleted
+        ..isHidden = isHidden;
 
   Future<void> pumpViewer(
     WidgetTester tester, {
     required bool isCompleted,
+    bool isHidden = false,
   }) async {
     final container = ProviderContainer(overrides: [
       appDatabaseProvider.overrideWithValue(db),
@@ -83,7 +87,9 @@ void main() {
         child: MaterialApp(
           theme: ThemeData(brightness: Brightness.dark),
           home: CheckPageViewer(
-            items: [viewerItem(isCompleted: isCompleted)],
+            items: [
+              viewerItem(isCompleted: isCompleted, isHidden: isHidden)
+            ],
             initialIndex: 0,
             groupName: 'Pre-departure',
           ),
@@ -150,5 +156,36 @@ void main() {
     expect(_contrastRatio(bg, text), greaterThanOrEqualTo(4.5),
         reason: 'button background vs its own label must meet WCAG AA '
             'regardless of what color the surrounding screen happens to be');
+  });
+
+  testWidgets(
+      '#204: "Hide" on a visible item previews the hidden (destination) '
+      'state, not a static color regardless of direction', (tester) async {
+    await seed(isCompleted: false);
+    await pumpViewer(tester, isCompleted: false);
+
+    final (bg, text) = actionButtonColors(tester, 'Hide');
+    final hiddenState = SisuColors.itemStateColors(true, ItemListState.hidden);
+    expect(bg, hiddenState.bg);
+    expect(text, hiddenState.title);
+    expect(_contrastRatio(bg, text), greaterThanOrEqualTo(4.5));
+  });
+
+  testWidgets(
+      '#204: "Unhide" on a hidden item previews the visible (destination) '
+      'state, not the hidden state it is currently in', (tester) async {
+    await seed(isCompleted: false, isHidden: true);
+    await pumpViewer(tester, isCompleted: false, isHidden: true);
+
+    final (bg, text) = actionButtonColors(tester, 'Unhide');
+    final hiddenState = SisuColors.itemStateColors(true, ItemListState.hidden);
+    final visibleState =
+        SisuColors.itemStateColors(true, ItemListState.defaults);
+    expect(bg, isNot(hiddenState.bg),
+        reason: 'before the fix Hide and Unhide shared one static color '
+            '(SisuColors.hideAction) regardless of direction');
+    expect(bg, visibleState.bg);
+    expect(text, visibleState.title);
+    expect(_contrastRatio(bg, text), greaterThanOrEqualTo(4.5));
   });
 }
