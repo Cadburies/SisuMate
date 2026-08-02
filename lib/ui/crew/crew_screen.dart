@@ -16,6 +16,7 @@ import '../../models/models.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/record_share_service.dart';
 import '../../services/import_service.dart';
+import 'travel_safety_dialog.dart';
 
 final crewMembersProvider = StreamProvider<List<CrewMember>>((ref) {
   return ref.watch(crewMemberRepositoryProvider).watchCrewMembers();
@@ -104,6 +105,17 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
                     : [
                         // Standard trailing order (right→left): menu,
                         // import/export, share — so share renders first.
+                        // #208: AI actions get their own distinct entry
+                        // point, never blended into the offline actions.
+                        IconButton(
+                          icon: const Icon(Icons.auto_awesome,
+                              color: Colors.deepPurple),
+                          tooltip: 'AI: Travel & entry safety',
+                          onPressed: () => showDialog<void>(
+                            context: context,
+                            builder: (_) => const TravelSafetyDialog(),
+                          ),
+                        ),
                         if (isPro && allMembers.isNotEmpty)
                           IconButton(
                             icon: Icon(Icons.ios_share, color: color),

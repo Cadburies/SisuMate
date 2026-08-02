@@ -336,4 +336,281 @@ void main() {
       expect(usage.totalTokens, 0);
     });
   });
+
+  group('#223 completeWithSearch (grounded web/X search)', () {
+    test('a provider without supportsGroundedSearch is rejected without '
+        'any network call', () async {
+      var called = false;
+      final service = LlmClientService(
+        httpClient: MockClient((_) async {
+          called = true;
+          return http.Response('{}', 200);
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'openai'),
+        prompt: 'is it safe to sail to X?',
+      );
+
+      expect(result.status, LlmResultStatus.groundedSearchUnsupported);
+      expect(result.errorMessage, contains('OpenAI'));
+      expect(called, isFalse,
+          reason: 'must never fall back to a plain, ungrounded completion');
+    });
+
+    test('no key configured returns noKeyConfigured without any network call',
+        () async {
+      var called = false;
+      final service = LlmClientService(
+        httpClient: MockClient((_) async {
+          called = true;
+          return http.Response('{}', 200);
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result =
+          await service.completeWithSearch(boat: null, prompt: 'hello');
+
+      expect(result.status, LlmResultStatus.noKeyConfigured);
+      expect(called, isFalse);
+    });
+
+    test('offline returns offline without any network call', () async {
+      var called = false;
+      final service = LlmClientService(
+        httpClient: MockClient((_) async {
+          called = true;
+          return http.Response('{}', 200);
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.none]),
+      );
+
+      final result = await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'xai'),
+        prompt: 'hello',
+      );
+
+      expect(result.status, LlmResultStatus.offline);
+      expect(called, isFalse);
+    });
+
+    test('sends the request to the xAI /v1/responses endpoint with '
+        'web_search and x_search tools', () async {
+      late Uri calledUri;
+      late Map<String, dynamic> calledBody;
+      final service = LlmClientService(
+        httpClient: MockClient((request) async {
+          calledUri = request.url;
+          calledBody = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(
+            jsonEncode({'output_text': 'looks fine'}),
+            200,
+          );
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'xai'),
+        prompt: 'hello',
+      );
+
+      expect(calledUri.toString(), 'https://api.x.ai/v1/responses');
+      final tools = calledBody['tools'] as List;
+      expect(tools, [
+        {'type': 'web_search'},
+        {'type': 'x_search'},
+      ]);
+      expect(calledBody['input'], [
+        {'role': 'user', 'content': 'hello'}
+      ]);
+    });
+
+    test('parses a top-level output_text response', () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async => http.Response(
+            jsonEncode({'output_text': 'a grounded answer'}), 200)),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'xai'),
+        prompt: 'hello',
+      );
+
+      expect(result.status, LlmResultStatus.success);
+      expect(result.text, 'a grounded answer');
+    });
+
+    test('falls back to walking output[].content[] when output_text is '
+        'absent', () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async => http.Response(
+              jsonEncode({
+                'output': [
+                  {
+                    'type': 'message',
+                    'content': [
+                      {'type': 'output_text', 'text': 'walked answer'},
+                    ],
+                  },
+                ],
+              }),
+              200,
+            )),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'xai'),
+        prompt: 'hello',
+      );
+
+      expect(result.status, LlmResultStatus.success);
+      expect(result.text, 'walked answer');
+    });
+
+    test('parses citations as objects with url/title', () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async => http.Response(
+              jsonEncode({
+                'output_text': 'answer',
+                'citations': [
+                  {'url': 'https://example.com/a', 'title': 'Source A'},
+                  {'url': 'https://example.com/b'},
+                ],
+              }),
+              200,
+            )),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'xai'),
+        prompt: 'hello',
+      );
+
+      expect(result.citations, hasLength(2));
+      expect(result.citations[0].url, 'https://example.com/a');
+      expect(result.citations[0].title, 'Source A');
+      expect(result.citations[1].title, isNull);
+    });
+
+    test('parses citations as a flat list of URL strings', () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async => http.Response(
+              jsonEncode({
+                'output_text': 'answer',
+                'citations': ['https://example.com/a'],
+              }),
+              200,
+            )),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'xai'),
+        prompt: 'hello',
+      );
+
+      expect(result.citations.single.url, 'https://example.com/a');
+    });
+
+    test('no citations field parses to an empty list, not a crash', () async {
+      final service = LlmClientService(
+        httpClient: MockClient(
+            (_) async => http.Response(jsonEncode({'output_text': 'ok'}), 200)),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'xai'),
+        prompt: 'hello',
+      );
+
+      expect(result.citations, isEmpty);
+    });
+
+    test('401 returns invalidKey', () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async => http.Response('{}', 401)),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.completeWithSearch(
+        boat: boatWith(key: 'sk-bad', provider: 'xai'),
+        prompt: 'hello',
+      );
+
+      expect(result.status, LlmResultStatus.invalidKey);
+    });
+
+    test('a grounded call records usage plus the extra tool-cost estimate',
+        () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async => http.Response(
+              jsonEncode({
+                'output_text': 'ok',
+                'usage': {
+                  'input_tokens': 50,
+                  'output_tokens': 20,
+                  'total_tokens': 70,
+                },
+              }),
+              200,
+            )),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      await service.completeWithSearch(
+        boat: boatWith(key: 'sk-test', provider: 'xai'),
+        prompt: 'hello',
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final usage = await LlmUsageTracker().currentMonth();
+      expect(usage.totalTokens, 70);
+      expect(usage.estimatedCostUsd, greaterThan(xaiGroundedSearchToolCostUsd),
+          reason: 'should include both token cost and the flat tool-cost '
+              'estimate, not just one or the other');
+    });
+
+    test('grounded and plain completions for the same prompt cache '
+        'separately', () async {
+      var groundedCalls = 0;
+      var plainCalls = 0;
+      final service = LlmClientService(
+        httpClient: MockClient((request) async {
+          if (request.url.path.contains('responses')) {
+            groundedCalls++;
+            return http.Response(jsonEncode({'output_text': 'grounded'}), 200);
+          }
+          plainCalls++;
+          return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {'content': 'plain'}
+                }
+              ]
+            }),
+            200,
+          );
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+      final boat = boatWith(key: 'sk-test', provider: 'xai');
+
+      final grounded = await service.completeWithSearch(boat: boat, prompt: 'hello');
+      final plain = await service.complete(boat: boat, prompt: 'hello');
+
+      expect(grounded.text, 'grounded');
+      expect(plain.text, 'plain');
+      expect(groundedCalls, 1);
+      expect(plainCalls, 1);
+    });
+  });
 }

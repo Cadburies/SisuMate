@@ -30,6 +30,14 @@ const Map<String, LlmModelPricing> llmModelPricing = {
   'grok-3-mini': LlmModelPricing(inputPer1kUsd: 0.0003, outputPer1kUsd: 0.0005),
 };
 
+/// #223: xAI bills its `web_search`/`x_search` tools separately from token
+/// usage, but the `/v1/responses` payload doesn't expose an exact
+/// per-invocation figure to parse (undocumented as of 2026-08). This is a
+/// conservative flat estimate applied once per grounded call — deliberately
+/// approximate, same spirit as [llmModelPricing]. Verify against
+/// https://docs.x.ai/docs/pricing before treating it as accurate.
+const double xaiGroundedSearchToolCostUsd = 0.025;
+
 class LlmMonthlyUsage {
   final int totalTokens;
   final double estimatedCostUsd;
@@ -67,16 +75,22 @@ class LlmUsageTracker {
         (usage.completionTokens / 1000 * pricing.outputPer1kUsd);
   }
 
+  /// [extraCostUsd] (#223): a flat, non-token cost to add on top of the
+  /// usual token-based estimate — e.g. [xaiGroundedSearchToolCostUsd] for a
+  /// grounded-search call — so the monthly estimate doesn't quietly
+  /// under-report calls that carry provider-side tool fees.
   Future<void> record({
     required LlmUsage usage,
     required String modelId,
+    double extraCostUsd = 0,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final monthKey = _currentMonthKey();
     final tokens =
         (prefs.getInt('$_tokensKeyPrefix$monthKey') ?? 0) + usage.totalTokens;
     final cost = (prefs.getDouble('$_costKeyPrefix$monthKey') ?? 0) +
-        _estimateCost(usage, modelId);
+        _estimateCost(usage, modelId) +
+        extraCostUsd;
     await prefs.setInt('$_tokensKeyPrefix$monthKey', tokens);
     await prefs.setDouble('$_costKeyPrefix$monthKey', cost);
   }

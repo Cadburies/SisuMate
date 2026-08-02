@@ -43,4 +43,17 @@ class LlmPayloadBuilder {
         'intervalHours': ?intervalHours,
         'intervalMonths': ?intervalMonths,
       };
+
+  /// Travel-safety briefing (#224): destination country + crew nationalities
+  /// only. Never a passport number, DOB, photo, or any other passport
+  /// field — nationality is all a visa/entry-safety lookup needs, and this
+  /// is a hard privacy line, not a scope-convenience one.
+  static Map<String, dynamic> travelSafetyQuery({
+    required String destinationCountry,
+    required Iterable<String> nationalities,
+  }) =>
+      {
+        'destinationCountry': destinationCountry,
+        'nationalities': nationalities.toList(),
+      };
 }

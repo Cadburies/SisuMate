@@ -60,4 +60,31 @@ void main() {
     expect(usage.totalTokens, 150);
     expect(usage.estimatedCostUsd, 0);
   });
+
+  test('#223: extraCostUsd (a grounded-search tool-invocation estimate) is '
+      'added on top of the normal token-based cost', () async {
+    final tracker = LlmUsageTracker();
+    await tracker.record(
+      usage: const LlmUsage(
+          promptTokens: 100, completionTokens: 50, totalTokens: 150),
+      modelId: 'grok-3-mini',
+      extraCostUsd: xaiGroundedSearchToolCostUsd,
+    );
+
+    final usage = await tracker.currentMonth();
+    expect(usage.estimatedCostUsd, greaterThanOrEqualTo(xaiGroundedSearchToolCostUsd));
+  });
+
+  test('extraCostUsd defaults to zero and never inflates a plain call',
+      () async {
+    final tracker = LlmUsageTracker();
+    await tracker.record(
+      usage: const LlmUsage(
+          promptTokens: 100, completionTokens: 50, totalTokens: 150),
+      modelId: 'some-future-model',
+    );
+
+    final usage = await tracker.currentMonth();
+    expect(usage.estimatedCostUsd, 0);
+  });
 }

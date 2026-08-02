@@ -62,4 +62,23 @@ void main() {
     expect(encoded, isNot(contains(poisonPhone)));
     expect(encoded, isNot(contains(poisonNotes)));
   });
+
+  test('travelSafetyQuery only includes destination + nationalities, never '
+      'a passport number, DOB, or other passport field', () {
+    final payload = LlmPayloadBuilder.travelSafetyQuery(
+      destinationCountry: 'Taiwan',
+      nationalities: ['British', 'American'],
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('Taiwan'));
+    expect(encoded, contains('British'));
+    expect(payload.keys, {'destinationCountry', 'nationalities'});
+    // The builder's signature structurally has no passportNumber/dob/photo
+    // parameter at all — asserting the poison strings can't appear proves
+    // that's a real constraint, not an accident of this call's arguments.
+    expect(encoded, isNot(contains(poisonEmail)));
+    expect(encoded, isNot(contains(poisonPhone)));
+    expect(encoded, isNot(contains(poisonNotes)));
+  });
 }

@@ -8,21 +8,50 @@ import '../models/models.dart';
 import 'llm_usage_tracker.dart';
 
 /// Which provider a boat's bring-your-own key targets (#203).
+///
+/// #223: [supportsGroundedSearch]/[groundedSearchEndpoint] — provider-side
+/// live web/X search (current data, not just training-cutoff knowledge) is
+/// a genuinely different API shape per provider, not a flag on the same
+/// endpoint. Confirmed 2026-08-02: xAI's web_search/x_search tools live on
+/// `/v1/responses` (input/output items), not `/v1/chat/completions`
+/// (messages/choices) that [endpoint] points to. OpenAI has an equivalent
+/// only on its own Responses API — genuinely unimplemented here, not just
+/// unset by omission — so `openai.supportsGroundedSearch` stays false until
+/// a future issue adds that separate integration; never assume parity.
 enum LlmProvider {
   openai('openai', 'OpenAI', 'https://api.openai.com/v1/chat/completions',
-      'gpt-4o-mini'),
+      'gpt-4o-mini',
+      supportsGroundedSearch: false, groundedSearchEndpoint: null),
   xai('xai', 'xAI (Grok)', 'https://api.x.ai/v1/chat/completions',
-      'grok-3-mini');
+      'grok-3-mini',
+      supportsGroundedSearch: true,
+      groundedSearchEndpoint: 'https://api.x.ai/v1/responses');
 
-  const LlmProvider(this.id, this.label, this.endpoint, this.defaultModel);
+  const LlmProvider(
+    this.id,
+    this.label,
+    this.endpoint,
+    this.defaultModel, {
+    required this.supportsGroundedSearch,
+    required this.groundedSearchEndpoint,
+  });
 
   final String id;
   final String label;
   final String endpoint;
   final String defaultModel;
+  final bool supportsGroundedSearch;
+  final String? groundedSearchEndpoint;
 
   static LlmProvider? fromId(String? id) =>
       LlmProvider.values.where((p) => p.id == id).firstOrNull;
+}
+
+/// A source xAI's web_search/x_search tools cited while answering (#223).
+class LlmCitation {
+  final String url;
+  final String? title;
+  const LlmCitation({required this.url, this.title});
 }
 
 /// Outcome of an [LlmClientService.complete] call. Every LLM-powered feature
@@ -46,17 +75,31 @@ enum LlmResultStatus {
 
   /// Anything else — network hiccup, malformed response, unexpected status.
   error,
+
+  /// #223: caller asked for grounded (live web/X) search but the boat's
+  /// configured provider doesn't support it. Deliberately never falls back
+  /// to a plain, ungrounded completion for a grounded-only call — a feature
+  /// that specifically needs current data must not silently answer from
+  /// stale training data instead.
+  groundedSearchUnsupported,
 }
 
 class LlmResult {
   final LlmResultStatus status;
   final String? text;
   final String? errorMessage;
+  final List<LlmCitation> citations;
 
-  const LlmResult._(this.status, {this.text, this.errorMessage});
+  const LlmResult._(this.status,
+      {this.text, this.errorMessage, this.citations = const []});
 
-  const LlmResult.success(String text)
-      : this._(LlmResultStatus.success, text: text);
+  const LlmResult.success(String text, {List<LlmCitation> citations = const []})
+      : this._(LlmResultStatus.success, text: text, citations: citations);
+  LlmResult.groundedSearchUnsupported(String providerLabel)
+      : this._(LlmResultStatus.groundedSearchUnsupported,
+            errorMessage: '$providerLabel doesn\'t support live web/X '
+                'search — switch to a provider that does (xAI/Grok) in '
+                'Settings to use this feature.');
   const LlmResult.offline()
       : this._(LlmResultStatus.offline,
             errorMessage: 'The app is offline — AI features need an internet '
@@ -230,5 +273,173 @@ class LlmClientService {
     } catch (e) {
       return LlmResult.error(e.toString());
     }
+  }
+
+  /// #223: like [complete] but asks the provider to ground its answer in
+  /// live web/X search results — current data (visa rules, active unrest,
+  /// disease alerts, regional crime reports) a plain completion can only
+  /// guess about from its training cutoff. Only providers with
+  /// [LlmProvider.supportsGroundedSearch] can serve this; every other
+  /// provider gets [LlmResultStatus.groundedSearchUnsupported] — never a
+  /// silent fallback to an ungrounded answer, since that would reintroduce
+  /// exactly the staleness risk this method exists to avoid.
+  ///
+  /// Hits a different endpoint/request shape than [complete]: xAI's
+  /// `/v1/responses` takes an `input` item list and returns an
+  /// `output`/`output_text` shape, not `/v1/chat/completions`'s
+  /// `messages`/`choices`. [LlmResult.citations] carries the sources the
+  /// provider cited, parsed defensively — the exact response schema isn't
+  /// fully published as of 2026-08; verify against
+  /// https://docs.x.ai/docs/guides/live-search if provider behavior seems
+  /// off, don't assume the parsing below is exhaustive.
+  Future<LlmResult> completeWithSearch({
+    required Boat? boat,
+    required String prompt,
+    String? systemPrompt,
+    bool useCache = true,
+  }) async {
+    final provider = LlmProvider.fromId(boat?.llmApiKeyProvider);
+    final key = boat?.llmApiKey;
+    if (provider == null || key == null || key.trim().isEmpty) {
+      return const LlmResult.noKeyConfigured();
+    }
+    if (!provider.supportsGroundedSearch ||
+        provider.groundedSearchEndpoint == null) {
+      return LlmResult.groundedSearchUnsupported(provider.label);
+    }
+
+    final cacheKey =
+        'grounded|${_cacheKey(boat!, provider, systemPrompt, prompt)}';
+    if (useCache) {
+      final cached = _cache[cacheKey];
+      if (cached != null) {
+        if (DateTime.now().isBefore(cached.expiresAt)) return cached.result;
+        _cache.remove(cacheKey);
+      }
+    }
+
+    final connectivityResult = await _connectivity.checkConnectivity();
+    if (connectivityResult.every((r) => r == ConnectivityResult.none)) {
+      return const LlmResult.offline();
+    }
+
+    try {
+      final response = await _http.post(
+        Uri.parse(provider.groundedSearchEndpoint!),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $key',
+        },
+        body: jsonEncode({
+          'model': provider.defaultModel,
+          'input': [
+            if (systemPrompt != null)
+              {'role': 'system', 'content': systemPrompt},
+            {'role': 'user', 'content': prompt},
+          ],
+          'tools': [
+            {'type': 'web_search'},
+            {'type': 'x_search'},
+          ],
+        }),
+      );
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return const LlmResult.invalidKey();
+      }
+      if (response.statusCode == 429 || response.statusCode == 402) {
+        return const LlmResult.quotaExceeded();
+      }
+      if (response.statusCode != 200) {
+        return LlmResult.error(
+            'Provider returned HTTP ${response.statusCode}');
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final content = _extractOutputText(decoded);
+      if (content == null || content.isEmpty) {
+        return const LlmResult.error('Provider returned no completion text');
+      }
+      final citations = _extractCitations(decoded);
+
+      // #15: informational-only local tracking, plus #223's flat estimate
+      // for the search-tool invocation cost xAI bills separately from
+      // tokens (not exposed as its own response field as of 2026-08 — see
+      // xaiGroundedSearchToolCostUsd's doc comment).
+      final usageJson = decoded['usage'] as Map<String, dynamic>?;
+      if (usageJson != null) {
+        final promptTokens = usageJson['input_tokens'] as int? ??
+            usageJson['prompt_tokens'] as int? ??
+            0;
+        final completionTokens = usageJson['output_tokens'] as int? ??
+            usageJson['completion_tokens'] as int? ??
+            0;
+        final totalTokens = usageJson['total_tokens'] as int? ??
+            promptTokens + completionTokens;
+        unawaited(_usageTracker.record(
+          usage: LlmUsage(
+            promptTokens: promptTokens,
+            completionTokens: completionTokens,
+            totalTokens: totalTokens,
+          ),
+          modelId: provider.defaultModel,
+          extraCostUsd: xaiGroundedSearchToolCostUsd,
+        ));
+      }
+
+      final result = LlmResult.success(content, citations: citations);
+      _cacheResult(cacheKey, result);
+      return result;
+    } on http.ClientException {
+      return const LlmResult.offline();
+    } catch (e) {
+      return LlmResult.error(e.toString());
+    }
+  }
+
+  /// Best-effort text extraction across the response shapes xAI's Responses
+  /// API has been documented to use — a top-level `output_text`
+  /// convenience field, or walking `output[].content[]` for text items
+  /// (the OpenAI-style Responses API shape xAI's was modeled on).
+  String? _extractOutputText(Map<String, dynamic> decoded) {
+    final direct = decoded['output_text'] as String?;
+    if (direct != null && direct.isNotEmpty) return direct;
+
+    final output = decoded['output'] as List?;
+    if (output == null) return null;
+    final buffer = StringBuffer();
+    for (final item in output) {
+      if (item is! Map<String, dynamic> || item['type'] != 'message') {
+        continue;
+      }
+      final content = item['content'] as List?;
+      if (content == null) continue;
+      for (final c in content) {
+        if (c is! Map<String, dynamic>) continue;
+        final text = c['text'] as String?;
+        if (text != null) buffer.write(text);
+      }
+    }
+    return buffer.isEmpty ? null : buffer.toString();
+  }
+
+  /// Citations may arrive as a flat list of URL strings or as objects with
+  /// `url`/`title` — defensive either way since the exact schema isn't
+  /// fully published (see [completeWithSearch]'s doc comment).
+  List<LlmCitation> _extractCitations(Map<String, dynamic> decoded) {
+    final raw = decoded['citations'] as List?;
+    if (raw == null) return const [];
+    final result = <LlmCitation>[];
+    for (final item in raw) {
+      if (item is String && item.isNotEmpty) {
+        result.add(LlmCitation(url: item));
+      } else if (item is Map<String, dynamic>) {
+        final url = item['url'] as String?;
+        if (url != null && url.isNotEmpty) {
+          result.add(LlmCitation(url: url, title: item['title'] as String?));
+        }
+      }
+    }
+    return result;
   }
 }
