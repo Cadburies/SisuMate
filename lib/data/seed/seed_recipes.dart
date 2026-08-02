@@ -379,7 +379,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_jungle_bird', 'Campari', 20, 'ml');
   addCocktail('cocktail_jungle_bird', 'Pineapple Juice', 45, 'ml');
   addCocktail('cocktail_jungle_bird', 'Fresh Lime Juice', 20, 'ml');
-  addCocktail('cocktail_jungle_bird', 'Demerara Syrup 2:1', 15, 'ml', substitute: 'Simple Syrup');
+  addCocktail('cocktail_jungle_bird', 'Demerara Syrup', 15, 'ml', substitute: 'Simple Syrup');
   addCocktail('cocktail_jungle_bird', 'Pineapple Wedge', null, null, isGarnish: true, garnishNotes: 'Skewer a thick pineapple wedge with a cocktail pick, add a maraschino cherry to the pick, and rest it on the glass rim. The pineapple echoes the juice; the cherry nods to classic tiki.');
   addCocktail('cocktail_jungle_bird', 'Maraschino Cherry', null, null, isGarnish: true, garnishNotes: 'Place on the cocktail pick alongside the pineapple wedge.');
 
@@ -722,7 +722,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
     Recipe()
       ..supabaseId = 'syrup_demerara_21'
       ..boatSupabaseId = defaultBoatSupabaseId
-      ..name = 'Demerara Syrup 2:1'
+      ..name = 'Demerara Syrup'
       ..description = 'Rich molasses-forward syrup - the backbone of most tiki cocktails'
       ..instructions = 'Combine 2 cups Demerara sugar with 1 cup hot (not boiling) water. Stir until fully dissolved. Cool, pour into a bottle, refrigerate. Keeps 3-4 weeks.'
       ..recipeType = 'syrup'
@@ -744,7 +744,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
     Recipe()
       ..supabaseId = 'syrup_orgeat'
       ..boatSupabaseId = defaultBoatSupabaseId
-      ..name = 'House Orgeat'
+      ..name = 'Orgeat'
       ..description = 'Fresh almond syrup - the heart of the Mai Tai and a tiki essential'
       ..instructions = 'Blend 1 cup blanched almonds with 11/2 cups water. Strain through cheesecloth, squeezing firmly. Heat almond milk with 1 cup sugar until dissolved. Off heat, add 1/2 tsp orange flower water and 1 tbsp vodka as preservative. Bottle and refrigerate up to 2 weeks.'
       ..recipeType = 'syrup'
@@ -755,7 +755,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
     Recipe()
       ..supabaseId = 'syrup_velvet_falernum'
       ..boatSupabaseId = defaultBoatSupabaseId
-      ..name = 'House Velvet Falernum'
+      ..name = 'Velvet Falernum'
       ..description = 'Rum-based lime-almond-spice liqueur from Barbados - a cornerstone of tiki'
       ..instructions = 'Zest 6 limes and steep zest with 10 cloves, 5 allspice berries, 2 oz fresh ginger (sliced), and 1/4 cup blanched almonds in 1 cup white rum for 24 hours. Strain, press solids. Combine with 1 cup simple syrup and 1/4 tsp vanilla extract. Bottle. Keeps 1 month refrigerated.'
       ..recipeType = 'syrup'
@@ -766,7 +766,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
     Recipe()
       ..supabaseId = 'syrup_grenadine'
       ..boatSupabaseId = defaultBoatSupabaseId
-      ..name = 'House Grenadine'
+      ..name = 'Grenadine'
       ..description = 'Real pomegranate grenadine - nothing like the artificial red dye version'
       ..instructions = 'Combine 2 cups pomegranate juice and 2 cups white sugar in a saucepan. Heat over medium, stirring, until sugar dissolves - do not boil. Remove from heat, add 1 tsp orange flower water (optional) and 1 oz pomegranate molasses for depth. Cool, bottle. Keeps 1 month refrigerated.'
       ..recipeType = 'syrup'
@@ -899,7 +899,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
     );
   }
 
-  // Demerara Syrup 2:1
+  // Demerara Syrup
   addSyrup('syrup_demerara_21', 'Demerara Sugar', 480.0, 'ml');
   addSyrup('syrup_demerara_21', 'Water', 240.0, 'ml');
 
@@ -908,7 +908,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addSyrup('syrup_cinnamon', 'Water', 240.0, 'ml');
   addSyrup('syrup_cinnamon', 'White Sugar', 480.0, 'ml');
 
-  // House Orgeat
+  // Orgeat
   addSyrup('syrup_orgeat', 'Blanched Almonds', 240.0, 'ml');
   addSyrup('syrup_orgeat', 'Water', 360.0, 'ml');
   addSyrup('syrup_orgeat', 'White Sugar', 240.0, 'ml');
@@ -925,7 +925,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addSyrup('syrup_velvet_falernum', 'Vanilla Extract', 1.25, 'ml');
   addSyrup('syrup_velvet_falernum', 'Simple Syrup', 240.0, 'ml');
 
-  // House Grenadine
+  // Grenadine
   addSyrup('syrup_grenadine', 'Pomegranate Juice', 480.0, 'ml');
   addSyrup('syrup_grenadine', 'White Sugar', 480.0, 'ml');
   addSyrup('syrup_grenadine', 'Orange Flower Water', 5.0, 'ml', isOptional: true);

@@ -5,8 +5,9 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137, #158 (drawer ProUpgradeSection/AboutSection gaps: home, weather, games, shopping item-options, ingredient detail). Audited + closed #1/#2/#3. Investigated (left open, no confident fix): #156 (RLS, needs live repro), #147/#176 (rare Riverpod-scheduler race, non-reproducible). CLI agent (agent:claude) active concurrently on #133/#134 (seed_recipes.dart, cocktails_screen.dart) as of this write — don't touch those files without checking current state first.
-- **Doing:** nothing claimed by claudevc.
+- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137, #158 (drawer ProUpgradeSection/AboutSection gaps: home, weather, games, shopping item-options, ingredient detail). Audited + closed #1/#2/#3. Investigated (left open, no confident fix): #156 (RLS, needs live repro), #147/#176 (rare Riverpod-scheduler race, non-reproducible).
+- **Last (CLI agent):** fixed + closed #184 (Community browse hit Supabase for Free users despite the documented Pro-only gate) and #133/#134 together (House-tab "used in N cocktails" on `CocktailRecipeDetailScreen`; renamed 4 syrup `Recipe.name`s — "House Orgeat"/"House Velvet Falernum"/"House Grenadine"/"Demerara Syrup 2:1" — to match how cocktails actually reference them as ingredients).
+- **Doing:** nothing claimed by claudecli right now. Unrelated uncommitted WIP for `maintenance_items_screen.dart` (`_openViewer`, not #133/#134/#184) is sitting in the shared tree from another session — left untouched, not staged.
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 

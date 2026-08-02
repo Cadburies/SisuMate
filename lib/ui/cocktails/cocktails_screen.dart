@@ -1317,6 +1317,59 @@ class CocktailRecipeDetailScreenState
                         ),
                       ),
                     ],
+                    if (widget.recipe.recipeType == 'syrup') ...[
+                      const SizedBox(height: 20),
+                      Text(
+                        'Used in cocktails',
+                        style: Theme.of(context).textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final cocktailsAsync = ref.watch(
+                            cocktailRecipesForIngredientProvider(
+                              widget.recipe.name,
+                            ),
+                          );
+                          return cocktailsAsync.when(
+                            data: (list) {
+                              if (list.isEmpty) {
+                                return Text(
+                                  'Not used in any cocktail',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(color: Colors.grey),
+                                );
+                              }
+                              return Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: [
+                                  for (final cocktail in list)
+                                    ActionChip(
+                                      visualDensity: VisualDensity.compact,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      label: Text(
+                                        cocktail.name,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      onPressed: () => context.push(
+                                        AppRoutes.cocktailRecipe,
+                                        extra: cocktail,
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                            loading: () => const Text('Loading…'),
+                            error: (_, _) => const SizedBox.shrink(),
+                          );
+                        },
+                      ),
+                    ],
                     // ── Tasting Log ───────────────────────────────────────
                     const SizedBox(height: 24),
                     Row(
