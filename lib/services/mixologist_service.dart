@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../models/models.dart';
 
 // -- Data types ----------------------------------------------------------------
@@ -335,6 +337,21 @@ class MixologistService {
       if (desired.contains(f)) score++;
     }
     return score;
+  }
+
+  /// Randomly selects among the entries tying for the top score in a
+  /// desc-sorted list, so repeated `suggest()` calls with identical inputs
+  /// ("Try Another") vary instead of always returning the same #1 pick
+  /// (#127) — while never dropping to a strictly worse-scored candidate.
+  static T _pickTiedTop<T>(
+      List<T> sortedDesc, int Function(T) score, Random random) {
+    final top = score(sortedDesc.first);
+    var tiedCount = 1;
+    while (tiedCount < sortedDesc.length &&
+        score(sortedDesc[tiedCount]) == top) {
+      tiedCount++;
+    }
+    return sortedDesc[random.nextInt(tiedCount)];
   }
 
   static String _spiritKey(String name) {
@@ -1096,7 +1113,9 @@ class MixologistService {
     CocktailStrength strength = CocktailStrength.session,
     String? glassware,
     int servings = 1,
+    Random? random,
   }) {
+    final rnd = random ?? Random();
     final available = barIngredients.where((i) => i.inMyBar).toList();
     if (available.isEmpty) return null;
 
@@ -1144,7 +1163,8 @@ class MixologistService {
         CocktailStrength.session => 0,
       };
     });
-    final spirit = spirits.first;
+    int scoreOf(BarIngredient i) => _flavorScore(_flavors(i), desiredList);
+    final spirit = _pickTiedTop(spirits, scoreOf, rnd);
 
     // Select acid - prefer sour/citrus juices that match vibe
     final acids = juices.where((j) {
@@ -1154,6 +1174,8 @@ class MixologistService {
     acids.sort((a, b) =>
         _flavorScore(_flavors(b), desiredList)
             .compareTo(_flavorScore(_flavors(a), desiredList)));
+    final chosenAcid =
+        acids.isNotEmpty ? _pickTiedTop(acids, scoreOf, rnd) : null;
 
     // Select sweet - prefer syrups matching vibe
     final sweets = [...syrups];
@@ -1161,17 +1183,19 @@ class MixologistService {
     sweets.sort((a, b) =>
         _flavorScore(_flavors(b), desiredList)
             .compareTo(_flavorScore(_flavors(a), desiredList)));
+    final chosenSweet =
+        sweets.isNotEmpty ? _pickTiedTop(sweets, scoreOf, rnd) : null;
 
     // Select modifier - optional liqueur that adds complexity
-    final modifiers = liqueurs
-        .where((l) => l != (sweets.firstOrNull))
-        .toList();
+    final modifiers = liqueurs.where((l) => l != chosenSweet).toList();
     modifiers.sort((a, b) =>
         _flavorScore(_flavors(b), desiredList)
             .compareTo(_flavorScore(_flavors(a), desiredList)));
+    final chosenModifier =
+        modifiers.isNotEmpty ? _pickTiedTop(modifiers, scoreOf, rnd) : null;
 
     // Select fizz for build/fizzy vibes / highball glassware
-    BarIngredient? fizz;
+    BarIngredient? chosenFizz;
     final wantFizz = technique == 'build' ||
         vibes.contains('fizzy') ||
         glass.toLowerCase().contains('highball') ||
@@ -1183,11 +1207,14 @@ class MixologistService {
       fizzOpts.sort((a, b) =>
           _flavorScore(_flavors(b), desiredList)
               .compareTo(_flavorScore(_flavors(a), desiredList)));
-      fizz = fizzOpts.firstOrNull;
+      chosenFizz = fizzOpts.isNotEmpty
+          ? _pickTiedTop<BarIngredient>(fizzOpts, scoreOf, rnd)
+          : null;
     }
 
-    // Select bitters - optional
-    final bitter = bitters.firstOrNull;
+    // Select bitters - optional (unscored, so pick uniformly among all on hand)
+    final chosenBitter =
+        bitters.isEmpty ? null : bitters[rnd.nextInt(bitters.length)];
 
     final spiritOz = strength.spiritOz;
     final balanceOz = strength.balanceOz;
@@ -1203,29 +1230,29 @@ class MixologistService {
       SuggestedIngredient(spirit.name, spiritOz, 'oz'),
     ];
 
-    if (acids.isNotEmpty) {
-      single.add(SuggestedIngredient(acids.first.name, bal, 'oz'));
+    if (chosenAcid != null) {
+      single.add(SuggestedIngredient(chosenAcid.name, bal, 'oz'));
     }
 
-    if (sweets.isNotEmpty) {
-      single.add(SuggestedIngredient(sweets.first.name, bal, 'oz'));
+    if (chosenSweet != null) {
+      single.add(SuggestedIngredient(chosenSweet.name, bal, 'oz'));
     }
 
-    if (modifiers.isNotEmpty && modifiers.first != sweets.firstOrNull) {
+    if (chosenModifier != null && chosenModifier != chosenSweet) {
       // Strong drinks keep modifiers; light drops them unless high confidence vibe.
       if (strength != CocktailStrength.light) {
         single.add(SuggestedIngredient(
-            modifiers.first.name, modOz, 'oz',
+            chosenModifier.name, modOz, 'oz',
             optional: true));
       }
     }
 
-    if (fizz != null) {
-      single.add(SuggestedIngredient(fizz.name, fizzOz, 'oz'));
+    if (chosenFizz != null) {
+      single.add(SuggestedIngredient(chosenFizz.name, fizzOz, 'oz'));
     }
 
-    if (bitter != null) {
-      single.add(SuggestedIngredient(bitter.name, 2.0, 'dashes', optional: true));
+    if (chosenBitter != null) {
+      single.add(SuggestedIngredient(chosenBitter.name, 2.0, 'dashes', optional: true));
     }
 
     final ingredients = _scaleForServings(single, crew);
@@ -1245,8 +1272,8 @@ class MixologistService {
     final rationale =
         'Built around ${spirit.name} for a ${strength.label.toLowerCase()} '
         '$vibeLabel pour in a $glass.'
-        '${acids.isNotEmpty ? " ${acids.first.name} adds brightness." : ""}'
-        '${sweets.isNotEmpty ? " ${sweets.first.name} balances sweetness." : ""}'
+        '${chosenAcid != null ? " ${chosenAcid.name} adds brightness." : ""}'
+        '${chosenSweet != null ? " ${chosenSweet.name} balances sweetness." : ""}'
         '${crew > 1 ? " Scaled for $crew." : ""}'
         '$abvNote';
 

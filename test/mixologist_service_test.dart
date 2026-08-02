@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sisu_mate/models/models.dart';
 import 'package:sisu_mate/services/mixologist_service.dart';
@@ -156,6 +158,82 @@ void main() {
       expect(four.servings, 4);
       expect(four.ingredients.first.quantity,
           closeTo(one.ingredients.first.quantity * 4, 0.3));
+    });
+
+    test(
+        '#127: "Try Another" varies when multiple bar candidates tie for '
+        'top score, instead of always returning the same suggestion', () {
+      // Two gins with identical flavor profiles -> tied top score, so which
+      // one gets picked should vary across calls with a real Random().
+      final bar = [
+        BarIngredient()
+          ..name = 'Gin A'
+          ..category = 'spirit'
+          ..flavorProfiles = ['citrus', 'fresh']
+          ..inMyBar = true,
+        BarIngredient()
+          ..name = 'Gin B'
+          ..category = 'spirit'
+          ..flavorProfiles = ['citrus', 'fresh']
+          ..inMyBar = true,
+        BarIngredient()
+          ..name = 'Fresh Lime Juice'
+          ..category = 'juice'
+          ..flavorProfiles = ['sour', 'citrus']
+          ..inMyBar = true,
+        BarIngredient()
+          ..name = 'Simple Syrup'
+          ..category = 'syrup'
+          ..flavorProfiles = ['sweet']
+          ..inMyBar = true,
+      ];
+
+      final seen = <String>{};
+      for (var i = 0; i < 40; i++) {
+        final s = MixologistService.suggest(
+          vibes: const ['citrus'],
+          barIngredients: bar,
+          random: Random(),
+        )!;
+        seen.add(s.ingredients.first.name);
+      }
+
+      expect(seen, containsAll(['Gin A', 'Gin B']),
+          reason: '40 calls with two tied-top candidates and a real Random '
+              'should statistically produce both at least once — a fixed '
+              '.first pick would only ever produce one name (#127)');
+    });
+
+    test(
+        '#127: falls back gracefully to the same suggestion when only one '
+        'valid candidate exists per category (no crash, no false variety)',
+        () {
+      final bar = [
+        BarIngredient()
+          ..name = 'Gin'
+          ..category = 'spirit'
+          ..flavorProfiles = ['citrus', 'fresh']
+          ..inMyBar = true,
+        BarIngredient()
+          ..name = 'Fresh Lime Juice'
+          ..category = 'juice'
+          ..flavorProfiles = ['sour', 'citrus']
+          ..inMyBar = true,
+        BarIngredient()
+          ..name = 'Simple Syrup'
+          ..category = 'syrup'
+          ..flavorProfiles = ['sweet']
+          ..inMyBar = true,
+      ];
+
+      for (var i = 0; i < 10; i++) {
+        final s = MixologistService.suggest(
+          vibes: const ['citrus'],
+          barIngredients: bar,
+          random: Random(),
+        )!;
+        expect(s.ingredients.first.name, 'Gin');
+      }
     });
 
     test('MIX3 estimates ABV when spirit ABV is known', () {
