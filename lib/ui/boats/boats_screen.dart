@@ -130,7 +130,11 @@ class _BoatsScreenState extends ConsumerState<BoatsScreen> {
               if (name.isNotEmpty) {
                 final boat = Boat()
                   ..supabaseId = 'user_boat_${DateTime.now().millisecondsSinceEpoch}'
-                  ..name = name;
+                  ..name = name
+                  // Without this, boats_insert's `ownerId = auth.uid()` RLS
+                  // check always rejects the push (#200/#201) — the row can
+                  // never sync, silently staying local-only forever.
+                  ..ownerId = ref.read(authServiceProvider).currentUser?.id;
 
                 try {
                   final repository = ref.read(boatRepositoryProvider);
