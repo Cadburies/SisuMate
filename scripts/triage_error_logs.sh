@@ -67,7 +67,7 @@ fi
 echo "==> Filing issues (one per new fingerprint; already-filed fingerprints are skipped)"
 while IFS= read -r line; do
   [ -z "$line" ] && continue
-  FINGERPRINT="$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["fingerprint"])')"
+  FINGERPRINT="$(printf '%s' "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["fingerprint"])')"
   if [ -z "$FINGERPRINT" ]; then
     echo "  SKIPPING a row: fingerprint extraction failed (malformed JSON line — see it in $DUMP)" >&2
     continue
@@ -80,15 +80,15 @@ while IFS= read -r line; do
     continue
   fi
 
-  TITLE="$(echo "$line" | python3 scripts/_error_log_issue_body.py --title-only)"
+  TITLE="$(printf '%s' "$line" | python3 scripts/_error_log_issue_body.py --title-only)"
   BODY_FILE="$WORKDIR/body_${FINGERPRINT}.md"
-  echo "$line" | python3 scripts/_error_log_issue_body.py > "$BODY_FILE"
+  printf '%s' "$line" | python3 scripts/_error_log_issue_body.py > "$BODY_FILE"
 
   # Pixel-overflow (RenderFlex) rows get a second, distinct label so they're
   # `gh issue list --label ui-overflow`-findable at a glance, independent of
   # whether sourceFile capture succeeded for that particular row.
   LABEL_ARGS=(--label bug)
-  if echo "$line" | python3 -c 'import json,sys; msg=json.load(sys.stdin).get("message") or ""; sys.exit(0 if "RenderFlex overflowed" in msg else 1)'; then
+  if printf '%s' "$line" | python3 -c 'import json,sys; msg=json.load(sys.stdin).get("message") or ""; sys.exit(0 if "RenderFlex overflowed" in msg else 1)'; then
     LABEL_ARGS+=(--label ui-overflow)
   fi
 

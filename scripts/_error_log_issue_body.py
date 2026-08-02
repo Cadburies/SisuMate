@@ -17,11 +17,29 @@ CONTEXT_LINES = 6
 # more descriptive issue title than the bare file path.
 _CLASS_RE = re.compile(r"^\s*(?:abstract\s+)?(?:class|mixin)\s+(\w+)")
 
+# `logFlutterError` now renders via `details.toString()` (needed to reach the
+# file:line location — see error_log_service.dart), which is Flutter's full
+# boxed console format: a `══╡ EXCEPTION CAUGHT BY X ╞══...` border line,
+# then a "The following ... was thrown[...]:" lead-in, THEN the actual
+# one-line summary ("A RenderFlex overflowed by 1.1 pixels on the bottom.").
+# Naively taking the literal first line put that border/boilerplate in every
+# title instead of the summary. Skip both to find the real summary line.
+_BORDER_RE = re.compile(r"^[\s═╡╞◢◤]+$")
+_LEAD_IN_RE = re.compile(r"^The following .* was thrown.*:$")
+
 
 def first_line(text: str) -> str:
     if not text:
         return "(no message)"
-    return text.strip().splitlines()[0][:120]
+    lines = text.strip().splitlines()
+    for raw in lines:
+        line = raw.strip()
+        if not line or _BORDER_RE.match(line) or "EXCEPTION CAUGHT BY" in line:
+            continue
+        if _LEAD_IN_RE.match(line):
+            continue
+        return line[:120]
+    return lines[0][:120]
 
 
 def parse_source_file(source_file: str):
