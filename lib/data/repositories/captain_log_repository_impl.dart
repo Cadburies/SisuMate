@@ -25,6 +25,13 @@ class CaptainLogRepositoryImpl implements CaptainLogRepository {
     ..weather = r.weather
     ..windSpeedKt = r.windSpeedKt
     ..windDir = r.windDir
+    ..sogKt = r.sogKt
+    ..cogDeg = r.cogDeg
+    ..barometricPressureHpa = r.barometricPressureHpa
+    ..seaState = r.seaState
+    ..watchCrew = (jsonDecode(r.watchCrew) as List).cast<String>()
+    ..engineHours = r.engineHours
+    ..fuelLevelPercent = r.fuelLevelPercent
     ..crewOnBoard = (jsonDecode(r.crewOnBoard) as List).cast<String>()
     ..notes = r.notes
     ..photos = (jsonDecode(r.photos) as List).cast<String>()
@@ -43,6 +50,13 @@ class CaptainLogRepositoryImpl implements CaptainLogRepository {
         weather: Value(l.weather),
         windSpeedKt: Value(l.windSpeedKt),
         windDir: Value(l.windDir),
+        sogKt: Value(l.sogKt),
+        cogDeg: Value(l.cogDeg),
+        barometricPressureHpa: Value(l.barometricPressureHpa),
+        seaState: Value(l.seaState),
+        watchCrew: Value(jsonEncode(l.watchCrew)),
+        engineHours: Value(l.engineHours),
+        fuelLevelPercent: Value(l.fuelLevelPercent),
         crewOnBoard: Value(jsonEncode(l.crewOnBoard)),
         notes: Value(l.notes),
         photos: Value(jsonEncode(l.photos)),

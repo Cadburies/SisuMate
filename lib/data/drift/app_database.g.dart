@@ -5016,6 +5016,80 @@ class $CaptainLogEntriesTable extends CaptainLogEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sogKtMeta = const VerificationMeta('sogKt');
+  @override
+  late final GeneratedColumn<double> sogKt = GeneratedColumn<double>(
+    'sog_kt',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cogDegMeta = const VerificationMeta('cogDeg');
+  @override
+  late final GeneratedColumn<double> cogDeg = GeneratedColumn<double>(
+    'cog_deg',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _barometricPressureHpaMeta =
+      const VerificationMeta('barometricPressureHpa');
+  @override
+  late final GeneratedColumn<double> barometricPressureHpa =
+      GeneratedColumn<double>(
+        'barometric_pressure_hpa',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _seaStateMeta = const VerificationMeta(
+    'seaState',
+  );
+  @override
+  late final GeneratedColumn<String> seaState = GeneratedColumn<String>(
+    'sea_state',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _watchCrewMeta = const VerificationMeta(
+    'watchCrew',
+  );
+  @override
+  late final GeneratedColumn<String> watchCrew = GeneratedColumn<String>(
+    'watch_crew',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _engineHoursMeta = const VerificationMeta(
+    'engineHours',
+  );
+  @override
+  late final GeneratedColumn<double> engineHours = GeneratedColumn<double>(
+    'engine_hours',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fuelLevelPercentMeta = const VerificationMeta(
+    'fuelLevelPercent',
+  );
+  @override
+  late final GeneratedColumn<double> fuelLevelPercent = GeneratedColumn<double>(
+    'fuel_level_percent',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _crewOnBoardMeta = const VerificationMeta(
     'crewOnBoard',
   );
@@ -5087,6 +5161,13 @@ class $CaptainLogEntriesTable extends CaptainLogEntries
     weather,
     windSpeedKt,
     windDir,
+    sogKt,
+    cogDeg,
+    barometricPressureHpa,
+    seaState,
+    watchCrew,
+    engineHours,
+    fuelLevelPercent,
     crewOnBoard,
     notes,
     photos,
@@ -5180,6 +5261,57 @@ class $CaptainLogEntriesTable extends CaptainLogEntries
         windDir.isAcceptableOrUnknown(data['wind_dir']!, _windDirMeta),
       );
     }
+    if (data.containsKey('sog_kt')) {
+      context.handle(
+        _sogKtMeta,
+        sogKt.isAcceptableOrUnknown(data['sog_kt']!, _sogKtMeta),
+      );
+    }
+    if (data.containsKey('cog_deg')) {
+      context.handle(
+        _cogDegMeta,
+        cogDeg.isAcceptableOrUnknown(data['cog_deg']!, _cogDegMeta),
+      );
+    }
+    if (data.containsKey('barometric_pressure_hpa')) {
+      context.handle(
+        _barometricPressureHpaMeta,
+        barometricPressureHpa.isAcceptableOrUnknown(
+          data['barometric_pressure_hpa']!,
+          _barometricPressureHpaMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sea_state')) {
+      context.handle(
+        _seaStateMeta,
+        seaState.isAcceptableOrUnknown(data['sea_state']!, _seaStateMeta),
+      );
+    }
+    if (data.containsKey('watch_crew')) {
+      context.handle(
+        _watchCrewMeta,
+        watchCrew.isAcceptableOrUnknown(data['watch_crew']!, _watchCrewMeta),
+      );
+    }
+    if (data.containsKey('engine_hours')) {
+      context.handle(
+        _engineHoursMeta,
+        engineHours.isAcceptableOrUnknown(
+          data['engine_hours']!,
+          _engineHoursMeta,
+        ),
+      );
+    }
+    if (data.containsKey('fuel_level_percent')) {
+      context.handle(
+        _fuelLevelPercentMeta,
+        fuelLevelPercent.isAcceptableOrUnknown(
+          data['fuel_level_percent']!,
+          _fuelLevelPercentMeta,
+        ),
+      );
+    }
     if (data.containsKey('crew_on_board')) {
       context.handle(
         _crewOnBoardMeta,
@@ -5269,6 +5401,34 @@ class $CaptainLogEntriesTable extends CaptainLogEntries
         DriftSqlType.string,
         data['${effectivePrefix}wind_dir'],
       ),
+      sogKt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}sog_kt'],
+      ),
+      cogDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cog_deg'],
+      ),
+      barometricPressureHpa: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}barometric_pressure_hpa'],
+      ),
+      seaState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sea_state'],
+      ),
+      watchCrew: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}watch_crew'],
+      )!,
+      engineHours: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}engine_hours'],
+      ),
+      fuelLevelPercent: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}fuel_level_percent'],
+      ),
       crewOnBoard: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}crew_on_board'],
@@ -5311,6 +5471,13 @@ class CaptainLogEntryRow extends DataClass
   final String? weather;
   final int? windSpeedKt;
   final String? windDir;
+  final double? sogKt;
+  final double? cogDeg;
+  final double? barometricPressureHpa;
+  final String? seaState;
+  final String watchCrew;
+  final double? engineHours;
+  final double? fuelLevelPercent;
   final String crewOnBoard;
   final String? notes;
   final String photos;
@@ -5328,6 +5495,13 @@ class CaptainLogEntryRow extends DataClass
     this.weather,
     this.windSpeedKt,
     this.windDir,
+    this.sogKt,
+    this.cogDeg,
+    this.barometricPressureHpa,
+    this.seaState,
+    required this.watchCrew,
+    this.engineHours,
+    this.fuelLevelPercent,
     required this.crewOnBoard,
     this.notes,
     required this.photos,
@@ -5359,6 +5533,25 @@ class CaptainLogEntryRow extends DataClass
     }
     if (!nullToAbsent || windDir != null) {
       map['wind_dir'] = Variable<String>(windDir);
+    }
+    if (!nullToAbsent || sogKt != null) {
+      map['sog_kt'] = Variable<double>(sogKt);
+    }
+    if (!nullToAbsent || cogDeg != null) {
+      map['cog_deg'] = Variable<double>(cogDeg);
+    }
+    if (!nullToAbsent || barometricPressureHpa != null) {
+      map['barometric_pressure_hpa'] = Variable<double>(barometricPressureHpa);
+    }
+    if (!nullToAbsent || seaState != null) {
+      map['sea_state'] = Variable<String>(seaState);
+    }
+    map['watch_crew'] = Variable<String>(watchCrew);
+    if (!nullToAbsent || engineHours != null) {
+      map['engine_hours'] = Variable<double>(engineHours);
+    }
+    if (!nullToAbsent || fuelLevelPercent != null) {
+      map['fuel_level_percent'] = Variable<double>(fuelLevelPercent);
     }
     map['crew_on_board'] = Variable<String>(crewOnBoard);
     if (!nullToAbsent || notes != null) {
@@ -5395,6 +5588,25 @@ class CaptainLogEntryRow extends DataClass
       windDir: windDir == null && nullToAbsent
           ? const Value.absent()
           : Value(windDir),
+      sogKt: sogKt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sogKt),
+      cogDeg: cogDeg == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cogDeg),
+      barometricPressureHpa: barometricPressureHpa == null && nullToAbsent
+          ? const Value.absent()
+          : Value(barometricPressureHpa),
+      seaState: seaState == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seaState),
+      watchCrew: Value(watchCrew),
+      engineHours: engineHours == null && nullToAbsent
+          ? const Value.absent()
+          : Value(engineHours),
+      fuelLevelPercent: fuelLevelPercent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fuelLevelPercent),
       crewOnBoard: Value(crewOnBoard),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
@@ -5422,6 +5634,15 @@ class CaptainLogEntryRow extends DataClass
       weather: serializer.fromJson<String?>(json['weather']),
       windSpeedKt: serializer.fromJson<int?>(json['windSpeedKt']),
       windDir: serializer.fromJson<String?>(json['windDir']),
+      sogKt: serializer.fromJson<double?>(json['sogKt']),
+      cogDeg: serializer.fromJson<double?>(json['cogDeg']),
+      barometricPressureHpa: serializer.fromJson<double?>(
+        json['barometricPressureHpa'],
+      ),
+      seaState: serializer.fromJson<String?>(json['seaState']),
+      watchCrew: serializer.fromJson<String>(json['watchCrew']),
+      engineHours: serializer.fromJson<double?>(json['engineHours']),
+      fuelLevelPercent: serializer.fromJson<double?>(json['fuelLevelPercent']),
       crewOnBoard: serializer.fromJson<String>(json['crewOnBoard']),
       notes: serializer.fromJson<String?>(json['notes']),
       photos: serializer.fromJson<String>(json['photos']),
@@ -5444,6 +5665,15 @@ class CaptainLogEntryRow extends DataClass
       'weather': serializer.toJson<String?>(weather),
       'windSpeedKt': serializer.toJson<int?>(windSpeedKt),
       'windDir': serializer.toJson<String?>(windDir),
+      'sogKt': serializer.toJson<double?>(sogKt),
+      'cogDeg': serializer.toJson<double?>(cogDeg),
+      'barometricPressureHpa': serializer.toJson<double?>(
+        barometricPressureHpa,
+      ),
+      'seaState': serializer.toJson<String?>(seaState),
+      'watchCrew': serializer.toJson<String>(watchCrew),
+      'engineHours': serializer.toJson<double?>(engineHours),
+      'fuelLevelPercent': serializer.toJson<double?>(fuelLevelPercent),
       'crewOnBoard': serializer.toJson<String>(crewOnBoard),
       'notes': serializer.toJson<String?>(notes),
       'photos': serializer.toJson<String>(photos),
@@ -5464,6 +5694,13 @@ class CaptainLogEntryRow extends DataClass
     Value<String?> weather = const Value.absent(),
     Value<int?> windSpeedKt = const Value.absent(),
     Value<String?> windDir = const Value.absent(),
+    Value<double?> sogKt = const Value.absent(),
+    Value<double?> cogDeg = const Value.absent(),
+    Value<double?> barometricPressureHpa = const Value.absent(),
+    Value<String?> seaState = const Value.absent(),
+    String? watchCrew,
+    Value<double?> engineHours = const Value.absent(),
+    Value<double?> fuelLevelPercent = const Value.absent(),
     String? crewOnBoard,
     Value<String?> notes = const Value.absent(),
     String? photos,
@@ -5481,6 +5718,17 @@ class CaptainLogEntryRow extends DataClass
     weather: weather.present ? weather.value : this.weather,
     windSpeedKt: windSpeedKt.present ? windSpeedKt.value : this.windSpeedKt,
     windDir: windDir.present ? windDir.value : this.windDir,
+    sogKt: sogKt.present ? sogKt.value : this.sogKt,
+    cogDeg: cogDeg.present ? cogDeg.value : this.cogDeg,
+    barometricPressureHpa: barometricPressureHpa.present
+        ? barometricPressureHpa.value
+        : this.barometricPressureHpa,
+    seaState: seaState.present ? seaState.value : this.seaState,
+    watchCrew: watchCrew ?? this.watchCrew,
+    engineHours: engineHours.present ? engineHours.value : this.engineHours,
+    fuelLevelPercent: fuelLevelPercent.present
+        ? fuelLevelPercent.value
+        : this.fuelLevelPercent,
     crewOnBoard: crewOnBoard ?? this.crewOnBoard,
     notes: notes.present ? notes.value : this.notes,
     photos: photos ?? this.photos,
@@ -5510,6 +5758,19 @@ class CaptainLogEntryRow extends DataClass
           ? data.windSpeedKt.value
           : this.windSpeedKt,
       windDir: data.windDir.present ? data.windDir.value : this.windDir,
+      sogKt: data.sogKt.present ? data.sogKt.value : this.sogKt,
+      cogDeg: data.cogDeg.present ? data.cogDeg.value : this.cogDeg,
+      barometricPressureHpa: data.barometricPressureHpa.present
+          ? data.barometricPressureHpa.value
+          : this.barometricPressureHpa,
+      seaState: data.seaState.present ? data.seaState.value : this.seaState,
+      watchCrew: data.watchCrew.present ? data.watchCrew.value : this.watchCrew,
+      engineHours: data.engineHours.present
+          ? data.engineHours.value
+          : this.engineHours,
+      fuelLevelPercent: data.fuelLevelPercent.present
+          ? data.fuelLevelPercent.value
+          : this.fuelLevelPercent,
       crewOnBoard: data.crewOnBoard.present
           ? data.crewOnBoard.value
           : this.crewOnBoard,
@@ -5536,6 +5797,13 @@ class CaptainLogEntryRow extends DataClass
           ..write('weather: $weather, ')
           ..write('windSpeedKt: $windSpeedKt, ')
           ..write('windDir: $windDir, ')
+          ..write('sogKt: $sogKt, ')
+          ..write('cogDeg: $cogDeg, ')
+          ..write('barometricPressureHpa: $barometricPressureHpa, ')
+          ..write('seaState: $seaState, ')
+          ..write('watchCrew: $watchCrew, ')
+          ..write('engineHours: $engineHours, ')
+          ..write('fuelLevelPercent: $fuelLevelPercent, ')
           ..write('crewOnBoard: $crewOnBoard, ')
           ..write('notes: $notes, ')
           ..write('photos: $photos, ')
@@ -5546,7 +5814,7 @@ class CaptainLogEntryRow extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     supabaseId,
     boatSupabaseId,
@@ -5558,12 +5826,19 @@ class CaptainLogEntryRow extends DataClass
     weather,
     windSpeedKt,
     windDir,
+    sogKt,
+    cogDeg,
+    barometricPressureHpa,
+    seaState,
+    watchCrew,
+    engineHours,
+    fuelLevelPercent,
     crewOnBoard,
     notes,
     photos,
     isSynced,
     lastModified,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5579,6 +5854,13 @@ class CaptainLogEntryRow extends DataClass
           other.weather == this.weather &&
           other.windSpeedKt == this.windSpeedKt &&
           other.windDir == this.windDir &&
+          other.sogKt == this.sogKt &&
+          other.cogDeg == this.cogDeg &&
+          other.barometricPressureHpa == this.barometricPressureHpa &&
+          other.seaState == this.seaState &&
+          other.watchCrew == this.watchCrew &&
+          other.engineHours == this.engineHours &&
+          other.fuelLevelPercent == this.fuelLevelPercent &&
           other.crewOnBoard == this.crewOnBoard &&
           other.notes == this.notes &&
           other.photos == this.photos &&
@@ -5598,6 +5880,13 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
   final Value<String?> weather;
   final Value<int?> windSpeedKt;
   final Value<String?> windDir;
+  final Value<double?> sogKt;
+  final Value<double?> cogDeg;
+  final Value<double?> barometricPressureHpa;
+  final Value<String?> seaState;
+  final Value<String> watchCrew;
+  final Value<double?> engineHours;
+  final Value<double?> fuelLevelPercent;
   final Value<String> crewOnBoard;
   final Value<String?> notes;
   final Value<String> photos;
@@ -5615,6 +5904,13 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
     this.weather = const Value.absent(),
     this.windSpeedKt = const Value.absent(),
     this.windDir = const Value.absent(),
+    this.sogKt = const Value.absent(),
+    this.cogDeg = const Value.absent(),
+    this.barometricPressureHpa = const Value.absent(),
+    this.seaState = const Value.absent(),
+    this.watchCrew = const Value.absent(),
+    this.engineHours = const Value.absent(),
+    this.fuelLevelPercent = const Value.absent(),
     this.crewOnBoard = const Value.absent(),
     this.notes = const Value.absent(),
     this.photos = const Value.absent(),
@@ -5633,6 +5929,13 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
     this.weather = const Value.absent(),
     this.windSpeedKt = const Value.absent(),
     this.windDir = const Value.absent(),
+    this.sogKt = const Value.absent(),
+    this.cogDeg = const Value.absent(),
+    this.barometricPressureHpa = const Value.absent(),
+    this.seaState = const Value.absent(),
+    this.watchCrew = const Value.absent(),
+    this.engineHours = const Value.absent(),
+    this.fuelLevelPercent = const Value.absent(),
     this.crewOnBoard = const Value.absent(),
     this.notes = const Value.absent(),
     this.photos = const Value.absent(),
@@ -5651,6 +5954,13 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
     Expression<String>? weather,
     Expression<int>? windSpeedKt,
     Expression<String>? windDir,
+    Expression<double>? sogKt,
+    Expression<double>? cogDeg,
+    Expression<double>? barometricPressureHpa,
+    Expression<String>? seaState,
+    Expression<String>? watchCrew,
+    Expression<double>? engineHours,
+    Expression<double>? fuelLevelPercent,
     Expression<String>? crewOnBoard,
     Expression<String>? notes,
     Expression<String>? photos,
@@ -5669,6 +5979,14 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
       if (weather != null) 'weather': weather,
       if (windSpeedKt != null) 'wind_speed_kt': windSpeedKt,
       if (windDir != null) 'wind_dir': windDir,
+      if (sogKt != null) 'sog_kt': sogKt,
+      if (cogDeg != null) 'cog_deg': cogDeg,
+      if (barometricPressureHpa != null)
+        'barometric_pressure_hpa': barometricPressureHpa,
+      if (seaState != null) 'sea_state': seaState,
+      if (watchCrew != null) 'watch_crew': watchCrew,
+      if (engineHours != null) 'engine_hours': engineHours,
+      if (fuelLevelPercent != null) 'fuel_level_percent': fuelLevelPercent,
       if (crewOnBoard != null) 'crew_on_board': crewOnBoard,
       if (notes != null) 'notes': notes,
       if (photos != null) 'photos': photos,
@@ -5689,6 +6007,13 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
     Value<String?>? weather,
     Value<int?>? windSpeedKt,
     Value<String?>? windDir,
+    Value<double?>? sogKt,
+    Value<double?>? cogDeg,
+    Value<double?>? barometricPressureHpa,
+    Value<String?>? seaState,
+    Value<String>? watchCrew,
+    Value<double?>? engineHours,
+    Value<double?>? fuelLevelPercent,
     Value<String>? crewOnBoard,
     Value<String?>? notes,
     Value<String>? photos,
@@ -5707,6 +6032,14 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
       weather: weather ?? this.weather,
       windSpeedKt: windSpeedKt ?? this.windSpeedKt,
       windDir: windDir ?? this.windDir,
+      sogKt: sogKt ?? this.sogKt,
+      cogDeg: cogDeg ?? this.cogDeg,
+      barometricPressureHpa:
+          barometricPressureHpa ?? this.barometricPressureHpa,
+      seaState: seaState ?? this.seaState,
+      watchCrew: watchCrew ?? this.watchCrew,
+      engineHours: engineHours ?? this.engineHours,
+      fuelLevelPercent: fuelLevelPercent ?? this.fuelLevelPercent,
       crewOnBoard: crewOnBoard ?? this.crewOnBoard,
       notes: notes ?? this.notes,
       photos: photos ?? this.photos,
@@ -5751,6 +6084,29 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
     if (windDir.present) {
       map['wind_dir'] = Variable<String>(windDir.value);
     }
+    if (sogKt.present) {
+      map['sog_kt'] = Variable<double>(sogKt.value);
+    }
+    if (cogDeg.present) {
+      map['cog_deg'] = Variable<double>(cogDeg.value);
+    }
+    if (barometricPressureHpa.present) {
+      map['barometric_pressure_hpa'] = Variable<double>(
+        barometricPressureHpa.value,
+      );
+    }
+    if (seaState.present) {
+      map['sea_state'] = Variable<String>(seaState.value);
+    }
+    if (watchCrew.present) {
+      map['watch_crew'] = Variable<String>(watchCrew.value);
+    }
+    if (engineHours.present) {
+      map['engine_hours'] = Variable<double>(engineHours.value);
+    }
+    if (fuelLevelPercent.present) {
+      map['fuel_level_percent'] = Variable<double>(fuelLevelPercent.value);
+    }
     if (crewOnBoard.present) {
       map['crew_on_board'] = Variable<String>(crewOnBoard.value);
     }
@@ -5783,6 +6139,13 @@ class CaptainLogEntriesCompanion extends UpdateCompanion<CaptainLogEntryRow> {
           ..write('weather: $weather, ')
           ..write('windSpeedKt: $windSpeedKt, ')
           ..write('windDir: $windDir, ')
+          ..write('sogKt: $sogKt, ')
+          ..write('cogDeg: $cogDeg, ')
+          ..write('barometricPressureHpa: $barometricPressureHpa, ')
+          ..write('seaState: $seaState, ')
+          ..write('watchCrew: $watchCrew, ')
+          ..write('engineHours: $engineHours, ')
+          ..write('fuelLevelPercent: $fuelLevelPercent, ')
           ..write('crewOnBoard: $crewOnBoard, ')
           ..write('notes: $notes, ')
           ..write('photos: $photos, ')
@@ -21750,6 +22113,13 @@ typedef $$CaptainLogEntriesTableCreateCompanionBuilder =
       Value<String?> weather,
       Value<int?> windSpeedKt,
       Value<String?> windDir,
+      Value<double?> sogKt,
+      Value<double?> cogDeg,
+      Value<double?> barometricPressureHpa,
+      Value<String?> seaState,
+      Value<String> watchCrew,
+      Value<double?> engineHours,
+      Value<double?> fuelLevelPercent,
       Value<String> crewOnBoard,
       Value<String?> notes,
       Value<String> photos,
@@ -21769,6 +22139,13 @@ typedef $$CaptainLogEntriesTableUpdateCompanionBuilder =
       Value<String?> weather,
       Value<int?> windSpeedKt,
       Value<String?> windDir,
+      Value<double?> sogKt,
+      Value<double?> cogDeg,
+      Value<double?> barometricPressureHpa,
+      Value<String?> seaState,
+      Value<String> watchCrew,
+      Value<double?> engineHours,
+      Value<double?> fuelLevelPercent,
       Value<String> crewOnBoard,
       Value<String?> notes,
       Value<String> photos,
@@ -21837,6 +22214,41 @@ class $$CaptainLogEntriesTableFilterComposer
 
   ColumnFilters<String> get windDir => $composableBuilder(
     column: $table.windDir,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get sogKt => $composableBuilder(
+    column: $table.sogKt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get cogDeg => $composableBuilder(
+    column: $table.cogDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get barometricPressureHpa => $composableBuilder(
+    column: $table.barometricPressureHpa,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get seaState => $composableBuilder(
+    column: $table.seaState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get watchCrew => $composableBuilder(
+    column: $table.watchCrew,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get engineHours => $composableBuilder(
+    column: $table.engineHours,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get fuelLevelPercent => $composableBuilder(
+    column: $table.fuelLevelPercent,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21930,6 +22342,41 @@ class $$CaptainLogEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get sogKt => $composableBuilder(
+    column: $table.sogKt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get cogDeg => $composableBuilder(
+    column: $table.cogDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get barometricPressureHpa => $composableBuilder(
+    column: $table.barometricPressureHpa,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get seaState => $composableBuilder(
+    column: $table.seaState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get watchCrew => $composableBuilder(
+    column: $table.watchCrew,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get engineHours => $composableBuilder(
+    column: $table.engineHours,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get fuelLevelPercent => $composableBuilder(
+    column: $table.fuelLevelPercent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get crewOnBoard => $composableBuilder(
     column: $table.crewOnBoard,
     builder: (column) => ColumnOrderings(column),
@@ -22008,6 +22455,33 @@ class $$CaptainLogEntriesTableAnnotationComposer
   GeneratedColumn<String> get windDir =>
       $composableBuilder(column: $table.windDir, builder: (column) => column);
 
+  GeneratedColumn<double> get sogKt =>
+      $composableBuilder(column: $table.sogKt, builder: (column) => column);
+
+  GeneratedColumn<double> get cogDeg =>
+      $composableBuilder(column: $table.cogDeg, builder: (column) => column);
+
+  GeneratedColumn<double> get barometricPressureHpa => $composableBuilder(
+    column: $table.barometricPressureHpa,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get seaState =>
+      $composableBuilder(column: $table.seaState, builder: (column) => column);
+
+  GeneratedColumn<String> get watchCrew =>
+      $composableBuilder(column: $table.watchCrew, builder: (column) => column);
+
+  GeneratedColumn<double> get engineHours => $composableBuilder(
+    column: $table.engineHours,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get fuelLevelPercent => $composableBuilder(
+    column: $table.fuelLevelPercent,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get crewOnBoard => $composableBuilder(
     column: $table.crewOnBoard,
     builder: (column) => column,
@@ -22079,6 +22553,13 @@ class $$CaptainLogEntriesTableTableManager
                 Value<String?> weather = const Value.absent(),
                 Value<int?> windSpeedKt = const Value.absent(),
                 Value<String?> windDir = const Value.absent(),
+                Value<double?> sogKt = const Value.absent(),
+                Value<double?> cogDeg = const Value.absent(),
+                Value<double?> barometricPressureHpa = const Value.absent(),
+                Value<String?> seaState = const Value.absent(),
+                Value<String> watchCrew = const Value.absent(),
+                Value<double?> engineHours = const Value.absent(),
+                Value<double?> fuelLevelPercent = const Value.absent(),
                 Value<String> crewOnBoard = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String> photos = const Value.absent(),
@@ -22096,6 +22577,13 @@ class $$CaptainLogEntriesTableTableManager
                 weather: weather,
                 windSpeedKt: windSpeedKt,
                 windDir: windDir,
+                sogKt: sogKt,
+                cogDeg: cogDeg,
+                barometricPressureHpa: barometricPressureHpa,
+                seaState: seaState,
+                watchCrew: watchCrew,
+                engineHours: engineHours,
+                fuelLevelPercent: fuelLevelPercent,
                 crewOnBoard: crewOnBoard,
                 notes: notes,
                 photos: photos,
@@ -22115,6 +22603,13 @@ class $$CaptainLogEntriesTableTableManager
                 Value<String?> weather = const Value.absent(),
                 Value<int?> windSpeedKt = const Value.absent(),
                 Value<String?> windDir = const Value.absent(),
+                Value<double?> sogKt = const Value.absent(),
+                Value<double?> cogDeg = const Value.absent(),
+                Value<double?> barometricPressureHpa = const Value.absent(),
+                Value<String?> seaState = const Value.absent(),
+                Value<String> watchCrew = const Value.absent(),
+                Value<double?> engineHours = const Value.absent(),
+                Value<double?> fuelLevelPercent = const Value.absent(),
                 Value<String> crewOnBoard = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String> photos = const Value.absent(),
@@ -22132,6 +22627,13 @@ class $$CaptainLogEntriesTableTableManager
                 weather: weather,
                 windSpeedKt: windSpeedKt,
                 windDir: windDir,
+                sogKt: sogKt,
+                cogDeg: cogDeg,
+                barometricPressureHpa: barometricPressureHpa,
+                seaState: seaState,
+                watchCrew: watchCrew,
+                engineHours: engineHours,
+                fuelLevelPercent: fuelLevelPercent,
                 crewOnBoard: crewOnBoard,
                 notes: notes,
                 photos: photos,

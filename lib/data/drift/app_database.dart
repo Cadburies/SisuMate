@@ -162,6 +162,13 @@ class CaptainLogEntries extends Table {
   TextColumn get weather => text().nullable()();
   IntColumn get windSpeedKt => integer().nullable()();
   TextColumn get windDir => text().nullable()();
+  RealColumn get sogKt => real().nullable()();
+  RealColumn get cogDeg => real().nullable()();
+  RealColumn get barometricPressureHpa => real().nullable()();
+  TextColumn get seaState => text().nullable()();
+  TextColumn get watchCrew => text().withDefault(const Constant('[]'))();
+  RealColumn get engineHours => real().nullable()();
+  RealColumn get fuelLevelPercent => real().nullable()();
   TextColumn get crewOnBoard => text().withDefault(const Constant('[]'))();
   TextColumn get notes => text().nullable()();
   TextColumn get photos => text().withDefault(const Constant('[]'))();
@@ -578,7 +585,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

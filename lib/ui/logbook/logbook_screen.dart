@@ -5,7 +5,9 @@ import '../components/common_drawer.dart';
 import '../components/main_list_tile.dart';
 import '../../core/di.dart';
 import '../../core/colors.dart';
+import '../../core/units.dart';
 import '../../models/models.dart';
+import '../../services/location_service.dart';
 import '../../services/revenuecat_service.dart';
 
 final captainLogsProvider = StreamProvider<List<CaptainLogEntry>>((ref) {
@@ -175,10 +177,15 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
 
   void _showAddEditDialog(BuildContext context, {CaptainLogEntry? existing}) {
     final messenger = ScaffoldMessenger.of(context);
+    // Carry-forward source: the most recent entry, only relevant when adding
+    // a new one — never for edit (existing already has its own values).
+    final logs = ref.read(captainLogsProvider).asData?.value ?? const [];
+    final previousEntry = existing == null && logs.isNotEmpty ? logs.first : null;
     showDialog<void>(
       context: context,
       builder: (_) => AddEditCaptainLogDialog(
         existing: existing,
+        previousEntry: previousEntry,
         onSave: (entry) async {
           final repo = ref.read(captainLogRepositoryProvider);
           if (existing == null) {
@@ -269,6 +276,35 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
                 Text('${log.positionLat}, ${log.positionLng}'),
                 const SizedBox(height: 8),
               ],
+              if (log.sogKt != null || log.cogDeg != null) ...[
+                const Text('SOG / COG:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  '${log.sogKt != null ? '${log.sogKt!.toStringAsFixed(1)} kt' : '—'} / '
+                  '${log.cogDeg != null ? '${log.cogDeg!.toStringAsFixed(0)}°' : '—'}',
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (log.barometricPressureHpa != null || log.seaState != null) ...[
+                const Text('Pressure / Sea state:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  '${log.barometricPressureHpa != null ? '${log.barometricPressureHpa!.toStringAsFixed(0)} hPa' : '—'} / '
+                  '${log.seaState ?? '—'}',
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (log.engineHours != null || log.fuelLevelPercent != null) ...[
+                const Text('Engine hrs / Fuel:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  '${log.engineHours != null ? log.engineHours!.toStringAsFixed(1) : '—'} / '
+                  '${log.fuelLevelPercent != null ? '${log.fuelLevelPercent!.toStringAsFixed(0)}%' : '—'}',
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (log.watchCrew.isNotEmpty) ...[
+                const Text('On watch:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(log.watchCrew.join(', ')),
+                const SizedBox(height: 8),
+              ],
               if (log.crewOnBoard.isNotEmpty) ...[
                 const Text('Crew:', style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(log.crewOnBoard.join(', ')),
@@ -304,12 +340,20 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
 /// Add / edit dialog for a Captain's Log entry (public for widget tests).
 class AddEditCaptainLogDialog extends StatefulWidget {
   final CaptainLogEntry? existing;
+  /// Most recent prior entry, for carry-forward pre-fill on a *new* entry
+  /// only (#213) — never passed when editing. Only fields that make sense
+  /// to repeat (crew) are pre-filled; position/SOG/COG must only ever come
+  /// from an explicit "Use GPS" tap, never stale carry-forward.
+  final CaptainLogEntry? previousEntry;
   final Future<void> Function(CaptainLogEntry entry) onSave;
+  final LocationService? locationService;
 
   const AddEditCaptainLogDialog({
     super.key,
     this.existing,
+    this.previousEntry,
     required this.onSave,
+    this.locationService,
   });
 
   @override
@@ -325,13 +369,24 @@ class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
   late final TextEditingController _windDirCtrl;
   late final TextEditingController _latCtrl;
   late final TextEditingController _lngCtrl;
+  late final TextEditingController _sogCtrl;
+  late final TextEditingController _cogCtrl;
+  late final TextEditingController _pressureCtrl;
+  late final TextEditingController _seaStateCtrl;
+  late final TextEditingController _watchCrewCtrl;
+  late final TextEditingController _engineHoursCtrl;
+  late final TextEditingController _fuelLevelCtrl;
   late final TextEditingController _crewCtrl;
+  late final LocationService _locationService =
+      widget.locationService ?? const LocationService();
   late DateTime _date;
+  bool _locating = false;
 
   @override
   void initState() {
     super.initState();
     final e = widget.existing;
+    final prev = widget.previousEntry;
     _notesCtrl = TextEditingController(text: e?.notes ?? '');
     _weatherCtrl = TextEditingController(text: e?.weather ?? '');
     _windSpeedCtrl =
@@ -339,7 +394,24 @@ class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
     _windDirCtrl = TextEditingController(text: e?.windDir ?? '');
     _latCtrl = TextEditingController(text: e?.positionLat?.toString() ?? '');
     _lngCtrl = TextEditingController(text: e?.positionLng?.toString() ?? '');
-    _crewCtrl = TextEditingController(text: e?.crewOnBoard.join(', ') ?? '');
+    _sogCtrl = TextEditingController(text: e?.sogKt?.toString() ?? '');
+    _cogCtrl = TextEditingController(text: e?.cogDeg?.toString() ?? '');
+    _pressureCtrl = TextEditingController(
+        text: e?.barometricPressureHpa?.toString() ?? '');
+    _seaStateCtrl = TextEditingController(text: e?.seaState ?? '');
+    _engineHoursCtrl =
+        TextEditingController(text: e?.engineHours?.toString() ?? '');
+    _fuelLevelCtrl =
+        TextEditingController(text: e?.fuelLevelPercent?.toString() ?? '');
+    // Carry-forward: only on a new entry (e == null), and only for fields
+    // that are sensible to repeat — crew tends to stay the same leg to leg.
+    _crewCtrl = TextEditingController(
+        text: e?.crewOnBoard.join(', ') ??
+            prev?.crewOnBoard.join(', ') ??
+            '');
+    _watchCrewCtrl = TextEditingController(
+        text:
+            e?.watchCrew.join(', ') ?? prev?.watchCrew.join(', ') ?? '');
     _date = e?.logDate ?? DateTime.now();
   }
 
@@ -351,6 +423,13 @@ class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
     _windDirCtrl.dispose();
     _latCtrl.dispose();
     _lngCtrl.dispose();
+    _sogCtrl.dispose();
+    _cogCtrl.dispose();
+    _pressureCtrl.dispose();
+    _seaStateCtrl.dispose();
+    _watchCrewCtrl.dispose();
+    _engineHoursCtrl.dispose();
+    _fuelLevelCtrl.dispose();
     _crewCtrl.dispose();
     super.dispose();
   }
@@ -370,6 +449,45 @@ class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
     if (picked != null) setState(() => _date = picked);
   }
 
+  /// #213: fills Lat/Lng and, when the fix reports them, SOG/COG from one
+  /// GPS position. Zero `speedAccuracy`/`headingAccuracy` means the device
+  /// didn't actually report that value (geolocator default), not a real
+  /// zero reading — those fields are left for manual entry in that case.
+  Future<void> _useGps() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    try {
+      final result = await _locationService.getCurrentPosition();
+      if (!mounted) return;
+      if (!result.isSuccess) {
+        final message = switch (result.failureReason) {
+          LocationFailureReason.serviceDisabled =>
+            'Turn on location services to use GPS',
+          LocationFailureReason.permissionDenied =>
+            'Location permission denied — enter coordinates manually',
+          _ => 'Could not get location: ${result.error}',
+        };
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
+        return;
+      }
+      final pos = result.position!;
+      setState(() {
+        _latCtrl.text = pos.latitude.toStringAsFixed(4);
+        _lngCtrl.text = pos.longitude.toStringAsFixed(4);
+        if (pos.speedAccuracy > 0) {
+          _sogCtrl.text =
+              (pos.speed / UnitConverter.msPerKnot).toStringAsFixed(1);
+        }
+        if (pos.headingAccuracy > 0) {
+          _cogCtrl.text = pos.heading.toStringAsFixed(0);
+        }
+      });
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     final entry = widget.existing ??
@@ -384,6 +502,17 @@ class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
       ..windDir = _windDirCtrl.text.isEmpty ? null : _windDirCtrl.text
       ..positionLat = double.tryParse(_latCtrl.text)
       ..positionLng = double.tryParse(_lngCtrl.text)
+      ..sogKt = double.tryParse(_sogCtrl.text)
+      ..cogDeg = double.tryParse(_cogCtrl.text)
+      ..barometricPressureHpa = double.tryParse(_pressureCtrl.text)
+      ..seaState = _seaStateCtrl.text.isEmpty ? null : _seaStateCtrl.text
+      ..watchCrew = _watchCrewCtrl.text
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList()
+      ..engineHours = double.tryParse(_engineHoursCtrl.text)
+      ..fuelLevelPercent = double.tryParse(_fuelLevelCtrl.text)
       ..crewOnBoard = _crewCtrl.text
           .split(',')
           .map((s) => s.trim())
@@ -447,6 +576,18 @@ class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
                 ],
               ),
               const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: _locating ? null : _useGps,
+                  icon: Icon(
+                    _locating ? Icons.hourglass_top : Icons.my_location,
+                    size: 18,
+                  ),
+                  label: const Text('Use GPS'),
+                ),
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
@@ -472,11 +613,93 @@ class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
                 ],
               ),
               const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _sogCtrl,
+                      decoration: const InputDecoration(labelText: 'SOG (kt)'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      validator: _validateOptionalNumber,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cogCtrl,
+                      decoration:
+                          const InputDecoration(labelText: 'COG (°true)'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      validator: _validateOptionalNumber,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _pressureCtrl,
+                      decoration:
+                          const InputDecoration(labelText: 'Pressure (hPa)'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      validator: _validateOptionalNumber,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _seaStateCtrl,
+                      decoration:
+                          const InputDecoration(labelText: 'Sea state'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _engineHoursCtrl,
+                      decoration:
+                          const InputDecoration(labelText: 'Engine hrs'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      validator: _validateOptionalNumber,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _fuelLevelCtrl,
+                      decoration:
+                          const InputDecoration(labelText: 'Fuel level (%)'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      validator: _validateOptionalNumber,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _crewCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Crew on board',
                   helperText: 'Comma-separated',
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _watchCrewCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'On watch',
+                  helperText: 'Comma-separated — who\'s on duty now',
                 ),
               ),
             ],

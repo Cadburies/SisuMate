@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,13 +11,16 @@ import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../services/error_log_service.dart';
+import '../../services/location_service.dart';
 import '../../services/weather_service.dart';
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
 
 /// Weather hub — Open-Meteo forecast + map pin (S3) + device GPS (WX1).
 class WeatherScreen extends ConsumerStatefulWidget {
-  const WeatherScreen({super.key});
+  final LocationService? locationService;
+
+  const WeatherScreen({super.key, this.locationService});
 
   @override
   ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
@@ -33,6 +35,8 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   final _lonCtrl = TextEditingController(text: '$_fallbackLon');
   final _placeCtrl = TextEditingController();
   final _service = WeatherService();
+  late final LocationService _locationService =
+      widget.locationService ?? const LocationService();
   WeatherBundle? _bundle;
   bool _loading = false;
   bool _locating = false;
@@ -86,52 +90,44 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     if (_locating) return;
     setState(() => _locating = true);
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (!silent && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Turn on location services to use GPS'),
-          ));
-        }
-        return;
-      }
-
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        if (!silent && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'Location permission denied — enter coordinates or tap the map'),
-          ));
-        }
-        return;
-      }
-
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 12),
-        ),
-      );
+      final result = await _locationService.getCurrentPosition();
       if (!mounted) return;
-      setState(() {
-        _latCtrl.text = pos.latitude.toStringAsFixed(4);
-        _lonCtrl.text = pos.longitude.toStringAsFixed(4);
-      });
-      if (!silent) await _load();
-    } catch (e) {
-      // Denied permission is common/expected; still worth a warning-level
-      // signal since it also covers real GPS/timeout failures.
-      unawaited(ErrorLogService()
-          .logWarning('location lookup failed: $e', context: 'weather_screen: _locate'));
-      if (!silent && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not get location: $e'),
-        ));
+      switch (result.failureReason) {
+        case LocationFailureReason.serviceDisabled:
+          if (!silent) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Turn on location services to use GPS'),
+            ));
+          }
+          return;
+        case LocationFailureReason.permissionDenied:
+          if (!silent) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                  'Location permission denied — enter coordinates or tap the map'),
+            ));
+          }
+          return;
+        case LocationFailureReason.error:
+          // Denied permission is common/expected; still worth a
+          // warning-level signal since it also covers real GPS/timeout
+          // failures.
+          unawaited(ErrorLogService().logWarning(
+              'location lookup failed: ${result.error}',
+              context: 'weather_screen: _locate'));
+          if (!silent) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Could not get location: ${result.error}'),
+            ));
+          }
+          return;
+        case null:
+          final pos = result.position!;
+          setState(() {
+            _latCtrl.text = pos.latitude.toStringAsFixed(4);
+            _lonCtrl.text = pos.longitude.toStringAsFixed(4);
+          });
+          if (!silent) await _load();
       }
     } finally {
       if (mounted) setState(() => _locating = false);

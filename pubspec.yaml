@@ -83,6 +83,10 @@ dev_dependencies:
   # path_provider) — talks to the sqlite file with raw SQL instead of Drift.
   sqlite3: ^3.3.4
   fake_async: ^1.3.3
+  # test/location_service_test.dart (#213): fakes GeolocatorPlatform.instance
+  # directly rather than mocking a MethodChannel.
+  geolocator_platform_interface: ^4.2.8
+  plugin_platform_interface: ^2.1.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
