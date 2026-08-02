@@ -5,8 +5,7 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #140 (Build a Round crash on non-cocktail recipes), #129/#130 (seeded Bushwhacker + Sisu Bushwhacker/Screwball whiskey). Filed #178 (verify debug owner bootstrap needs explicit login).
-- **Last (overflow session):** fixed #160 (drawer `Column`+`Spacer` no-scroll anti-pattern, 10 files), #161 (`item_detail_shell.dart` fixed-height-image overflow), #173 (`weather_screen.dart` toolbar `Row`→`Wrap`). #159/#138 closed unlocated — error-logger now captures exact file:line, so a recurrence self-locates via `triage_error_logs.sh`.
+- **Last (claudevc):** fixed + closed #140, #129/#130, #181/#182/#183 (triage_error_logs.sh on SM S928U1 found #182/#183 recurring the #160 drawer anti-pattern in 2 recipe-detail endDrawers #160's sweep missed; #181 admin_screen.dart Row overflow, same Expanded fix as its sibling row). Filed #178.
 - **Doing:** nothing claimed; Kimi on #124/#125. Open P1: #156 (sync RLS rejection post-enrollment)
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)

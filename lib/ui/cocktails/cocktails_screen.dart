@@ -1369,83 +1369,94 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
           child: Column(
             children: [
               DrawerHeaderWidget(title: 'Recipe options'),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Edit recipe'),
-                onTap: () {
-                  Navigator.pop(context);
-                  isProAsync.whenData((isPro) {
-                    if (isPro) {
-                      _showEditDialog(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Editing requires Sisu Mate Pro')),
-                      );
-                    }
-                  });
-                },
-              ),
-              ListTile(
-                leading: Icon(widget.recipe.isFavourite
-                    ? Icons.favorite
-                    : Icons.favorite_border),
-                title: Text(widget.recipe.isFavourite
-                    ? 'Remove favourite'
-                    : 'Add favourite'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  widget.recipe.isFavourite = !widget.recipe.isFavourite;
-                  await ref
-                      .read(recipeRepositoryProvider)
-                      .updateRecipe(widget.recipe);
-                  if (mounted) setState(() {});
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.ios_share),
-                title: const Text('Print / Share'),
-                onTap: () {
-                  Navigator.pop(context);
-                  ingredientsAsync.whenData((ingredients) =>
-                      RecipeShareService.shareRecipeCard(
-                          recipe: widget.recipe, ingredients: ingredients));
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.sync),
-                title: const Text('Sync ingredient counts'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await ref
-                      .read(recipeRepositoryProvider)
-                      .syncMissingIngredientCounts();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Ingredient counts updated'),
-                          duration: Duration(seconds: 1)),
-                    );
-                  }
-                },
-              ),
-              if (!widget.recipe.isBundled)
-                ListTile(
-                  leading: const Icon(Icons.delete_forever, color: Colors.red),
-                  title: const Text('Delete recipe',
-                      style: TextStyle(color: Colors.red)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _confirmDelete(context);
-                  },
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.edit),
+                        title: const Text('Edit recipe'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          isProAsync.whenData((isPro) {
+                            if (isPro) {
+                              _showEditDialog(context);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text('Editing requires Sisu Mate Pro')),
+                              );
+                            }
+                          });
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(widget.recipe.isFavourite
+                            ? Icons.favorite
+                            : Icons.favorite_border),
+                        title: Text(widget.recipe.isFavourite
+                            ? 'Remove favourite'
+                            : 'Add favourite'),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          widget.recipe.isFavourite =
+                              !widget.recipe.isFavourite;
+                          await ref
+                              .read(recipeRepositoryProvider)
+                              .updateRecipe(widget.recipe);
+                          if (mounted) setState(() {});
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.ios_share),
+                        title: const Text('Print / Share'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          ingredientsAsync.whenData((ingredients) =>
+                              RecipeShareService.shareRecipeCard(
+                                  recipe: widget.recipe,
+                                  ingredients: ingredients));
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.sync),
+                        title: const Text('Sync ingredient counts'),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await ref
+                              .read(recipeRepositoryProvider)
+                              .syncMissingIngredientCounts();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Ingredient counts updated'),
+                                  duration: Duration(seconds: 1)),
+                            );
+                          }
+                        },
+                      ),
+                      if (!widget.recipe.isBundled)
+                        ListTile(
+                          leading: const Icon(Icons.delete_forever,
+                              color: Colors.red),
+                          title: const Text('Delete recipe',
+                              style: TextStyle(color: Colors.red)),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _confirmDelete(context);
+                          },
+                        ),
+                      const Divider(),
+                      SectionHeader(title: 'Account'),
+                      AccountSection(),
+                      ProUpgradeSection(),
+                      AboutSection(),
+                    ],
+                  ),
                 ),
-              const Divider(),
-              SectionHeader(title: 'Account'),
-              AccountSection(),
-              ProUpgradeSection(),
-              AboutSection(),
-              const Spacer(),
+              ),
               DrawerFooter(),
             ],
           ),

@@ -11,11 +11,20 @@ import 'package:flutter_test/flutter_test.dart';
 /// with the footer pinned after it, matching the pre-existing correct
 /// pattern in home_screen.dart/shopping_screen.dart.
 ///
+/// #182/#183 — the same anti-pattern recurred in a second pair of drawers
+/// #160's sweep missed: the per-recipe "Recipe options" `endDrawer`s on
+/// `ChefRecipeDetailScreen` (chef_screen.dart) and
+/// `CocktailRecipeDetailScreen` (cocktails_screen.dart), found live via
+/// `scripts/triage_error_logs.sh` (109px / 115px overflow). Same fix,
+/// identical shape — no new test needed beyond extending this note, since
+/// what's under test below is the structural pattern itself, not any one
+/// screen's provider wiring.
+///
 /// Reconstructs the fixed shape (header, scrollable body, pinned footer)
 /// rather than mounting a real screen's drawer — the shared sections
 /// (AccountSection/DataManagementSection/ProUpgradeSection) need auth/sync
 /// provider mocking unrelated to this layout bug; what's under test is the
-/// structural pattern itself, applied identically across all 10 files.
+/// structural pattern itself, applied identically across all 12 files.
 void main() {
   Widget fixedDrawer({required int itemCount, required double height}) {
     return MaterialApp(

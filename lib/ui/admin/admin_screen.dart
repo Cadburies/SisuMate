@@ -298,7 +298,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
             ),
             Row(
               children: [
-                const Text('Grace period after warning: '),
+                const Expanded(child: Text('Grace period after warning: ')),
                 DropdownButton<int>(
                   value: _graceDays,
                   items: const [
