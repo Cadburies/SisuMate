@@ -1,19 +1,70 @@
 #!/usr/bin/env python3
 """Renders one triage_error_logs.sh JSONL row (from tool/error_log_admin.dart
 dump-unprocessed) into a GitHub issue title or body. Not a standalone
-entrypoint — called by triage_error_logs.sh.
+entrypoint — called by triage_error_logs.sh, which `cd`s to the repo root
+first (so relative lib/... and test/... paths below resolve correctly).
 
 Usage:
   echo '<json line>' | python3 scripts/_error_log_issue_body.py [--title-only]
 """
 import json
+import re
 import sys
+
+CONTEXT_LINES = 6
+# Nearest enclosing class/mixin, scanned backward from the reported line —
+# gives an agent "which screen/class" without opening the file, and feeds a
+# more descriptive issue title than the bare file path.
+_CLASS_RE = re.compile(r"^\s*(?:abstract\s+)?(?:class|mixin)\s+(\w+)")
 
 
 def first_line(text: str) -> str:
     if not text:
         return "(no message)"
     return text.strip().splitlines()[0][:120]
+
+
+def parse_source_file(source_file: str):
+    """`package:sisu_mate/ui/x.dart:112:14` -> ('lib/ui/x.dart', 112, 14).
+    `test/foo_test.dart:20:5` -> ('test/foo_test.dart', 20, 5). Returns None
+    if source_file doesn't match this shape (e.g. "unknown source")."""
+    m = re.match(r"^(?:package:sisu_mate/|test/)(.+):(\d+):(\d+)$", source_file)
+    if not m:
+        return None
+    rel = m.group(1)
+    path = f"lib/{rel}" if source_file.startswith("package:sisu_mate/") else source_file.rsplit(":", 2)[0]
+    return path, int(m.group(2)), int(m.group(3))
+
+
+def enclosing_class(lines: list[str], line_no: int) -> str | None:
+    """Nearest `class Foo`/`mixin Foo` above line_no (1-based)."""
+    for i in range(min(line_no, len(lines)) - 1, -1, -1):
+        m = _CLASS_RE.match(lines[i])
+        if m:
+            return m.group(1)
+    return None
+
+
+def code_snippet(path: str, line_no: int, col: int):
+    """Returns (snippet_text, enclosing_class_or_None), or (None, None) if
+    the file can't be read (different machine, moved/renamed since capture,
+    etc.) — triage must degrade gracefully, never crash on a stale path."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return None, None
+
+    cls = enclosing_class(lines, line_no)
+    start = max(1, line_no - CONTEXT_LINES)
+    end = min(len(lines), line_no + CONTEXT_LINES)
+    width = len(str(end))
+    out = []
+    for n in range(start, end + 1):
+        marker = ">>" if n == line_no else "  "
+        text = lines[n - 1] if n - 1 < len(lines) else ""
+        out.append(f"{marker} {str(n).rjust(width)}| {text}")
+    return "\n".join(out), cls
 
 
 def bare_path(source_file: str) -> str:
@@ -28,7 +79,14 @@ def main() -> None:
     row = json.loads(sys.stdin.read())
     source_file = row.get("sourceFile") or "unknown source"
     message = row.get("message") or ""
-    title = f"{bare_path(source_file)}: {first_line(message)}"
+
+    parsed = parse_source_file(source_file) if source_file != "unknown source" else None
+    snippet, cls = (None, None)
+    if parsed:
+        snippet, cls = code_snippet(*parsed)
+
+    title_prefix = f"{cls} ({bare_path(source_file)})" if cls else bare_path(source_file)
+    title = f"{title_prefix}: {first_line(message)}"
 
     if "--title-only" in sys.argv:
         print(title)
@@ -46,6 +104,24 @@ def main() -> None:
     fingerprint = row["fingerprint"]
 
     touches = source_file if source_file != "unknown source" else "(no source file captured — inspect the stack trace below to identify it)"
+    touches_suffix = f" (inside `{cls}`)" if cls else ""
+
+    code_section = ""
+    if parsed:
+        path, line_no, col = parsed
+        if snippet:
+            code_section = f"""
+## Code at the reported location
+`{path}:{line_no}:{col}`{f" — inside `{cls}`" if cls else ""}
+```dart
+{snippet}
+```
+"""
+        else:
+            code_section = f"""
+## Code at the reported location
+`{path}:{line_no}:{col}` — file not found in this checkout at triage time (moved/renamed since capture, or triaged from a different machine). Open it directly at that line.
+"""
 
     body = f"""## Found by
 `scripts/triage_error_logs.sh` (#121 error-log automation) — auto-filed from a real on-device `{level}`, not written by a human or an agent from a code read. Verify against the stack trace before fixing.
@@ -62,7 +138,7 @@ def main() -> None:
 ```
 {stack}
 ```
-
+{code_section}
 ## Route hint (best-effort, last occurrence)
 `{route_hint}`
 
@@ -70,7 +146,7 @@ def main() -> None:
 Best-effort from the captured context — the route above is where the last occurrence fired; the stack trace is the exact call path. If the route hint is empty or unhelpful, the message/stack above is the primary lead (this is common for framework-level errors like a `RenderFlex` overflow, which layout internals report without an app-code stack frame).
 
 ## Touches
-`{touches}` — auto-predicted from the captured source file. **Verify and refine before claiming** (per CLAUDE.md: every issue needs an accurate Touches field for other agents to check parallel-safety against).
+`{touches}`{touches_suffix} — auto-predicted from the captured source file. **Verify and refine before claiming** (per CLAUDE.md: every issue needs an accurate Touches field for other agents to check parallel-safety against).
 
 ## Acceptance
 - [ ] Root cause identified and fixed (or confirmed benign/expected and closed with a note — see #122's verdict table: expected control flow shouldn't have reached the error log in the first place, so if this fires again after the fix, check whether it should have been filtered at the `ErrorLogService` call site instead)

@@ -107,14 +107,35 @@ class ErrorLogService {
 
   /// For `FlutterError.onError`. Always call the previous handler too (this
   /// only adds capture, it must not silence the normal debug red-screen).
-  Future<void> logFlutterError(FlutterErrorDetails details) => _log(
-        level: 'exception',
-        rawMessage: details.exceptionAsString(),
-        stack: details.stack,
-        context: details.library == null
-            ? details.context?.toString()
-            : '${details.library}${details.context == null ? '' : ' — ${details.context}'}',
-      );
+  ///
+  /// Must render via [FlutterErrorDetails.toString] (→
+  /// `toDiagnosticsNode().toStringDeep()`), NOT hand-reconstruct from
+  /// `exceptionAsString()` + raw `informationCollector()` nodes. The
+  /// offending widget's `file:line:col` (from `--track-widget-creation`) for
+  /// a `RenderFlex` overflow is injected by
+  /// `debugTransformDebugCreator`/`_describeRelevantUserCode`
+  /// (`widget_inspector.dart`) as a `FlutterErrorDetails.propertiesTransformer`
+  /// — that transform only runs when something calls through
+  /// `toDiagnosticsNode()` (which is what `FlutterError.dumpErrorToConsole`
+  /// does), never when `informationCollector()` is called and `.toString()`n
+  /// is taken directly on its raw nodes. Calling `informationCollector()`
+  /// directly (the previous approach here) silently produced only the
+  /// truncated `debugCreator: Row ← Column ← …` ownership-chain text with no
+  /// location at all — confirmed against the Flutter SDK source
+  /// (`foundation/assertions.dart` `_FlutterErrorDetailsNode.builder`) after
+  /// #159/#160/#161 shipped with `sourceFile: null` despite this exact
+  /// append already being in place (the fix for #138 addressed a different,
+  /// narrower gap and didn't catch this one).
+  Future<void> logFlutterError(FlutterErrorDetails details) {
+    return _log(
+      level: 'exception',
+      rawMessage: details.toString(),
+      stack: details.stack,
+      context: details.library == null
+          ? details.context?.toString()
+          : '${details.library}${details.context == null ? '' : ' — ${details.context}'}',
+    );
+  }
 
   // ── Internals ──────────────────────────────────────────────────────────
 
@@ -179,11 +200,37 @@ class ErrorLogService {
   static final _appFrame =
       RegExp(r'package:sisu_mate/[A-Za-z0-9_/\.]+\.dart:\d+:\d+');
 
+  /// `--track-widget-creation` locations (as opposed to real stack-trace
+  /// frames, which always use `package:` URIs) are embedded by the compiler
+  /// as the absolute on-disk path of whoever built the debug APK —
+  /// `file:///Users/.../SisuMate/lib/ui/.../foo.dart:LINE:COL` — not a
+  /// `package:` URI. `_appFrame` alone never matches that, so the "relevant
+  /// error-causing widget" line `logFlutterError` now surfaces (via
+  /// `details.toString()`) still fell through to `sourceFile: null` even
+  /// after that fix. Match it and normalize `lib/` hits to the same
+  /// `package:sisu_mate/` shape used elsewhere so `sourceFile`/Touches stay
+  /// portable across machines; `test/` hits (only ever seen under `flutter
+  /// test`, never in a shipped app) are kept as a plain repo-relative path.
+  static final _appFrameFileUri = RegExp(
+      r'file:///\S*?/(lib|test)/([A-Za-z0-9_/\.]+\.dart):(\d+):(\d+)');
+
   String? _extractSourceFile(String? stackText, String message) {
-    final inStack = stackText == null ? null : _appFrame.firstMatch(stackText);
-    if (inStack != null) return inStack.group(0);
-    final inMessage = _appFrame.firstMatch(message);
-    return inMessage?.group(0);
+    for (final text in [stackText, message]) {
+      if (text == null) continue;
+      final pkg = _appFrame.firstMatch(text);
+      if (pkg != null) return pkg.group(0);
+      final fileUri = _appFrameFileUri.firstMatch(text);
+      if (fileUri != null) {
+        final root = fileUri.group(1)!;
+        final rest = fileUri.group(2)!;
+        final line = fileUri.group(3)!;
+        final col = fileUri.group(4)!;
+        return root == 'lib'
+            ? 'package:sisu_mate/$rest:$line:$col'
+            : '$root/$rest:$line:$col';
+      }
+    }
+    return null;
   }
 
   /// Digits vary run-to-run for the same underlying bug (a pixel-overflow
@@ -191,14 +238,37 @@ class ErrorLogService {
   /// to one fingerprint instead of spamming a new row per exact value.
   static final _digits = RegExp(r'\d+(\.\d+)?');
 
+  /// Flutter's `Element`/`State`/`RenderObject` `toString()` appends a
+  /// short, non-deterministic hashCode suffix per instance, e.g.
+  /// `CocktailBatchScreenState#2aca9` — mixed alphanumeric, so `_digits`
+  /// alone doesn't normalize it, and two occurrences of the exact same bug
+  /// (same widget, same crash) fingerprint differently and dedupe fails
+  /// (found live: #139 was a straight duplicate of #140 because of this).
+  /// Must run before `_digits` — normalize the whole `#hex` token first.
+  static final _widgetHashSuffix = RegExp(r'#[0-9a-fA-F]{3,8}\b');
+
   String _fingerprint({
     required String level,
     required String? sourceFile,
     required String message,
   }) {
-    final normalizedMessage = message.replaceAll(_digits, '#');
+    final normalizedMessage = message
+        .replaceAll(_widgetHashSuffix, '#')
+        .replaceAll(_digits, '#');
     final basis = '$level|${sourceFile ?? ''}|$normalizedMessage';
-    return _fnv1a64(basis).toRadixString(16).padLeft(16, '0');
+    // FNV-1a is a plain 64-bit int, which on native platforms Dart treats as
+    // *signed* — `int.toUnsigned(64)` is a no-op here (64 is already the
+    // type's full native width, so there's no wider representation to
+    // reinterpret from), so `toRadixString` still prints a leading '-' when
+    // the top bit is set. That broke a GitHub search query built from
+    // "Fingerprint: <hash>" (found live: #138's idempotency check). Split
+    // into two 32-bit halves instead — each masked half is always < 2^32,
+    // so it's never negative regardless of the original sign.
+    final raw = _fnv1a64(basis);
+    final hi = (raw >> 32) & 0xFFFFFFFF;
+    final lo = raw & 0xFFFFFFFF;
+    return hi.toRadixString(16).padLeft(8, '0') +
+        lo.toRadixString(16).padLeft(8, '0');
   }
 
   /// FNV-1a 64-bit — deterministic, dependency-free (no `package:crypto`),

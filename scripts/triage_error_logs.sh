@@ -6,22 +6,26 @@
 # agent-actionable issues automatically. Run on demand (cron or ad hoc) —
 # NOT part of run_full_suite.sh; see CLAUDE.md's GUI-test-drivers table.
 #
-# Idempotent: a fingerprint that already has a filed issue (searched by the
-# "Fingerprint: <hash>" marker in issue bodies, not just local processedAt —
-# so a failed push-back on a prior run can't cause a duplicate) is skipped
-# and just re-marked processed against the existing issue URL.
+# Device-safe by design: force-stops the app, pulls the sqlite file, then
+# does every remaining step (dump, dedupe-check, file issues) on the local
+# copy only. Nothing is ever written back to the device — no risk of
+# corrupting the live on-device database, and no need for the operator to
+# manually stop the app first.
+#
+# Idempotent: a fingerprint that already has a filed issue is found by
+# searching for the "Fingerprint: <hash>" marker in issue bodies (not local
+# processedAt state, which no longer round-trips to the device at all) —
+# safe to rerun as often as you like.
 #
 # Usage:
 #   bash scripts/triage_error_logs.sh <serial>
 #
 # Requires: a debug build already run at least once on <serial> (so
-# com.sailingsisu.sisumate/files/app_flutter/sisu_mate.sqlite exists on
-# device), `adb`, this repo's `dart`, `gh` authenticated for this repo.
+# com.sailingsisu.sisumate/app_flutter/sisu_mate.sqlite exists on device),
+# `adb`, this repo's `dart`, `gh` authenticated for this repo.
 #
-# Stop the app on <serial> before running this — it pulls the sqlite file
-# and pushes a modified copy back; a live app write mid-swap would corrupt
-# or lose data. (iOS: not yet supported — the pull/push step is Android
-# `run-as`-specific; porting needs an idb/simctl file-copy equivalent.)
+# iOS not yet supported — the pull step is Android `run-as`-specific;
+# porting needs an idb/simctl file-copy equivalent.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -32,16 +36,28 @@ WORKDIR="/tmp/triage_error_logs"
 mkdir -p "$WORKDIR"
 DB_LOCAL="$WORKDIR/${SAFE_SERIAL}.sqlite"
 
-echo "==> Pulling sisu_mate.sqlite from $SERIAL"
-adb -s "$SERIAL" exec-out run-as "$PKG" cat files/app_flutter/sisu_mate.sqlite > "$DB_LOCAL"
+echo "==> Stopping the app on $SERIAL (if running)"
+adb -s "$SERIAL" shell am force-stop "$PKG"
+
+echo "==> Pulling sisu_mate.sqlite from $SERIAL to $DB_LOCAL"
+adb -s "$SERIAL" exec-out run-as "$PKG" cat app_flutter/sisu_mate.sqlite > "$DB_LOCAL"
 if [ ! -s "$DB_LOCAL" ]; then
   echo "Empty/missing DB pull — is the app installed and has it run at least once on $SERIAL?" >&2
   exit 1
 fi
 
-echo "==> Reading unprocessed rows"
+echo "==> Reading unprocessed rows (local copy only — device is not touched again)"
 DUMP="$WORKDIR/dump_${SAFE_SERIAL}.jsonl"
 dart run tool/error_log_admin.dart dump-unprocessed "$DB_LOCAL" > "$DUMP"
+
+# `dart run` prints "Running build hooks..." (sqlite3's native-asset build
+# step) to stdout ahead of the tool's own output, landing on the same line
+# as the first JSON object and breaking its parse (found live: corrupted
+# the very first row of a real run, which then silently mis-filed against
+# an unrelated issue via the empty-fingerprint fallback below). Strip
+# anything before the first '{' on each line; JSONL is one full object per
+# line here, so this is safe.
+sed -i.bak 's/^[^{]*{/{/' "$DUMP" && rm -f "$DUMP.bak"
 
 if [ ! -s "$DUMP" ]; then
   echo "No unprocessed error-log rows. Nothing to do."
@@ -52,6 +68,10 @@ echo "==> Filing issues (one per new fingerprint; already-filed fingerprints are
 while IFS= read -r line; do
   [ -z "$line" ] && continue
   FINGERPRINT="$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["fingerprint"])')"
+  if [ -z "$FINGERPRINT" ]; then
+    echo "  SKIPPING a row: fingerprint extraction failed (malformed JSON line — see it in $DUMP)" >&2
+    continue
+  fi
 
   EXISTING="$(gh issue list --search "\"Fingerprint: $FINGERPRINT\" in:body" --state all --json url -q '.[0].url' 2>/dev/null || true)"
   if [ -n "$EXISTING" ]; then
@@ -64,12 +84,18 @@ while IFS= read -r line; do
   BODY_FILE="$WORKDIR/body_${FINGERPRINT}.md"
   echo "$line" | python3 scripts/_error_log_issue_body.py > "$BODY_FILE"
 
-  URL="$(gh issue create --title "$TITLE" --label bug --body-file "$BODY_FILE")"
+  # Pixel-overflow (RenderFlex) rows get a second, distinct label so they're
+  # `gh issue list --label ui-overflow`-findable at a glance, independent of
+  # whether sourceFile capture succeeded for that particular row.
+  LABEL_ARGS=(--label bug)
+  if echo "$line" | python3 -c 'import json,sys; msg=json.load(sys.stdin).get("message") or ""; sys.exit(0 if "RenderFlex overflowed" in msg else 1)'; then
+    LABEL_ARGS+=(--label ui-overflow)
+  fi
+
+  URL="$(gh issue create --title "$TITLE" "${LABEL_ARGS[@]}" --body-file "$BODY_FILE")"
   echo "  filed $FINGERPRINT -> $URL"
   dart run tool/error_log_admin.dart mark-processed "$DB_LOCAL" "$FINGERPRINT" "$URL" >/dev/null
 done < "$DUMP"
 
-echo "==> Pushing updated processedAt/issueUrl back to $SERIAL"
-adb -s "$SERIAL" exec-out run-as "$PKG" sh -c 'cat > files/app_flutter/sisu_mate.sqlite' < "$DB_LOCAL"
-
-echo "==> Done"
+echo "==> Done. $DB_LOCAL is marked processed locally for reference; the on-device DB was never modified."
+echo "==> Relaunch the app on $SERIAL if you want to keep testing."
