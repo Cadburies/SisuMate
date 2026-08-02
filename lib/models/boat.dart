@@ -18,12 +18,19 @@ class Boat {
   // shareCode: inbound-only (DB-generated), never pushed.
   String? ownerId;
   String? shareCode;
-  // #203: bring-your-own-key LLM support. User-entered, per-boat, synced like
-  // any other boat field — only the owner can write (boats_update RLS), crew
-  // read it via the normal boats_select policy. Never validated or billed by
-  // this app; used directly from the device to the chosen provider.
+  // #203/#215: bring-your-own-key LLM support. **Local-only by default** —
+  // stored on this device, never pushed to Supabase, never seen by other
+  // crew. [llmApiKeyShared] is an explicit owner-only opt-in: only when true
+  // does [toJson] actually push the real key (RLS still restricts the write
+  // to the owner); when false, [toJson] pushes null for both key fields so
+  // a previously-shared key gets actively cleared remotely, not just left
+  // stale. Inbound sync only ever adopts the key when the incoming boat's
+  // [llmApiKeyShared] is true — see `InboundSyncApplier._upsertBoat` — so a
+  // device's own local (unshared) key is never silently overwritten by
+  // someone else's "not sharing" state.
   String? llmApiKey;
   String? llmApiKeyProvider; // 'openai' | 'xai'
+  bool llmApiKeyShared = false;
 
   factory Boat.fromJson(Map<String, dynamic> json) {
     return Boat()
@@ -40,7 +47,8 @@ class Boat {
       ..ownerId = json['ownerId']
       ..shareCode = json['shareCode']
       ..llmApiKey = json['llmApiKey']
-      ..llmApiKeyProvider = json['llmApiKeyProvider'];
+      ..llmApiKeyProvider = json['llmApiKeyProvider']
+      ..llmApiKeyShared = json['llmApiKeyShared'] ?? false;
   }
 
   Map<String, dynamic> toJson() => {
@@ -57,8 +65,11 @@ class Boat {
     // ownerId is pushed (only owners write boats) so RLS can validate ownership
     // on insert/update. shareCode stays inbound-only (DB-generated).
     'ownerId': ownerId,
-    'llmApiKey': llmApiKey,
-    'llmApiKeyProvider': llmApiKeyProvider,
+    'llmApiKeyShared': llmApiKeyShared,
+    // Local-only unless explicitly shared — never send the real value
+    // otherwise, and actively null it out remotely when un-sharing.
+    'llmApiKey': llmApiKeyShared ? llmApiKey : null,
+    'llmApiKeyProvider': llmApiKeyShared ? llmApiKeyProvider : null,
   };
 
   @override
@@ -80,7 +91,8 @@ class Boat {
           ownerId == other.ownerId &&
           shareCode == other.shareCode &&
           llmApiKey == other.llmApiKey &&
-          llmApiKeyProvider == other.llmApiKeyProvider;
+          llmApiKeyProvider == other.llmApiKeyProvider &&
+          llmApiKeyShared == other.llmApiKeyShared;
 
   @override
   int get hashCode => Object.hashAll([
@@ -99,6 +111,7 @@ class Boat {
         shareCode,
         llmApiKey,
         llmApiKeyProvider,
+        llmApiKeyShared,
       ]);
 
   @override
@@ -107,5 +120,6 @@ class Boat {
       'lastModified: $lastModified, lastPurchasePrice: $lastPurchasePrice, '
       'notes: $notes, origin: $origin, photoUrl: $photoUrl, '
       'ownerId: $ownerId, shareCode: $shareCode, '
-      'llmApiKeyProvider: $llmApiKeyProvider)'; // key itself never in toString
+      'llmApiKeyProvider: $llmApiKeyProvider, '
+      'llmApiKeyShared: $llmApiKeyShared)'; // key itself never in toString
 }

@@ -6,8 +6,10 @@ import 'package:sisu_mate/models/models.dart';
 
 import 'test_helpers/db_test_helper.dart';
 
-/// #203: llmApiKey/llmApiKeyProvider round-trip through Drift and
-/// Boat.fromJson/toJson (the wire shape pushed to Supabase).
+/// #203/#215: llmApiKey/llmApiKeyProvider/llmApiKeyShared round-trip
+/// through Drift (always full-fidelity, local storage) and
+/// Boat.fromJson/toJson (the wire shape pushed to Supabase — local-only by
+/// default, only actually carries the real key when llmApiKeyShared).
 void main() {
   late AppDatabase db;
   late BoatRepositoryImpl repo;
@@ -19,7 +21,8 @@ void main() {
 
   tearDown(() async => db.close());
 
-  test('llmApiKey/llmApiKeyProvider persist through the repository', () async {
+  test('llmApiKey/llmApiKeyProvider persist through the repository (local, '
+      'full fidelity regardless of sharing)', () async {
     await repo.addBoat(Boat()
       ..supabaseId = 'boat_1'
       ..name = 'Sisu'
@@ -30,6 +33,7 @@ void main() {
     expect(saved, isNotNull);
     expect(saved!.llmApiKey, 'sk-test-123');
     expect(saved.llmApiKeyProvider, 'openai');
+    expect(saved.llmApiKeyShared, isFalse, reason: 'local-only by default');
   });
 
   test('llmApiKey defaults to null when never set', () async {
@@ -40,6 +44,7 @@ void main() {
     final saved = await repo.getBoatById('boat_2');
     expect(saved!.llmApiKey, isNull);
     expect(saved.llmApiKeyProvider, isNull);
+    expect(saved.llmApiKeyShared, isFalse);
   });
 
   test('update can clear a previously-set key', () async {
@@ -60,25 +65,60 @@ void main() {
     expect(saved.llmApiKeyProvider, isNull);
   });
 
-  test('Boat.fromJson/toJson round-trips the key fields', () {
+  test(
+      '#215: toJson excludes the real key when NOT shared (local-only '
+      'default) even though it is set locally', () {
     final boat = Boat()
       ..supabaseId = 'boat_4'
       ..name = 'Sisu'
       ..llmApiKey = 'sk-test-789'
-      ..llmApiKeyProvider = 'openai';
+      ..llmApiKeyProvider = 'openai'
+      ..llmApiKeyShared = false;
 
     final json = boat.toJson();
-    expect(json['llmApiKey'], 'sk-test-789');
-    expect(json['llmApiKeyProvider'], 'openai');
+    expect(json['llmApiKeyShared'], isFalse);
+    expect(json['llmApiKey'], isNull,
+        reason: 'the wire payload must never carry an unshared key');
+    expect(json['llmApiKeyProvider'], isNull);
+  });
 
-    final restored = Boat.fromJson(json);
-    expect(restored, boat);
+  test('#215: toJson includes the real key only when explicitly shared', () {
+    final boat = Boat()
+      ..supabaseId = 'boat_5'
+      ..name = 'Sisu'
+      ..llmApiKey = 'sk-test-shared'
+      ..llmApiKeyProvider = 'xai'
+      ..llmApiKeyShared = true;
+
+    final json = boat.toJson();
+    expect(json['llmApiKeyShared'], isTrue);
+    expect(json['llmApiKey'], 'sk-test-shared');
+    expect(json['llmApiKeyProvider'], 'xai');
+  });
+
+  test(
+      '#215: fromJson still parses an incoming shared key faithfully — the '
+      'selective-adopt guard lives in InboundSyncApplier, not here', () {
+    final restored = Boat.fromJson({
+      'supabaseId': 'boat_6',
+      'name': 'Sisu',
+      'isBought': false,
+      'isHidden': false,
+      'isSynced': true,
+      'lastModified': DateTime.now().toUtc().toIso8601String(),
+      'llmApiKey': 'sk-from-owner',
+      'llmApiKeyProvider': 'openai',
+      'llmApiKeyShared': true,
+    });
+
+    expect(restored.llmApiKey, 'sk-from-owner');
+    expect(restored.llmApiKeyShared, isTrue);
   });
 
   test('Boat.toString never includes the raw key, only the provider',
       () {
     final boat = Boat()
-      ..supabaseId = 'boat_5'
+      ..supabaseId = 'boat_7'
       ..llmApiKey = 'sk-super-secret-should-not-print'
       ..llmApiKeyProvider = 'openai';
 

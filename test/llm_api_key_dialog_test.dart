@@ -10,8 +10,9 @@ import 'package:sisu_mate/ui/settings/llm_api_key_dialog.dart';
 
 import 'test_helpers/platform_mocks.dart';
 
-/// #203: BYOK entry dialog — reminder text always present, owner form
-/// persists via boatRepositoryProvider, non-owner view stays read-only.
+/// #215: BYOK entry dialog — local-only by default. Everyone (owner or
+/// crew) gets the same editable form for their own device's key; only the
+/// owner's "Share with crew" switch is interactive.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
@@ -29,6 +30,13 @@ void main() {
     WidgetTester tester,
     Widget dialog,
   ) async {
+    // No isProProvider/RevenueCat override — real entitlement lookups fail
+    // gracefully offline and resolve to Free, so _syncAllowed() is false and
+    // SyncService never starts its periodic queue monitor. syncServiceProvider
+    // is left to construct normally (against the overridden db below) so
+    // queueOutgoingChange's writes land in a db.syncOutboxItems this test can
+    // actually inspect — a separately-instantiated SyncService (e.g.
+    // testSyncService()) would write into its own isolated db instead.
     final container = ProviderContainer(overrides: [
       appDatabaseProvider.overrideWithValue(db),
     ]);
@@ -41,18 +49,42 @@ void main() {
     return container;
   }
 
-  testWidgets('shows the online/validity/tokens reminder text', (tester) async {
+  testWidgets('shows the local-only/online/validity/tokens reminder text',
+      (tester) async {
     await pumpDialog(
       tester,
-      LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1'),
+      LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1', isOwner: true),
     );
 
     expect(find.textContaining('only work when the app is online'), findsOneWidget);
     expect(find.textContaining('never validates, meters, or bills'), findsOneWidget);
+    expect(find.textContaining('Stored only on this device by default'),
+        findsOneWidget);
   });
 
-  testWidgets('saving a key persists it to the boat via the repository',
-      (tester) async {
+  testWidgets('owner: the share switch is interactive', (tester) async {
+    await pumpDialog(
+      tester,
+      LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1', isOwner: true),
+    );
+
+    final tile = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+    expect(tile.onChanged, isNotNull);
+  });
+
+  testWidgets('crew (non-owner): the share switch is disabled', (tester) async {
+    await pumpDialog(
+      tester,
+      LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1', isOwner: false),
+    );
+
+    final tile = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+    expect(tile.onChanged, isNull);
+  });
+
+  testWidgets(
+      'owner saving with sharing ON persists both the key and the shared '
+      'flag locally', (tester) async {
     await db.into(db.boats).insert(BoatsCompanion.insert(
           supabaseId: const Value('boat_1'),
           name: const Value('Sisu'),
@@ -60,12 +92,17 @@ void main() {
 
     await pumpDialog(
       tester,
-      LlmApiKeyDialog(boat: Boat()
-        ..supabaseId = 'boat_1'
-        ..name = 'Sisu'),
+      LlmApiKeyDialog(
+        boat: Boat()
+          ..supabaseId = 'boat_1'
+          ..name = 'Sisu',
+        isOwner: true,
+      ),
     );
 
-    await tester.enterText(find.byType(TextField), 'sk-new-key');
+    await tester.enterText(find.byType(TextField), 'sk-shared-key');
+    await tester.pump();
+    await tester.tap(find.byType(SwitchListTile));
     await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pump();
@@ -74,41 +111,50 @@ void main() {
     final row = await (db.select(db.boats)
           ..where((t) => t.supabaseId.equals('boat_1')))
         .getSingle();
-    expect(row.llmApiKey, 'sk-new-key');
-    expect(row.llmApiKeyProvider, 'openai');
+    expect(row.llmApiKey, 'sk-shared-key');
+    expect(row.llmApiKeyShared, isTrue);
   });
 
-  testWidgets('read-only dialog shows configured state without an edit field',
-      (tester) async {
+  testWidgets(
+      'non-owner saving persists their own key locally without ever '
+      'touching llmApiKeyShared (they can\'t change it)', (tester) async {
+    await db.into(db.boats).insert(BoatsCompanion.insert(
+          supabaseId: const Value('boat_1'),
+          name: const Value('Sisu'),
+          llmApiKeyShared: const Value(true), // owner already shares
+        ));
+
     await pumpDialog(
       tester,
-      LlmApiKeyReadOnlyDialog(
+      LlmApiKeyDialog(
         boat: Boat()
           ..supabaseId = 'boat_1'
-          ..llmApiKey = 'sk-owner-set'
-          ..llmApiKeyProvider = 'xai',
+          ..name = 'Sisu'
+          ..llmApiKeyShared = true,
+        isOwner: false,
       ),
     );
 
-    expect(find.textContaining('configured for this boat by its owner'),
-        findsOneWidget);
-    expect(find.byType(TextField), findsNothing);
-    expect(find.text('Save'), findsNothing);
+    await tester.enterText(find.byType(TextField), 'sk-crew-personal');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    await tester.pump();
+
+    final row = await (db.select(db.boats)
+          ..where((t) => t.supabaseId.equals('boat_1')))
+        .getSingle();
+    expect(row.llmApiKey, 'sk-crew-personal');
+    expect(row.llmApiKeyShared, isTrue,
+        reason: 'a non-owner editing their own local key must not reset '
+            'the shared flag the owner set — they can\'t change it either '
+            'way, so it must be left exactly as it was');
   });
 
-  testWidgets('read-only dialog shows the not-configured state', (tester) async {
+  testWidgets('#15: dialog shows a usage summary', (tester) async {
     await pumpDialog(
       tester,
-      LlmApiKeyReadOnlyDialog(boat: Boat()..supabaseId = 'boat_1'),
-    );
-
-    expect(find.textContaining('No AI API key is configured'), findsOneWidget);
-  });
-
-  testWidgets('#15: editable dialog shows a usage summary', (tester) async {
-    await pumpDialog(
-      tester,
-      LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1'),
+      LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1', isOwner: true),
     );
     await tester.pump();
 

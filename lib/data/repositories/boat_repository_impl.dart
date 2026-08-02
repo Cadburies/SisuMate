@@ -26,6 +26,7 @@ class BoatRepositoryImpl implements BoatRepository {
     ..shareCode = r.shareCode
     ..llmApiKey = r.llmApiKey
     ..llmApiKeyProvider = r.llmApiKeyProvider
+    ..llmApiKeyShared = r.llmApiKeyShared
     ..lastModified = r.lastModified;
 
   BoatsCompanion _toCompanion(Boat b) => BoatsCompanion(
@@ -42,6 +43,7 @@ class BoatRepositoryImpl implements BoatRepository {
         shareCode: Value(b.shareCode),
         llmApiKey: Value(b.llmApiKey),
         llmApiKeyProvider: Value(b.llmApiKeyProvider),
+        llmApiKeyShared: Value(b.llmApiKeyShared),
         lastModified: Value(b.lastModified),
       );
 

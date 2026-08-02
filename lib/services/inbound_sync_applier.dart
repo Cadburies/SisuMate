@@ -737,6 +737,15 @@ class InboundSyncApplier {
       ownerId: Value(b.ownerId),
       shareCode: Value(b.shareCode),
       lastModified: Value(b.lastModified),
+      llmApiKeyShared: Value(b.llmApiKeyShared),
+      // #215: only ever adopt an inbound key when it's actively being
+      // shared by the owner — Value.absent() leaves the column untouched,
+      // so a device's own local (unshared) key survives an inbound sync of
+      // someone else's "not sharing" state instead of being silently wiped.
+      llmApiKey: b.llmApiKeyShared ? Value(b.llmApiKey) : const Value.absent(),
+      llmApiKeyProvider: b.llmApiKeyShared
+          ? Value(b.llmApiKeyProvider)
+          : const Value.absent(),
     );
     if (existing == null) {
       await db.into(db.boats).insert(c);

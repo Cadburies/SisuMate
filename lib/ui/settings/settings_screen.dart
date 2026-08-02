@@ -107,7 +107,8 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                         ),
 
-                        // #203: bring-your-own-key AI API key, per active boat.
+                        // #215: bring-your-own-key AI API key — local-only by
+                        // default; everyone (owner or crew) can set their own.
                         activeBoatAsync.maybeWhen(
                           data: (activeBoat) {
                             if (activeBoat == null) return const SizedBox.shrink();
@@ -121,15 +122,17 @@ class SettingsScreen extends ConsumerWidget {
                               leading: const Icon(Icons.smart_toy_outlined),
                               title: const Text('AI API Key'),
                               subtitle: Text(configured
-                                  ? 'Key configured (bring your own)'
+                                  ? (activeBoat.llmApiKeyShared
+                                      ? 'Key configured — shared with crew'
+                                      : 'Key configured — this device only')
                                   : 'None set — bring your own to use AI features'),
-                              trailing:
-                                  Icon(isOwner ? Icons.edit : Icons.visibility),
+                              trailing: const Icon(Icons.edit),
                               onTap: () => showDialog(
                                 context: context,
-                                builder: (_) => isOwner
-                                    ? LlmApiKeyDialog(boat: activeBoat)
-                                    : LlmApiKeyReadOnlyDialog(boat: activeBoat),
+                                builder: (_) => LlmApiKeyDialog(
+                                  boat: activeBoat,
+                                  isOwner: isOwner,
+                                ),
                               ),
                             );
                           },
