@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #180 (`_markSynced` reset on successful push — fixed "Keep mine" reappearing). Investigated #156: prior "recipe_ingredients missing from restamp" claim was wrong (that table has no `boatSupabaseId` column — doesn't compile as a fix). Live Supabase check shows all 5 tables now correctly prefixed; RLS 42501s look transient/self-healed via retry, already logged as `warning`. Left #156 open, uncertain without live repro — has `emulator-5554` + dart-defines available.
+- **Last (claudevc):** fixed + closed #180 (`_markSynced` reset on successful push) and #178 (`DebugBootstrap` no longer renames a contributor's local boat / claims ownership without a real signed-in owner). Investigated #156: prior "recipe_ingredients missing from restamp" claim was wrong (that table has no `boatSupabaseId` column). Live Supabase check shows all 5 tables now correctly prefixed; RLS 42501s look transient/self-healed via retry. Left #156 open, uncertain without live repro — has `emulator-5554` + dart-defines available.
 - **Doing:** nothing claimed by claudevc. CLI agent on #126 (exclusive UI task, dialog contrast).
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)

@@ -25,6 +25,14 @@ class DebugBootstrap {
     if (ref.read(authServiceProvider).isAnonymous) return;
 
     await _ensureOwnerSignedIn(ref);
+
+    // The boat-rename + ownership-claim side effects below are scoped to the
+    // developer's own device: without a real signed-in owner (no credentials
+    // configured, wrong credentials, or offline), a plain `flutter run` from
+    // a clean clone must not rename a contributor's local boat or force a
+    // boat-account context under nobody's identity (#178).
+    if (ref.read(authServiceProvider).currentUser == null) return;
+
     await _ensureActiveDebugBoat(ref);
   }
 
