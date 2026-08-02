@@ -4,6 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../ads/ad_helper.dart';
 import 'admob_platform.dart';
 
+/// Factory id for the full-width list-item tile native ad style.
+const String kNativeAdFactoryItemTile = 'sisu_item_tile';
+
+/// Factory id for the two-column grid card (cocktails/Chef) native ad style.
+const String kNativeAdFactoryCocktailTile = 'sisu_cocktail_tile';
+
 class AdMobService {
   /// Shared instance for production call sites (#123: interstitial state —
   /// the loaded ad and the load-attempt counter — must survive across
@@ -270,7 +276,10 @@ class AdMobService {
     await ad.show();
   }
 
-  NativeAd? createNativeAd() {
+  NativeAd? createNativeAd({
+    String factoryId = kNativeAdFactoryItemTile,
+    String? contextHint,
+  }) {
     if (!_platform.isSupported) {
       if (kDebugMode) {
         print('AdMob: Cannot create native ad - platform not supported');
@@ -286,7 +295,11 @@ class AdMobService {
 
     return NativeAd(
       adUnitId: AdHelper.nativeAdUnitId,
-      factoryId: 'adFactoryExample',
+      factoryId: factoryId,
+      // Context targeting note: AdRequest.contentUrl only works when the URL
+      // resolves to a real, publicly crawlable page Google can classify —
+      // fabricating module URLs does nothing, so none is sent until real
+      // public content pages exist (see issue #124 thread for the discussion).
       request: const AdRequest(),
       listener: NativeAdListener(
         onAdLoaded: (ad) {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tile-styled native ad colors (#124) — mirror SisuColors dark tokens. -->
+<resources>
+    <color name="ad_tile_bg">#1E1E1E</color>
+    <color name="ad_headline">#FFFFFF</color>
+    <color name="ad_body">#B0BEC5</color>
+    <color name="ad_chip_bg">#006666</color>
+    <color name="ad_chip_text">#80DEEA</color>
+</resources>
