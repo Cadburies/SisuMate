@@ -8603,6 +8603,140 @@
           "sortOrder": 3
         }
       ]
+    },
+    {
+      "supabaseId": "cocktail_imp_bushwhacker",
+      "name": "Bushwhacker",
+      "description": "A frozen, boozy milkshake of a cocktail loaded with rum, coffee liqueur, and cream.",
+      "instructions": "Blend all ingredients with a scoop of ice until smooth. Pour into a hurricane glass and garnish with chocolate shavings.",
+      "recipeType": "cocktail",
+      "glassware": "Hurricane",
+      "prepMinutes": 5,
+      "story": "Born at Cajun's Wharf on Pensacola Beach in the late 1970s, the Bushwhacker was dreamed up as a frozen answer to Florida's brutal summer heat — part dessert, part dare. It quickly became the signature drink of the Gulf Coast, with bars up and down the 'Redneck Riviera' claiming their own 'original' recipe. Locals will tell you it drinks like a chocolate milkshake that sneaks up on you two sips in.",
+      "cuisine": [
+        "Classic",
+        "American",
+        "Tiki"
+      ],
+      "flavorProfiles": [
+        "rum",
+        "creamy",
+        "coffee",
+        "chocolate",
+        "sweet"
+      ],
+      "ingredients": [
+        {
+          "name": "Dark Rum",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 0
+        },
+        {
+          "name": "Coconut Rum",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 1
+        },
+        {
+          "name": "Coffee Liqueur",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 2
+        },
+        {
+          "name": "Cream of Coconut",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 3
+        },
+        {
+          "name": "Heavy Cream",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 4
+        },
+        {
+          "name": "Chocolate Shavings",
+          "quantity": null,
+          "unit": null,
+          "isGarnish": true,
+          "garnishNotes": null,
+          "sortOrder": 5
+        }
+      ]
+    },
+    {
+      "supabaseId": "cocktail_imp_sisu_bushwhacker",
+      "name": "Sisu Bushwhacker",
+      "description": "A Sisu Mate twist on the frozen Bushwhacker, swapping in peanut-butter whiskey for a nuttier, dessert-like spin.",
+      "instructions": "Blend all ingredients with a scoop of ice until smooth. Pour into a hurricane glass and garnish with chocolate shavings.",
+      "recipeType": "cocktail",
+      "glassware": "Hurricane",
+      "prepMinutes": 5,
+      "story": "A Sisu Mate twist on the classic Bushwhacker: swap the dark rum for Screwball Peanut Butter Whiskey and the frozen Gulf Coast classic turns into a peanut-butter-cup dessert in a glass — chocolate and peanut butter doing what they do best at anchor.",
+      "cuisine": [
+        "Original",
+        "Tiki"
+      ],
+      "flavorProfiles": [
+        "whiskey",
+        "peanut butter",
+        "creamy",
+        "coffee",
+        "chocolate",
+        "sweet"
+      ],
+      "ingredients": [
+        {
+          "name": "Screwball Peanut Butter Whiskey",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 0
+        },
+        {
+          "name": "Coconut Rum",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 1
+        },
+        {
+          "name": "Coffee Liqueur",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 2
+        },
+        {
+          "name": "Cream of Coconut",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 3
+        },
+        {
+          "name": "Heavy Cream",
+          "quantity": 30,
+          "unit": "ml",
+          "isGarnish": false,
+          "sortOrder": 4
+        },
+        {
+          "name": "Chocolate Shavings",
+          "quantity": null,
+          "unit": null,
+          "isGarnish": true,
+          "garnishNotes": null,
+          "sortOrder": 5
+        }
+      ]
     }
   ]
 }

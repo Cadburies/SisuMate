@@ -63,6 +63,8 @@ const _barData =
     ['smoky', 'peaty', 'rich', 'spirit-forward', 'complex'], 40.0, 45.0, '750ml', null),
   ('Irish Whiskey', 'spirit',
     ['light', 'smooth', 'sweet', 'spirit-forward', 'grain'], 40.0, 30.0, '750ml', null),
+  ('Screwball Peanut Butter Whiskey', 'spirit',
+    ['sweet', 'nutty', 'dessert', 'creamy'], 35.0, 20.0, '750ml', null),
   ('Gin', 'spirit',
     ['herbal', 'botanical', 'fresh', 'floral', 'citrus', 'juniper'], 40.0, 30.0, '750ml', null),
   ('Vodka', 'spirit',
