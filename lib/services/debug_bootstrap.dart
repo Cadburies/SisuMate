@@ -8,7 +8,10 @@ import 'revenuecat_service.dart';
 /// Debug-only convenience: when the Pro testing bypass is on, sign the fixed
 /// owner account in and make sure a boat named [kDebugBoatName] is the active
 /// boat, so on-device Pro sync runs against Supabase without the (not-yet-built)
-/// sign-up / boat-picker UI. No-op in profile/release builds.
+/// sign-up / boat-picker UI. Also seeds that boat's LLM BYOK key from
+/// `XAI_KEY` (dart-defines) if it doesn't already have one, so LLM features
+/// (#203+) are testable without opening Settings each run — see [_xaiKey].
+/// No-op in profile/release builds.
 class DebugBootstrap {
   const DebugBootstrap._();
 
@@ -16,6 +19,22 @@ class DebugBootstrap {
       String.fromEnvironment('SUPABASE_DEBUG_EMAIL');
   static const _password =
       String.fromEnvironment('SUPABASE_DEBUG_PASSWORD');
+
+  // Developer convenience only (user request, 2026-08-02): #203/#215 made
+  // the LLM BYOK key "purely user-entered, per-boat data" so it never ships
+  // baked into a build — this is a narrow, deliberate exception to that for
+  // local testing, not a reversal. Same kDebugMode-gated path as the rest of
+  // this class; a release build never reads `XAI_KEY` (it isn't passed to
+  // `flutter build`) and `dart-defines.json` holding it is gitignored, same
+  // as the Supabase debug credentials above. xAI only (not Kimi/Anthropic —
+  // no `LlmProvider` enum value exists for either yet; that's #211).
+  static const _xaiKey = String.fromEnvironment('XAI_KEY');
+
+  /// Test-only override — `String.fromEnvironment` is resolved at compile
+  /// time so [_xaiKey] itself can't be injected; tests set this instead of
+  /// passing a dart-define. Mirrors [RevenueCatService.debugProOverrideForTests].
+  static String? debugXaiKeyOverrideForTests;
+  static String get _resolvedXaiKey => debugXaiKeyOverrideForTests ?? _xaiKey;
 
   static Future<void> run(ProviderContainer ref) async {
     if (!kDebugMode || !kForceProForTesting) return;
@@ -59,6 +78,14 @@ class DebugBootstrap {
     final boatRepo = ref.read(boatRepositoryProvider);
     final boat = await boatRepo.getBoatById(guid);
     if (boat != null) {
+      // Never overwrite a key the developer deliberately set/changed by hand
+      // for a specific test — only fills a genuinely empty slot.
+      final xaiKey = _resolvedXaiKey;
+      if ((boat.llmApiKey == null || boat.llmApiKey!.isEmpty) &&
+          xaiKey.isNotEmpty) {
+        boat.llmApiKey = xaiKey;
+        boat.llmApiKeyProvider = 'xai';
+      }
       await boatRepo.updateBoat(boat);
       try {
         await auth.claimBoatOwnership(guid);

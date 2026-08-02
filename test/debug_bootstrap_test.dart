@@ -70,4 +70,46 @@ void main() {
     expect(boat.supabaseId, isNot(BoatEnrollmentService.defaultBoatId));
     expect(boat.name, kDebugBoatName);
   });
+
+  group('XAI_KEY dev autofill (user request, 2026-08-02)', () {
+    tearDown(() => DebugBootstrap.debugXaiKeyOverrideForTests = null);
+
+    test('a real signed-in owner with no LLM key yet gets XAI_KEY seeded',
+        () async {
+      DebugBootstrap.debugXaiKeyOverrideForTests = 'xai-test-key';
+      backend.setUser(fakeOwnerUser());
+      await DebugBootstrap.run(container);
+
+      final boat = await db.select(db.boats).getSingle();
+      expect(boat.llmApiKey, 'xai-test-key');
+      expect(boat.llmApiKeyProvider, 'xai');
+    });
+
+    test('a boat that already has a manually-set key is left untouched',
+        () async {
+      await (db.update(db.boats)
+            ..where((b) => b.supabaseId.equals(BoatEnrollmentService.defaultBoatId)))
+          .write(const BoatsCompanion(
+        llmApiKey: Value('sk-manually-entered'),
+        llmApiKeyProvider: Value('openai'),
+      ));
+      DebugBootstrap.debugXaiKeyOverrideForTests = 'xai-test-key';
+      backend.setUser(fakeOwnerUser());
+      await DebugBootstrap.run(container);
+
+      final boat = await db.select(db.boats).getSingle();
+      expect(boat.llmApiKey, 'sk-manually-entered',
+          reason: 'must never clobber a key the developer deliberately set');
+      expect(boat.llmApiKeyProvider, 'openai');
+    });
+
+    test('no XAI_KEY dart-define configured: boat gets no key, no crash',
+        () async {
+      backend.setUser(fakeOwnerUser());
+      await DebugBootstrap.run(container);
+
+      final boat = await db.select(db.boats).getSingle();
+      expect(boat.llmApiKey, null);
+    });
+  });
 }
