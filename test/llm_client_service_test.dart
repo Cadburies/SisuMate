@@ -157,4 +157,111 @@ void main() {
 
     expect(calledUri.host, 'api.x.ai');
   });
+
+  group('#17 cost controls (caching)', () {
+    LlmClientService serviceCountingCalls(
+      int Function() incrementAndGet, {
+      Duration cacheTtl = const Duration(minutes: 10),
+    }) {
+      return LlmClientService(
+        httpClient: MockClient((_) async {
+          incrementAndGet();
+          return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {'content': 'cached answer'}
+                }
+              ]
+            }),
+            200,
+          );
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+        cacheTtl: cacheTtl,
+      );
+    }
+
+    test('an identical second query is served from cache, not the network',
+        () async {
+      var calls = 0;
+      final service = serviceCountingCalls(() => ++calls);
+      final boat = boatWith(key: 'sk-test', provider: 'openai');
+
+      final first = await service.complete(boat: boat, prompt: 'hello');
+      final second = await service.complete(boat: boat, prompt: 'hello');
+
+      expect(calls, 1);
+      expect(second.text, first.text);
+      expect(second.status, LlmResultStatus.success);
+    });
+
+    test('a different prompt is not served from another prompt\'s cache entry',
+        () async {
+      var calls = 0;
+      final service = serviceCountingCalls(() => ++calls);
+      final boat = boatWith(key: 'sk-test', provider: 'openai');
+
+      await service.complete(boat: boat, prompt: 'hello');
+      await service.complete(boat: boat, prompt: 'goodbye');
+
+      expect(calls, 2);
+    });
+
+    test('useCache: false always forces a fresh network call', () async {
+      var calls = 0;
+      final service = serviceCountingCalls(() => ++calls);
+      final boat = boatWith(key: 'sk-test', provider: 'openai');
+
+      await service.complete(boat: boat, prompt: 'hello');
+      await service.complete(boat: boat, prompt: 'hello', useCache: false);
+
+      expect(calls, 2);
+    });
+
+    test('an expired cache entry triggers a fresh network call', () async {
+      var calls = 0;
+      final service = serviceCountingCalls(() => ++calls,
+          cacheTtl: const Duration(milliseconds: 1));
+      final boat = boatWith(key: 'sk-test', provider: 'openai');
+
+      await service.complete(boat: boat, prompt: 'hello');
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await service.complete(boat: boat, prompt: 'hello');
+
+      expect(calls, 2);
+    });
+
+    test('non-success results (e.g. errors) are never cached', () async {
+      var calls = 0;
+      final service = LlmClientService(
+        httpClient: MockClient((_) async {
+          calls++;
+          return http.Response('server error', 500);
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+      final boat = boatWith(key: 'sk-test', provider: 'openai');
+
+      await service.complete(boat: boat, prompt: 'hello');
+      await service.complete(boat: boat, prompt: 'hello');
+
+      expect(calls, 2,
+          reason: 'an error result must never be served from cache — it '
+              'would permanently mask a transient failure');
+    });
+
+    test('clearCache forces the next identical query back to the network',
+        () async {
+      var calls = 0;
+      final service = serviceCountingCalls(() => ++calls);
+      final boat = boatWith(key: 'sk-test', provider: 'openai');
+
+      await service.complete(boat: boat, prompt: 'hello');
+      service.clearCache();
+      await service.complete(boat: boat, prompt: 'hello');
+
+      expect(calls, 2);
+    });
+  });
 }
