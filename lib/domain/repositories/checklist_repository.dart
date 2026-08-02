@@ -12,6 +12,12 @@ abstract class ChecklistRepository {
   Stream<List<ChecklistItem>> watchItemsForAppType(String appType);
   Future<List<ChecklistItem>> getItemsByGroup(String groupSupabaseId);
   Future<void> toggleComplete(ChecklistItem item);
+  /// Marks every non-hidden, not-yet-completed item in [groupSupabaseId] as
+  /// completed (#205 bulk "Complete all").
+  Future<void> completeAll(String groupSupabaseId);
+  /// Marks every non-hidden, completed item in [groupSupabaseId] as
+  /// incomplete (#205 bulk "Clear all").
+  Future<void> uncompleteAll(String groupSupabaseId);
   Future<void> hideItem(ChecklistItem item);
   Future<void> unhideItem(ChecklistItem item);
   Future<void> permanentlyDelete(ChecklistItem item);

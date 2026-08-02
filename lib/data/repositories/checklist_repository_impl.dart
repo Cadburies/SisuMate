@@ -195,6 +195,35 @@ class ChecklistRepositoryImpl implements ChecklistRepository {
   }
 
   @override
+  Future<void> completeAll(String groupSupabaseId) async {
+    final items = await getItemsByGroup(groupSupabaseId);
+    final now = DateTime.now();
+    for (final item in items.where((i) => !i.isHidden && !i.isCompleted)) {
+      item.isCompleted = true;
+      item.completedAt = now;
+      item.completionHistory = [
+        ...item.completionHistory,
+        now.toIso8601String(),
+      ];
+      item.lastModified = now.toUtc();
+      await _putItem(item);
+      await syncService.queueOutgoingChange('checklist_items', item.toJson());
+    }
+  }
+
+  @override
+  Future<void> uncompleteAll(String groupSupabaseId) async {
+    final items = await getItemsByGroup(groupSupabaseId);
+    final now = DateTime.now().toUtc();
+    for (final item in items.where((i) => !i.isHidden && i.isCompleted)) {
+      item.isCompleted = false;
+      item.lastModified = now;
+      await _putItem(item);
+      await syncService.queueOutgoingChange('checklist_items', item.toJson());
+    }
+  }
+
+  @override
   Future<void> hideItem(ChecklistItem item) async {
     item.isHidden = true;
     item.lastModified = DateTime.now().toUtc();

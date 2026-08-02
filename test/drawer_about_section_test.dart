@@ -76,4 +76,27 @@ void main() {
       label: 'ingredient_detail_screen.dart',
     );
   });
+
+  test(
+      '#209: Home drawer no longer duplicates Boats/Appearance/Units — '
+      'those live only in Settings now', () {
+    final source = read('lib/ui/home/home_screen.dart');
+    expect(source.contains('Active Boat'), isFalse,
+        reason: 'Boats section is a duplicate of settings_screen.dart — '
+            'Home should link to Settings instead of re-implementing it');
+    expect(source.contains('Dark theme'), isFalse,
+        reason: 'Appearance toggle is a duplicate of settings_screen.dart\'s '
+            'ThemeMode picker — two divergent widgets editing the same '
+            'themeModeProvider was the bug #209 fixed');
+    expect(source.contains("Text('Units')"), isFalse,
+        reason: 'Units summary tile duplicates settings_screen.dart\'s full '
+            'unit editor');
+    // Exactly one way into Settings from Home now, not three.
+    final settingsLinks =
+        RegExp('AppRoutes\\.settings').allMatches(source).length;
+    expect(settingsLinks, 1,
+        reason: 'Home should have a single Settings entry point, not the '
+            'redundant Units-tile + explicit-tile + (removed) Boats copies '
+            'it had before #209');
+  });
 }

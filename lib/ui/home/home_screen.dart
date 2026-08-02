@@ -6,11 +6,7 @@ import '../components/common_drawer.dart';
 import '../components/banner_ad_widget.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
-import '../../core/theme.dart';
 import '../../core/colors.dart';
-import '../../core/units.dart';
-import '../../models/models.dart';
-import '../../providers/shopping_provider.dart';
 import '../../providers/passage_readiness_provider.dart';
 import '../../services/suggestion_engine.dart';
 
@@ -147,186 +143,39 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildEndDrawer(BuildContext context) {
     return Drawer(
-      child: Consumer(
-        builder: (context, ref, _) {
-          return Column(
-            children: [
-              const DrawerHeaderWidget(title: 'Sisu Mate'),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const SectionHeader(title: 'Account'),
-                      const AccountSection(),
-                      const Divider(),
-                      const SectionHeader(title: 'Boats'),
-                      Consumer(
-                        builder: (context, ref, child) {
-                          final boatsAsync = ref.watch(boatsProvider);
-                          final activeBoatAsync = ref.watch(activeBoatProvider);
-                          final isProAsync = ref.watch(isProProvider);
-
-                          return isProAsync.when(
-                            data: (isPro) => boatsAsync.when(
-                              data: (boats) {
-                                return Column(
-                                  children: [
-                                    activeBoatAsync.when(
-                                      data: (activeBoat) => ListTile(
-                                        title: const Text('Active Boat'),
-                                        subtitle: Text(
-                                            activeBoat?.name ?? 'No boat selected'),
-                                        trailing: PopupMenuButton<Boat>(
-                                          onSelected: (boat) async {
-                                            final userSettings = await ref
-                                                .read(userSettingsProvider.future);
-                                            if (userSettings != null) {
-                                              userSettings.activeBoatSupabaseId =
-                                                  boat.supabaseId;
-                                              await ref
-                                                  .read(
-                                                      userSettingsRepositoryProvider)
-                                                  .updateSettings(userSettings);
-                                              ref.invalidate(userSettingsProvider);
-                                              ref.invalidate(activeBoatProvider);
-                                            }
-                                          },
-                                          itemBuilder: (context) => boats
-                                              .map((boat) => PopupMenuItem(
-                                                    value: boat,
-                                                    child: Text(boat.name),
-                                                  ))
-                                              .toList(),
-                                          child: const Icon(Icons.arrow_drop_down),
-                                        ),
-                                      ),
-                                      loading: () => const ListTile(
-                                        title: Text('Active Boat'),
-                                        subtitle: Text('Loading...'),
-                                      ),
-                                      error: (e, _) => ListTile(
-                                        title: const Text('Active Boat'),
-                                        subtitle: Text('Error: $e'),
-                                      ),
-                                    ),
-                                    if (isPro) ...[
-                                      ListTile(
-                                        title: const Text('Manage Boats'),
-                                        subtitle: const Text(
-                                          'Add, edit, or delete boats',
-                                        ),
-                                        trailing: const Icon(
-                                          Icons.directions_boat,
-                                        ),
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                          context.push(AppRoutes.boats);
-                                        },
-                                      ),
-                                    ] else if (boats.length <= 1) ...[
-                                      const ListTile(
-                                        title: Text('Boat Management'),
-                                        subtitle: Text(
-                                          'Upgrade to Pro for multiple boats',
-                                        ),
-                                        trailing: Icon(Icons.lock),
-                                      ),
-                                    ],
-                                  ],
-                                );
-                              },
-                              loading: () => const ListTile(
-                                title: Text('Active Boat'),
-                                subtitle: Text('Loading boats...'),
-                              ),
-                              error: (e, _) => ListTile(
-                                title: const Text('Active Boat'),
-                                subtitle: Text('Error loading boats: $e'),
-                              ),
-                            ),
-                            loading: () => const ListTile(
-                              title: Text('Active Boat'),
-                              subtitle: Text('Loading subscription...'),
-                            ),
-                            error: (e, _) => ListTile(
-                              title: const Text('Active Boat'),
-                              subtitle: Text('Error: $e'),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(),
-                      // Appearance — the theme toggle lives only here, in the
-                      // main-screen drawer (theme.md §1). Default is dark.
-                      const SectionHeader(title: 'Appearance'),
-                      SwitchListTile(
-                        secondary: Icon(
-                          ref.watch(themeModeProvider) == ThemeMode.dark
-                              ? Icons.dark_mode
-                              : Icons.light_mode,
-                        ),
-                        title: const Text('Dark theme'),
-                        value: ref.watch(themeModeProvider) == ThemeMode.dark,
-                        onChanged: (isDark) {
-                          final notifier = ref.read(themeModeProvider.notifier);
-                          isDark
-                              ? notifier.setDarkTheme()
-                              : notifier.setLightTheme();
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.straighten),
-                        title: const Text('Units'),
-                        subtitle: Text(
-                          () {
-                            final p = ref.watch(unitPrefsProvider);
-                            final name = switch (p.matchingPreset) {
-                              UnitPreset.marine => 'Marine',
-                              UnitPreset.us => 'US',
-                              UnitPreset.metric => 'Metric',
-                              null => 'Custom',
-                            };
-                            final windLabel =
-                                UnitConverter.speedUnitLabel(p.windSpeed);
-                            final boatLabel =
-                                UnitConverter.speedUnitLabel(p.boatSpeed);
-                            final speedSummary = windLabel == boatLabel
-                                ? windLabel
-                                : '$windLabel wind / $boatLabel boat';
-                            return '$name · $speedSummary · '
-                                '${p.depth == DepthUnitPref.feet ? 'ft' : (p.depth == DepthUnitPref.fathoms ? 'fm' : 'm')} · '
-                                'DB metric';
-                          }(),
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          Navigator.pop(context);
-                          context.push(AppRoutes.settings);
-                        },
-                      ),
-                      const Divider(),
-                      const SectionHeader(title: 'Data Management'),
-                      const DataManagementSection(),
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.settings),
-                        title: const Text('Settings'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          context.push(AppRoutes.settings);
-                        },
-                      ),
-                      const Divider(),
-                      const ProUpgradeSection(),
-                      const AboutSection(),
-                    ],
+      child: Column(
+        children: [
+          const DrawerHeaderWidget(title: 'Sisu Mate'),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.settings),
+                    title: const Text('Settings'),
+                    subtitle: const Text(
+                      'Boats, appearance, units, email & sharing',
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.settings);
+                    },
                   ),
-                ),
+                  const Divider(),
+                  const SectionHeader(title: 'Account'),
+                  const AccountSection(),
+                  const Divider(),
+                  const SectionHeader(title: 'Data Management'),
+                  const DataManagementSection(),
+                  const Divider(),
+                  const ProUpgradeSection(),
+                  const AboutSection(),
+                ],
               ),
-              const DrawerFooter(),
-            ],
-          );
-        },
+            ),
+          ),
+          const DrawerFooter(),
+        ],
       ),
     );
   }

@@ -148,4 +148,99 @@ void main() {
       findsWidgets,
     );
   });
+
+  // #205: "Complete all" / "Clear all" bulk drawer actions.
+  const bulkVisibleId = 'chk_visible';
+  const bulkHiddenId = 'chk_hidden';
+
+  Future<void> seedTwoItems({
+    required bool visibleCompleted,
+    required bool hiddenCompleted,
+  }) async {
+    await db.into(db.checklistGroups).insert(
+          ChecklistGroupsCompanion.insert(
+            supabaseId: const Value(groupId),
+            boatSupabaseId: const Value('boat_1'),
+            appType: const Value('checklist'),
+            title: const Value('Pre-departure'),
+          ),
+        );
+    await db.into(db.checklistItems).insert(
+          ChecklistItemsCompanion.insert(
+            supabaseId: const Value(bulkVisibleId),
+            boatSupabaseId: const Value('boat_1'),
+            groupSupabaseId: const Value(groupId),
+            title: const Value('Check bilge pump'),
+            name: const Value('Check bilge pump'),
+            isCompleted: Value(visibleCompleted),
+          ),
+        );
+    await db.into(db.checklistItems).insert(
+          ChecklistItemsCompanion.insert(
+            supabaseId: const Value(bulkHiddenId),
+            boatSupabaseId: const Value('boat_1'),
+            groupSupabaseId: const Value(groupId),
+            title: const Value('Hidden item'),
+            name: const Value('Hidden item'),
+            isCompleted: Value(hiddenCompleted),
+            isHidden: const Value(true),
+          ),
+        );
+  }
+
+  Future<void> openDrawerAndTap(WidgetTester tester, String label) async {
+    final scaffold = tester.state<ScaffoldState>(find.byType(Scaffold));
+    scaffold.openEndDrawer();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final tile = find.text(label);
+    await tester.ensureVisible(tile);
+    await tester.pumpAndSettle();
+    await tester.tap(tile);
+    await tester.pumpAndSettle();
+    // Confirmation dialog — tap the matching confirm button (scoped to the
+    // dialog since the drawer tile with the same label is still in the tree
+    // behind the modal barrier).
+    await tester.tap(find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text(label),
+    ));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+      '#205: "Complete all" marks every visible item done, leaves hidden '
+      'items untouched (via ChecklistRepositoryImpl.completeAll)',
+      (tester) async {
+    await seedTwoItems(visibleCompleted: false, hiddenCompleted: false);
+    await pumpItems(tester, isPro: true);
+
+    await openDrawerAndTap(tester, 'Complete All');
+
+    final rows = await db.select(db.checklistItems).get();
+    final visible = rows.singleWhere((r) => r.supabaseId == bulkVisibleId);
+    final hidden = rows.singleWhere((r) => r.supabaseId == bulkHiddenId);
+    expect(visible.isCompleted, isTrue,
+        reason: 'Complete all must mark visible incomplete items done');
+    expect(hidden.isCompleted, isFalse,
+        reason: 'Complete all must not affect hidden items');
+  });
+
+  testWidgets(
+      '#205: "Clear all" marks every visible item not-done, leaves hidden '
+      'items untouched (via ChecklistRepositoryImpl.uncompleteAll)',
+      (tester) async {
+    await seedTwoItems(visibleCompleted: true, hiddenCompleted: true);
+    await pumpItems(tester, isPro: true);
+
+    await openDrawerAndTap(tester, 'Clear All');
+
+    final rows = await db.select(db.checklistItems).get();
+    final visible = rows.singleWhere((r) => r.supabaseId == bulkVisibleId);
+    final hidden = rows.singleWhere((r) => r.supabaseId == bulkHiddenId);
+    expect(visible.isCompleted, isFalse,
+        reason: 'Clear all must mark visible completed items not-done');
+    expect(hidden.isCompleted, isTrue,
+        reason: 'Clear all must not affect hidden items');
+  });
 }

@@ -243,10 +243,14 @@ class _SafetyBriefingItemsScreenState
                 children: [
                   const Icon(Icons.filter_list),
                   const SizedBox(width: 8),
-                  Text(
-                    'Filters & Options',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      'Filters & Options',
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                   ),
                 ],
@@ -335,6 +339,18 @@ class _SafetyBriefingItemsScreenState
               title: const Text('Reset to Factory'),
               subtitle: const Text('Restore original briefings'),
               onTap: () => _handleFactoryReset(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.done_all),
+              title: const Text('Complete All'),
+              subtitle: const Text('Mark every item in this list as done'),
+              onTap: () => _handleCompleteAll(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.replay),
+              title: const Text('Clear All'),
+              subtitle: const Text('Mark every item in this list as not done'),
+              onTap: () => _handleUncompleteAll(context),
             ),
 
             Consumer(
@@ -493,6 +509,74 @@ class _SafetyBriefingItemsScreenState
           ),
         ],
       ),
+    );
+  }
+
+  void _handleCompleteAll(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Complete All Items?'),
+          content: Text(
+            'Mark every item in "${widget.group.title}" as done? This does '
+            'not affect hidden items.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                final repository = ref.read(checklistRepositoryProvider);
+                await repository.completeAll(widget.group.supabaseId);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('All items marked complete')),
+                  );
+                }
+              },
+              child: const Text('Complete All'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _handleUncompleteAll(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Clear All Items?'),
+          content: Text(
+            'Mark every item in "${widget.group.title}" as not done? This '
+            'does not affect hidden items.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                final repository = ref.read(checklistRepositoryProvider);
+                await repository.uncompleteAll(widget.group.supabaseId);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('All items cleared')),
+                  );
+                }
+              },
+              child: const Text('Clear All'),
+            ),
+          ],
+        );
+      },
     );
   }
 
