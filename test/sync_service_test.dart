@@ -248,6 +248,52 @@ void main() {
     });
 
     test(
+        'Pro + online: successful immediate upsert resets the local row to '
+        'isSynced=true (#180 — was permanently stuck dirty)', () async {
+      _mockConnectivity(true);
+      await db.into(db.boats).insert(BoatsCompanion.insert(
+            supabaseId: const Value('boat-resync'),
+            name: const Value('Sisu'),
+            isSynced: const Value(false),
+          ));
+
+      await sync.queueOutgoingChange('boats', {
+        'supabaseId': 'boat-resync',
+        'name': 'Sisu',
+        'lastModified': DateTime.now().toUtc().toIso8601String(),
+      });
+
+      final row = await (db.select(db.boats)
+            ..where((t) => t.supabaseId.equals('boat-resync')))
+          .getSingle();
+      expect(row.isSynced, isTrue);
+    });
+
+    test(
+        'Pro + online: forceProcessQueue resets the local row to isSynced=true '
+        'after a successful outbox push (#180)', () async {
+      _mockConnectivity(true);
+      await db.into(db.boats).insert(BoatsCompanion.insert(
+            supabaseId: const Value('boat-queued2'),
+            name: const Value('Queued'),
+            isSynced: const Value(false),
+          ));
+      await db.into(db.syncOutboxItems).insert(SyncOutboxItemsCompanion.insert(
+            targetTable: const Value('boats'),
+            recordId: const Value('boat-queued2'),
+            data: const Value(
+                '{"supabaseId":"boat-queued2","name":"Queued","lastModified":"2026-07-01T00:00:00.000Z"}'),
+          ));
+
+      await sync.forceProcessQueue();
+
+      final row = await (db.select(db.boats)
+            ..where((t) => t.supabaseId.equals('boat-queued2')))
+          .getSingle();
+      expect(row.isSynced, isTrue);
+    });
+
+    test(
         'Pro + online: successful delete leaves outbox empty and records delete',
         () async {
       _mockConnectivity(true);

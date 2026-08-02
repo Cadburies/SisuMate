@@ -518,6 +518,74 @@ class SyncService {
     }
   }
 
+  /// Mirrors [_markUnsynced], inverted: marks a row synced after its
+  /// outbound push succeeds. Deliberately does not touch `lastModified` —
+  /// this confirms an already-pushed edit, not a new local change.
+  Future<void> _markSynced(String table, String supabaseId) async {
+    switch (table) {
+      case 'boats':
+        await (_db.update(_db.boats)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const BoatsCompanion(isSynced: Value(true)));
+      case 'checklist_groups':
+        await (_db.update(_db.checklistGroups)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const ChecklistGroupsCompanion(isSynced: Value(true)));
+      case 'checklist_items':
+        await (_db.update(_db.checklistItems)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const ChecklistItemsCompanion(isSynced: Value(true)));
+      case 'shopping_categories':
+        await (_db.update(_db.shoppingCategories)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const ShoppingCategoriesCompanion(isSynced: Value(true)));
+      case 'shopping_items':
+        await (_db.update(_db.shoppingItems)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const ShoppingItemsCompanion(isSynced: Value(true)));
+      case 'captain_logs':
+        await (_db.update(_db.captainLogEntries)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const CaptainLogEntriesCompanion(isSynced: Value(true)));
+      case 'maintenance_tasks':
+        await (_db.update(_db.maintenanceTasks)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const MaintenanceTasksCompanion(isSynced: Value(true)));
+      case 'documents':
+        await (_db.update(_db.documents)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const DocumentsCompanion(isSynced: Value(true)));
+      case 'crew_members':
+        await (_db.update(_db.crewMembers)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const CrewMembersCompanion(isSynced: Value(true)));
+      case 'inventory_items':
+        await (_db.update(_db.inventoryItems)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const InventoryItemsCompanion(isSynced: Value(true)));
+      case 'fuel_logs':
+        await (_db.update(_db.fuelLogEntries)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const FuelLogEntriesCompanion(isSynced: Value(true)));
+      case 'recipes':
+        await (_db.update(_db.recipes)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const RecipesCompanion(isSynced: Value(true)));
+      case 'recipe_ingredients':
+        await (_db.update(_db.recipeIngredients)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const RecipeIngredientsCompanion(isSynced: Value(true)));
+      case 'bar_ingredients':
+        await (_db.update(_db.barIngredients)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const BarIngredientsCompanion(isSynced: Value(true)));
+      case 'pantry_ingredients':
+        await (_db.update(_db.pantryIngredients)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(const PantryIngredientsCompanion(isSynced: Value(true)));
+    }
+  }
+
   ConflictLog _conflictFromRow(ConflictLogRow r) => ConflictLog.fromRow(
         id: r.id,
         targetTable: r.targetTable,
@@ -557,6 +625,11 @@ class SyncService {
       } else {
         final wire = WirePrefix.encode(table, record, await _boatGuid());
         await _remote.upsert(table, wire);
+        // Same reset as the outbox success path (#180) — an immediate
+        // online push also leaves the row permanently "dirty" otherwise.
+        final id =
+            record['id'] as String? ?? record['supabaseId'] as String? ?? '';
+        await _markSynced(table, id);
       }
     } catch (e) {
       // Failed to push, queue for later
@@ -687,6 +760,13 @@ class SyncService {
         await (_db.delete(_db.syncOutboxItems)
               ..where((t) => t.id.equals(item.id)))
             .go();
+        if (!item.isDelete) {
+          // Mirrors InboundSyncApplier.applyRemote's isSynced=true reset —
+          // without this, every successful outbound push leaves the local
+          // row permanently "dirty", which resurrects resolved conflicts
+          // (#180).
+          await _markSynced(item.targetTable, item.recordId);
+        }
 
         _processedCount++;
         _lastSyncSuccess = DateTime.now();

@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #140, #129/#130, #181/#182/#183 (triage_error_logs.sh on SM S928U1 found #182/#183 recurring the #160 drawer anti-pattern in 2 recipe-detail endDrawers #160's sweep missed; #181 admin_screen.dart Row overflow, same Expanded fix as its sibling row). Filed #178.
-- **Doing:** nothing claimed; Kimi on #124/#125. Open P1: #156 (sync RLS rejection post-enrollment)
+- **Last (claudevc):** fixed + closed #180 (successful outbound push never reset `isSynced` — added `_markSynced` mirroring `_markUnsynced`, called from both `_processOutgoingQueue` success branch and `queueOutgoingChange`'s immediate-push path; this is what made "Keep mine" conflict resolutions reappear).
+- **Doing:** nothing claimed by claudevc. CLI agent on #126 (exclusive UI task, dialog contrast). Open P1: #156 (sync RLS rejection post-enrollment), #125 (Pro-gate bypass in item detail viewer)
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 
