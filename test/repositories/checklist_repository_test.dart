@@ -128,5 +128,67 @@ void main() {
       final saved = (await repo.watchItems('group_1').first).single;
       expect(saved.completionHistory, ['2026-07-01', '2026-07-05']);
     });
+
+    group(
+        '#207: watchItemsForAppType replaces the per-group family-watch loop '
+        'safetyChecklistItemsProvider used to do', () {
+      test(
+          'combines items across every non-hidden group of the app type in '
+          'one stream, excluding other app types/hidden groups/deleted items',
+          () async {
+        await repo.createGroup(ChecklistGroup()
+          ..supabaseId = 'safety_1'
+          ..appType = 'safety'
+          ..title = 'Fire Safety');
+        await repo.createGroup(ChecklistGroup()
+          ..supabaseId = 'safety_2'
+          ..appType = 'safety'
+          ..title = 'Man Overboard');
+        await repo.createGroup(ChecklistGroup()
+          ..supabaseId = 'safety_hidden'
+          ..appType = 'safety'
+          ..title = 'Old safety list'
+          ..isHidden = true);
+        await repo.createGroup(ChecklistGroup()
+          ..supabaseId = 'maint_1'
+          ..appType = 'maintenance'
+          ..title = 'Engine');
+
+        await repo.addItem(ChecklistItem()
+          ..supabaseId = 'item_1'
+          ..groupSupabaseId = 'safety_1'
+          ..title = 'Fire extinguisher check');
+        await repo.addItem(ChecklistItem()
+          ..supabaseId = 'item_2'
+          ..groupSupabaseId = 'safety_2'
+          ..title = 'Life ring check');
+        await repo.addItem(ChecklistItem()
+          ..supabaseId = 'item_hidden_group'
+          ..groupSupabaseId = 'safety_hidden'
+          ..title = 'Stale item in a hidden group');
+        await repo.addItem(ChecklistItem()
+          ..supabaseId = 'item_other_type'
+          ..groupSupabaseId = 'maint_1'
+          ..title = 'Oil change');
+        final deleted = ChecklistItem()
+          ..supabaseId = 'item_deleted'
+          ..groupSupabaseId = 'safety_1'
+          ..title = 'Removed check';
+        await repo.addItem(deleted);
+        await repo.permanentlyDelete(deleted);
+
+        final items = await repo.watchItemsForAppType('safety').first;
+
+        expect(items.map((i) => i.title).toSet(), {
+          'Fire extinguisher check',
+          'Life ring check',
+        });
+      });
+
+      test('empty when no groups of that app type exist', () async {
+        final items = await repo.watchItemsForAppType('safety').first;
+        expect(items, isEmpty);
+      });
+    });
   });
 }

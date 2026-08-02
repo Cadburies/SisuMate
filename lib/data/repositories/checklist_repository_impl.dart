@@ -116,6 +116,21 @@ class ChecklistRepositoryImpl implements ChecklistRepository {
   }
 
   @override
+  Stream<List<ChecklistItem>> watchItemsForAppType(String appType) {
+    final query = db.select(db.checklistItems).join([
+      innerJoin(
+        db.checklistGroups,
+        db.checklistGroups.supabaseId.equalsExp(db.checklistItems.groupSupabaseId),
+      ),
+    ])
+      ..where(db.checklistGroups.appType.equals(appType) &
+          db.checklistGroups.isHidden.equals(false) &
+          db.checklistItems.isPermanentlyDeleted.equals(false));
+    return query.watch().map((rows) =>
+        rows.map((r) => _itemToDomain(r.readTable(db.checklistItems))).toList());
+  }
+
+  @override
   Future<List<ChecklistItem>> getItemsByGroup(String groupSupabaseId) async {
     final rows = await db.select(db.checklistItems).get();
     return rows
