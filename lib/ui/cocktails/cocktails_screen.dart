@@ -963,6 +963,24 @@ class _FeaturedCocktailBanner extends StatelessWidget {
 
 // ── Cocktail detail ───────────────────────────────────────────────────────────
 
+// #131: shared by the live "N missing" count and "Add missing to shopping" so
+// they can never disagree — non-garnish, non-optional ingredients not in bar.
+List<RecipeIngredient> _missingRecipeIngredients(
+  List<RecipeIngredient> ingredients,
+  List<BarIngredient> barIngredients,
+) {
+  final barNames = barIngredients
+      .where((b) => b.inMyBar)
+      .map((b) => b.name.toLowerCase().trim())
+      .toSet();
+  return ingredients
+      .where((i) =>
+          !i.isGarnish &&
+          !i.isOptional &&
+          !barNames.contains(i.name.toLowerCase().trim()))
+      .toList();
+}
+
 class CocktailRecipeDetailScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
   const CocktailRecipeDetailScreen({super.key, required this.recipe});
@@ -1152,9 +1170,14 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                       loading: () => const CircularProgressIndicator(),
                       error: (e, _) => Text('Error: $e'),
                     ),
-                    if (widget.recipe.missingIngredientCount > 0)
-                      barAsync.when(
-                        data: (barIngredients) => Padding(
+                    if (ingredientsAsync.asData != null && barAsync.asData != null)
+                      Builder(builder: (_) {
+                        final missing = _missingRecipeIngredients(
+                          ingredientsAsync.asData!.value,
+                          barAsync.asData!.value,
+                        );
+                        if (missing.isEmpty) return const SizedBox.shrink();
+                        return Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: SizedBox(
                             width: double.infinity,
@@ -1162,18 +1185,16 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                               icon: const Icon(Icons.add_shopping_cart,
                                   size: 16),
                               label: Text(
-                                'Add ${widget.recipe.missingIngredientCount} missing to shopping',
+                                'Add ${missing.length} missing to shopping',
                               ),
                               onPressed: () => _addMissingToShopping(
                                   context,
-                                  ingredientsAsync.asData?.value ?? [],
-                                  barIngredients),
+                                  ingredientsAsync.asData!.value,
+                                  barAsync.asData!.value),
                             ),
                           ),
-                        ),
-                        loading: () => const SizedBox.shrink(),
-                        error: (e, _) => const SizedBox.shrink(),
-                      ),
+                        );
+                      }),
                     if (widget.recipe.recipeType == 'cocktail')
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
@@ -1503,16 +1524,7 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
     List<RecipeIngredient> ingredients,
     List<BarIngredient> barIngredients,
   ) async {
-    final barNames = barIngredients
-        .where((b) => b.inMyBar)
-        .map((b) => b.name.toLowerCase().trim())
-        .toSet();
-    final missing = ingredients
-        .where((i) =>
-            !i.isGarnish &&
-            !i.isOptional &&
-            !barNames.contains(i.name.toLowerCase().trim()))
-        .toList();
+    final missing = _missingRecipeIngredients(ingredients, barIngredients);
     if (missing.isEmpty) return;
     final repo = ref.read(shoppingRepositoryProvider);
     var addedCount = 0;
