@@ -27,6 +27,8 @@ import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../services/tag_library_service.dart';
 import '../components/tag_combobox.dart';
+import '../components/native_ad_widget.dart';
+import '../components/ad_slots.dart';
 
 class CocktailsScreen extends ConsumerStatefulWidget {
   const CocktailsScreen({super.key});
@@ -239,38 +241,47 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
             builder: (context, ref, _) => Column(
               children: [
                 DrawerHeaderWidget(title: 'Menu'),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.collections_bookmark_outlined),
-                  title: const Text('Collections'),
-                  onTap: () => context.push(AppRoutes.collections),
-                ),
-                const Divider(),
-                SectionHeader(title: 'My Bar sort'),
-                for (final mode in IngredientListSort.values)
-                  ListTile(
-                    dense: true,
-                    leading: Icon(
-                      _barOrder.sort == mode
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                      size: 20,
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const Divider(),
+                        ListTile(
+                          leading:
+                              const Icon(Icons.collections_bookmark_outlined),
+                          title: const Text('Collections'),
+                          onTap: () => context.push(AppRoutes.collections),
+                        ),
+                        const Divider(),
+                        SectionHeader(title: 'My Bar sort'),
+                        for (final mode in IngredientListSort.values)
+                          ListTile(
+                            dense: true,
+                            leading: Icon(
+                              _barOrder.sort == mode
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                              size: 20,
+                            ),
+                            title: Text(mode.label,
+                                style: const TextStyle(fontSize: 14)),
+                            onTap: () {
+                              setState(() => _barOrder.setSort(mode));
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        const Divider(),
+                        SectionHeader(title: 'Account'),
+                        AccountSection(),
+                        const Divider(),
+                        SectionHeader(title: 'Data Management'),
+                        DataManagementSection(),
+                        ProUpgradeSection(),
+                        AboutSection(),
+                      ],
                     ),
-                    title: Text(mode.label, style: const TextStyle(fontSize: 14)),
-                    onTap: () {
-                      setState(() => _barOrder.setSort(mode));
-                      Navigator.of(context).pop();
-                    },
                   ),
-                const Divider(),
-                SectionHeader(title: 'Account'),
-                AccountSection(),
-                const Divider(),
-                SectionHeader(title: 'Data Management'),
-                DataManagementSection(),
-                ProUpgradeSection(),
-                AboutSection(),
-                const Spacer(),
+                ),
                 DrawerFooter(),
               ],
             ),
@@ -387,6 +398,9 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
 
   /// Selected flavor tags (AND).
   final Set<String> _flavorFilters = {};
+
+  /// Ad slots for the first grid (stable across rebuilds; see ad_slots.dart).
+  final NativeAdSlotCache _adSlotCache = NativeAdSlotCache();
 
   /// Suggested + custom tags from [TagLibraryService] (for filter chips).
   List<String> _libraryCuisine = const [];
@@ -605,7 +619,7 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
           return CustomScrollView(
             slivers: [
               headerSliver,
-              _cocktailGridSliver(filtered),
+              _cocktailGridSliver(filtered, withAds: true),
             ],
           );
         }
@@ -623,18 +637,24 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
 
         // Always show the three buckets with count/total so an empty bar
         // reads "Can make now · 0/162", not "Can make now · 162".
+        // Native tile ads go in the FIRST non-empty bucket (start of list).
         return CustomScrollView(
           slivers: [
             headerSliver,
             _sectionHeaderSliver(
                 'Can make now · ${canMake.length}/$total'),
-            if (canMake.isNotEmpty) _cocktailGridSliver(canMake),
+            if (canMake.isNotEmpty)
+              _cocktailGridSliver(canMake, withAds: true),
             _sectionHeaderSliver(
                 'Almost there · ${almost.length}/$total'),
-            if (almost.isNotEmpty) _cocktailGridSliver(almost),
+            if (almost.isNotEmpty)
+              _cocktailGridSliver(almost,
+                  withAds: canMake.isEmpty),
             _sectionHeaderSliver(
                 'Need ingredients · ${needMore.length}/$total'),
-            if (needMore.isNotEmpty) _cocktailGridSliver(needMore),
+            if (needMore.isNotEmpty)
+              _cocktailGridSliver(needMore,
+                  withAds: canMake.isEmpty && almost.isEmpty),
           ],
         );
       },
@@ -645,7 +665,11 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
     return _SectionDivider(label: label);
   }
 
-  static Widget _cocktailGridSliver(List<Recipe> recipes) {
+  /// Two-column recipe grid; when [withAds] splices native tile ads into
+  /// ≤4 random slots near the start (user policy; see ad_slots.dart).
+  Widget _cocktailGridSliver(List<Recipe> recipes, {bool withAds = false}) {
+    final slots = withAds ? _adSlotCache(recipes.length) : const <int>[];
+    final count = recipes.length + slots.length;
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       sliver: SliverGrid(
@@ -656,8 +680,16 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
           childAspectRatio: 0.55,
         ),
         delegate: SliverChildBuilderDelegate(
-          (_, i) => _CocktailCard(recipe: recipes[i]),
-          childCount: recipes.length,
+          (_, i) {
+            if (isNativeAdSlot(i, slots)) {
+              return const NativeAdWidget(
+                  style: NativeAdTileStyle.cocktailTile,
+                  contextHint: 'cocktails');
+            }
+            return _CocktailCard(
+                recipe: recipes[nativeAdContentIndex(i, slots)]);
+          },
+          childCount: count,
         ),
       ),
     );
@@ -1142,20 +1174,21 @@ class CocktailRecipeDetailScreenState extends ConsumerState<CocktailRecipeDetail
                         loading: () => const SizedBox.shrink(),
                         error: (e, _) => const SizedBox.shrink(),
                       ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.groups, size: 16),
-                          label: const Text('Build a Round'),
-                          onPressed: () => context.push(
-                            AppRoutes.cocktailBatch,
-                            extra: widget.recipe,
+                    if (widget.recipe.recipeType == 'cocktail')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.groups, size: 16),
+                            label: const Text('Build a Round'),
+                            onPressed: () => context.push(
+                              AppRoutes.cocktailBatch,
+                              extra: widget.recipe,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     if (widget.recipe.instructions != null) ...[
                       const SizedBox(height: 16),
                       Text('Instructions',
@@ -1764,6 +1797,7 @@ class _BarTab extends ConsumerStatefulWidget {
 
 class _BarTabState extends ConsumerState<_BarTab> {
   final TextEditingController _searchController = TextEditingController();
+  final NativeAdSlotCache _adSlotCache = NativeAdSlotCache();
   String _searchQuery = '';
   int _lastSortEpoch = -1;
 
@@ -1876,14 +1910,23 @@ class _BarTabState extends ConsumerState<_BarTab> {
               if (filtered.isEmpty) {
                 return const Center(child: Text('No ingredients found.'));
               }
+              // Native tile ads in ≤4 random slots near the start.
+              final adSlots = _adSlotCache(filtered.length);
               return ListView.builder(
                 // Keys keep tiles stable when data updates without reordering.
-                itemCount: filtered.length,
-                itemBuilder: (_, idx) => _BarIngredientTile(
-                  key: ValueKey(filtered[idx].supabaseId),
-                  ingredient: filtered[idx],
-                  allIngredients: filtered,
-                ),
+                itemCount: filtered.length + adSlots.length,
+                itemBuilder: (_, idx) {
+                  if (isNativeAdSlot(idx, adSlots)) {
+                    return const NativeAdWidget(contextHint: 'my-bar');
+                  }
+                  final ingredient =
+                      filtered[nativeAdContentIndex(idx, adSlots)];
+                  return _BarIngredientTile(
+                    key: ValueKey(ingredient.supabaseId),
+                    ingredient: ingredient,
+                    allIngredients: filtered,
+                  );
+                },
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),

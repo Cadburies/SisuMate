@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** live device triage rerun with the fixed logging (Claude) — confirmed #160's drawer-`Column`-no-scroll bug on 5/10 predicted files (cocktails/chef/maintenance/safety_briefing/documents, closed as dupes of #160) and #161's `item_detail_shell.dart:187` overflow (closed dupe #171). New: #173 (weather_screen.dart Row overflow, unrelated to drawer bug), #176 (riverpod setState-during-build on an Overlay widget, maybe related to #147).
-- **Doing:** nothing claimed by Claude; Kimi on #124/#155 (native ads). Open: #147, #156, #157, #158, #159, #160 (5 files left to confirm: checklist_items/crew/fuel/inventory), #161, #173, #176
+- **Last:** fixed + closed #140 (Build a Round crash on non-cocktail recipes — gated button on `recipeType == 'cocktail'`, cocktails_screen.dart ~1177; regression test added). Filed #178 (verify debug owner bootstrap/Sisu-boat rename needs explicit login, not just a debug build).
+- **Doing:** nothing claimed by this session; another Claude session on overflow issues (#173/161/160/159/138); Kimi on #124/#125. Open P1s: #156 (sync RLS rejection post-enrollment)
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 
