@@ -81,11 +81,20 @@ class _ChefScreenState extends ConsumerState<ChefScreen>
   /// My Pantry list sort (drawer). Sticky order until sort mode changes.
   final IngredientListOrder _pantryOrder = IngredientListOrder();
 
+  bool _didSyncMissing = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() => setState(() {}));
+    // Seeded recipes default missingIngredientCount=0; recompute against
+    // My Pantry (#157 — mirrors Cocktails' same recompute-on-load).
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _didSyncMissing) return;
+      _didSyncMissing = true;
+      await ref.read(recipeRepositoryProvider).syncMissingIngredientCounts();
+    });
   }
 
   @override
@@ -936,6 +945,27 @@ class _MiniChip extends StatelessWidget {
 
 // ── Menu detail ───────────────────────────────────────────────────────────────
 
+// #157: mirrors Cocktails' _missingRecipeIngredients — non-garnish,
+// non-optional ingredients not in My Pantry, shared by the live count and
+// "Add missing to shopping".
+List<RecipeIngredient> _missingRecipeIngredientsPantry(
+  List<RecipeIngredient> ingredients,
+  List<PantryIngredient> pantryIngredients,
+) {
+  final pantryNames = pantryIngredients
+      .where((p) => p.inMyPantry)
+      .map((p) => p.name.toLowerCase().trim())
+      .toSet();
+  return ingredients
+      .where(
+        (i) =>
+            !i.isGarnish &&
+            !i.isOptional &&
+            !pantryNames.contains(i.name.toLowerCase().trim()),
+      )
+      .toList();
+}
+
 class ChefRecipeDetailScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
   const ChefRecipeDetailScreen({super.key, required this.recipe});
@@ -1140,6 +1170,37 @@ class ChefRecipeDetailScreenState extends ConsumerState<ChefRecipeDetailScreen> 
                       loading: () => const CircularProgressIndicator(),
                       error: (e, _) => Text('Error: $e'),
                     ),
+                    if (ingredientsAsync.asData != null &&
+                        pantryAsync.asData != null)
+                      Builder(
+                        builder: (_) {
+                          final missing = _missingRecipeIngredientsPantry(
+                            ingredientsAsync.asData!.value,
+                            pantryAsync.asData!.value,
+                          );
+                          if (missing.isEmpty) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                icon: const Icon(
+                                  Icons.add_shopping_cart,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  'Add ${missing.length} missing to shopping',
+                                ),
+                                onPressed: () => _addMissingToShopping(
+                                  context,
+                                  ingredientsAsync.asData!.value,
+                                  pantryAsync.asData!.value,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     if (widget.recipe.instructions != null) ...[
                       const SizedBox(height: 16),
                       Row(
@@ -1466,6 +1527,36 @@ class ChefRecipeDetailScreenState extends ConsumerState<ChefRecipeDetailScreen> 
         ),
       ),
     );
+  }
+
+  Future<void> _addMissingToShopping(
+    BuildContext context,
+    List<RecipeIngredient> ingredients,
+    List<PantryIngredient> pantryIngredients,
+  ) async {
+    final missing =
+        _missingRecipeIngredientsPantry(ingredients, pantryIngredients);
+    if (missing.isEmpty) return;
+    final repo = ref.read(shoppingRepositoryProvider);
+    var addedCount = 0;
+    for (final ingredient in missing) {
+      final added = await repo.ensureInShopping(
+        name: ingredient.name,
+        origin: 'pantry',
+      );
+      if (added) addedCount++;
+    }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            addedCount == 0
+                ? 'All missing ingredients already on the shopping list'
+                : '$addedCount ingredient${addedCount == 1 ? '' : 's'} added to shopping',
+          ),
+        ),
+      );
+    }
   }
 
   void _showEditDialog(BuildContext context) async {
