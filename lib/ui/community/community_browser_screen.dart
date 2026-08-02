@@ -58,6 +58,11 @@ class _CommunityBrowserScreenState
   }
 
   Future<void> _loadTemplates() async {
+    // Community browse/import is Pro-only (access_tiers.md) — never query
+    // Supabase's community tables in the background for a Free user, even
+    // though the upgrade prompt already hides the resulting list.
+    if (!await ref.read(revenueCatProvider).isPro()) return;
+
     setState(() {
       _loading = true;
       _error = null;
