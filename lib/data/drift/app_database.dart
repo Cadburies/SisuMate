@@ -137,6 +137,10 @@ class Boats extends Table {
   // Supabase (owner stamped server-side, shareCode DB-generated) — never pushed.
   TextColumn get ownerId => text().nullable()();
   TextColumn get shareCode => text().nullable()();
+  // #203: bring-your-own-key LLM support — user-entered, owner-writable,
+  // synced like any other boat field. Never validated/billed by this app.
+  TextColumn get llmApiKey => text().nullable()();
+  TextColumn get llmApiKeyProvider => text().nullable()(); // 'openai' | 'xai'
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -572,7 +576,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

@@ -4115,6 +4115,29 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _llmApiKeyMeta = const VerificationMeta(
+    'llmApiKey',
+  );
+  @override
+  late final GeneratedColumn<String> llmApiKey = GeneratedColumn<String>(
+    'llm_api_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _llmApiKeyProviderMeta = const VerificationMeta(
+    'llmApiKeyProvider',
+  );
+  @override
+  late final GeneratedColumn<String> llmApiKeyProvider =
+      GeneratedColumn<String>(
+        'llm_api_key_provider',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
     'lastModified',
   );
@@ -4141,6 +4164,8 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
     photoUrl,
     ownerId,
     shareCode,
+    llmApiKey,
+    llmApiKeyProvider,
     lastModified,
   ];
   @override
@@ -4227,6 +4252,21 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
         shareCode.isAcceptableOrUnknown(data['share_code']!, _shareCodeMeta),
       );
     }
+    if (data.containsKey('llm_api_key')) {
+      context.handle(
+        _llmApiKeyMeta,
+        llmApiKey.isAcceptableOrUnknown(data['llm_api_key']!, _llmApiKeyMeta),
+      );
+    }
+    if (data.containsKey('llm_api_key_provider')) {
+      context.handle(
+        _llmApiKeyProviderMeta,
+        llmApiKeyProvider.isAcceptableOrUnknown(
+          data['llm_api_key_provider']!,
+          _llmApiKeyProviderMeta,
+        ),
+      );
+    }
     if (data.containsKey('last_modified')) {
       context.handle(
         _lastModifiedMeta,
@@ -4293,6 +4333,14 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
         DriftSqlType.string,
         data['${effectivePrefix}share_code'],
       ),
+      llmApiKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}llm_api_key'],
+      ),
+      llmApiKeyProvider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}llm_api_key_provider'],
+      ),
       lastModified: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_modified'],
@@ -4319,6 +4367,8 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
   final String? photoUrl;
   final String? ownerId;
   final String? shareCode;
+  final String? llmApiKey;
+  final String? llmApiKeyProvider;
   final DateTime lastModified;
   const BoatRow({
     required this.id,
@@ -4333,6 +4383,8 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     this.photoUrl,
     this.ownerId,
     this.shareCode,
+    this.llmApiKey,
+    this.llmApiKeyProvider,
     required this.lastModified,
   });
   @override
@@ -4361,6 +4413,12 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     }
     if (!nullToAbsent || shareCode != null) {
       map['share_code'] = Variable<String>(shareCode);
+    }
+    if (!nullToAbsent || llmApiKey != null) {
+      map['llm_api_key'] = Variable<String>(llmApiKey);
+    }
+    if (!nullToAbsent || llmApiKeyProvider != null) {
+      map['llm_api_key_provider'] = Variable<String>(llmApiKeyProvider);
     }
     map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
@@ -4392,6 +4450,12 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       shareCode: shareCode == null && nullToAbsent
           ? const Value.absent()
           : Value(shareCode),
+      llmApiKey: llmApiKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(llmApiKey),
+      llmApiKeyProvider: llmApiKeyProvider == null && nullToAbsent
+          ? const Value.absent()
+          : Value(llmApiKeyProvider),
       lastModified: Value(lastModified),
     );
   }
@@ -4416,6 +4480,10 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       photoUrl: serializer.fromJson<String?>(json['photoUrl']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       shareCode: serializer.fromJson<String?>(json['shareCode']),
+      llmApiKey: serializer.fromJson<String?>(json['llmApiKey']),
+      llmApiKeyProvider: serializer.fromJson<String?>(
+        json['llmApiKeyProvider'],
+      ),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
   }
@@ -4435,6 +4503,8 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       'photoUrl': serializer.toJson<String?>(photoUrl),
       'ownerId': serializer.toJson<String?>(ownerId),
       'shareCode': serializer.toJson<String?>(shareCode),
+      'llmApiKey': serializer.toJson<String?>(llmApiKey),
+      'llmApiKeyProvider': serializer.toJson<String?>(llmApiKeyProvider),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
   }
@@ -4452,6 +4522,8 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     Value<String?> photoUrl = const Value.absent(),
     Value<String?> ownerId = const Value.absent(),
     Value<String?> shareCode = const Value.absent(),
+    Value<String?> llmApiKey = const Value.absent(),
+    Value<String?> llmApiKeyProvider = const Value.absent(),
     DateTime? lastModified,
   }) => BoatRow(
     id: id ?? this.id,
@@ -4468,6 +4540,10 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     photoUrl: photoUrl.present ? photoUrl.value : this.photoUrl,
     ownerId: ownerId.present ? ownerId.value : this.ownerId,
     shareCode: shareCode.present ? shareCode.value : this.shareCode,
+    llmApiKey: llmApiKey.present ? llmApiKey.value : this.llmApiKey,
+    llmApiKeyProvider: llmApiKeyProvider.present
+        ? llmApiKeyProvider.value
+        : this.llmApiKeyProvider,
     lastModified: lastModified ?? this.lastModified,
   );
   BoatRow copyWithCompanion(BoatsCompanion data) {
@@ -4488,6 +4564,10 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       photoUrl: data.photoUrl.present ? data.photoUrl.value : this.photoUrl,
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       shareCode: data.shareCode.present ? data.shareCode.value : this.shareCode,
+      llmApiKey: data.llmApiKey.present ? data.llmApiKey.value : this.llmApiKey,
+      llmApiKeyProvider: data.llmApiKeyProvider.present
+          ? data.llmApiKeyProvider.value
+          : this.llmApiKeyProvider,
       lastModified: data.lastModified.present
           ? data.lastModified.value
           : this.lastModified,
@@ -4509,6 +4589,8 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
           ..write('photoUrl: $photoUrl, ')
           ..write('ownerId: $ownerId, ')
           ..write('shareCode: $shareCode, ')
+          ..write('llmApiKey: $llmApiKey, ')
+          ..write('llmApiKeyProvider: $llmApiKeyProvider, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -4528,6 +4610,8 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     photoUrl,
     ownerId,
     shareCode,
+    llmApiKey,
+    llmApiKeyProvider,
     lastModified,
   );
   @override
@@ -4546,6 +4630,8 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
           other.photoUrl == this.photoUrl &&
           other.ownerId == this.ownerId &&
           other.shareCode == this.shareCode &&
+          other.llmApiKey == this.llmApiKey &&
+          other.llmApiKeyProvider == this.llmApiKeyProvider &&
           other.lastModified == this.lastModified);
 }
 
@@ -4562,6 +4648,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
   final Value<String?> photoUrl;
   final Value<String?> ownerId;
   final Value<String?> shareCode;
+  final Value<String?> llmApiKey;
+  final Value<String?> llmApiKeyProvider;
   final Value<DateTime> lastModified;
   const BoatsCompanion({
     this.id = const Value.absent(),
@@ -4576,6 +4664,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     this.photoUrl = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.shareCode = const Value.absent(),
+    this.llmApiKey = const Value.absent(),
+    this.llmApiKeyProvider = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   BoatsCompanion.insert({
@@ -4591,6 +4681,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     this.photoUrl = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.shareCode = const Value.absent(),
+    this.llmApiKey = const Value.absent(),
+    this.llmApiKeyProvider = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   static Insertable<BoatRow> custom({
@@ -4606,6 +4698,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     Expression<String>? photoUrl,
     Expression<String>? ownerId,
     Expression<String>? shareCode,
+    Expression<String>? llmApiKey,
+    Expression<String>? llmApiKeyProvider,
     Expression<DateTime>? lastModified,
   }) {
     return RawValuesInsertable({
@@ -4621,6 +4715,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
       if (photoUrl != null) 'photo_url': photoUrl,
       if (ownerId != null) 'owner_id': ownerId,
       if (shareCode != null) 'share_code': shareCode,
+      if (llmApiKey != null) 'llm_api_key': llmApiKey,
+      if (llmApiKeyProvider != null) 'llm_api_key_provider': llmApiKeyProvider,
       if (lastModified != null) 'last_modified': lastModified,
     });
   }
@@ -4638,6 +4734,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     Value<String?>? photoUrl,
     Value<String?>? ownerId,
     Value<String?>? shareCode,
+    Value<String?>? llmApiKey,
+    Value<String?>? llmApiKeyProvider,
     Value<DateTime>? lastModified,
   }) {
     return BoatsCompanion(
@@ -4653,6 +4751,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
       photoUrl: photoUrl ?? this.photoUrl,
       ownerId: ownerId ?? this.ownerId,
       shareCode: shareCode ?? this.shareCode,
+      llmApiKey: llmApiKey ?? this.llmApiKey,
+      llmApiKeyProvider: llmApiKeyProvider ?? this.llmApiKeyProvider,
       lastModified: lastModified ?? this.lastModified,
     );
   }
@@ -4696,6 +4796,12 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     if (shareCode.present) {
       map['share_code'] = Variable<String>(shareCode.value);
     }
+    if (llmApiKey.present) {
+      map['llm_api_key'] = Variable<String>(llmApiKey.value);
+    }
+    if (llmApiKeyProvider.present) {
+      map['llm_api_key_provider'] = Variable<String>(llmApiKeyProvider.value);
+    }
     if (lastModified.present) {
       map['last_modified'] = Variable<DateTime>(lastModified.value);
     }
@@ -4717,6 +4823,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
           ..write('photoUrl: $photoUrl, ')
           ..write('ownerId: $ownerId, ')
           ..write('shareCode: $shareCode, ')
+          ..write('llmApiKey: $llmApiKey, ')
+          ..write('llmApiKeyProvider: $llmApiKeyProvider, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -21183,6 +21291,8 @@ typedef $$BoatsTableCreateCompanionBuilder =
       Value<String?> photoUrl,
       Value<String?> ownerId,
       Value<String?> shareCode,
+      Value<String?> llmApiKey,
+      Value<String?> llmApiKeyProvider,
       Value<DateTime> lastModified,
     });
 typedef $$BoatsTableUpdateCompanionBuilder =
@@ -21199,6 +21309,8 @@ typedef $$BoatsTableUpdateCompanionBuilder =
       Value<String?> photoUrl,
       Value<String?> ownerId,
       Value<String?> shareCode,
+      Value<String?> llmApiKey,
+      Value<String?> llmApiKeyProvider,
       Value<DateTime> lastModified,
     });
 
@@ -21267,6 +21379,16 @@ class $$BoatsTableFilterComposer extends Composer<_$AppDatabase, $BoatsTable> {
 
   ColumnFilters<String> get shareCode => $composableBuilder(
     column: $table.shareCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get llmApiKey => $composableBuilder(
+    column: $table.llmApiKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get llmApiKeyProvider => $composableBuilder(
+    column: $table.llmApiKeyProvider,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21345,6 +21467,16 @@ class $$BoatsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get llmApiKey => $composableBuilder(
+    column: $table.llmApiKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get llmApiKeyProvider => $composableBuilder(
+    column: $table.llmApiKeyProvider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => ColumnOrderings(column),
@@ -21400,6 +21532,14 @@ class $$BoatsTableAnnotationComposer
   GeneratedColumn<String> get shareCode =>
       $composableBuilder(column: $table.shareCode, builder: (column) => column);
 
+  GeneratedColumn<String> get llmApiKey =>
+      $composableBuilder(column: $table.llmApiKey, builder: (column) => column);
+
+  GeneratedColumn<String> get llmApiKeyProvider => $composableBuilder(
+    column: $table.llmApiKeyProvider,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => column,
@@ -21446,6 +21586,8 @@ class $$BoatsTableTableManager
                 Value<String?> photoUrl = const Value.absent(),
                 Value<String?> ownerId = const Value.absent(),
                 Value<String?> shareCode = const Value.absent(),
+                Value<String?> llmApiKey = const Value.absent(),
+                Value<String?> llmApiKeyProvider = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => BoatsCompanion(
                 id: id,
@@ -21460,6 +21602,8 @@ class $$BoatsTableTableManager
                 photoUrl: photoUrl,
                 ownerId: ownerId,
                 shareCode: shareCode,
+                llmApiKey: llmApiKey,
+                llmApiKeyProvider: llmApiKeyProvider,
                 lastModified: lastModified,
               ),
           createCompanionCallback:
@@ -21476,6 +21620,8 @@ class $$BoatsTableTableManager
                 Value<String?> photoUrl = const Value.absent(),
                 Value<String?> ownerId = const Value.absent(),
                 Value<String?> shareCode = const Value.absent(),
+                Value<String?> llmApiKey = const Value.absent(),
+                Value<String?> llmApiKeyProvider = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => BoatsCompanion.insert(
                 id: id,
@@ -21490,6 +21636,8 @@ class $$BoatsTableTableManager
                 photoUrl: photoUrl,
                 ownerId: ownerId,
                 shareCode: shareCode,
+                llmApiKey: llmApiKey,
+                llmApiKeyProvider: llmApiKeyProvider,
                 lastModified: lastModified,
               ),
           withReferenceMapper: (p0) => p0

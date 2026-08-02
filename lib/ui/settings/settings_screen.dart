@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../components/title_tile.dart';
+import 'llm_api_key_dialog.dart';
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/di.dart';
@@ -104,6 +105,35 @@ class SettingsScreen extends ConsumerWidget {
                             title: const Text('Active Boat'),
                             subtitle: Text('Error: $e'),
                           ),
+                        ),
+
+                        // #203: bring-your-own-key AI API key, per active boat.
+                        activeBoatAsync.maybeWhen(
+                          data: (activeBoat) {
+                            if (activeBoat == null) return const SizedBox.shrink();
+                            final configured = activeBoat.llmApiKey != null &&
+                                activeBoat.llmApiKey!.isNotEmpty;
+                            final currentUserId =
+                                ref.watch(authStateProvider).value?.id;
+                            final isOwner = activeBoat.ownerId == null ||
+                                activeBoat.ownerId == currentUserId;
+                            return ListTile(
+                              leading: const Icon(Icons.smart_toy_outlined),
+                              title: const Text('AI API Key'),
+                              subtitle: Text(configured
+                                  ? 'Key configured (bring your own)'
+                                  : 'None set — bring your own to use AI features'),
+                              trailing:
+                                  Icon(isOwner ? Icons.edit : Icons.visibility),
+                              onTap: () => showDialog(
+                                context: context,
+                                builder: (_) => isOwner
+                                    ? LlmApiKeyDialog(boat: activeBoat)
+                                    : LlmApiKeyReadOnlyDialog(boat: activeBoat),
+                              ),
+                            );
+                          },
+                          orElse: () => const SizedBox.shrink(),
                         ),
 
                         // Boat Management (Pro only)

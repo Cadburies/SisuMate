@@ -24,6 +24,8 @@ class BoatRepositoryImpl implements BoatRepository {
     ..photoUrl = r.photoUrl
     ..ownerId = r.ownerId
     ..shareCode = r.shareCode
+    ..llmApiKey = r.llmApiKey
+    ..llmApiKeyProvider = r.llmApiKeyProvider
     ..lastModified = r.lastModified;
 
   BoatsCompanion _toCompanion(Boat b) => BoatsCompanion(
@@ -38,6 +40,8 @@ class BoatRepositoryImpl implements BoatRepository {
         photoUrl: Value(b.photoUrl),
         ownerId: Value(b.ownerId),
         shareCode: Value(b.shareCode),
+        llmApiKey: Value(b.llmApiKey),
+        llmApiKeyProvider: Value(b.llmApiKeyProvider),
         lastModified: Value(b.lastModified),
       );
 

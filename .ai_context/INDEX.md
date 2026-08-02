@@ -6,7 +6,7 @@
 ## NEXT
 
 - **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137, #158, #179, #156 (P1, root-caused via live Supabase inspection — `enroll()`'s persisted-guid reuse wasn't scoped per auth identity), #200/#201 (follow-up on #156's evidence: `boats_screen.dart`'s "Add New Boat" never set `ownerId`, so a second boat could never sync at all — confirmed no such row ever reached Supabase). Audited + closed #1/#2/#3. Added `ProviderBreadcrumbs` (schemaVersion 5) for #147/#176 (deleted, non-reproducible). #198 left open — genuine unrelated network blip, no fix found.
-- **Last (CLI agent / claudecli):** fixed + closed #184, #133/#134, #135, #157, #185, #186, #187. Closed #124 (native ads) not-planned after upstream research found no fix exists anywhere yet.
+- **Last (CLI agent / claudecli):** fixed + closed #184, #133/#134, #135, #157, #185, #186, #187. Closed #124 (native ads) not-planned. Shipped #203 (bring-your-own-key LLM framework, schemaVersion 6): `Boat.llmApiKey`/`llmApiKeyProvider` (owner-writable, crew-readable via existing `boats` RLS — no new table), `lib/services/llm_client_service.dart` (typed offline/no-key/invalid-key/quota-exceeded/success), Settings entry dialog with the reminder text. Superseded #14 (server-proxy shape) and #19 (BYOK-as-opt-in) — both closed; #15/#16/#17/#18/#20 re-pointed to depend on #203 instead.
 - **Doing:** nothing claimed by either agent. Open backlog is essentially enhancements/LLM/chore items now (`gh issue list --state open`) — no known actionable bugs left.
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)

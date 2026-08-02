@@ -18,6 +18,12 @@ class Boat {
   // shareCode: inbound-only (DB-generated), never pushed.
   String? ownerId;
   String? shareCode;
+  // #203: bring-your-own-key LLM support. User-entered, per-boat, synced like
+  // any other boat field — only the owner can write (boats_update RLS), crew
+  // read it via the normal boats_select policy. Never validated or billed by
+  // this app; used directly from the device to the chosen provider.
+  String? llmApiKey;
+  String? llmApiKeyProvider; // 'openai' | 'xai'
 
   factory Boat.fromJson(Map<String, dynamic> json) {
     return Boat()
@@ -32,7 +38,9 @@ class Boat {
       ..photoUrl = json['photoUrl']
       ..supabaseId = json['supabaseId'] ?? ''
       ..ownerId = json['ownerId']
-      ..shareCode = json['shareCode'];
+      ..shareCode = json['shareCode']
+      ..llmApiKey = json['llmApiKey']
+      ..llmApiKeyProvider = json['llmApiKeyProvider'];
   }
 
   Map<String, dynamic> toJson() => {
@@ -49,6 +57,8 @@ class Boat {
     // ownerId is pushed (only owners write boats) so RLS can validate ownership
     // on insert/update. shareCode stays inbound-only (DB-generated).
     'ownerId': ownerId,
+    'llmApiKey': llmApiKey,
+    'llmApiKeyProvider': llmApiKeyProvider,
   };
 
   @override
@@ -68,7 +78,9 @@ class Boat {
           photoUrl == other.photoUrl &&
           supabaseId == other.supabaseId &&
           ownerId == other.ownerId &&
-          shareCode == other.shareCode;
+          shareCode == other.shareCode &&
+          llmApiKey == other.llmApiKey &&
+          llmApiKeyProvider == other.llmApiKeyProvider;
 
   @override
   int get hashCode => Object.hashAll([
@@ -85,6 +97,8 @@ class Boat {
         supabaseId,
         ownerId,
         shareCode,
+        llmApiKey,
+        llmApiKeyProvider,
       ]);
 
   @override
@@ -92,5 +106,6 @@ class Boat {
       'isBought: $isBought, isHidden: $isHidden, isSynced: $isSynced, '
       'lastModified: $lastModified, lastPurchasePrice: $lastPurchasePrice, '
       'notes: $notes, origin: $origin, photoUrl: $photoUrl, '
-      'ownerId: $ownerId, shareCode: $shareCode)';
+      'ownerId: $ownerId, shareCode: $shareCode, '
+      'llmApiKeyProvider: $llmApiKeyProvider)'; // key itself never in toString
 }
