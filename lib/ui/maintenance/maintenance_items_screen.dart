@@ -8,6 +8,7 @@ import '../components/native_ad_widget.dart';
 import '../components/ad_slots.dart';
 import '../components/add_checklist_item_dialog.dart';
 import '../checklists/check_page_viewer.dart';
+import 'maintenance_ai_explainer_dialog.dart';
 
 import '../../providers/checklist_provider.dart';
 import '../../providers/package_info_provider.dart';
@@ -161,16 +162,48 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                     final item =
                         filteredItems[nativeAdContentIndex(i, adSlots)];
                     widgets.add(
-                      ChecklistItemTile(
-                        item: item,
-                        groupName: widget.group.title,
-                        fallbackIcon: Icons.build,
-                        onComplete: isPro
-                            ? () => _toggleComplete(item)
-                            : _proGatedComplete,
-                        onHide: () => _toggleHide(item),
-                        onUnhide: () => _unhideItem(item),
-                        onTap: () => _openViewer(item),
+                      Stack(
+                        children: [
+                          ChecklistItemTile(
+                            item: item,
+                            groupName: widget.group.title,
+                            fallbackIcon: Icons.build,
+                            onComplete: isPro
+                                ? () => _toggleComplete(item)
+                                : _proGatedComplete,
+                            onHide: () => _toggleHide(item),
+                            onUnhide: () => _unhideItem(item),
+                            onTap: () => _openViewer(item),
+                          ),
+                          // #18/#208: AI explainer — a visually distinct
+                          // badge (own icon, own color), never mixed into
+                          // the tile's offline Complete/Hide actions above.
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: Material(
+                              color: Colors.deepPurple,
+                              shape: const CircleBorder(),
+                              elevation: 2,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => showDialog(
+                                  context: context,
+                                  builder: (_) =>
+                                      MaintenanceAiExplainerDialog(item: item),
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(6),
+                                  child: Icon(
+                                    Icons.auto_awesome,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }
