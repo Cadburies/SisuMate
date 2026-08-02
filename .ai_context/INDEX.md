@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137 (drawer sort menus scoped to their own tab on both Cocktails and Chef; House/Chef tabs gained their own A-Z/Z-A sort). Audited + closed #1/#2/#3. Left #156 open — RLS 42501s look transient/self-healed via retry, uncertain without live repro. Remaining open bugs mostly P2/P3 UI + #124 (deep unresolved ads investigation).
+- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137, #158 (drawer ProUpgradeSection/AboutSection gaps: home, weather, games, shopping item-options, ingredient detail). Audited + closed #1/#2/#3. Investigated (left open, no confident fix): #156 (RLS, needs live repro), #147/#176 (rare Riverpod-scheduler race, non-reproducible). CLI agent (agent:claude) active concurrently on #133/#134 (seed_recipes.dart, cocktails_screen.dart) as of this write — don't touch those files without checking current state first.
 - **Doing:** nothing claimed by claudevc.
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
