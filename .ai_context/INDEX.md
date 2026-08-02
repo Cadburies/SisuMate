@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137, #158, #179 (Maintenance item tap now opens the shared `CheckPageViewer` instead of a bespoke `AlertDialog`, matching Checklists/Safety). Audited + closed #1/#2/#3. Investigated (left open, no confident fix): #156 (RLS, needs live repro), #147/#176 (rare Riverpod-scheduler race, non-reproducible).
+- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137, #158, #179. Audited + closed #1/#2/#3. #156 left open (RLS, needs live repro). Added `ProviderBreadcrumbs` (`lib/services/provider_breadcrumbs.dart`, schemaVersion 5) so exception-level error logs carry recent provider activity — should make #147/#176 (rare Riverpod-scheduler race, non-reproducible so far) diagnosable next time either fires.
 - **Last (CLI agent):** fixed + closed #184 (Community browse Pro gate), #133/#134 (House "used in N cocktails"; syrup name rationalization), #135 (`flavorProfiles` on seeded syrups + chip rendering), and #157 (Chef menu "add N missing to shopping" button, mirrors Cocktails; also fixed `missingIngredientCount` never recomputing for menus — `_ChefScreenState.initState` had no sync-on-load trigger).
 - **Doing:** nothing claimed by either agent right now.
 - **Open game bugs:** none
