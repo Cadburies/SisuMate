@@ -5,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../components/title_tile.dart';
+import '../components/tag_chip.dart';
 import '../components/common_drawer.dart';
 import '../components/import_export.dart';
 import '../components/smart_image.dart';
@@ -843,12 +844,12 @@ class _CocktailCard extends ConsumerWidget {
                         runSpacing: 2,
                         children: [
                           for (final t in recipe.cuisine.take(2))
-                            _TagChip(
+                            TagChip(
                               label: t,
                               color: SisuColors.completedBackground,
                             ),
                           for (final t in recipe.flavorProfiles.take(2))
-                            _TagChip(label: t, color: flavorColor),
+                            TagChip(label: t, color: flavorColor),
                         ],
                       ),
                     ],
@@ -878,31 +879,6 @@ class _CocktailCard extends ConsumerWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TagChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _TagChip({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          color: color,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -2151,14 +2127,12 @@ class _BarIngredientTile extends ConsumerWidget {
       loading: () => 'Loading…',
       error: (e, _) => '',
     );
-    final flavors = ingredient.flavorProfiles.isNotEmpty
-        ? ingredient.flavorProfiles.take(3).join(' · ')
-        : null;
+    // #187: flavor profile gets its own colored chip (matching recipe
+    // tiles) below — price stays plain text, unchanged.
     final priceLabel = ingredient.lastKnownPrice != null
         ? '\$${ingredient.lastKnownPrice!.toStringAsFixed(0)}'
         : null;
     final tertiary = [
-      ?flavors,
       ?priceLabel,
       if (inShopping && !inBar) 'On shopping list',
     ].join(' · ');
@@ -2233,6 +2207,17 @@ class _BarIngredientTile extends ConsumerWidget {
                             extra: recipe,
                           ),
                         ),
+                    ],
+                  ),
+                ],
+                if (ingredient.flavorProfiles.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 2,
+                    children: [
+                      for (final f in ingredient.flavorProfiles)
+                        TagChip(label: f, color: Colors.orange[700]!),
                     ],
                   ),
                 ],
@@ -3488,7 +3473,7 @@ class _SyrupsTabState extends ConsumerState<_SyrupsTab> {
                             runSpacing: 2,
                             children: [
                               for (final t in recipes[i].flavorProfiles.take(3))
-                                _TagChip(label: t, color: Colors.orange[700]!),
+                                TagChip(label: t, color: Colors.orange[700]!),
                             ],
                           ),
                         ],

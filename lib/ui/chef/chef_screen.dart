@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import '../components/title_tile.dart';
+import '../components/tag_chip.dart';
 import '../components/common_drawer.dart';
 import '../components/swipeable_list_item.dart';
 import '../components/themed_state_tile.dart';
@@ -2144,18 +2145,16 @@ class _PantryIngredientTile extends ConsumerWidget {
       unitSystem,
     );
     final qtyLabel = qtyFormatted.isEmpty ? null : qtyFormatted;
-    final allergens = ingredient.allergenTags.isNotEmpty
-        ? 'Contains: ${ingredient.allergenTags.take(3).join(", ")}${ingredient.allergenTags.length > 3 ? "..." : ""}'
-        : null;
     final price = ingredient.lastKnownPrice != null
         ? '\$${ingredient.lastKnownPrice!.toStringAsFixed(0)}'
         : null;
     final expiry = ingredient.expiryDate != null
         ? _expiryLabel(ingredient.expiryDate!)
         : null;
+    // #187: allergens/flavor get their own colored chips (matching recipe
+    // tiles) below — quantity/expiry/price stay plain text, unchanged.
     final tertiary = [
       ?qtyLabel,
-      ?allergens,
       ?expiry,
       ?price,
       if (inShopping && !inPantry) 'On shopping list',
@@ -2246,6 +2245,20 @@ class _PantryIngredientTile extends ConsumerWidget {
                             extra: recipe,
                           ),
                         ),
+                    ],
+                  ),
+                ],
+                if (ingredient.allergenTags.isNotEmpty ||
+                    ingredient.flavorProfiles.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 2,
+                    children: [
+                      for (final a in ingredient.allergenTags)
+                        TagChip(label: a, color: Colors.red[700]!),
+                      for (final f in ingredient.flavorProfiles)
+                        TagChip(label: f, color: Colors.orange[700]!),
                     ],
                   ),
                 ],
