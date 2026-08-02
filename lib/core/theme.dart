@@ -128,6 +128,59 @@ ThemeData createSisuMateTheme({required Brightness brightness}) {
       actionTextColor: SisuColors.completedText,
       behavior: SnackBarBehavior.floating,
     ),
+    // Detail dialogs (#126): raised tile background per theme.md §3, readable
+    // title/body text. Buttons below give every AlertDialog action a
+    // WCAG-AA-contrast label instead of falling back to M3 defaults derived
+    // from the incomplete* colour pair (background/label ratio ~2.9:1).
+    dialogTheme: DialogThemeData(
+      backgroundColor: SisuColors.getTileColor(isDark),
+      titleTextStyle: TextStyle(
+        fontFamily: 'Nunito',
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: SisuColors.getTextPrimaryColor(isDark),
+      ),
+      contentTextStyle: TextStyle(
+        fontFamily: 'Nunito',
+        color: SisuColors.getTextPrimaryColor(isDark),
+      ),
+    ),
+    // Solid-background dialog actions (Save/Confirm) — dark teal on white
+    // clears ~6.8:1 in both themes.
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: SisuColors.completedBackground,
+        foregroundColor: SisuColors.dialogButtonOnColor,
+        disabledBackgroundColor:
+            SisuColors.getTextSecondaryColor(isDark).withValues(alpha: 0.24),
+        disabledForegroundColor:
+            SisuColors.getTextSecondaryColor(isDark).withValues(alpha: 0.6),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: SisuColors.completedBackground,
+        foregroundColor: SisuColors.dialogButtonOnColor,
+      ),
+    ),
+    // Text-only dialog actions (Cancel/etc) — teal label against the dialog
+    // surface, ~6.8:1 (light) / ~10.8:1 (dark).
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor:
+            isDark ? SisuColors.completedText : SisuColors.completedBackground,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor:
+            isDark ? SisuColors.completedText : SisuColors.completedBackground,
+        side: BorderSide(
+          color:
+              isDark ? SisuColors.completedText : SisuColors.completedBackground,
+        ),
+      ),
+    ),
   );
 }
 

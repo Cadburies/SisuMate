@@ -92,7 +92,12 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
         actions: [
           TextButton(
             style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+              // Destructive text button: notAvailableText reads on the dark
+              // dialog surface, notAvailableBackground on the light one —
+              // the single red tone doesn't clear WCAG AA against both.
+              foregroundColor: Theme.of(ctx).brightness == Brightness.dark
+                  ? SisuColors.notAvailableText
+                  : SisuColors.notAvailableBackground,
             ),
             onPressed: () async {
               Navigator.of(ctx).pop();

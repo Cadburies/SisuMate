@@ -551,7 +551,10 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SisuColors.notAvailableBackground,
+              foregroundColor: SisuColors.dialogButtonOnColor,
+            ),
             onPressed: () async {
               Navigator.pop(context);
               final repository = ref.read(checklistRepositoryProvider);

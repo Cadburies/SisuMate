@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #180 (`_markSynced` reset on successful push) and #178 (`DebugBootstrap` owner gate). Audited + closed #1/#2 (already covered by existing `pro_free_gate_matrix_test.dart` source-scan tests, no code needed) and #3 (repo confirmed still private). Investigated #156: prior "recipe_ingredients missing from restamp" claim was wrong (no `boatSupabaseId` column there). Left #156 open — RLS 42501s look transient/self-healed via retry, but uncertain without live repro (`emulator-5554` + dart-defines available).
-- **Doing:** nothing claimed by claudevc. CLI agent on #126 (exclusive UI task, dialog contrast).
+- **Last (claudevc):** fixed + closed #180, #178, #126 (took over #126 from the idle CLI agent at user's direction — dialogTheme + button themes in theme.dart, dialogButtonOnColor token, 5 dialog call sites de-hardcoded, 6 contrast regression tests, verified no other dialog call sites needed it). Audited + closed #1/#2/#3 (already covered / no-op-while-private). Left #156 open — RLS 42501s look transient/self-healed via retry, uncertain without live repro (`emulator-5554` + dart-defines available).
+- **Doing:** nothing claimed by claudevc.
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 

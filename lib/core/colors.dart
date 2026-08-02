@@ -114,6 +114,15 @@ class SisuColors {
   static const Color lightStateHiddenDesc = Color(0xFF78909C);
   static const Color lightStateHiddenTitle = Color(0xFF546E7A);
 
+  // ── Dialog Buttons (theme.md / #126) ─────────────────────────────────────
+  // AlertDialog action buttons (Save/Confirm/Delete) need a solid background
+  // with a high-contrast label — the pale *Text tile tokens above (tuned for
+  // large tile areas) fall well under WCAG AA at button-label scale. Reuses
+  // existing background tokens (completedBackground = confirm, notAvailable-
+  // Background = destructive) with one dedicated on-color, since both are
+  // dark enough to need the same light label in both themes.
+  static const Color dialogButtonOnColor = Color(0xFFFFFFFF);
+
   // ── General UI ────────────────────────────────────────────────────────────
   // Use these only when you cannot use the Theme; prefer Theme.of(context) in widgets.
   static const Color background = lightBackground;

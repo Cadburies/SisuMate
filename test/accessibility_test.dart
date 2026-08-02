@@ -10,7 +10,10 @@ import 'package:sisu_mate/services/auth_service.dart';
 import 'package:sisu_mate/services/revenuecat_service.dart';
 import 'package:sisu_mate/services/suggestion_engine.dart';
 import 'package:sisu_mate/ui/checklists/checklist_screen.dart';
+import 'package:sisu_mate/ui/components/add_checklist_item_dialog.dart';
+import 'package:sisu_mate/ui/components/record_detail_screen.dart';
 import 'package:sisu_mate/ui/home/home_screen.dart';
+import 'package:sisu_mate/ui/logbook/logbook_screen.dart';
 import 'package:sisu_mate/ui/safety/safety_screen.dart';
 import 'package:sisu_mate/ui/settings/settings_screen.dart';
 import 'package:sisu_mate/ui/shopping/shopping_screen.dart';
@@ -243,5 +246,118 @@ void main() {
       expect(find.text(label), findsOneWidget, reason: label);
     }
     handle.dispose();
+  });
+
+  // #126: detail-dialog button contrast — dialogTheme + button themes in
+  // theme.dart must give every AlertDialog action a readable label, not just
+  // whichever screen happened to be checked first. Covers three modules'
+  // real dialog widgets (Checklists/Maintenance/Safety, Logbook, Crew/
+  // Inventory/Documents/Fuel) in both themes.
+  group('Detail dialog button contrast (#126)', () {
+    Future<void> pumpAndOpenDialog(
+      WidgetTester tester,
+      ThemeData theme,
+      WidgetBuilder dialogBuilder,
+    ) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: theme,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: dialogBuilder,
+                ),
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+    }
+
+    for (final entry in {
+      'dark': sisuMateDarkTheme,
+      'light': sisuMateLightTheme,
+    }.entries) {
+      final themeName = entry.key;
+      final theme = entry.value;
+
+      testWidgets(
+          'AddChecklistItemFormDialog (Checklists/Maintenance/Safety) meets '
+          'text-contrast guideline ($themeName theme)', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pumpAndOpenDialog(
+          tester,
+          theme,
+          (_) => const AddChecklistItemFormDialog(itemNoun: 'item'),
+        );
+
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Add'), findsOneWidget);
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        handle.dispose();
+      });
+
+      testWidgets(
+          'AddEditCaptainLogDialog (Logbook) meets text-contrast guideline '
+          '($themeName theme)', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pumpAndOpenDialog(
+          tester,
+          theme,
+          (_) => AddEditCaptainLogDialog(onSave: (_) async {}),
+        );
+
+        expect(find.text('Save'), findsOneWidget);
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        handle.dispose();
+      });
+
+      testWidgets(
+          'RecordDetailScreen delete-confirmation dialog (Crew/Inventory/'
+          'Documents/Fuel) meets text-contrast guideline ($themeName theme)',
+          (tester) async {
+        final handle = tester.ensureSemantics();
+        // RecordDetailScreen's endDrawer (CommonDrawer) reads auth/pro
+        // providers even before it's opened (Scaffold builds it eagerly) —
+        // needs the same fake-backend overrides as pumpSettingsScreen, not a
+        // bare ProviderScope, or it reaches for real Supabase/RevenueCat.
+        final container = ProviderContainer(overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          isProProvider.overrideWith((ref) => Stream.value(false)),
+          authServiceProvider
+              .overrideWith((ref) => AuthService(ref, backend: authBackend)),
+        ]);
+        addTearDown(container.dispose);
+        await tester.pumpWidget(UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: theme,
+            home: RecordDetailScreen(
+              itemCount: 1,
+              initialIndex: 0,
+              titleForIndex: (_) => 'Test Item',
+              fieldsForIndex: (_) => const [
+                RecordField(key: 'notes', label: 'Notes', value: 'n/a'),
+              ],
+              onSave: (_, values) async {},
+              onDelete: (_) async {},
+            ),
+          ),
+        ));
+        await tester.pump();
+
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Cancel'), findsOneWidget);
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        handle.dispose();
+      });
+    }
   });
 }

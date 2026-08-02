@@ -348,7 +348,9 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
                           child: const Text('Cancel')),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red),
+                          backgroundColor: SisuColors.notAvailableBackground,
+                          foregroundColor: SisuColors.dialogButtonOnColor,
+                        ),
                         onPressed: () => Navigator.pop(context, true),
                         child: const Text('Delete'),
                       ),
