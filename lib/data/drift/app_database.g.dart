@@ -18394,6 +18394,17 @@ class $ErrorLogsTable extends ErrorLogs
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _debugBreadcrumbsMeta = const VerificationMeta(
+    'debugBreadcrumbs',
+  );
+  @override
+  late final GeneratedColumn<String> debugBreadcrumbs = GeneratedColumn<String>(
+    'debug_breadcrumbs',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -18410,6 +18421,7 @@ class $ErrorLogsTable extends ErrorLogs
     occurrences,
     processedAt,
     issueUrl,
+    debugBreadcrumbs,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -18513,6 +18525,15 @@ class $ErrorLogsTable extends ErrorLogs
         issueUrl.isAcceptableOrUnknown(data['issue_url']!, _issueUrlMeta),
       );
     }
+    if (data.containsKey('debug_breadcrumbs')) {
+      context.handle(
+        _debugBreadcrumbsMeta,
+        debugBreadcrumbs.isAcceptableOrUnknown(
+          data['debug_breadcrumbs']!,
+          _debugBreadcrumbsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -18578,6 +18599,10 @@ class $ErrorLogsTable extends ErrorLogs
         DriftSqlType.string,
         data['${effectivePrefix}issue_url'],
       ),
+      debugBreadcrumbs: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}debug_breadcrumbs'],
+      ),
     );
   }
 
@@ -18611,6 +18636,15 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
   /// for this fingerprint.
   final DateTime? processedAt;
   final String? issueUrl;
+
+  /// `exception`-level only: newline-joined recent Riverpod provider
+  /// lifecycle events (see `lib/services/provider_breadcrumbs.dart`) at the
+  /// moment this was captured — which provider was updating/failing right
+  /// before a rare, timing-dependent crash (e.g. "setState() called during
+  /// build" races). Deliberately excluded from [fingerprint]/[message] since
+  /// it differs on every occurrence of the same underlying bug and would
+  /// otherwise break dedupe (#147/#176 follow-up).
+  final String? debugBreadcrumbs;
   const ErrorLogRow({
     required this.id,
     required this.createdAt,
@@ -18626,6 +18660,7 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
     required this.occurrences,
     this.processedAt,
     this.issueUrl,
+    this.debugBreadcrumbs,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -18653,6 +18688,9 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
     }
     if (!nullToAbsent || issueUrl != null) {
       map['issue_url'] = Variable<String>(issueUrl);
+    }
+    if (!nullToAbsent || debugBreadcrumbs != null) {
+      map['debug_breadcrumbs'] = Variable<String>(debugBreadcrumbs);
     }
     return map;
   }
@@ -18683,6 +18721,9 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
       issueUrl: issueUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(issueUrl),
+      debugBreadcrumbs: debugBreadcrumbs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(debugBreadcrumbs),
     );
   }
 
@@ -18706,6 +18747,7 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
       occurrences: serializer.fromJson<int>(json['occurrences']),
       processedAt: serializer.fromJson<DateTime?>(json['processedAt']),
       issueUrl: serializer.fromJson<String?>(json['issueUrl']),
+      debugBreadcrumbs: serializer.fromJson<String?>(json['debugBreadcrumbs']),
     );
   }
   @override
@@ -18726,6 +18768,7 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
       'occurrences': serializer.toJson<int>(occurrences),
       'processedAt': serializer.toJson<DateTime?>(processedAt),
       'issueUrl': serializer.toJson<String?>(issueUrl),
+      'debugBreadcrumbs': serializer.toJson<String?>(debugBreadcrumbs),
     };
   }
 
@@ -18744,6 +18787,7 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
     int? occurrences,
     Value<DateTime?> processedAt = const Value.absent(),
     Value<String?> issueUrl = const Value.absent(),
+    Value<String?> debugBreadcrumbs = const Value.absent(),
   }) => ErrorLogRow(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -18759,6 +18803,9 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
     occurrences: occurrences ?? this.occurrences,
     processedAt: processedAt.present ? processedAt.value : this.processedAt,
     issueUrl: issueUrl.present ? issueUrl.value : this.issueUrl,
+    debugBreadcrumbs: debugBreadcrumbs.present
+        ? debugBreadcrumbs.value
+        : this.debugBreadcrumbs,
   );
   ErrorLogRow copyWithCompanion(ErrorLogsCompanion data) {
     return ErrorLogRow(
@@ -18788,6 +18835,9 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
           ? data.processedAt.value
           : this.processedAt,
       issueUrl: data.issueUrl.present ? data.issueUrl.value : this.issueUrl,
+      debugBreadcrumbs: data.debugBreadcrumbs.present
+          ? data.debugBreadcrumbs.value
+          : this.debugBreadcrumbs,
     );
   }
 
@@ -18807,7 +18857,8 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
           ..write('fingerprint: $fingerprint, ')
           ..write('occurrences: $occurrences, ')
           ..write('processedAt: $processedAt, ')
-          ..write('issueUrl: $issueUrl')
+          ..write('issueUrl: $issueUrl, ')
+          ..write('debugBreadcrumbs: $debugBreadcrumbs')
           ..write(')'))
         .toString();
   }
@@ -18828,6 +18879,7 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
     occurrences,
     processedAt,
     issueUrl,
+    debugBreadcrumbs,
   );
   @override
   bool operator ==(Object other) =>
@@ -18846,7 +18898,8 @@ class ErrorLogRow extends DataClass implements Insertable<ErrorLogRow> {
           other.fingerprint == this.fingerprint &&
           other.occurrences == this.occurrences &&
           other.processedAt == this.processedAt &&
-          other.issueUrl == this.issueUrl);
+          other.issueUrl == this.issueUrl &&
+          other.debugBreadcrumbs == this.debugBreadcrumbs);
 }
 
 class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
@@ -18864,6 +18917,7 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
   final Value<int> occurrences;
   final Value<DateTime?> processedAt;
   final Value<String?> issueUrl;
+  final Value<String?> debugBreadcrumbs;
   const ErrorLogsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -18879,6 +18933,7 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
     this.occurrences = const Value.absent(),
     this.processedAt = const Value.absent(),
     this.issueUrl = const Value.absent(),
+    this.debugBreadcrumbs = const Value.absent(),
   });
   ErrorLogsCompanion.insert({
     this.id = const Value.absent(),
@@ -18895,6 +18950,7 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
     this.occurrences = const Value.absent(),
     this.processedAt = const Value.absent(),
     this.issueUrl = const Value.absent(),
+    this.debugBreadcrumbs = const Value.absent(),
   });
   static Insertable<ErrorLogRow> custom({
     Expression<int>? id,
@@ -18911,6 +18967,7 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
     Expression<int>? occurrences,
     Expression<DateTime>? processedAt,
     Expression<String>? issueUrl,
+    Expression<String>? debugBreadcrumbs,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -18927,6 +18984,7 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
       if (occurrences != null) 'occurrences': occurrences,
       if (processedAt != null) 'processed_at': processedAt,
       if (issueUrl != null) 'issue_url': issueUrl,
+      if (debugBreadcrumbs != null) 'debug_breadcrumbs': debugBreadcrumbs,
     });
   }
 
@@ -18945,6 +19003,7 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
     Value<int>? occurrences,
     Value<DateTime?>? processedAt,
     Value<String?>? issueUrl,
+    Value<String?>? debugBreadcrumbs,
   }) {
     return ErrorLogsCompanion(
       id: id ?? this.id,
@@ -18961,6 +19020,7 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
       occurrences: occurrences ?? this.occurrences,
       processedAt: processedAt ?? this.processedAt,
       issueUrl: issueUrl ?? this.issueUrl,
+      debugBreadcrumbs: debugBreadcrumbs ?? this.debugBreadcrumbs,
     );
   }
 
@@ -19009,6 +19069,9 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
     if (issueUrl.present) {
       map['issue_url'] = Variable<String>(issueUrl.value);
     }
+    if (debugBreadcrumbs.present) {
+      map['debug_breadcrumbs'] = Variable<String>(debugBreadcrumbs.value);
+    }
     return map;
   }
 
@@ -19028,7 +19091,8 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
           ..write('fingerprint: $fingerprint, ')
           ..write('occurrences: $occurrences, ')
           ..write('processedAt: $processedAt, ')
-          ..write('issueUrl: $issueUrl')
+          ..write('issueUrl: $issueUrl, ')
+          ..write('debugBreadcrumbs: $debugBreadcrumbs')
           ..write(')'))
         .toString();
   }
@@ -27684,6 +27748,7 @@ typedef $$ErrorLogsTableCreateCompanionBuilder =
       Value<int> occurrences,
       Value<DateTime?> processedAt,
       Value<String?> issueUrl,
+      Value<String?> debugBreadcrumbs,
     });
 typedef $$ErrorLogsTableUpdateCompanionBuilder =
     ErrorLogsCompanion Function({
@@ -27701,6 +27766,7 @@ typedef $$ErrorLogsTableUpdateCompanionBuilder =
       Value<int> occurrences,
       Value<DateTime?> processedAt,
       Value<String?> issueUrl,
+      Value<String?> debugBreadcrumbs,
     });
 
 class $$ErrorLogsTableFilterComposer
@@ -27779,6 +27845,11 @@ class $$ErrorLogsTableFilterComposer
 
   ColumnFilters<String> get issueUrl => $composableBuilder(
     column: $table.issueUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get debugBreadcrumbs => $composableBuilder(
+    column: $table.debugBreadcrumbs,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -27861,6 +27932,11 @@ class $$ErrorLogsTableOrderingComposer
     column: $table.issueUrl,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get debugBreadcrumbs => $composableBuilder(
+    column: $table.debugBreadcrumbs,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ErrorLogsTableAnnotationComposer
@@ -27925,6 +28001,11 @@ class $$ErrorLogsTableAnnotationComposer
 
   GeneratedColumn<String> get issueUrl =>
       $composableBuilder(column: $table.issueUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get debugBreadcrumbs => $composableBuilder(
+    column: $table.debugBreadcrumbs,
+    builder: (column) => column,
+  );
 }
 
 class $$ErrorLogsTableTableManager
@@ -27972,6 +28053,7 @@ class $$ErrorLogsTableTableManager
                 Value<int> occurrences = const Value.absent(),
                 Value<DateTime?> processedAt = const Value.absent(),
                 Value<String?> issueUrl = const Value.absent(),
+                Value<String?> debugBreadcrumbs = const Value.absent(),
               }) => ErrorLogsCompanion(
                 id: id,
                 createdAt: createdAt,
@@ -27987,6 +28069,7 @@ class $$ErrorLogsTableTableManager
                 occurrences: occurrences,
                 processedAt: processedAt,
                 issueUrl: issueUrl,
+                debugBreadcrumbs: debugBreadcrumbs,
               ),
           createCompanionCallback:
               ({
@@ -28004,6 +28087,7 @@ class $$ErrorLogsTableTableManager
                 Value<int> occurrences = const Value.absent(),
                 Value<DateTime?> processedAt = const Value.absent(),
                 Value<String?> issueUrl = const Value.absent(),
+                Value<String?> debugBreadcrumbs = const Value.absent(),
               }) => ErrorLogsCompanion.insert(
                 id: id,
                 createdAt: createdAt,
@@ -28019,6 +28103,7 @@ class $$ErrorLogsTableTableManager
                 occurrences: occurrences,
                 processedAt: processedAt,
                 issueUrl: issueUrl,
+                debugBreadcrumbs: debugBreadcrumbs,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

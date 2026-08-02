@@ -59,7 +59,8 @@ void main(List<String> args) {
 void _dumpUnprocessed(Database db) {
   final rows = db.select(
     'SELECT level, message, stack_trace, source_file, route_hint, '
-    'app_version, platform, is_pro, fingerprint, occurrences, created_at '
+    'app_version, platform, is_pro, fingerprint, occurrences, created_at, '
+    'debug_breadcrumbs '
     'FROM error_logs WHERE processed_at IS NULL '
     'ORDER BY fingerprint, created_at ASC',
   );
@@ -92,6 +93,7 @@ void _dumpUnprocessed(Database db) {
       'occurrences': totalOccurrences,
       'firstSeen': _secondsToIso(first['created_at'] as int),
       'lastSeen': _secondsToIso(last['created_at'] as int),
+      'debugBreadcrumbs': last['debug_breadcrumbs'],
     }));
   }
 }

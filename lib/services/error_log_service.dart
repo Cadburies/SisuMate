@@ -56,6 +56,11 @@ class ErrorLogService {
   /// import — that would pull the whole router into every call site).
   static String? Function()? routeHintProvider;
 
+  /// Set once from `main.dart` — the registered [ProviderBreadcrumbs]
+  /// observer's recent events, oldest first. Only consulted for
+  /// `exception`-level entries (see `_log`).
+  static List<String> Function()? providerBreadcrumbsProvider;
+
   // ── Best-effort context (app version / Pro / platform) ───────────────────
 
   String _appVersion = '';
@@ -171,7 +176,8 @@ class ErrorLogService {
         ..platform = _platform
         ..isPro = _isPro
         ..fingerprint = fingerprint
-        ..occurrences = 1;
+        ..occurrences = 1
+        ..debugBreadcrumbs = level == 'exception' ? _safeBreadcrumbs() : null;
       final id = await _repo.insert(entry);
       _seenThisRun[fingerprint] = id;
     } catch (e) {
@@ -187,6 +193,16 @@ class ErrorLogService {
   String? _safeRouteHint() {
     try {
       return routeHintProvider?.call();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String? _safeBreadcrumbs() {
+    try {
+      final events = providerBreadcrumbsProvider?.call();
+      if (events == null || events.isEmpty) return null;
+      return _redactSecrets(events.join('\n'));
     } catch (_) {
       return null;
     }

@@ -112,6 +112,7 @@ def main() -> None:
 
     stack = row.get("stackTrace") or "(no stack trace captured)"
     route_hint = row.get("routeHint") or "(no route captured)"
+    debug_breadcrumbs = row.get("debugBreadcrumbs")
     level = row.get("level", "error")
     occurrences = row.get("occurrences", 1)
     first_seen = row.get("firstSeen", "?")
@@ -123,6 +124,18 @@ def main() -> None:
 
     touches = source_file if source_file != "unknown source" else "(no source file captured — inspect the stack trace below to identify it)"
     touches_suffix = f" (inside `{cls}`)" if cls else ""
+
+    breadcrumbs_section = ""
+    if debug_breadcrumbs:
+        breadcrumbs_section = f"""
+## Recent provider activity (best-effort, up to 20 events before capture)
+Riverpod provider lifecycle events immediately preceding this — helps pin down timing-dependent
+races (e.g. a StreamProvider emission landing mid-build) that the stack trace alone can't show,
+since Riverpod's own scheduler frames don't name which provider triggered them.
+```
+{debug_breadcrumbs}
+```
+"""
 
     code_section = ""
     if parsed:
@@ -159,7 +172,7 @@ def main() -> None:
 {code_section}
 ## Route hint (best-effort, last occurrence)
 `{route_hint}`
-
+{breadcrumbs_section}
 ## Recreate
 Best-effort from the captured context — the route above is where the last occurrence fired; the stack trace is the exact call path. If the route hint is empty or unhelpful, the message/stack above is the primary lead (this is common for framework-level errors like a `RenderFlex` overflow, which layout internals report without an app-code stack frame).
 

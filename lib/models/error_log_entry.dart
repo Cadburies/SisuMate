@@ -19,6 +19,9 @@ class ErrorLogEntry {
   int occurrences = 1;
   DateTime? processedAt;
   String? issueUrl;
+  /// `exception`-level only — see `debugBreadcrumbs` column doc in
+  /// `app_database.dart` for why this is a separate field from [message].
+  String? debugBreadcrumbs;
 
   bool get isProcessed => processedAt != null;
 
@@ -37,6 +40,7 @@ class ErrorLogEntry {
     required int occurrences,
     DateTime? processedAt,
     String? issueUrl,
+    String? debugBreadcrumbs,
   }) {
     return ErrorLogEntry()
       ..id = id
@@ -52,7 +56,8 @@ class ErrorLogEntry {
       ..fingerprint = fingerprint
       ..occurrences = occurrences
       ..processedAt = processedAt
-      ..issueUrl = issueUrl;
+      ..issueUrl = issueUrl
+      ..debugBreadcrumbs = debugBreadcrumbs;
   }
 
   @override
@@ -73,7 +78,8 @@ class ErrorLogEntry {
           fingerprint == other.fingerprint &&
           occurrences == other.occurrences &&
           processedAt == other.processedAt &&
-          issueUrl == other.issueUrl;
+          issueUrl == other.issueUrl &&
+          debugBreadcrumbs == other.debugBreadcrumbs;
 
   @override
   int get hashCode => Object.hashAll([
@@ -91,6 +97,7 @@ class ErrorLogEntry {
         occurrences,
         processedAt,
         issueUrl,
+        debugBreadcrumbs,
       ]);
 
   @override

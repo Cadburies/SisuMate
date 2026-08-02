@@ -19,7 +19,80 @@ void main() {
 
   tearDown(() async {
     ErrorLogService.resetInstanceForTests();
+    ErrorLogService.providerBreadcrumbsProvider = null;
     await db.close();
+  });
+
+  group('#147/#176 follow-up: provider breadcrumbs', () {
+    test('exception-level entries carry the current breadcrumb snapshot',
+        () async {
+      ErrorLogService.providerBreadcrumbsProvider = () => [
+            '12:00:00.100 update ProviderElement boatSuggestionsProvider',
+            '12:00:00.120 update StreamProviderElement maintenanceTasksProvider',
+          ];
+
+      try {
+        throw StateError('setState() called during build');
+      } catch (e, st) {
+        await ErrorLogService().logException(e, st);
+      }
+
+      final rows = await repo.getUnprocessed();
+      expect(rows.single.debugBreadcrumbs, isNotNull);
+      expect(rows.single.debugBreadcrumbs,
+          contains('boatSuggestionsProvider'));
+      expect(rows.single.debugBreadcrumbs,
+          contains('maintenanceTasksProvider'));
+    });
+
+    test('warning/error levels do not carry breadcrumbs (kept lean)',
+        () async {
+      ErrorLogService.providerBreadcrumbsProvider =
+          () => ['12:00:00.100 update ProviderElement foo'];
+
+      await ErrorLogService().logWarning('offline retry');
+      await ErrorLogService().logError('degraded: retrying');
+
+      final rows = await repo.getUnprocessed();
+      expect(rows.every((r) => r.debugBreadcrumbs == null), isTrue);
+    });
+
+    test('no breadcrumbs provider registered → null, no crash', () async {
+      try {
+        throw StateError('boom');
+      } catch (e, st) {
+        await ErrorLogService().logException(e, st);
+      }
+
+      final rows = await repo.getUnprocessed();
+      expect(rows.single.debugBreadcrumbs, isNull);
+    });
+
+    test(
+        'breadcrumbs never affect fingerprint/message — the same underlying '
+        'exception still dedupes even as breadcrumbs differ every call '
+        '(would otherwise file a new GitHub issue every occurrence)',
+        () async {
+      var call = 0;
+      ErrorLogService.providerBreadcrumbsProvider = () {
+        call++;
+        return ['12:00:00.$call update ProviderElement someProvider'];
+      };
+
+      for (var i = 0; i < 3; i++) {
+        try {
+          throw StateError('setState() called during build');
+        } catch (e, st) {
+          await ErrorLogService().logException(e, st);
+        }
+      }
+
+      final rows = await repo.getUnprocessed();
+      expect(rows, hasLength(1),
+          reason: 'must still dedupe to one row despite differing '
+              'breadcrumbs each call');
+      expect(rows.single.occurrences, 3);
+    });
   });
 
   test('logException writes a row an agent can act on', () async {

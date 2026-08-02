@@ -516,6 +516,14 @@ class ErrorLogs extends Table {
   /// for this fingerprint.
   DateTimeColumn get processedAt => dateTime().nullable()();
   TextColumn get issueUrl => text().nullable()();
+  /// `exception`-level only: newline-joined recent Riverpod provider
+  /// lifecycle events (see `lib/services/provider_breadcrumbs.dart`) at the
+  /// moment this was captured — which provider was updating/failing right
+  /// before a rare, timing-dependent crash (e.g. "setState() called during
+  /// build" races). Deliberately excluded from [fingerprint]/[message] since
+  /// it differs on every occurrence of the same underlying bug and would
+  /// otherwise break dedupe (#147/#176 follow-up).
+  TextColumn get debugBreadcrumbs => text().nullable()();
 }
 
 /// The app's Drift database — the sole local store. Every table the app
@@ -564,7 +572,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

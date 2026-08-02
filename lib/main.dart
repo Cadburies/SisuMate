@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/revenuecat_service.dart';
 import 'services/admob_service.dart';
 import 'services/error_log_service.dart';
+import 'services/provider_breadcrumbs.dart';
 import 'core/theme.dart';
 import 'core/app_router.dart';
 import 'core/di.dart';
@@ -20,6 +21,10 @@ const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 /// App-wide GoRouter (T3). Created once; not a Riverpod provider so tests that
 /// pump individual screens without the full router still work.
 final appRouter = createAppRouter();
+
+/// #147/#176 follow-up: recent provider activity for exception-level error
+/// log entries (see `ErrorLogService.providerBreadcrumbsProvider`).
+final _providerBreadcrumbs = ProviderBreadcrumbs();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +47,7 @@ void main() async {
   };
   ErrorLogService.routeHintProvider =
       () => appRouter.routerDelegate.currentConfiguration.uri.toString();
+  ErrorLogService.providerBreadcrumbsProvider = () => _providerBreadcrumbs.recent;
 
   assert(
     _supabaseUrl.isNotEmpty && _supabaseAnonKey.isNotEmpty,
@@ -59,7 +65,10 @@ void main() async {
   //
   // RT1: do NOT await RevenueCat / AdMob before runApp — they blocked first
   // paint (~dozens of skipped frames). They start after the first frame.
-  runApp(const ProviderScope(child: SisuMateApp()));
+  runApp(ProviderScope(
+    observers: [_providerBreadcrumbs],
+    child: const SisuMateApp(),
+  ));
 
   WidgetsBinding.instance.addPostFrameCallback((_) {
     unawaited(_initDeferredSdks());

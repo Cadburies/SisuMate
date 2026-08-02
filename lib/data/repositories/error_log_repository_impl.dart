@@ -22,6 +22,7 @@ class ErrorLogRepositoryImpl implements ErrorLogRepository {
         occurrences: r.occurrences,
         processedAt: r.processedAt,
         issueUrl: r.issueUrl,
+        debugBreadcrumbs: r.debugBreadcrumbs,
       );
 
   @override
@@ -38,6 +39,7 @@ class ErrorLogRepositoryImpl implements ErrorLogRepository {
           isPro: Value(entry.isPro),
           fingerprint: Value(entry.fingerprint),
           occurrences: Value(entry.occurrences),
+          debugBreadcrumbs: Value(entry.debugBreadcrumbs),
         ));
   }
 
