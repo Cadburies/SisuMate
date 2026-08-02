@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136 (drawer's My Bar sort scoped to My Bar tab only; House gained its own A-Z/Z-A sort). Doing #137 (same pattern, Chef screen). Audited + closed #1/#2/#3. Left #156 open — RLS 42501s look transient/self-healed via retry, uncertain without live repro.
+- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137 (drawer sort menus scoped to their own tab on both Cocktails and Chef; House/Chef tabs gained their own A-Z/Z-A sort). Audited + closed #1/#2/#3. Left #156 open — RLS 42501s look transient/self-healed via retry, uncertain without live repro. Remaining open bugs mostly P2/P3 UI + #124 (deep unresolved ads investigation).
 - **Doing:** nothing claimed by claudevc.
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)

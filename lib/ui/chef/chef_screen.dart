@@ -265,24 +265,29 @@ class _ChefScreenState extends ConsumerState<ChefScreen>
                           title: const Text('Collections'),
                           onTap: () => context.push(AppRoutes.collections),
                         ),
-                        const Divider(),
-                        SectionHeader(title: 'My Pantry sort'),
-                        for (final mode in IngredientListSort.values)
-                          ListTile(
-                            dense: true,
-                            leading: Icon(
-                              _pantryOrder.sort == mode
-                                  ? Icons.radio_button_checked
-                                  : Icons.radio_button_off,
-                              size: 20,
+                        // #137: only shown on My Pantry — it's the only tab
+                        // that reads _pantryOrder, so it silently no-op'd
+                        // elsewhere.
+                        if (_tabController.index == 1) ...[
+                          const Divider(),
+                          SectionHeader(title: 'My Pantry sort'),
+                          for (final mode in IngredientListSort.values)
+                            ListTile(
+                              dense: true,
+                              leading: Icon(
+                                _pantryOrder.sort == mode
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_off,
+                                size: 20,
+                              ),
+                              title: Text(mode.label,
+                                  style: const TextStyle(fontSize: 14)),
+                              onTap: () {
+                                setState(() => _pantryOrder.setSort(mode));
+                                Navigator.of(context).pop();
+                              },
                             ),
-                            title: Text(mode.label,
-                                style: const TextStyle(fontSize: 14)),
-                            onTap: () {
-                              setState(() => _pantryOrder.setSort(mode));
-                              Navigator.of(context).pop();
-                            },
-                          ),
+                        ],
                         const Divider(),
                         SectionHeader(title: 'Account'),
                         AccountSection(),
@@ -492,6 +497,9 @@ class _ChefTabState extends ConsumerState<_ChefTab> {
   String? _methodFilter;
   String? _timeFilter; // '≤20', '≤45', or null
   bool _favouritesOnly = false;
+  // #137: Chef had no sort of any kind; a simple local A-Z/Z-A toggle
+  // matches the level of functionality My Pantry already has.
+  bool _sortAscending = true;
 
   /// Ad slots for the recipe grid (stable across rebuilds; see ad_slots.dart).
   final NativeAdSlotCache _adSlotCache = NativeAdSlotCache();
@@ -540,6 +548,17 @@ class _ChefTabState extends ConsumerState<_ChefTab> {
                 selectedColor: Colors.red.withValues(alpha: 0.15),
                 checkmarkColor: Colors.red,
                 onSelected: (v) => setState(() => _favouritesOnly = v),
+                visualDensity: VisualDensity.compact,
+              ),
+              const SizedBox(width: 6),
+              ActionChip(
+                avatar: Icon(
+                  _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                  size: 16,
+                ),
+                label: Text(_sortAscending ? 'Name A–Z' : 'Name Z–A'),
+                onPressed: () =>
+                    setState(() => _sortAscending = !_sortAscending),
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -647,6 +666,10 @@ class _ChefTabState extends ConsumerState<_ChefTab> {
             return total <= maxMin;
           }).toList();
         }
+        filtered = List.of(filtered)
+          ..sort((a, b) => _sortAscending
+              ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
+              : b.name.toLowerCase().compareTo(a.name.toLowerCase()));
 
         // Empty filtered list still scrolls so filters remain reachable.
         if (filtered.isEmpty) {
