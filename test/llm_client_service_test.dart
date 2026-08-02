@@ -4,8 +4,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisu_mate/models/models.dart';
 import 'package:sisu_mate/services/llm_client_service.dart';
+import 'package:sisu_mate/services/llm_usage_tracker.dart';
 
 /// Fake so tests control connectivity without a real platform channel.
 class _FakeConnectivity implements Connectivity {
@@ -20,6 +22,12 @@ class _FakeConnectivity implements Connectivity {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   Boat boatWith({String? key, String? provider}) => Boat()
     ..supabaseId = 'boat_1'
     ..llmApiKey = key
@@ -262,6 +270,70 @@ void main() {
       await service.complete(boat: boat, prompt: 'hello');
 
       expect(calls, 2);
+    });
+  });
+
+  group('#15 usage tracking', () {
+    test('a successful completion with a usage field records it locally',
+        () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async {
+          return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {'content': 'ok'}
+                }
+              ],
+              'usage': {
+                'prompt_tokens': 20,
+                'completion_tokens': 10,
+                'total_tokens': 30,
+              },
+            }),
+            200,
+          );
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      await service.complete(
+        boat: boatWith(key: 'sk-test', provider: 'openai'),
+        prompt: 'hello',
+      );
+      // recording is fire-and-forget (unawaited) — give it a tick.
+      await Future<void>.delayed(Duration.zero);
+
+      final usage = await LlmUsageTracker().currentMonth();
+      expect(usage.totalTokens, 30);
+    });
+
+    test('a successful completion with no usage field records nothing',
+        () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async {
+          return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {'content': 'ok'}
+                }
+              ],
+            }),
+            200,
+          );
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      await service.complete(
+        boat: boatWith(key: 'sk-test', provider: 'openai'),
+        prompt: 'hello',
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final usage = await LlmUsageTracker().currentMonth();
+      expect(usage.totalTokens, 0);
     });
   });
 }

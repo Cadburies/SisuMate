@@ -5,6 +5,7 @@ import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/llm_client_service.dart';
+import '../../services/llm_usage_tracker.dart';
 
 /// #203: bring-your-own-key entry dialog. Only the boat owner can reach the
 /// editable form ([LlmApiKeyDialog]) — settings_screen.dart routes everyone
@@ -15,6 +16,41 @@ const _reminderText =
     'the account behind it still has tokens/credits remaining. Sisu Mate '
     'never validates, meters, or bills this key — it is used directly from '
     'your device to the provider you choose below.';
+
+/// #15: local, informational-only usage estimate — never enforced, never
+/// synced (a shared boat key used from multiple crew devices only reflects
+/// *this* device's usage).
+class _UsageSummary extends StatelessWidget {
+  const _UsageSummary();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<LlmMonthlyUsage>(
+      future: LlmUsageTracker().currentMonth(),
+      builder: (context, snapshot) {
+        final usage = snapshot.data;
+        if (usage == null || usage.totalTokens == 0) {
+          return Text(
+            'No AI usage recorded on this device yet this month.',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.outline),
+          );
+        }
+        return Text(
+          'This device this month: ${usage.totalTokens} tokens '
+          '(~\$${usage.estimatedCostUsd.toStringAsFixed(4)} estimated, '
+          'published list pricing — check your provider for actual billing).',
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: Theme.of(context).colorScheme.outline),
+        );
+      },
+    );
+  }
+}
 
 class LlmApiKeyDialog extends ConsumerStatefulWidget {
   final Boat boat;
@@ -118,6 +154,8 @@ class _LlmApiKeyDialogState extends ConsumerState<LlmApiKeyDialog> {
                   .bodySmall
                   ?.copyWith(color: Theme.of(context).colorScheme.outline),
             ),
+            const SizedBox(height: 8),
+            const _UsageSummary(),
           ],
         ),
       ),
@@ -154,12 +192,22 @@ class LlmApiKeyReadOnlyDialog extends StatelessWidget {
     final providerLabel = LlmProvider.fromId(boat.llmApiKeyProvider)?.label;
     return AlertDialog(
       title: const Text('AI API Key'),
-      content: Text(
-        configured
-            ? 'An AI API key (${providerLabel ?? 'provider'}) is configured '
-                'for this boat by its owner. $_reminderText'
-            : 'No AI API key is configured for this boat yet. Ask the boat '
-                'owner to add one in Settings.',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            configured
+                ? 'An AI API key (${providerLabel ?? 'provider'}) is configured '
+                    'for this boat by its owner. $_reminderText'
+                : 'No AI API key is configured for this boat yet. Ask the boat '
+                    'owner to add one in Settings.',
+          ),
+          if (configured) ...[
+            const SizedBox(height: 12),
+            const _UsageSummary(),
+          ],
+        ],
       ),
       actions: [
         TextButton(

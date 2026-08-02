@@ -104,4 +104,15 @@ void main() {
 
     expect(find.textContaining('No AI API key is configured'), findsOneWidget);
   });
+
+  testWidgets('#15: editable dialog shows a usage summary', (tester) async {
+    await pumpDialog(
+      tester,
+      LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1'),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('No AI usage recorded on this device yet'),
+        findsOneWidget);
+  });
 }

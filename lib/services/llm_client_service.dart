@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/models.dart';
+import 'llm_usage_tracker.dart';
 
 /// Which provider a boat's bring-your-own key targets (#203).
 enum LlmProvider {
@@ -100,13 +102,16 @@ class LlmClientService {
   LlmClientService({
     http.Client? httpClient,
     Connectivity? connectivity,
+    LlmUsageTracker? usageTracker,
     this.cacheTtl = const Duration(minutes: 10),
     this.maxCacheEntries = 50,
   })  : _http = httpClient ?? http.Client(),
-        _connectivity = connectivity ?? Connectivity();
+        _connectivity = connectivity ?? Connectivity(),
+        _usageTracker = usageTracker ?? LlmUsageTracker();
 
   final http.Client _http;
   final Connectivity _connectivity;
+  final LlmUsageTracker _usageTracker;
   final Duration cacheTtl;
   final int maxCacheEntries;
   final Map<String, _CacheEntry> _cache = {};
@@ -195,6 +200,25 @@ class LlmClientService {
       if (content == null || content.isEmpty) {
         return const LlmResult.error('Provider returned no completion text');
       }
+
+      // #15: the provider's own reported token counts — informational-only
+      // local tracking, never enforced/billed by this app.
+      final usageJson = decoded['usage'] as Map<String, dynamic>?;
+      if (usageJson != null) {
+        final promptTokens = usageJson['prompt_tokens'] as int? ?? 0;
+        final completionTokens = usageJson['completion_tokens'] as int? ?? 0;
+        final totalTokens =
+            usageJson['total_tokens'] as int? ?? promptTokens + completionTokens;
+        unawaited(_usageTracker.record(
+          usage: LlmUsage(
+            promptTokens: promptTokens,
+            completionTokens: completionTokens,
+            totalTokens: totalTokens,
+          ),
+          modelId: provider.defaultModel,
+        ));
+      }
+
       final result = LlmResult.success(content);
       _cacheResult(cacheKey, result);
       return result;
