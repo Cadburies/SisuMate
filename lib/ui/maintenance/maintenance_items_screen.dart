@@ -6,8 +6,8 @@ import '../components/title_tile.dart';
 import '../components/checklist_item_tile.dart';
 import '../components/native_ad_widget.dart';
 import '../components/ad_slots.dart';
-import '../components/smart_image.dart';
 import '../components/add_checklist_item_dialog.dart';
+import '../checklists/check_page_viewer.dart';
 
 import '../../providers/checklist_provider.dart';
 import '../../providers/package_info_provider.dart';
@@ -17,6 +17,7 @@ import '../../services/error_log_service.dart';
 import '../../services/import_service.dart';
 import '../components/import_export.dart';
 import '../../core/di.dart';
+import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../models/models.dart';
 
@@ -169,7 +170,7 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                             : _proGatedComplete,
                         onHide: () => _toggleHide(item),
                         onUnhide: () => _unhideItem(item),
-                        onTap: () => _showMaintenanceItemDialog(item),
+                        onTap: () => _openViewer(item),
                       ),
                     );
                   }
@@ -200,121 +201,16 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
     );
   }
 
-  void _showMaintenanceItemDialog(ChecklistItem item) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(item.title),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (item.assetName != null || item.userPhotoUrl != null || item.userPhotoPath != null)
-                Container(
-                  width: double.maxFinite,
-                  height: 200,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SmartImage(
-                      assetName: item.assetName,
-                      userPhotoUrl: item.userPhotoUrl,
-                      userPhotoPath: item.userPhotoPath,
-                      itemName: item.title,
-                      groupName: widget.group.title,
-                      fit: BoxFit.cover,
-                      customFallback: Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.build,
-                          color: Colors.grey,
-                          size: 48,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (item.description != null) ...[
-                const Text(
-                  'Description:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(item.description!),
-                const SizedBox(height: 16),
-              ],
-              Row(
-                children: [
-                  Icon(
-                    item.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: item.isCompleted ? SisuColors.completedBackground : SisuColors.incompleteBackground,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    item.isCompleted ? 'Completed' : 'Not Completed',
-                    style: TextStyle(
-                      color: item.isCompleted ? SisuColors.completedBackground : SisuColors.incompleteBackground,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-          Consumer(
-            builder: (context, ref, child) {
-              final isProAsync = ref.watch(isProProvider);
-              return isProAsync.when(
-                data: (isPro) => ElevatedButton(
-                  onPressed: isPro
-                      ? () {
-                          Navigator.pop(context);
-                          _toggleComplete(item);
-                        }
-                      : () async {
-                          Navigator.pop(context);
-                          // Show interstitial ad first, then upgrade prompt
-                          final adMobService = AdMobService();
-                          adMobService.createInterstitialAd(); // idempotent; usually preloaded
-                          await adMobService.awaitInterstitialReady();
-                          await adMobService.showInterstitialAdIfAllowed();
-
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text(
-                                  'Completing maintenance items requires Sisu Pro',
-                                ),
-                                action: SnackBarAction(
-                                  label: 'Upgrade',
-                                  onPressed: () => RevenueCatService().showPaywall(context),
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                  child: Text(item.isCompleted ? 'Mark Incomplete' : 'Mark Complete'),
-                ),
-                loading: () => const ElevatedButton(
-                  onPressed: null,
-                  child: Text('Loading...'),
-                ),
-                error: (e, _) => const ElevatedButton(
-                  onPressed: null,
-                  child: Text('Error'),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+  Future<void> _openViewer(ChecklistItem item) async {
+    final repository = ref.read(checklistRepositoryProvider);
+    final allItems = await repository.getItemsByGroup(widget.group.supabaseId);
+    if (!mounted) return;
+    context.showCheckPageViewer(
+      items: allItems,
+      initialIndex:
+          allItems.indexWhere((i) => i.supabaseId == item.supabaseId),
+      groupName: widget.group.title,
+      routePath: AppRoutes.maintenanceItemDetail,
     );
   }
 
