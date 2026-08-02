@@ -26,6 +26,8 @@
       "prepMinutes": 20,
       "cookMinutes": 20,
       "story": "Classic Boerewors on the Braai is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -132,6 +134,8 @@
       "prepMinutes": 15,
       "cookMinutes": 45,
       "story": "Traditional Bobotie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "winePairing": "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+      "cocktailPairing": "Mimosa - classic brunch pairing.",
       "ingredients": [
         {
           "name": "White bread slice",
@@ -288,6 +292,8 @@
       "prepMinutes": 15,
       "cookMinutes": 120,
       "story": "Tomato Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Sunflower oil",
@@ -412,6 +418,8 @@
       "prepMinutes": 15,
       "cookMinutes": 120,
       "story": "Beef Potjiekos is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Beef short rib pieces",
@@ -543,6 +551,8 @@
       "prepMinutes": 15,
       "cookMinutes": 35,
       "story": "Malva Pudding is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Butter",
@@ -657,6 +667,8 @@
       "prepMinutes": 10,
       "cookMinutes": 20,
       "story": "Boereboontjies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Green beans",
@@ -736,6 +748,8 @@
       "prepMinutes": 40,
       "cookMinutes": 15,
       "story": "Roosterkoek is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -815,6 +829,8 @@
       "prepMinutes": 60,
       "cookMinutes": 20,
       "story": "Vetkoek is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -889,6 +905,8 @@
       "prepMinutes": 20,
       "cookMinutes": 15,
       "story": "Melktert is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Milk",
@@ -978,6 +996,8 @@
       "prepMinutes": 30,
       "cookMinutes": 12,
       "story": "Lamb Sosaties is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Lamb cubes",
@@ -1078,6 +1098,8 @@
       "prepMinutes": 25,
       "cookMinutes": 20,
       "story": "Karoo Boerewors is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -1193,6 +1215,8 @@
       "prepMinutes": 10,
       "cookMinutes": 10,
       "story": "Snoek on the Braai is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Apricot jam",
@@ -1277,6 +1301,8 @@
       "prepMinutes": 15,
       "cookMinutes": 110,
       "story": "Beef Curry with Samp is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.",
+      "winePairing": "Off-dry Gewurztraminer or Riesling - the touch of sweetness calms chilli heat.",
+      "cocktailPairing": "Painkiller - pineapple, orange and coconut cream cool chilli heat.",
       "ingredients": [
         {
           "name": "Beef cubes",
@@ -1393,6 +1419,8 @@
       "prepMinutes": 45,
       "cookMinutes": 20,
       "story": "Koeksisters is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -1513,6 +1541,8 @@
       "prepMinutes": 10,
       "cookMinutes": 25,
       "story": "Soetpatats is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Sweet potatoes",
@@ -1563,6 +1593,8 @@
       "prepMinutes": 30,
       "cookMinutes": 0,
       "story": "Biltong is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red - acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
+      "winePairing": "Dry white (Sauvignon Blanc or Chenin style) or a light red (Pinot Noir style) - acidity balances the sugar.",
+      "cocktailPairing": "Manhattan - whiskey, vermouth and bitters read well against cured, salty flavours.",
       "ingredients": [
         {
           "name": "Beef silverside",
@@ -1637,6 +1669,8 @@
       "prepMinutes": 20,
       "cookMinutes": 12,
       "story": "Chicken Sosaties is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Chicken breast cubes",
@@ -1718,6 +1752,8 @@
       "prepMinutes": 10,
       "cookMinutes": 15,
       "story": "Melkkos is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "winePairing": "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+      "cocktailPairing": "Mimosa - classic brunch pairing.",
       "ingredients": [
         {
           "name": "Milk",
@@ -1789,6 +1825,8 @@
       "prepMinutes": 60,
       "cookMinutes": 40,
       "story": "Potbrood is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -1864,6 +1902,8 @@
       "prepMinutes": 10,
       "cookMinutes": 60,
       "story": "Pepper Steak Potjie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Beef steak strips",
@@ -1947,6 +1987,8 @@
       "prepMinutes": 15,
       "cookMinutes": 25,
       "story": "Lamb Ribbetjie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Onion",
@@ -2031,6 +2073,8 @@
       "prepMinutes": 15,
       "cookMinutes": 100,
       "story": "Waterblommetjie Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -2135,6 +2179,8 @@
       "prepMinutes": 30,
       "cookMinutes": 300,
       "story": "Rusks is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -2211,6 +2257,8 @@
       "prepMinutes": 15,
       "cookMinutes": 100,
       "story": "Green Bean Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -2299,6 +2347,8 @@
       "prepMinutes": 15,
       "cookMinutes": 35,
       "story": "Jan Ellis Pudding is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -2388,6 +2438,8 @@
       "prepMinutes": 10,
       "cookMinutes": 30,
       "story": "Boerepap with Sheba is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Water",
@@ -2467,6 +2519,8 @@
       "prepMinutes": 20,
       "cookMinutes": 30,
       "story": "Frikkadels is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -2552,6 +2606,8 @@
       "prepMinutes": 15,
       "cookMinutes": 15,
       "story": "Pampoenkoekies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Cooked pumpkin",
@@ -2633,6 +2689,8 @@
       "prepMinutes": 10,
       "cookMinutes": 20,
       "story": "Chakalaka is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.",
+      "winePairing": "Off-dry Gewurztraminer or Riesling - the touch of sweetness calms chilli heat.",
+      "cocktailPairing": "Painkiller - pineapple, orange and coconut cream cool chilli heat.",
       "ingredients": [
         {
           "name": "Onion",
@@ -2716,6 +2774,8 @@
       "prepMinutes": 15,
       "cookMinutes": 80,
       "story": "Skaapboud is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Lamb leg",
@@ -2789,6 +2849,8 @@
       "prepMinutes": 30,
       "cookMinutes": 20,
       "story": "Cape Malay Pickled Fish is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red - acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
+      "winePairing": "Dry white (Sauvignon Blanc or Chenin style) or a light red (Pinot Noir style) - acidity balances the sugar.",
+      "cocktailPairing": "Manhattan - whiskey, vermouth and bitters read well against cured, salty flavours.",
       "ingredients": [
         {
           "name": "White fish fillets",
@@ -2871,6 +2933,8 @@
       "prepMinutes": 20,
       "cookMinutes": 120,
       "story": "Boontjiebredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -2943,6 +3007,8 @@
       "prepMinutes": 60,
       "cookMinutes": 15,
       "story": "Koesisters is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -3031,6 +3097,8 @@
       "prepMinutes": 10,
       "cookMinutes": 10,
       "story": "Braaibroodjies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "White bread slices",
@@ -3102,6 +3170,8 @@
       "prepMinutes": 20,
       "cookMinutes": 15,
       "story": "Hertzoggie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Shortcrust pastry",
@@ -3167,6 +3237,8 @@
       "prepMinutes": 10,
       "cookMinutes": 0,
       "story": "Sosatie Marinade is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Apricot jam",
@@ -3231,6 +3303,8 @@
       "prepMinutes": 30,
       "cookMinutes": 0,
       "story": "Droewors is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -3287,6 +3361,8 @@
       "prepMinutes": 15,
       "cookMinutes": 100,
       "story": "Tomato Bredie with Samp is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -3342,6 +3418,8 @@
       "prepMinutes": 45,
       "cookMinutes": 20,
       "story": "Vetkoek with Mince is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Cake flour",
@@ -3399,6 +3477,8 @@
       "prepMinutes": 15,
       "cookMinutes": 25,
       "story": "Peri-Peri Chicken is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Peri-peri sauce",
@@ -3470,6 +3550,8 @@
       "prepMinutes": 20,
       "cookMinutes": 90,
       "story": "Bredie with Dumplings is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -3526,6 +3608,8 @@
       "prepMinutes": 30,
       "cookMinutes": 30,
       "story": "Milk Tart is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Milk",
@@ -3596,6 +3680,8 @@
       "prepMinutes": 10,
       "cookMinutes": 15,
       "story": "Boerewors Roll is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Boerewors",
@@ -3656,6 +3742,8 @@
       "prepMinutes": 15,
       "cookMinutes": 15,
       "story": "Pumpkin Fritters is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Mashed pumpkin",
@@ -3708,6 +3796,8 @@
       "prepMinutes": 60,
       "cookMinutes": 60,
       "story": "Green Fig Preserve is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red - acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
+      "winePairing": "Dry white (Sauvignon Blanc or Chenin style) or a light red (Pinot Noir style) - acidity balances the sugar.",
+      "cocktailPairing": "Manhattan - whiskey, vermouth and bitters read well against cured, salty flavours.",
       "ingredients": [
         {
           "name": "Green figs",
@@ -3753,6 +3843,8 @@
       "prepMinutes": 5,
       "cookMinutes": 15,
       "story": "Stywe Pap is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Mealie meal",
@@ -3807,6 +3899,8 @@
       "prepMinutes": 15,
       "cookMinutes": 90,
       "story": "Cabbage Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -3860,6 +3954,8 @@
       "prepMinutes": 15,
       "cookMinutes": 35,
       "story": "Amarula Malva is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Butter",
@@ -3899,6 +3995,8 @@
       "prepMinutes": 15,
       "cookMinutes": 30,
       "story": "Biltong Quiche is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Biltong",
@@ -3948,6 +4046,8 @@
       "prepMinutes": 5,
       "cookMinutes": 10,
       "story": "Ostrich Steak is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Ostrich steaks",
@@ -4005,6 +4105,8 @@
       "prepMinutes": 15,
       "cookMinutes": 70,
       "story": "Kerrie Vleis is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Beef cubes",
@@ -4067,6 +4169,8 @@
       "prepMinutes": 15,
       "cookMinutes": 0,
       "story": "Snoek Pate is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Smoked snoek",
@@ -4119,6 +4223,8 @@
       "prepMinutes": 15,
       "cookMinutes": 90,
       "story": "Butternut Bredie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Lamb pieces",
@@ -4164,6 +4270,8 @@
       "prepMinutes": 20,
       "cookMinutes": 0,
       "story": "Peppermint Crisp Tart is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Espresso Martini - coffee and cocoa notes tie directly into a chocolate dessert.",
       "ingredients": [
         {
           "name": "Tennis biscuits",
@@ -4216,6 +4324,8 @@
       "prepMinutes": 5,
       "cookMinutes": 0,
       "story": "Maas is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "winePairing": "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+      "cocktailPairing": "Mimosa - classic brunch pairing.",
       "ingredients": [
         {
           "name": "Full cream milk",
@@ -4253,6 +4363,8 @@
       "prepMinutes": 25,
       "cookMinutes": 40,
       "story": "Frikkadel Curry is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works hard. Substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.",
+      "winePairing": "Off-dry Gewurztraminer or Riesling - the touch of sweetness calms chilli heat.",
+      "cocktailPairing": "Painkiller - pineapple, orange and coconut cream cool chilli heat.",
       "ingredients": [
         {
           "name": "Beef mince",
@@ -4297,6 +4409,8 @@
       "prepMinutes": 30,
       "cookMinutes": 10,
       "story": "Atjar is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Serve with a cheese board and a glass of dry white or light red - acidity balances sugar. Substitute: any dry white (Sauvignon Blanc / Chenin style) or light red (Pinot Noir style).",
+      "winePairing": "Dry white (Sauvignon Blanc or Chenin style) or a light red (Pinot Noir style) - acidity balances the sugar.",
+      "cocktailPairing": "Manhattan - whiskey, vermouth and bitters read well against cured, salty flavours.",
       "ingredients": [
         {
           "name": "Mixed vegetables",
@@ -4335,6 +4449,8 @@
       "prepMinutes": 15,
       "cookMinutes": 60,
       "story": "Roast Chicken with Lemon is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Whole chicken",
@@ -4379,6 +4495,8 @@
       "prepMinutes": 15,
       "cookMinutes": 60,
       "story": "Classic All-American Meatloaf is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Ground Beef",
@@ -4494,6 +4612,8 @@
       "prepMinutes": 10,
       "cookMinutes": 20,
       "story": "Southern Buttermilk Biscuits and Sausage Gravy is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "winePairing": "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+      "cocktailPairing": "Mimosa - classic brunch pairing.",
       "ingredients": [
         {
           "name": "Self-Rising Flour",
@@ -4583,6 +4703,8 @@
       "prepMinutes": 20,
       "cookMinutes": 30,
       "story": "Crispy Southern Fried Chicken is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked Chardonnay or light Pinot Noir is a safe deck pairing. Substitute: medium white (Chardonnay) or light red.",
+      "winePairing": "Unoaked Chardonnay or a light Pinot Noir - a safe, versatile pairing.",
+      "cocktailPairing": "Gin & Tonic - light and citrus-forward, a safe everyday match for poultry.",
       "ingredients": [
         {
           "name": "Chicken Pieces",
@@ -4665,6 +4787,8 @@
       "prepMinutes": 10,
       "cookMinutes": 30,
       "story": "Creamy Classic Macaroni and Cheese is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "winePairing": "Dry rose or a light Pinot Grigio - keeps salty cured meat and soft cheese lively.",
+      "cocktailPairing": "Aperol Spritz - bright and bitter-sweet, a natural match for salads and light apps.",
       "ingredients": [
         {
           "name": "Elbow Macaroni",
@@ -4753,6 +4877,8 @@
       "prepMinutes": 15,
       "cookMinutes": 35,
       "story": "Old-Fashioned Apple Cobbler is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Apples",
@@ -4834,6 +4960,8 @@
       "prepMinutes": 10,
       "cookMinutes": 20,
       "story": "Classic Southern Cornbread is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Cornmeal",
@@ -4922,6 +5050,8 @@
       "prepMinutes": 15,
       "cookMinutes": 0,
       "story": "Creamy Southern Coleslaw is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Green Cabbage",
@@ -5016,6 +5146,8 @@
       "prepMinutes": 15,
       "cookMinutes": 12,
       "story": "Classic Chocolate Chip Cookies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Espresso Martini - coffee and cocoa notes tie directly into a chocolate dessert.",
       "ingredients": [
         {
           "name": "Butter",
@@ -5105,6 +5237,8 @@
       "prepMinutes": 20,
       "cookMinutes": 15,
       "story": "Traditional American Potato Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "winePairing": "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+      "cocktailPairing": "Mimosa - classic brunch pairing.",
       "ingredients": [
         {
           "name": "Potatoes",
@@ -5207,6 +5341,8 @@
       "prepMinutes": 15,
       "cookMinutes": 120,
       "story": "BBQ Braai Pork Ribs is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Pork Ribs",
@@ -5272,6 +5408,8 @@
       "prepMinutes": 20,
       "cookMinutes": 180,
       "story": "Classic Yankee Pot Roast is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Beef Chuck Roast",
@@ -5352,6 +5490,8 @@
       "prepMinutes": 10,
       "cookMinutes": 15,
       "story": "Fluffy Buttermilk Pancakes is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "All-Purpose Flour",
@@ -5425,6 +5565,8 @@
       "prepMinutes": 15,
       "cookMinutes": 180,
       "story": "Boston Baked Beans is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Navy Beans",
@@ -5496,6 +5638,8 @@
       "prepMinutes": 10,
       "cookMinutes": 30,
       "story": "Green Bean Casserole is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Canned Green Beans",
@@ -5560,6 +5704,8 @@
       "prepMinutes": 10,
       "cookMinutes": 25,
       "story": "Fudgy Brownies is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Espresso Martini - coffee and cocoa notes tie directly into a chocolate dessert.",
       "ingredients": [
         {
           "name": "Butter",
@@ -5624,6 +5770,8 @@
       "prepMinutes": 15,
       "cookMinutes": 10,
       "story": "Deviled Eggs is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "winePairing": "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+      "cocktailPairing": "Mimosa - classic brunch pairing.",
       "ingredients": [
         {
           "name": "Eggs",
@@ -5694,6 +5842,8 @@
       "prepMinutes": 10,
       "cookMinutes": 20,
       "story": "Grilled Corn on the Cob is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Corn on the Cob",
@@ -5749,6 +5899,8 @@
       "prepMinutes": 15,
       "cookMinutes": 120,
       "story": "Homemade Apple Butter is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "winePairing": "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+      "cocktailPairing": "Mimosa - classic brunch pairing.",
       "ingredients": [
         {
           "name": "Apples",
@@ -5811,6 +5963,8 @@
       "prepMinutes": 20,
       "cookMinutes": 45,
       "story": "Chicken and Dumplings is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked Chardonnay or light Pinot Noir is a safe deck pairing. Substitute: medium white (Chardonnay) or light red.",
+      "winePairing": "Unoaked Chardonnay or a light Pinot Noir - a safe, versatile pairing.",
+      "cocktailPairing": "Gin & Tonic - light and citrus-forward, a safe everyday match for poultry.",
       "ingredients": [
         {
           "name": "Chicken Thighs",
@@ -5881,6 +6035,8 @@
       "prepMinutes": 10,
       "cookMinutes": 20,
       "story": "Creamy Garlic Mashed Potatoes is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Potatoes",
@@ -5944,6 +6100,8 @@
       "prepMinutes": 10,
       "cookMinutes": 15,
       "story": "NY Strip Steak with Herb Butter is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "NY Strip Steak",
@@ -6001,6 +6159,8 @@
       "prepMinutes": 10,
       "cookMinutes": 0,
       "story": "Waldorf Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "winePairing": "Dry rose or a light Pinot Grigio - keeps salty cured meat and soft cheese lively.",
+      "cocktailPairing": "Aperol Spritz - bright and bitter-sweet, a natural match for salads and light apps.",
       "ingredients": [
         {
           "name": "Apple",
@@ -6078,6 +6238,8 @@
       "prepMinutes": 10,
       "cookMinutes": 5,
       "story": "Shrimp Cocktail is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Shrimp",
@@ -6133,6 +6295,8 @@
       "prepMinutes": 15,
       "cookMinutes": 20,
       "story": "Chicken Marsala is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Chicken Cutlets",
@@ -6196,6 +6360,8 @@
       "prepMinutes": 10,
       "cookMinutes": 0,
       "story": "Caesar Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "winePairing": "Dry rose or a light Pinot Grigio - keeps salty cured meat and soft cheese lively.",
+      "cocktailPairing": "Aperol Spritz - bright and bitter-sweet, a natural match for salads and light apps.",
       "ingredients": [
         {
           "name": "Romaine Lettuce",
@@ -6258,6 +6424,8 @@
       "prepMinutes": 10,
       "cookMinutes": 15,
       "story": "Veal Piccata is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Veal Cutlets",
@@ -6326,6 +6494,8 @@
       "prepMinutes": 10,
       "cookMinutes": 15,
       "story": "Linguine with Clam Sauce is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "winePairing": "A crisp Sauvignon Blanc or dry Riesling - lifts citrus and brine.",
+      "cocktailPairing": "Classic Daiquiri - rum and lime stay bright without overpowering delicate fish.",
       "ingredients": [
         {
           "name": "Linguine",
@@ -6387,6 +6557,8 @@
       "prepMinutes": 20,
       "cookMinutes": 0,
       "story": "Tiramisu is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Mascarpone Cheese",
@@ -6447,6 +6619,8 @@
       "prepMinutes": 10,
       "cookMinutes": 90,
       "story": "Prime Rib Roast is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Prime Rib Roast",
@@ -6487,6 +6661,8 @@
       "prepMinutes": 15,
       "cookMinutes": 20,
       "story": "Key Lime Pie is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Graham Cracker Crumbs",
@@ -6550,6 +6726,8 @@
       "prepMinutes": 15,
       "cookMinutes": 20,
       "story": "Seared Scallops with Cauliflower Puree is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Sea Scallops",
@@ -6604,6 +6782,8 @@
       "prepMinutes": 15,
       "cookMinutes": 25,
       "story": "Roasted Duck Breast is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Duck Breasts",
@@ -6649,6 +6829,8 @@
       "prepMinutes": 30,
       "cookMinutes": 20,
       "story": "Foie Gras Torchon is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "winePairing": "Dry rose or a light Pinot Grigio - keeps salty cured meat and soft cheese lively.",
+      "cocktailPairing": "Aperol Spritz - bright and bitter-sweet, a natural match for salads and light apps.",
       "ingredients": [
         {
           "name": "Foie Gras",
@@ -6689,6 +6871,8 @@
       "prepMinutes": 10,
       "cookMinutes": 0,
       "story": "Burrata with Heirloom Tomatoes is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Burrata Cheese",
@@ -6750,6 +6934,8 @@
       "prepMinutes": 10,
       "cookMinutes": 10,
       "story": "Blackened Red Snapper is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Red Snapper Fillets",
@@ -6810,6 +6996,8 @@
       "prepMinutes": 10,
       "cookMinutes": 25,
       "story": "Truffle Risotto is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Arborio Rice",
@@ -6870,6 +7058,8 @@
       "prepMinutes": 20,
       "cookMinutes": 15,
       "story": "Chocolate Souffle is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Espresso Martini - coffee and cocoa notes tie directly into a chocolate dessert.",
       "ingredients": [
         {
           "name": "Dark Chocolate",
@@ -6923,6 +7113,8 @@
       "prepMinutes": 20,
       "cookMinutes": 30,
       "story": "Lobster Bisque is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "winePairing": "A crisp Sauvignon Blanc or dry Riesling - lifts citrus and brine.",
+      "cocktailPairing": "Classic Daiquiri - rum and lime stay bright without overpowering delicate fish.",
       "ingredients": [
         {
           "name": "Lobster Meat",
@@ -6961,6 +7153,8 @@
       "prepMinutes": 15,
       "cookMinutes": 0,
       "story": "Beef Tartare is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Beef Tenderloin",
@@ -7021,6 +7215,8 @@
       "prepMinutes": 15,
       "cookMinutes": 30,
       "story": "Lemon Olive Oil Cake is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Eggs",
@@ -7083,6 +7279,8 @@
       "prepMinutes": 10,
       "cookMinutes": 15,
       "story": "Grilled Branzino is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Whole Branzino",
@@ -7136,6 +7334,8 @@
       "prepMinutes": 20,
       "cookMinutes": 150,
       "story": "Short Ribs Bourguignon is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Beef Short Ribs",
@@ -7188,6 +7388,8 @@
       "prepMinutes": 10,
       "cookMinutes": 0,
       "story": "Heirloom Tomato Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Heirloom Tomatoes",
@@ -7240,6 +7442,8 @@
       "prepMinutes": 15,
       "cookMinutes": 15,
       "story": "Pan Seared Halibut is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Halibut Fillets",
@@ -7278,6 +7482,8 @@
       "prepMinutes": 20,
       "cookMinutes": 10,
       "story": "Ricotta Gnudi is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Ricotta Cheese",
@@ -7345,6 +7551,8 @@
       "prepMinutes": 15,
       "cookMinutes": 30,
       "story": "Flourless Chocolate Cake is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Espresso Martini - coffee and cocoa notes tie directly into a chocolate dessert.",
       "ingredients": [
         {
           "name": "Dark Chocolate",
@@ -7405,6 +7613,8 @@
       "prepMinutes": 10,
       "cookMinutes": 5,
       "story": "Crispy Calamari is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "winePairing": "A crisp Sauvignon Blanc or dry Riesling - lifts citrus and brine.",
+      "cocktailPairing": "Classic Daiquiri - rum and lime stay bright without overpowering delicate fish.",
       "ingredients": [
         {
           "name": "Calamari",
@@ -7457,6 +7667,8 @@
       "prepMinutes": 15,
       "cookMinutes": 30,
       "story": "Mushroom Risotto is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Arborio Rice",
@@ -7523,6 +7735,8 @@
       "prepMinutes": 15,
       "cookMinutes": 40,
       "story": "Creme Brulee is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Heavy Cream",
@@ -7569,6 +7783,8 @@
       "prepMinutes": 15,
       "cookMinutes": 15,
       "story": "Pork Chop Milanese is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Bone-In Pork Chops",
@@ -7629,6 +7845,8 @@
       "prepMinutes": 10,
       "cookMinutes": 15,
       "story": "Oven Roasted Salmon is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "winePairing": "A crisp Sauvignon Blanc or dry Riesling - lifts citrus and brine.",
+      "cocktailPairing": "Classic Daiquiri - rum and lime stay bright without overpowering delicate fish.",
       "ingredients": [
         {
           "name": "Salmon Fillet",
@@ -7674,6 +7892,8 @@
       "prepMinutes": 30,
       "cookMinutes": 40,
       "story": "Beef Wellington is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Cabernet Sauvignon or Shiraz/Syrah stands up to rich beef. Substitute: full red (Cabernet / Merlot / Shiraz), prefer fruit-forward over heavily oaked if young.",
+      "winePairing": "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+      "cocktailPairing": "Old Fashioned - whiskey's weight stands up to rich red meat.",
       "ingredients": [
         {
           "name": "Beef Tenderloin",
@@ -7726,6 +7946,8 @@
       "prepMinutes": 15,
       "cookMinutes": 0,
       "story": "Baby Kale Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Coffee or a light breakfast stout is classic; for wine, a dry sparkling white feels festive on deck. Substitute: any dry sparkling white (Cava / Prosecco style) or fresh orange juice.",
+      "winePairing": "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+      "cocktailPairing": "Mimosa - classic brunch pairing.",
       "ingredients": [
         {
           "name": "Baby Kale",
@@ -7771,6 +7993,8 @@
       "prepMinutes": 20,
       "cookMinutes": 60,
       "story": "Grilled Octopus is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Octopus",
@@ -7823,6 +8047,8 @@
       "prepMinutes": 30,
       "cookMinutes": 10,
       "story": "Pumpkin Ravioli is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Pumpkin Puree",
@@ -7868,6 +8094,8 @@
       "prepMinutes": 15,
       "cookMinutes": 35,
       "story": "Sticky Toffee Pudding is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Dates",
@@ -7919,6 +8147,8 @@
       "prepMinutes": 15,
       "cookMinutes": 10,
       "story": "Fried Artichokes is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "winePairing": "Dry rose or a light Pinot Grigio - keeps salty cured meat and soft cheese lively.",
+      "cocktailPairing": "Aperol Spritz - bright and bitter-sweet, a natural match for salads and light apps.",
       "ingredients": [
         {
           "name": "Artichokes",
@@ -7956,6 +8186,8 @@
       "prepMinutes": 15,
       "cookMinutes": 25,
       "story": "Wild Mushroom Soup is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Mixed Wild Mushrooms",
@@ -8015,6 +8247,8 @@
       "prepMinutes": 20,
       "cookMinutes": 0,
       "story": "Pistachio Semifreddo is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Heavy Cream",
@@ -8052,6 +8286,8 @@
       "prepMinutes": 20,
       "cookMinutes": 180,
       "story": "Osso Buco is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil richness. Substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.",
+      "winePairing": "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+      "cocktailPairing": "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
       "ingredients": [
         {
           "name": "Veal Shanks",
@@ -8090,6 +8326,8 @@
       "prepMinutes": 10,
       "cookMinutes": 25,
       "story": "Crispy Brussels Sprouts is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A versatile table wine or cold beer works on board - match weight of the dish to the drink (lighter food -> lighter drink). Caribbean substitute: dry white (Sauvignon Blanc / Chardonnay style) with fish and veg; medium red (Merlot / Cabernet blend) with red meat; cold lager with spice and braai.",
+      "winePairing": "A food-friendly dry rose - a versatile match when the table's ordering different dishes.",
+      "cocktailPairing": "Moscow Mule - a versatile, food-friendly cocktail for a mixed table.",
       "ingredients": [
         {
           "name": "Brussels Sprouts",
@@ -8141,6 +8379,8 @@
       "prepMinutes": 15,
       "cookMinutes": 180,
       "story": "Duck Confit is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Duck Legs",
@@ -8171,6 +8411,8 @@
       "prepMinutes": 15,
       "cookMinutes": 15,
       "story": "Quinoa Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "winePairing": "Dry rose or a light Pinot Grigio - keeps salty cured meat and soft cheese lively.",
+      "cocktailPairing": "Aperol Spritz - bright and bitter-sweet, a natural match for salads and light apps.",
       "ingredients": [
         {
           "name": "Quinoa",
@@ -8230,6 +8472,8 @@
       "prepMinutes": 10,
       "cookMinutes": 5,
       "story": "Seared Ahi Tuna is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).",
+      "winePairing": "A crisp Sauvignon Blanc or dry Riesling - lifts citrus and brine.",
+      "cocktailPairing": "Classic Daiquiri - rum and lime stay bright without overpowering delicate fish.",
       "ingredients": [
         {
           "name": "Ahi Tuna Steak",
@@ -8267,6 +8511,8 @@
       "prepMinutes": 15,
       "cookMinutes": 45,
       "story": "Butternut Squash Soup is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).",
+      "winePairing": "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir if duck is the star.",
+      "cocktailPairing": "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
       "ingredients": [
         {
           "name": "Butternut Squash",
@@ -8312,6 +8558,8 @@
       "prepMinutes": 15,
       "cookMinutes": 35,
       "story": "Lemon Olive Oil Cake is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Brandy Alexander - cream, cognac and cacao make a natural dessert-course cocktail.",
       "ingredients": [
         {
           "name": "Olive Oil",
@@ -8377,6 +8625,8 @@
       "prepMinutes": 10,
       "cookMinutes": 6,
       "story": "Grilled Prawns is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Large Prawns",
@@ -8428,6 +8678,8 @@
       "prepMinutes": 10,
       "cookMinutes": 0,
       "story": "Fig and Prosciutto Salad is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Dry rose or light Pinot Grigio keeps salty cured meat and soft cheese lively. Substitute: dry rose or crisp light white (Pinot Grigio / Sauvignon Blanc).",
+      "winePairing": "Dry rose or a light Pinot Grigio - keeps salty cured meat and soft cheese lively.",
+      "cocktailPairing": "Aperol Spritz - bright and bitter-sweet, a natural match for salads and light apps.",
       "ingredients": [
         {
           "name": "Fresh Figs",
@@ -8479,6 +8731,8 @@
       "prepMinutes": 15,
       "cookMinutes": 5,
       "story": "Espresso Panna Cotta is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. A late-harvest white or tawny-style dessert wine echoes sweetness without fighting it. Substitute: any sweet white (late harvest / Muscat style) slightly chilled; or skip alcohol and serve strong coffee.",
+      "winePairing": "A late-harvest white or tawny-style dessert wine - echoes sweetness without fighting it.",
+      "cocktailPairing": "Espresso Martini - coffee and cocoa notes tie directly into a chocolate dessert.",
       "ingredients": [
         {
           "name": "Heavy Cream",
@@ -8516,6 +8770,8 @@
       "prepMinutes": 15,
       "cookMinutes": 10,
       "story": "Lamb Chops Scottadito is scaled for two people at sea - double or triple from the app servings control for 4, 6, or more guests. Pair with a cold lager or pale ale - carbonation and hop bitterness cut fat from grilled meat. If you cannot find the same beer, any crisp lager or light pale ale works; avoid heavy stouts.",
+      "winePairing": "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the classic beer pairing here.",
+      "cocktailPairing": "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
       "ingredients": [
         {
           "name": "Lamb Chops",

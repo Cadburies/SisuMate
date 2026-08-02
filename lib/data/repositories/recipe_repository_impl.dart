@@ -29,6 +29,8 @@ class RecipeRepositoryImpl implements RecipeRepository {
     ..prepMinutes = r.prepMinutes
     ..cookMinutes = r.cookMinutes
     ..story = r.story
+    ..winePairing = r.winePairing
+    ..cocktailPairing = r.cocktailPairing
     ..tastingLog = (jsonDecode(r.tastingLog) as List)
         .map((e) => TastingRecord.fromJson(e as Map<String, dynamic>))
         .toList()
@@ -55,6 +57,8 @@ class RecipeRepositoryImpl implements RecipeRepository {
         prepMinutes: Value(r.prepMinutes),
         cookMinutes: Value(r.cookMinutes),
         story: Value(r.story),
+        winePairing: Value(r.winePairing),
+        cocktailPairing: Value(r.cocktailPairing),
         tastingLog: Value(jsonEncode(r.tastingLog.map((t) => t.toJson()).toList())),
         cuisine: Value(jsonEncode(r.cuisine)),
         flavorProfiles: Value(jsonEncode(r.flavorProfiles)),

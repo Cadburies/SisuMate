@@ -313,6 +313,8 @@ class Recipes extends Table {
   IntColumn get prepMinutes => integer().nullable()();
   IntColumn get cookMinutes => integer().nullable()();
   TextColumn get story => text().nullable()();
+  TextColumn get winePairing => text().nullable()();
+  TextColumn get cocktailPairing => text().nullable()();
   TextColumn get tastingLog => text().withDefault(const Constant('[]'))();
   /// JSON string list, e.g. `["Tiki","Classic"]`. Pre-v2 rows may hold a
   /// plain string; repositories coerce both shapes.
@@ -585,7 +587,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

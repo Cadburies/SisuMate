@@ -108,4 +108,26 @@ void main() {
     expect(await count(db.checklistGroups), before);
     expect(await count(db.checklistItems), itemsBefore);
   });
+
+  test(
+      '#214: every seeded meal (recipeType menu) has a wine + cocktail '
+      'pairing — both the 10 hardcoded meals and the 128-entry JSON pack',
+      () async {
+    final menus = await (db.select(db.recipes)
+          ..where((t) => t.recipeType.equals('menu')))
+        .get();
+    expect(menus.length, greaterThanOrEqualTo(138));
+    for (final m in menus) {
+      expect(m.winePairing, isNotNull, reason: m.name);
+      expect(m.winePairing!.isNotEmpty, isTrue, reason: m.name);
+      expect(m.cocktailPairing, isNotNull, reason: m.name);
+      expect(m.cocktailPairing!.isNotEmpty, isTrue, reason: m.name);
+    }
+    // Cocktails/syrups deliberately don't get meal pairings.
+    final cocktails = await (db.select(db.recipes)
+          ..where((t) => t.recipeType.equals('cocktail')))
+        .get();
+    expect(cocktails, isNotEmpty);
+    expect(cocktails.every((c) => c.winePairing == null), isTrue);
+  });
 }

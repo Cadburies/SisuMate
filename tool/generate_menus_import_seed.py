@@ -180,6 +180,183 @@ PAIRINGS: list[tuple[list[str], str, str]] = [
 ]
 
 
+# #214: grape/style-level wine suggestions, same category boundaries as
+# PAIRINGS above (checked in this order, first match wins) so a dish's wine
+# and its story/beer pairing stay consistent. Two categories above lead with
+# beer/coffee, not wine, so those get dedicated wine-specific text here
+# instead of reusing PAIRINGS' primary line verbatim.
+WINE_PAIRINGS: list[tuple[list[str], str]] = [
+    (
+        ["braai", "bbq", "barbecue", "wors", "steak", "rib", "grill"],
+        "Dry rose, or a lightly chilled Zinfandel - a wine alternative to the "
+        "classic beer pairing here.",
+    ),
+    (
+        ["dessert", "chocolate", "cake", "tart", "pudding", "ice cream"],
+        "A late-harvest white or tawny-style dessert wine - echoes sweetness "
+        "without fighting it.",
+    ),
+    (
+        ["breakfast", "pancake", "omelette", "egg", "toast"],
+        "A dry sparkling white (Cava or Prosecco style) - festive brunch pairing.",
+    ),
+    (
+        ["preserve", "jam", "chutney", "pickle"],
+        "Dry white (Sauvignon Blanc or Chenin style) or a light red (Pinot Noir "
+        "style) - acidity balances the sugar.",
+    ),
+    (
+        ["seafood", "fish", "prawn", "shrimp", "mussel", "calamari", "tuna", "salmon", "bass"],
+        "A crisp Sauvignon Blanc or dry Riesling - lifts citrus and brine.",
+    ),
+    (
+        ["thai", "curry", "spicy", "chilli", "chili", "sambal"],
+        "Off-dry Gewurztraminer or Riesling - the touch of sweetness calms chilli heat.",
+    ),
+    (
+        ["italian", "pasta", "pizza", "risotto", "tomato"],
+        "Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.",
+    ),
+    (
+        ["french", "butter", "duck", "bistro"],
+        "Unoaked or lightly oaked Chardonnay - suits butter sauces; Pinot Noir "
+        "if duck is the star.",
+    ),
+    (
+        ["asian", "soy", "ginger", "wok", "udon", "ramen"],
+        "An aromatic dry white (Riesling or Gruner Veltliner style).",
+    ),
+    (
+        ["japanese", "sushi", "sashimi", "miso", "soy"],
+        "Junmai-style sake, or a very dry sparkling white if sake isn't aboard.",
+    ),
+    (
+        ["spanish", "tapas", "paella", "chorizo"],
+        "Rioja-style Tempranillo or a dry Cava.",
+    ),
+    (
+        ["caribbean", "jerk", "rum", "plantain", "coconut"],
+        "Off-dry Riesling or a dry rose - light and citrus-friendly.",
+    ),
+    (
+        ["salad", "fig", "prosciutto", "cheese", "appetizer"],
+        "Dry rose or a light Pinot Grigio - keeps salty cured meat and soft cheese lively.",
+    ),
+    (
+        ["beef", "lamb", "steak", "wellington"],
+        "Cabernet Sauvignon or Shiraz/Syrah - stands up to rich red meat.",
+    ),
+    (
+        ["pork", "chop", "ham"],
+        "Dry Riesling or a light Pinot Noir - bridges a sweet glaze and savoury pork.",
+    ),
+    (
+        ["chicken", "poultry"],
+        "Unoaked Chardonnay or a light Pinot Noir - a safe, versatile pairing.",
+    ),
+]
+WINE_PAIRING_DEFAULT = (
+    "A food-friendly dry rose - a versatile match when the table's ordering "
+    "different dishes."
+)
+
+# #214: a cocktail suited to the dish. Own ordering (not tied to PAIRINGS'
+# boundaries) since a good cocktail match sometimes splits a wine category
+# further (e.g. chocolate desserts want something different from a fruit tart).
+COCKTAIL_PAIRINGS: list[tuple[list[str], str]] = [
+    (
+        ["chocolate"],
+        "Espresso Martini - coffee and cocoa notes tie directly into a "
+        "chocolate dessert.",
+    ),
+    (
+        ["dessert", "cake", "tart", "pudding", "ice cream"],
+        "Brandy Alexander - cream, cognac and cacao make a natural "
+        "dessert-course cocktail.",
+    ),
+    (
+        ["braai", "bbq", "barbecue", "wors", "steak", "rib", "grill"],
+        "Dark 'n Stormy - dark rum and ginger beer match the char and smoke.",
+    ),
+    (
+        ["breakfast", "pancake", "omelette", "egg", "toast"],
+        "Mimosa - classic brunch pairing.",
+    ),
+    (
+        ["preserve", "jam", "chutney", "pickle"],
+        "Manhattan - whiskey, vermouth and bitters read well against cured, "
+        "salty flavours.",
+    ),
+    (
+        ["seafood", "fish", "prawn", "shrimp", "mussel", "calamari", "tuna", "salmon", "bass"],
+        "Classic Daiquiri - rum and lime stay bright without overpowering "
+        "delicate fish.",
+    ),
+    (
+        ["thai", "curry", "spicy", "chilli", "chili", "sambal"],
+        "Painkiller - pineapple, orange and coconut cream cool chilli heat.",
+    ),
+    (
+        ["italian", "pasta", "pizza", "risotto", "tomato"],
+        "Negroni - bitter and herbal, cuts right through tomato and olive oil richness.",
+    ),
+    (
+        ["french", "butter", "duck", "bistro"],
+        "French 75 - gin, lemon and bubbles cut through butter-rich sauces.",
+    ),
+    (
+        ["asian", "soy", "ginger", "wok", "udon", "ramen"],
+        "Moscow Mule - ginger and lime match soy and aromatics well.",
+    ),
+    (
+        ["japanese", "sushi", "sashimi", "miso"],
+        "A chilled Vodka Martini - clean and neutral enough not to fight "
+        "delicate raw fish.",
+    ),
+    (
+        ["spanish", "tapas", "paella", "chorizo"],
+        "Rebujito - sherry and lemon-lime soda, the classic tapas-bar cooler.",
+    ),
+    (
+        ["caribbean", "jerk", "plantain", "coconut"],
+        "Rum Punch - tropical and citrus-forward, the natural Caribbean match.",
+    ),
+    (
+        ["salad", "fig", "prosciutto", "cheese", "appetizer"],
+        "Aperol Spritz - bright and bitter-sweet, a natural match for salads and light apps.",
+    ),
+    (
+        ["beef", "lamb", "wellington"],
+        "Old Fashioned - whiskey's weight stands up to rich red meat.",
+    ),
+    (
+        ["pork", "chop", "ham"],
+        "Whiskey Sour - bright acidity complements a sweet glaze and savoury pork.",
+    ),
+    (
+        ["chicken", "poultry"],
+        "Gin & Tonic - light and citrus-forward, a safe everyday match for poultry.",
+    ),
+]
+COCKTAIL_PAIRING_DEFAULT = (
+    "Moscow Mule - a versatile, food-friendly cocktail for a mixed table."
+)
+
+
+def build_wine_pairing(blob: str) -> str:
+    for keys, text in WINE_PAIRINGS:
+        if any(k in blob for k in keys):
+            return text
+    return WINE_PAIRING_DEFAULT
+
+
+def build_cocktail_pairing(blob: str) -> str:
+    for keys, text in COCKTAIL_PAIRINGS:
+        if any(k in blob for k in keys):
+            return text
+    return COCKTAIL_PAIRING_DEFAULT
+
+
 def slugify(name: str) -> str:
     s = unicodedata.normalize("NFKD", name)
     s = s.encode("ascii", "ignore").decode("ascii")
@@ -434,6 +611,11 @@ def process_item(item: dict, index: int) -> dict | None:
         sid = f"{sid}_{index}"
 
     story = build_story(item, course, cuisine)
+    pairing_blob = " ".join(
+        [name, course, " ".join(cuisine), description]
+    ).lower()
+    wine_pairing = build_wine_pairing(pairing_blob)
+    cocktail_pairing = build_cocktail_pairing(pairing_blob)
 
     cooking = item.get("cookingMethod")
     if not cooking:
@@ -469,6 +651,8 @@ def process_item(item: dict, index: int) -> dict | None:
         "prepMinutes": item.get("prepMinutes"),
         "cookMinutes": item.get("cookMinutes"),
         "story": story,
+        "winePairing": wine_pairing,
+        "cocktailPairing": cocktail_pairing,
         "ingredients": ings,
     }
 

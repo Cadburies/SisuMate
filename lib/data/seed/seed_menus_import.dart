@@ -65,7 +65,9 @@ Future<void> seedMenusImport(String defaultBoatSupabaseId) async {
         ..cookingMethod = item['cookingMethod'] as String?
         ..prepMinutes = item['prepMinutes'] as int?
         ..cookMinutes = item['cookMinutes'] as int?
-        ..story = item['story'] as String?,
+        ..story = item['story'] as String?
+        ..winePairing = item['winePairing'] as String?
+        ..cocktailPairing = item['cocktailPairing'] as String?,
     );
 
     final rawIngs = (item['ingredients'] as List? ?? const []);

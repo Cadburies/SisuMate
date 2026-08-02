@@ -328,6 +328,30 @@ void main() {
       expect(dst.story, src.story);
     });
 
+    test('#214: recipe import/export round-trips winePairing and '
+        'cocktailPairing', () {
+      final original = ImportService.parse('''
+        { "sisuMateImport": 1, "kind": "recipe", "items": [
+          {
+            "name": "Test Braai",
+            "recipeType": "menu",
+            "winePairing": "Dry rose, or a lightly chilled Zinfandel.",
+            "cocktailPairing": "Dark 'n Stormy - rum and ginger beer.",
+            "ingredients": [{"name": "Boerewors", "quantity": 0.3, "unit": "kg"}]
+          }
+        ]}
+      ''');
+      final src = original.recipes.single.recipe;
+      expect(src.winePairing, 'Dry rose, or a lightly chilled Zinfandel.');
+      expect(src.cocktailPairing, "Dark 'n Stormy - rum and ginger beer.");
+
+      final json = ImportService.exportRecipes(original.recipes);
+      final round = ImportService.parse(json);
+      final dst = round.recipes.single.recipe;
+      expect(dst.winePairing, src.winePairing);
+      expect(dst.cocktailPairing, src.cocktailPairing);
+    });
+
     test('recipe import accepts glasstype as alias for glassware', () {
       final batch = ImportService.parse('''
         { "sisuMateImport": 1, "kind": "recipe", "items": [

@@ -10860,6 +10860,28 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, RecipeRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _winePairingMeta = const VerificationMeta(
+    'winePairing',
+  );
+  @override
+  late final GeneratedColumn<String> winePairing = GeneratedColumn<String>(
+    'wine_pairing',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cocktailPairingMeta = const VerificationMeta(
+    'cocktailPairing',
+  );
+  @override
+  late final GeneratedColumn<String> cocktailPairing = GeneratedColumn<String>(
+    'cocktail_pairing',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _tastingLogMeta = const VerificationMeta(
     'tastingLog',
   );
@@ -10959,6 +10981,8 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, RecipeRow> {
     prepMinutes,
     cookMinutes,
     story,
+    winePairing,
+    cocktailPairing,
     tastingLog,
     cuisine,
     flavorProfiles,
@@ -11093,6 +11117,24 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, RecipeRow> {
         story.isAcceptableOrUnknown(data['story']!, _storyMeta),
       );
     }
+    if (data.containsKey('wine_pairing')) {
+      context.handle(
+        _winePairingMeta,
+        winePairing.isAcceptableOrUnknown(
+          data['wine_pairing']!,
+          _winePairingMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cocktail_pairing')) {
+      context.handle(
+        _cocktailPairingMeta,
+        cocktailPairing.isAcceptableOrUnknown(
+          data['cocktail_pairing']!,
+          _cocktailPairingMeta,
+        ),
+      );
+    }
     if (data.containsKey('tasting_log')) {
       context.handle(
         _tastingLogMeta,
@@ -11217,6 +11259,14 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, RecipeRow> {
         DriftSqlType.string,
         data['${effectivePrefix}story'],
       ),
+      winePairing: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}wine_pairing'],
+      ),
+      cocktailPairing: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cocktail_pairing'],
+      ),
       tastingLog: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}tasting_log'],
@@ -11271,6 +11321,8 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
   final int? prepMinutes;
   final int? cookMinutes;
   final String? story;
+  final String? winePairing;
+  final String? cocktailPairing;
   final String tastingLog;
 
   /// JSON string list, e.g. `["Tiki","Classic"]`. Pre-v2 rows may hold a
@@ -11302,6 +11354,8 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
     this.prepMinutes,
     this.cookMinutes,
     this.story,
+    this.winePairing,
+    this.cocktailPairing,
     required this.tastingLog,
     required this.cuisine,
     required this.flavorProfiles,
@@ -11340,6 +11394,12 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
     }
     if (!nullToAbsent || story != null) {
       map['story'] = Variable<String>(story);
+    }
+    if (!nullToAbsent || winePairing != null) {
+      map['wine_pairing'] = Variable<String>(winePairing);
+    }
+    if (!nullToAbsent || cocktailPairing != null) {
+      map['cocktail_pairing'] = Variable<String>(cocktailPairing);
     }
     map['tasting_log'] = Variable<String>(tastingLog);
     map['cuisine'] = Variable<String>(cuisine);
@@ -11387,6 +11447,12 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
       story: story == null && nullToAbsent
           ? const Value.absent()
           : Value(story),
+      winePairing: winePairing == null && nullToAbsent
+          ? const Value.absent()
+          : Value(winePairing),
+      cocktailPairing: cocktailPairing == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cocktailPairing),
       tastingLog: Value(tastingLog),
       cuisine: Value(cuisine),
       flavorProfiles: Value(flavorProfiles),
@@ -11427,6 +11493,8 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
       prepMinutes: serializer.fromJson<int?>(json['prepMinutes']),
       cookMinutes: serializer.fromJson<int?>(json['cookMinutes']),
       story: serializer.fromJson<String?>(json['story']),
+      winePairing: serializer.fromJson<String?>(json['winePairing']),
+      cocktailPairing: serializer.fromJson<String?>(json['cocktailPairing']),
       tastingLog: serializer.fromJson<String>(json['tastingLog']),
       cuisine: serializer.fromJson<String>(json['cuisine']),
       flavorProfiles: serializer.fromJson<String>(json['flavorProfiles']),
@@ -11456,6 +11524,8 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
       'prepMinutes': serializer.toJson<int?>(prepMinutes),
       'cookMinutes': serializer.toJson<int?>(cookMinutes),
       'story': serializer.toJson<String?>(story),
+      'winePairing': serializer.toJson<String?>(winePairing),
+      'cocktailPairing': serializer.toJson<String?>(cocktailPairing),
       'tastingLog': serializer.toJson<String>(tastingLog),
       'cuisine': serializer.toJson<String>(cuisine),
       'flavorProfiles': serializer.toJson<String>(flavorProfiles),
@@ -11483,6 +11553,8 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
     Value<int?> prepMinutes = const Value.absent(),
     Value<int?> cookMinutes = const Value.absent(),
     Value<String?> story = const Value.absent(),
+    Value<String?> winePairing = const Value.absent(),
+    Value<String?> cocktailPairing = const Value.absent(),
     String? tastingLog,
     String? cuisine,
     String? flavorProfiles,
@@ -11508,6 +11580,10 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
     prepMinutes: prepMinutes.present ? prepMinutes.value : this.prepMinutes,
     cookMinutes: cookMinutes.present ? cookMinutes.value : this.cookMinutes,
     story: story.present ? story.value : this.story,
+    winePairing: winePairing.present ? winePairing.value : this.winePairing,
+    cocktailPairing: cocktailPairing.present
+        ? cocktailPairing.value
+        : this.cocktailPairing,
     tastingLog: tastingLog ?? this.tastingLog,
     cuisine: cuisine ?? this.cuisine,
     flavorProfiles: flavorProfiles ?? this.flavorProfiles,
@@ -11554,6 +11630,12 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
           ? data.cookMinutes.value
           : this.cookMinutes,
       story: data.story.present ? data.story.value : this.story,
+      winePairing: data.winePairing.present
+          ? data.winePairing.value
+          : this.winePairing,
+      cocktailPairing: data.cocktailPairing.present
+          ? data.cocktailPairing.value
+          : this.cocktailPairing,
       tastingLog: data.tastingLog.present
           ? data.tastingLog.value
           : this.tastingLog,
@@ -11593,6 +11675,8 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
           ..write('prepMinutes: $prepMinutes, ')
           ..write('cookMinutes: $cookMinutes, ')
           ..write('story: $story, ')
+          ..write('winePairing: $winePairing, ')
+          ..write('cocktailPairing: $cocktailPairing, ')
           ..write('tastingLog: $tastingLog, ')
           ..write('cuisine: $cuisine, ')
           ..write('flavorProfiles: $flavorProfiles, ')
@@ -11622,6 +11706,8 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
     prepMinutes,
     cookMinutes,
     story,
+    winePairing,
+    cocktailPairing,
     tastingLog,
     cuisine,
     flavorProfiles,
@@ -11650,6 +11736,8 @@ class RecipeRow extends DataClass implements Insertable<RecipeRow> {
           other.prepMinutes == this.prepMinutes &&
           other.cookMinutes == this.cookMinutes &&
           other.story == this.story &&
+          other.winePairing == this.winePairing &&
+          other.cocktailPairing == this.cocktailPairing &&
           other.tastingLog == this.tastingLog &&
           other.cuisine == this.cuisine &&
           other.flavorProfiles == this.flavorProfiles &&
@@ -11676,6 +11764,8 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
   final Value<int?> prepMinutes;
   final Value<int?> cookMinutes;
   final Value<String?> story;
+  final Value<String?> winePairing;
+  final Value<String?> cocktailPairing;
   final Value<String> tastingLog;
   final Value<String> cuisine;
   final Value<String> flavorProfiles;
@@ -11700,6 +11790,8 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
     this.prepMinutes = const Value.absent(),
     this.cookMinutes = const Value.absent(),
     this.story = const Value.absent(),
+    this.winePairing = const Value.absent(),
+    this.cocktailPairing = const Value.absent(),
     this.tastingLog = const Value.absent(),
     this.cuisine = const Value.absent(),
     this.flavorProfiles = const Value.absent(),
@@ -11725,6 +11817,8 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
     this.prepMinutes = const Value.absent(),
     this.cookMinutes = const Value.absent(),
     this.story = const Value.absent(),
+    this.winePairing = const Value.absent(),
+    this.cocktailPairing = const Value.absent(),
     this.tastingLog = const Value.absent(),
     this.cuisine = const Value.absent(),
     this.flavorProfiles = const Value.absent(),
@@ -11750,6 +11844,8 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
     Expression<int>? prepMinutes,
     Expression<int>? cookMinutes,
     Expression<String>? story,
+    Expression<String>? winePairing,
+    Expression<String>? cocktailPairing,
     Expression<String>? tastingLog,
     Expression<String>? cuisine,
     Expression<String>? flavorProfiles,
@@ -11776,6 +11872,8 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
       if (prepMinutes != null) 'prep_minutes': prepMinutes,
       if (cookMinutes != null) 'cook_minutes': cookMinutes,
       if (story != null) 'story': story,
+      if (winePairing != null) 'wine_pairing': winePairing,
+      if (cocktailPairing != null) 'cocktail_pairing': cocktailPairing,
       if (tastingLog != null) 'tasting_log': tastingLog,
       if (cuisine != null) 'cuisine': cuisine,
       if (flavorProfiles != null) 'flavor_profiles': flavorProfiles,
@@ -11803,6 +11901,8 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
     Value<int?>? prepMinutes,
     Value<int?>? cookMinutes,
     Value<String?>? story,
+    Value<String?>? winePairing,
+    Value<String?>? cocktailPairing,
     Value<String>? tastingLog,
     Value<String>? cuisine,
     Value<String>? flavorProfiles,
@@ -11829,6 +11929,8 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
       prepMinutes: prepMinutes ?? this.prepMinutes,
       cookMinutes: cookMinutes ?? this.cookMinutes,
       story: story ?? this.story,
+      winePairing: winePairing ?? this.winePairing,
+      cocktailPairing: cocktailPairing ?? this.cocktailPairing,
       tastingLog: tastingLog ?? this.tastingLog,
       cuisine: cuisine ?? this.cuisine,
       flavorProfiles: flavorProfiles ?? this.flavorProfiles,
@@ -11892,6 +11994,12 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
     if (story.present) {
       map['story'] = Variable<String>(story.value);
     }
+    if (winePairing.present) {
+      map['wine_pairing'] = Variable<String>(winePairing.value);
+    }
+    if (cocktailPairing.present) {
+      map['cocktail_pairing'] = Variable<String>(cocktailPairing.value);
+    }
     if (tastingLog.present) {
       map['tasting_log'] = Variable<String>(tastingLog.value);
     }
@@ -11935,6 +12043,8 @@ class RecipesCompanion extends UpdateCompanion<RecipeRow> {
           ..write('prepMinutes: $prepMinutes, ')
           ..write('cookMinutes: $cookMinutes, ')
           ..write('story: $story, ')
+          ..write('winePairing: $winePairing, ')
+          ..write('cocktailPairing: $cocktailPairing, ')
           ..write('tastingLog: $tastingLog, ')
           ..write('cuisine: $cuisine, ')
           ..write('flavorProfiles: $flavorProfiles, ')
@@ -24773,6 +24883,8 @@ typedef $$RecipesTableCreateCompanionBuilder =
       Value<int?> prepMinutes,
       Value<int?> cookMinutes,
       Value<String?> story,
+      Value<String?> winePairing,
+      Value<String?> cocktailPairing,
       Value<String> tastingLog,
       Value<String> cuisine,
       Value<String> flavorProfiles,
@@ -24799,6 +24911,8 @@ typedef $$RecipesTableUpdateCompanionBuilder =
       Value<int?> prepMinutes,
       Value<int?> cookMinutes,
       Value<String?> story,
+      Value<String?> winePairing,
+      Value<String?> cocktailPairing,
       Value<String> tastingLog,
       Value<String> cuisine,
       Value<String> flavorProfiles,
@@ -24894,6 +25008,16 @@ class $$RecipesTableFilterComposer
 
   ColumnFilters<String> get story => $composableBuilder(
     column: $table.story,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get winePairing => $composableBuilder(
+    column: $table.winePairing,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cocktailPairing => $composableBuilder(
+    column: $table.cocktailPairing,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -25022,6 +25146,16 @@ class $$RecipesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get winePairing => $composableBuilder(
+    column: $table.winePairing,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cocktailPairing => $composableBuilder(
+    column: $table.cocktailPairing,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get tastingLog => $composableBuilder(
     column: $table.tastingLog,
     builder: (column) => ColumnOrderings(column),
@@ -25133,6 +25267,16 @@ class $$RecipesTableAnnotationComposer
   GeneratedColumn<String> get story =>
       $composableBuilder(column: $table.story, builder: (column) => column);
 
+  GeneratedColumn<String> get winePairing => $composableBuilder(
+    column: $table.winePairing,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cocktailPairing => $composableBuilder(
+    column: $table.cocktailPairing,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get tastingLog => $composableBuilder(
     column: $table.tastingLog,
     builder: (column) => column,
@@ -25209,6 +25353,8 @@ class $$RecipesTableTableManager
                 Value<int?> prepMinutes = const Value.absent(),
                 Value<int?> cookMinutes = const Value.absent(),
                 Value<String?> story = const Value.absent(),
+                Value<String?> winePairing = const Value.absent(),
+                Value<String?> cocktailPairing = const Value.absent(),
                 Value<String> tastingLog = const Value.absent(),
                 Value<String> cuisine = const Value.absent(),
                 Value<String> flavorProfiles = const Value.absent(),
@@ -25233,6 +25379,8 @@ class $$RecipesTableTableManager
                 prepMinutes: prepMinutes,
                 cookMinutes: cookMinutes,
                 story: story,
+                winePairing: winePairing,
+                cocktailPairing: cocktailPairing,
                 tastingLog: tastingLog,
                 cuisine: cuisine,
                 flavorProfiles: flavorProfiles,
@@ -25259,6 +25407,8 @@ class $$RecipesTableTableManager
                 Value<int?> prepMinutes = const Value.absent(),
                 Value<int?> cookMinutes = const Value.absent(),
                 Value<String?> story = const Value.absent(),
+                Value<String?> winePairing = const Value.absent(),
+                Value<String?> cocktailPairing = const Value.absent(),
                 Value<String> tastingLog = const Value.absent(),
                 Value<String> cuisine = const Value.absent(),
                 Value<String> flavorProfiles = const Value.absent(),
@@ -25283,6 +25433,8 @@ class $$RecipesTableTableManager
                 prepMinutes: prepMinutes,
                 cookMinutes: cookMinutes,
                 story: story,
+                winePairing: winePairing,
+                cocktailPairing: cocktailPairing,
                 tastingLog: tastingLog,
                 cuisine: cuisine,
                 flavorProfiles: flavorProfiles,

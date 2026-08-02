@@ -497,6 +497,8 @@ class ImportService {
       ..glassware =
           _optString(j, 'glassware', i) ?? _optString(j, 'glasstype', i)
       ..story = _optString(j, 'story', i)
+      ..winePairing = _optString(j, 'winePairing', i)
+      ..cocktailPairing = _optString(j, 'cocktailPairing', i)
       ..cuisine = cuisine
       ..flavorProfiles = dedupeStrings(_optStringList(j, 'flavorProfiles', i))
       ..cookingMethod = _optString(j, 'cookingMethod', i)
@@ -806,6 +808,10 @@ class ImportService {
             'instructions': ?instructions,
             if (r.recipe.glassware != null) 'glassware': r.recipe.glassware,
             if (r.recipe.story != null) 'story': r.recipe.story,
+            if (r.recipe.winePairing != null)
+              'winePairing': r.recipe.winePairing,
+            if (r.recipe.cocktailPairing != null)
+              'cocktailPairing': r.recipe.cocktailPairing,
             if (r.recipe.prepMinutes != null)
               'prepMinutes': r.recipe.prepMinutes,
             if (r.recipe.cookMinutes != null)

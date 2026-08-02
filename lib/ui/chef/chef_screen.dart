@@ -1243,6 +1243,69 @@ class ChefRecipeDetailScreenState extends ConsumerState<ChefRecipeDetailScreen> 
                         ref.watch(unitSystemProvider),
                       )),
                     ],
+                    // #214: curated wine + cocktail suggestions — distinct
+                    // from the "Pairs well with" section below, which
+                    // cross-references this app's own cocktail catalog by
+                    // keyword rather than a specifically chosen pairing.
+                    if (widget.recipe.winePairing != null ||
+                        widget.recipe.cocktailPairing != null) ...[
+                      const SizedBox(height: 20),
+                      Text(
+                        'Suggested Pairing',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.deepPurple.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (widget.recipe.winePairing != null)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.wine_bar,
+                                      size: 18, color: Colors.deepPurple),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      widget.recipe.winePairing!,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            if (widget.recipe.winePairing != null &&
+                                widget.recipe.cocktailPairing != null)
+                              const SizedBox(height: 8),
+                            if (widget.recipe.cocktailPairing != null)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.local_bar,
+                                      size: 18, color: Colors.deepPurple),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      widget.recipe.cocktailPairing!,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                     // Leftover ideas (CF8)
                     const SizedBox(height: 20),
                     OutlinedButton.icon(

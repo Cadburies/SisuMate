@@ -456,7 +456,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Pan-fry'
       ..prepMinutes = 30
       ..cookMinutes = 25
-      ..story = 'Scaled for two at sea - use servings to scale for more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Caribbean substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).',
+      ..story = 'Scaled for two at sea - use servings to scale for more guests. A crisp Sauvignon Blanc or dry Riesling lifts citrus and brine. Caribbean substitute: any dry white with citrus notes (Sauvignon Blanc / unoaked Chardonnay / dry Riesling).'
+      ..winePairing = 'Crisp Sauvignon Blanc or dry Riesling - lifts citrus and brine.'
+      ..cocktailPairing = 'Classic Daiquiri - rum and lime stay bright without overpowering delicate seafood.',
     Recipe()
       ..supabaseId = 'menu_asian_fusion_yacht_dinner'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -469,7 +471,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Wok'
       ..prepMinutes = 25
       ..cookMinutes = 20
-      ..story = 'Scaled for two. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works. Caribbean substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.',
+      ..story = 'Scaled for two. Off-dry Gewurztraminer or Riesling calms chilli heat; a cold lager also works. Caribbean substitute: slightly sweet white (Riesling / Gewurztraminer style) or ice-cold lager.'
+      ..winePairing = 'Off-dry Gewurztraminer or Riesling - the touch of sweetness calms chilli heat.'
+      ..cocktailPairing = 'Moscow Mule - ginger and lime echo the dish\'s own aromatics.',
     Recipe()
       ..supabaseId = 'menu_classic_french_bistro'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -482,7 +486,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Stovetop'
       ..prepMinutes = 30
       ..cookMinutes = 35
-      ..story = 'Scaled for two. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Caribbean substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).',
+      ..story = 'Scaled for two. Unoaked or lightly oaked Chardonnay suits butter sauces; Pinot Noir for duck. Caribbean substitute: white Burgundy style (Chardonnay) or light red (Pinot Noir).'
+      ..winePairing = 'Unoaked or lightly oaked Chardonnay, or Pinot Noir if duck is on the menu.'
+      ..cocktailPairing = 'French 75 - gin, lemon and bubbles cut through butter-rich sauces.',
     Recipe()
       ..supabaseId = 'menu_italian_villa_dinner'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -495,7 +501,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Stovetop'
       ..prepMinutes = 20
       ..cookMinutes = 30
-      ..story = 'Scaled for two. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil. Caribbean substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.',
+      ..story = 'Scaled for two. Chianti-style Sangiovese or a medium Merlot matches tomato and olive oil. Caribbean substitute: medium-bodied red (Merlot / Sangiovese / Cabernet blend), not too oaky.'
+      ..winePairing = 'Chianti-style Sangiovese or a medium Merlot - matches tomato and olive oil richness.'
+      ..cocktailPairing = 'Negroni - bitter and herbal, cuts right through tomato and olive oil richness.',
     Recipe()
       ..supabaseId = 'menu_caribbean_yacht_bbq'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -508,7 +516,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Grill'
       ..prepMinutes = 15
       ..cookMinutes = 30
-      ..story = 'Scaled for two. Ice-cold lager or a rum highball with lime; for wine, off-dry Riesling or rose. Caribbean substitute: any cold lager or dry rose; keep spirits light with ice and citrus.',
+      ..story = 'Scaled for two. Ice-cold lager or a rum highball with lime; for wine, off-dry Riesling or rose. Caribbean substitute: any cold lager or dry rose; keep spirits light with ice and citrus.'
+      ..winePairing = 'Off-dry Riesling or a dry rose - light and citrus-friendly.'
+      ..cocktailPairing = 'Rum Punch - tropical and citrus-forward, the natural Caribbean match.',
     Recipe()
       ..supabaseId = 'menu_modern_australian_cuisine'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -521,7 +531,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Grill'
       ..prepMinutes = 20
       ..cookMinutes = 25
-      ..story = 'Scaled for two. Cabernet or Shiraz/Syrah stands up to rich grilled meat. Caribbean substitute: full red (Cabernet / Merlot / Shiraz), fruit-forward if young.',
+      ..story = 'Scaled for two. Cabernet or Shiraz/Syrah stands up to rich grilled meat. Caribbean substitute: full red (Cabernet / Merlot / Shiraz), fruit-forward if young.'
+      ..winePairing = 'Cabernet or Shiraz/Syrah - stands up to rich grilled meat.'
+      ..cocktailPairing = 'Dark \'n Stormy - dark rum and ginger beer match the char from the grill.',
     Recipe()
       ..supabaseId = 'menu_spanish_tapas_yacht_party'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -534,7 +546,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'One-pot'
       ..prepMinutes = 30
       ..cookMinutes = 20
-      ..story = 'Scaled for two (double freely for a party). Rioja-style Tempranillo or dry Cava. Caribbean substitute: medium red (Tempranillo / Grenache style) or dry sparkling white.',
+      ..story = 'Scaled for two (double freely for a party). Rioja-style Tempranillo or dry Cava. Caribbean substitute: medium red (Tempranillo / Grenache style) or dry sparkling white.'
+      ..winePairing = 'Rioja-style Tempranillo or a dry Cava.'
+      ..cocktailPairing = 'Rebujito - sherry and lemon-lime soda, the classic tapas-bar cooler.',
     Recipe()
       ..supabaseId = 'menu_japanese_kaiseki_dinner'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -547,7 +561,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Raw / No-cook'
       ..prepMinutes = 40
       ..cookMinutes = 20
-      ..story = 'Scaled for two. Junmai-style sake or a very dry sparkling white keeps the palate clean. Caribbean substitute: dry sparkling white or light lager if sake is unavailable.',
+      ..story = 'Scaled for two. Junmai-style sake or a very dry sparkling white keeps the palate clean. Caribbean substitute: dry sparkling white or light lager if sake is unavailable.'
+      ..winePairing = 'Junmai-style sake, or a very dry sparkling white if sake isn\'t aboard.'
+      ..cocktailPairing = 'A chilled Vodka Martini - clean and neutral enough not to fight delicate raw fish.',
     Recipe()
       ..supabaseId = 'menu_american_steakhouse_classic'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -560,7 +576,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Grill'
       ..prepMinutes = 15
       ..cookMinutes = 20
-      ..story = 'Scaled for two. Cabernet Sauvignon or Shiraz/Syrah with steak. Caribbean substitute: full red (Cabernet / Merlot / Shiraz).',
+      ..story = 'Scaled for two. Cabernet Sauvignon or Shiraz/Syrah with steak. Caribbean substitute: full red (Cabernet / Merlot / Shiraz).'
+      ..winePairing = 'Cabernet Sauvignon or Shiraz/Syrah - stands up to a good steak.'
+      ..cocktailPairing = 'Old Fashioned - whiskey\'s weight stands up to a good steak.',
     Recipe()
       ..supabaseId = 'menu_thai_royal_cuisine'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -573,7 +591,9 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..cookingMethod = 'Wok'
       ..prepMinutes = 25
       ..cookMinutes = 25
-      ..story = 'Scaled for two. Off-dry Gewurztraminer or Riesling calms chilli heat; cold lager also works. Caribbean substitute: slightly sweet white or ice-cold lager.',
+      ..story = 'Scaled for two. Off-dry Gewurztraminer or Riesling calms chilli heat; cold lager also works. Caribbean substitute: slightly sweet white or ice-cold lager.'
+      ..winePairing = 'Off-dry Gewurztraminer or Riesling - the touch of sweetness calms chilli heat.'
+      ..cocktailPairing = 'Painkiller - pineapple, orange and coconut cream cool chilli heat.',
   ];
 
   await seedRecipesToDrift(menus);

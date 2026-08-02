@@ -20,6 +20,12 @@ void main() {
       expect((m['name'] as String).isNotEmpty, isTrue);
       expect(m['story'], isNotNull);
       expect((m['story'] as String).toLowerCase(), contains('two'));
+      // #214: every seeded meal needs a genuine wine + cocktail pairing.
+      expect(m['winePairing'], isNotNull, reason: m['name']);
+      expect((m['winePairing'] as String).isNotEmpty, isTrue, reason: m['name']);
+      expect(m['cocktailPairing'], isNotNull, reason: m['name']);
+      expect((m['cocktailPairing'] as String).isNotEmpty, isTrue,
+          reason: m['name']);
       final ings = m['ingredients'] as List? ?? const [];
       expect(ings, isNotEmpty, reason: m['name']);
     }

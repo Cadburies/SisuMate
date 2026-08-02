@@ -50,6 +50,13 @@ class Recipe {
   int? prepMinutes;
   int? cookMinutes;
   String? story;
+  /// #214: grape/style-level wine suggestion (e.g. "Sauvignon Blanc"), not
+  /// a specific bottle/vintage unless one is genuinely well-known for the
+  /// dish. Meals only — cocktails/syrups leave this null.
+  String? winePairing;
+  /// #214: a cocktail that suits the dish, by name (assumed to already
+  /// exist in this app's cocktail recipes where possible).
+  String? cocktailPairing;
   List<TastingRecord> tastingLog = [];
   /// Cuisine tags (e.g. `['Tiki', 'Classic']`). Empty when unset.
   List<String> cuisine = [];
@@ -79,6 +86,8 @@ class Recipe {
       ..prepMinutes = json['prepMinutes']
       ..cookMinutes = json['cookMinutes']
       ..story = json['story']
+      ..winePairing = json['winePairing']
+      ..cocktailPairing = json['cocktailPairing']
       ..tastingLog = ((json['tastingLog'] as List?) ?? const [])
           .map((e) => TastingRecord.fromJson(e as Map<String, dynamic>))
           .toList()
@@ -108,6 +117,8 @@ class Recipe {
     'prepMinutes': prepMinutes,
     'cookMinutes': cookMinutes,
     'story': story,
+    'winePairing': winePairing,
+    'cocktailPairing': cocktailPairing,
     'tastingLog': tastingLog.map((t) => t.toJson()).toList(),
     'cuisine': cuisine,
     'flavorProfiles': flavorProfiles,
@@ -138,6 +149,8 @@ class Recipe {
           prepMinutes == other.prepMinutes &&
           cookMinutes == other.cookMinutes &&
           story == other.story &&
+          winePairing == other.winePairing &&
+          cocktailPairing == other.cocktailPairing &&
           listEquals(tastingLog, other.tastingLog) &&
           listEquals(cuisine, other.cuisine) &&
           listEquals(flavorProfiles, other.flavorProfiles) &&
@@ -164,6 +177,8 @@ class Recipe {
         prepMinutes,
         cookMinutes,
         story,
+        winePairing,
+        cocktailPairing,
         Object.hashAll(tastingLog),
         Object.hashAll(cuisine),
         Object.hashAll(flavorProfiles),
@@ -183,6 +198,7 @@ class Recipe {
       'prepMinutes: $prepMinutes, cookMinutes: $cookMinutes, '
       'cuisine: $cuisine, flavorProfiles: $flavorProfiles, '
       'cookingMethod: $cookingMethod, imageAsset: $imageAsset, '
+      'winePairing: $winePairing, cocktailPairing: $cocktailPairing, '
       'localPath: $localPath, createdAt: $createdAt, '
       'lastModified: $lastModified)';
 }

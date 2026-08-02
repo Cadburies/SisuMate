@@ -58,6 +58,8 @@ Future<void> seedRecipesToDrift(List<Recipe> recipes) async {
           prepMinutes: Value(r.prepMinutes),
           cookMinutes: Value(r.cookMinutes),
           story: Value(r.story),
+          winePairing: Value(r.winePairing),
+          cocktailPairing: Value(r.cocktailPairing),
           tastingLog:
               Value(jsonEncode(r.tastingLog.map((t) => t.toJson()).toList())),
           cuisine: Value(jsonEncode(r.cuisine)),
