@@ -126,6 +126,7 @@ class _AccountSetupScreenState extends ConsumerState<AccountSetupScreen> {
     }
     ref.invalidate(userSettingsProvider);
     ref.invalidate(activeBoatProvider);
+    ref.invalidate(boatsProvider);
   }
 
   @override

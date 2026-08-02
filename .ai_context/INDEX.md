@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #180, #178, #126 (took over #126 from the idle CLI agent at user's direction — dialogTheme + button themes in theme.dart, dialogButtonOnColor token, 5 dialog call sites de-hardcoded, 6 contrast regression tests, verified no other dialog call sites needed it). Audited + closed #1/#2/#3 (already covered / no-op-while-private). Left #156 open — RLS 42501s look transient/self-healed via retry, uncertain without live repro (`emulator-5554` + dart-defines available).
+- **Last (claudevc):** fixed + closed #180, #178, #126, #128 (`boatsProvider` invalidation missing from `_createOwnedBoat`). Audited + closed #1/#2/#3. Left #156 open — RLS 42501s look transient/self-healed via retry, uncertain without live repro (`emulator-5554` + dart-defines available).
 - **Doing:** nothing claimed by claudevc.
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
