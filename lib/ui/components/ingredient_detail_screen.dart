@@ -291,6 +291,7 @@ class _IngredientDetailScreenState
               SectionHeader(title: 'Account'),
               AccountSection(),
               ProUpgradeSection(),
+              AboutSection(),
               const Spacer(),
               DrawerFooter(),
             ],

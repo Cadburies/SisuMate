@@ -316,6 +316,9 @@ class HomeScreen extends ConsumerWidget {
                           context.push(AppRoutes.settings);
                         },
                       ),
+                      const Divider(),
+                      const ProUpgradeSection(),
+                      const AboutSection(),
                     ],
                   ),
                 ),

@@ -240,6 +240,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
             AccountSection(),
             SectionHeader(title: 'Data'),
             DataManagementSection(),
+            ProUpgradeSection(),
             SectionHeader(title: 'About'),
             AboutSection(),
             DrawerFooter(),

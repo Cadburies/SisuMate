@@ -1167,6 +1167,7 @@ class _ShoppingItemDetailScreenState
               SectionHeader(title: 'Account'),
               AccountSection(),
               ProUpgradeSection(),
+              AboutSection(),
               const Spacer(),
               DrawerFooter(),
             ],

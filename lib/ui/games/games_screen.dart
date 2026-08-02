@@ -52,6 +52,7 @@ class GamesScreen extends ConsumerWidget {
             AccountSection(),
             SectionHeader(title: 'Data'),
             DataManagementSection(),
+            ProUpgradeSection(),
             SectionHeader(title: 'About'),
             AboutSection(),
             DrawerFooter(),
