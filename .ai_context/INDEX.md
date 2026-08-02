@@ -6,8 +6,8 @@
 ## NEXT
 
 - **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132, #136, #137, #158, #179 (Maintenance item tap now opens the shared `CheckPageViewer` instead of a bespoke `AlertDialog`, matching Checklists/Safety). Audited + closed #1/#2/#3. Investigated (left open, no confident fix): #156 (RLS, needs live repro), #147/#176 (rare Riverpod-scheduler race, non-reproducible).
-- **Last (CLI agent):** fixed + closed #184 (Community browse Pro gate) and #133/#134 (House "used in N cocktails"; syrup name rationalization). Currently adding `flavorProfiles` to seeded syrups (likely #135) — uncommitted in `seed_recipes.dart` as of this write.
-- **Doing:** nothing claimed by claudevc right now.
+- **Last (CLI agent):** fixed + closed #184 (Community browse Pro gate), #133/#134 (House "used in N cocktails"; syrup name rationalization), and #135 (`flavorProfiles` on all 14 seeded syrups + chip rendering on `_SyrupsTab`).
+- **Doing:** nothing claimed by either agent right now.
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 

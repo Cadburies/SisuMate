@@ -729,7 +729,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 5
       ..cookMinutes = 5
-      ..story = 'Donn Beach (Don the Beachcomber) insisted on Demerara sugar in place of white sugar for its deep molasses notes - a decision that quietly separated his drinks from everyone else\'s. The 2:1 ratio produces a viscous, shelf-stable syrup that carries the spirit of the cane from field to glass.',
+      ..story = 'Donn Beach (Don the Beachcomber) insisted on Demerara sugar in place of white sugar for its deep molasses notes - a decision that quietly separated his drinks from everyone else\'s. The 2:1 ratio produces a viscous, shelf-stable syrup that carries the spirit of the cane from field to glass.'
+      ..flavorProfiles = ['sweet', 'earthy', 'warming'],
     Recipe()
       ..supabaseId = 'syrup_cinnamon'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -740,7 +741,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 2
       ..cookMinutes = 15
-      ..story = 'Cinnamon syrup is the quiet workhorse of the tiki pantry - appearing in Trader Vic\'s originals and Don the Beachcomber\'s coded formulae alike. Don used it under cipher names like "mix #4" to guard his recipes from rival barkeeps who sent spies to sit at his bar.',
+      ..story = 'Cinnamon syrup is the quiet workhorse of the tiki pantry - appearing in Trader Vic\'s originals and Don the Beachcomber\'s coded formulae alike. Don used it under cipher names like "mix #4" to guard his recipes from rival barkeeps who sent spies to sit at his bar.'
+      ..flavorProfiles = ['spicy', 'sweet', 'warming'],
     Recipe()
       ..supabaseId = 'syrup_orgeat'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -751,7 +753,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 25
       ..cookMinutes = 10
-      ..story = 'Trader Vic called orgeat "the most important ingredient" in the Mai Tai - a bold claim for a syrup. The word comes from the French "orge" (barley), because medieval orgeat was barley-water sweetened with almonds. By the 19th century almonds had taken over entirely. Vic sourced it from a local Oakland confectioner before eventually bottling his own.',
+      ..story = 'Trader Vic called orgeat "the most important ingredient" in the Mai Tai - a bold claim for a syrup. The word comes from the French "orge" (barley), because medieval orgeat was barley-water sweetened with almonds. By the 19th century almonds had taken over entirely. Vic sourced it from a local Oakland confectioner before eventually bottling his own.'
+      ..flavorProfiles = ['nutty', 'sweet', 'floral'],
     Recipe()
       ..supabaseId = 'syrup_velvet_falernum'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -762,7 +765,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 30
       ..cookMinutes = 0
-      ..story = 'John D. Taylor\'s Velvet Falernum has been produced in Barbados since 1890. The commercial version is 11% ABV and sweetly spiced - but bartenders who make their own can dial up the rum, lime, or spice to match their bar. The name "falernum" likely traces to Falernian wine, the most celebrated wine of ancient Rome.',
+      ..story = 'John D. Taylor\'s Velvet Falernum has been produced in Barbados since 1890. The commercial version is 11% ABV and sweetly spiced - but bartenders who make their own can dial up the rum, lime, or spice to match their bar. The name "falernum" likely traces to Falernian wine, the most celebrated wine of ancient Rome.'
+      ..flavorProfiles = ['citrus', 'spicy', 'nutty'],
     Recipe()
       ..supabaseId = 'syrup_grenadine'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -773,7 +777,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 5
       ..cookMinutes = 10
-      ..story = 'Grenadine takes its name from "grenade" - French for pomegranate. Nineteenth-century bartenders made it from actual pomegranates. Somewhere in the 20th century food manufacturers replaced the fruit with high-fructose corn syrup and red dye #40. When Smuggler\'s Cove opened in 2009, they put house-made pomegranate grenadine back on the bar. It changed everything.',
+      ..story = 'Grenadine takes its name from "grenade" - French for pomegranate. Nineteenth-century bartenders made it from actual pomegranates. Somewhere in the 20th century food manufacturers replaced the fruit with high-fructose corn syrup and red dye #40. When Smuggler\'s Cove opened in 2009, they put house-made pomegranate grenadine back on the bar. It changed everything.'
+      ..flavorProfiles = ['tart', 'fruity', 'sweet-tart'],
     Recipe()
       ..supabaseId = 'syrup_dons_mix_1'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -784,7 +789,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 2
       ..cookMinutes = 0
-      ..story = "Don the Beachcomber used coded ingredient names on his recipe cards so employees couldn't recreate his drinks after leaving. \"Mix #1\" appears in the Zombie and several other originals. Tiki historian Jeff \"Beachbum\" Berry spent years tracking down former staff to decode the cipher. Mix #1 turned out to be this elegant two-ingredient blend that makes grapefruit taste like a spirit.",
+      ..story = "Don the Beachcomber used coded ingredient names on his recipe cards so employees couldn't recreate his drinks after leaving. \"Mix #1\" appears in the Zombie and several other originals. Tiki historian Jeff \"Beachbum\" Berry spent years tracking down former staff to decode the cipher. Mix #1 turned out to be this elegant two-ingredient blend that makes grapefruit taste like a spirit."
+      ..flavorProfiles = ['citrus', 'spicy', 'tart'],
     // -- New Smuggler's Cove / Trader Vic / Don the Beachcomber syrups --------
     Recipe()
       ..supabaseId = 'syrup_honey'
@@ -796,7 +802,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 5
       ..cookMinutes = 5
-      ..story = 'Honey syrup is the ingredient that lets bartenders use honey with precision - undiluted honey clumps in cold drinks. Smuggler\'s Cove uses it in the Three Dots and a Dash, Navy Grog, and many others. Donn Beach favored Hawaiian raw honey; any unfiltered wildflower or clover honey works beautifully.',
+      ..story = 'Honey syrup is the ingredient that lets bartenders use honey with precision - undiluted honey clumps in cold drinks. Smuggler\'s Cove uses it in the Three Dots and a Dash, Navy Grog, and many others. Donn Beach favored Hawaiian raw honey; any unfiltered wildflower or clover honey works beautifully.'
+      ..flavorProfiles = ['sweet', 'floral', 'earthy'],
     Recipe()
       ..supabaseId = 'syrup_passion_fruit'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -807,7 +814,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 15
       ..cookMinutes = 0
-      ..story = 'The passion fruit is native to South America but was transplanted across the Pacific Islands - and into the tiki pantheon - during the 20th century. Jeff Berry\'s Saturn (1967) brought it into cocktail culture. Smuggler\'s Cove uses house-made passion fruit syrup in seven different drinks on their menu, making it one of their most essential house preparations.',
+      ..story = 'The passion fruit is native to South America but was transplanted across the Pacific Islands - and into the tiki pantheon - during the 20th century. Jeff Berry\'s Saturn (1967) brought it into cocktail culture. Smuggler\'s Cove uses house-made passion fruit syrup in seven different drinks on their menu, making it one of their most essential house preparations.'
+      ..flavorProfiles = ['tropical', 'fruity', 'sweet-tart'],
     Recipe()
       ..supabaseId = 'syrup_coconut_cream'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -818,7 +826,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 30
       ..cookMinutes = 0
-      ..story = 'Smuggler\'s Cove makes a careful distinction between cream of coconut (the sweetened Coco Lopez product used in Painkillers) and fresh coconut cream - the unsweetened fat extracted from fresh coconut flesh. The latter has a cleaner, less cloying tropical flavour and is the base of their more refined coconut preparations.',
+      ..story = 'Smuggler\'s Cove makes a careful distinction between cream of coconut (the sweetened Coco Lopez product used in Painkillers) and fresh coconut cream - the unsweetened fat extracted from fresh coconut flesh. The latter has a cleaner, less cloying tropical flavour and is the base of their more refined coconut preparations.'
+      ..flavorProfiles = ['creamy', 'tropical', 'sweet'],
     Recipe()
       ..supabaseId = 'syrup_dons_spices_2'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -829,7 +838,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 2
       ..cookMinutes = 0
-      ..story = "Don the Beachcomber numbered his secret blends to obscure them from rival bartenders. Spices #2 is a marriage of pastis (anise-forward) and vanilla - two flavors that shouldn't work together but somehow elevate everything around them. Jeff Berry decoded it by tracking down Don's former bar manager. It appears in the Jet Pilot and the Cobra's Fang.",
+      ..story = "Don the Beachcomber numbered his secret blends to obscure them from rival bartenders. Spices #2 is a marriage of pastis (anise-forward) and vanilla - two flavors that shouldn't work together but somehow elevate everything around them. Jeff Berry decoded it by tracking down Don's former bar manager. It appears in the Jet Pilot and the Cobra's Fang."
+      ..flavorProfiles = ['herbal', 'sweet', 'complex'],
     Recipe()
       ..supabaseId = 'syrup_gardenia_mix'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -840,7 +850,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 5
       ..cookMinutes = 5
-      ..story = 'Gardenia Mix is one of the most unusual ingredients in the tiki canon - a warm butter-honey emulsion that melts into a drink and adds an extraordinary mouthfeel. It appears in Trader Vic\'s Navy Grog and several Don the Beachcomber originals. The name comes from the gardenia flowers that traditionally garnished the bowls it was used in.',
+      ..story = 'Gardenia Mix is one of the most unusual ingredients in the tiki canon - a warm butter-honey emulsion that melts into a drink and adds an extraordinary mouthfeel. It appears in Trader Vic\'s Navy Grog and several Don the Beachcomber originals. The name comes from the gardenia flowers that traditionally garnished the bowls it was used in.'
+      ..flavorProfiles = ['creamy', 'sweet', 'floral'],
     Recipe()
       ..supabaseId = 'syrup_dons_mix_2'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -851,7 +862,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 3
       ..cookMinutes = 0
-      ..story = "Don the Beachcomber used a numerical coding system on his recipe cards - Mix #1 through #4 were his essential pre-blended bases, each a different ratio of juice and sweetener. Mix #2 (grapefruit and honey) appears in the Test Pilot alongside its sibling Mix #1. Together they give the drink an extraordinary citrus complexity that no single juice can replicate.",
+      ..story = "Don the Beachcomber used a numerical coding system on his recipe cards - Mix #1 through #4 were his essential pre-blended bases, each a different ratio of juice and sweetener. Mix #2 (grapefruit and honey) appears in the Test Pilot alongside its sibling Mix #1. Together they give the drink an extraordinary citrus complexity that no single juice can replicate."
+      ..flavorProfiles = ['citrus', 'sweet', 'floral'],
     Recipe()
       ..supabaseId = 'syrup_hibiscus_grenadine'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -862,7 +874,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 35
       ..cookMinutes = 10
-      ..story = "Hibiscus (flor de Jamaica in Mexico) has been used in aguas frescas and cold teas across the tropical world for centuries. Smuggler's Cove steeps dried hibiscus flowers in their pomegranate grenadine, creating a deeper, more complex version that bridges the gap between grenadine and shrub. The crimson color alone justifies the extra step.",
+      ..story = "Hibiscus (flor de Jamaica in Mexico) has been used in aguas frescas and cold teas across the tropical world for centuries. Smuggler's Cove steeps dried hibiscus flowers in their pomegranate grenadine, creating a deeper, more complex version that bridges the gap between grenadine and shrub. The crimson color alone justifies the extra step."
+      ..flavorProfiles = ['tart', 'floral', 'fruity'],
     Recipe()
       ..supabaseId = 'syrup_macadamia_orgeat'
       ..boatSupabaseId = defaultBoatSupabaseId
@@ -873,7 +886,8 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       ..isBundled = true
       ..prepMinutes = 20
       ..cookMinutes = 10
-      ..story = "Trader Vic Bergeron grew up in Oakland but fell in love with the Pacific and Hawaii - macadamia nuts were his way of rooting orgeat in the Islands rather than the Mediterranean. His macadamia orgeat appeared on the menu at Trader Vic's in the 1960s and was a signature of the Polynesian pop era. It is buttery, vanilla-forward, and undeniably tropical.",
+      ..story = "Trader Vic Bergeron grew up in Oakland but fell in love with the Pacific and Hawaii - macadamia nuts were his way of rooting orgeat in the Islands rather than the Mediterranean. His macadamia orgeat appeared on the menu at Trader Vic's in the 1960s and was a signature of the Polynesian pop era. It is buttery, vanilla-forward, and undeniably tropical."
+      ..flavorProfiles = ['nutty', 'creamy', 'tropical'],
   ];
 
   await seedRecipesToDrift(syrups);

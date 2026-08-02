@@ -3478,10 +3478,27 @@ class _SyrupsTabState extends ConsumerState<_SyrupsTab> {
                       color: Colors.deepPurple,
                     ),
                     title: Text(recipes[i].name),
-                    subtitle: Text(
-                      recipes[i].description ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          recipes[i].description ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (recipes[i].flavorProfiles.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 2,
+                            children: [
+                              for (final t in recipes[i].flavorProfiles.take(3))
+                                _TagChip(label: t, color: Colors.orange[700]!),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                     trailing: recipes[i].prepMinutes != null
                         ? Text(
