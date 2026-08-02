@@ -243,8 +243,18 @@ class _ItemDetailShellState extends ConsumerState<ItemDetailShell> {
                                 ),
                               ConstrainedBox(
                                 constraints: BoxConstraints(
-                                  minHeight: constraints.maxHeight -
-                                      (image != null ? imageHeight : 0),
+                                  // #206: on a short screen (or a transient
+                                  // frame where the sliver hasn't settled to
+                                  // its final height yet), maxHeight can be
+                                  // less than the fixed image height, making
+                                  // this go negative — BoxConstraints forbids
+                                  // that. Clamp to 0; the content box just
+                                  // won't force extra height in that case,
+                                  // same graceful-degradation intent as the
+                                  // #161 comment above.
+                                  minHeight: (constraints.maxHeight -
+                                          (image != null ? imageHeight : 0))
+                                      .clamp(0.0, double.infinity),
                                 ),
                                 child: Container(
                                   width: double.infinity,
