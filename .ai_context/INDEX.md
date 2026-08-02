@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #141 closed (Claude) — Join Boat / Create Account / paywall-upgrade drawer entries now `context.push` (not `.go`) so the default AppBar back arrow renders; 2 regression tests (`drawer_navigation_test.dart`).
-- **Doing:** nothing claimed by Claude; Kimi on #124/#155 (native ads). Open: #147, #156, #157, #158, #159, #160, #161 (see GitHub issues)
+- **Last:** #161 investigated (Claude, not fixed — scope was logging) — `logFlutterError` never went through Flutter's `propertiesTransformers`, so RenderFlex-overflow `sourceFile` was always null; fixed via `details.toString()` + broadened `file:///.../lib/...` location regex. Triage (`_error_log_issue_body.py`) now embeds a code snippet + enclosing class in filed issues; overflow rows get a `ui-overflow` label.
+- **Doing:** nothing claimed by Claude; Kimi on #124/#155 (native ads). Open: #147, #156, #157, #158, #159, #160 (10-file drawer-overflow lead, see comment), #161
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)
 
