@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/title_tile.dart';
 import '../components/checklist_item_tile.dart';
 import '../components/native_ad_widget.dart';
+import '../components/ad_slots.dart';
 import '../components/add_checklist_item_dialog.dart';
 
 import 'check_page_viewer.dart';
@@ -11,6 +14,7 @@ import '../../providers/checklist_provider.dart';
 import '../../providers/package_info_provider.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/admob_service.dart';
+import '../../services/error_log_service.dart';
 import '../../services/import_service.dart';
 import '../components/import_export.dart';
 import '../../core/di.dart';
@@ -34,6 +38,7 @@ class ChecklistItemsScreen extends ConsumerStatefulWidget {
 class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
+  final NativeAdSlotCache _adSlotCache = NativeAdSlotCache();
   String _searchQuery = '';
   bool _showCompleted = true;
   bool _showIncomplete = true;
@@ -140,10 +145,20 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
                     return true;
                   }).toList();
 
-                  // Build list with native ads inserted every 8th item per prd.md section 9.2
+                  // Build list with native tile ads in ≤4 random slots near
+                  // the start (user policy 2026-08-01; see ad_slots.dart) —
+                  // supersedes the old every-8th-item insertion.
+                  final adSlots = _adSlotCache(filteredItems.length);
+                  final total = filteredItems.length + adSlots.length;
                   final List<Widget> widgets = [];
-                  for (int i = 0; i < filteredItems.length; i++) {
-                    final item = filteredItems[i];
+                  for (int i = 0; i < total; i++) {
+                    if (isNativeAdSlot(i, adSlots)) {
+                      widgets.add(
+                          const NativeAdWidget(contextHint: 'checklists'));
+                      continue;
+                    }
+                    final item =
+                        filteredItems[nativeAdContentIndex(i, adSlots)];
                     widgets.add(
                       ChecklistItemTile(
                         item: item,
@@ -156,11 +171,6 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
                         onTap: () => _openViewer(item),
                       ),
                     );
-
-                    // Insert native ad every 8th item (after items at indices 7, 15, 23, etc.)
-                    if ((i + 1) % 8 == 0 && i < filteredItems.length - 1) {
-                      widgets.add(const NativeAdWidget());
-                    }
                   }
 
                   return ListView(
@@ -230,10 +240,14 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
                 ],
               ),
             ),
-            const Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const Divider(),
 
-            // Search
-            Padding(
+                    // Search
+                    Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: TextField(
                 controller: _searchController,
@@ -362,8 +376,10 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
               subtitle: const Text('Version info & links'),
               onTap: () => _showAboutDialog(context),
             ),
-
-            const Spacer(),
+                  ],
+                ),
+              ),
+            ),
             // Footer
             Padding(
               padding: const EdgeInsets.all(16),
@@ -442,7 +458,9 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
                       ),
                     );
                   }
-                } catch (e) {
+                } catch (e, st) {
+                  unawaited(ErrorLogService().logException(e, st,
+                      context: 'checklist_items_screen: signInWithMagicLink'));
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Error: $e')),

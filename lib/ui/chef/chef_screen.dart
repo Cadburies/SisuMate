@@ -10,6 +10,8 @@ import '../components/swipeable_list_item.dart';
 import '../components/themed_state_tile.dart';
 import '../components/ingredient_list_sort.dart';
 import '../components/photo_source_picker.dart';
+import '../components/native_ad_widget.dart';
+import '../components/ad_slots.dart';
 import '../cocktails/cocktails_screen.dart' show AddEditRecipeArgs;
 import '../../providers/recipe_provider.dart';
 import '../../providers/pantry_ingredient_provider.dart';
@@ -252,38 +254,47 @@ class _ChefScreenState extends ConsumerState<ChefScreen>
             builder: (context, ref, _) => Column(
               children: [
                 DrawerHeaderWidget(title: 'Menu'),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.collections_bookmark_outlined),
-                  title: const Text('Collections'),
-                  onTap: () => context.push(AppRoutes.collections),
-                ),
-                const Divider(),
-                SectionHeader(title: 'My Pantry sort'),
-                for (final mode in IngredientListSort.values)
-                  ListTile(
-                    dense: true,
-                    leading: Icon(
-                      _pantryOrder.sort == mode
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                      size: 20,
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const Divider(),
+                        ListTile(
+                          leading:
+                              const Icon(Icons.collections_bookmark_outlined),
+                          title: const Text('Collections'),
+                          onTap: () => context.push(AppRoutes.collections),
+                        ),
+                        const Divider(),
+                        SectionHeader(title: 'My Pantry sort'),
+                        for (final mode in IngredientListSort.values)
+                          ListTile(
+                            dense: true,
+                            leading: Icon(
+                              _pantryOrder.sort == mode
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                              size: 20,
+                            ),
+                            title: Text(mode.label,
+                                style: const TextStyle(fontSize: 14)),
+                            onTap: () {
+                              setState(() => _pantryOrder.setSort(mode));
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        const Divider(),
+                        SectionHeader(title: 'Account'),
+                        AccountSection(),
+                        const Divider(),
+                        SectionHeader(title: 'Data Management'),
+                        DataManagementSection(),
+                        ProUpgradeSection(),
+                        AboutSection(),
+                      ],
                     ),
-                    title: Text(mode.label, style: const TextStyle(fontSize: 14)),
-                    onTap: () {
-                      setState(() => _pantryOrder.setSort(mode));
-                      Navigator.of(context).pop();
-                    },
                   ),
-                const Divider(),
-                SectionHeader(title: 'Account'),
-                AccountSection(),
-                const Divider(),
-                SectionHeader(title: 'Data Management'),
-                DataManagementSection(),
-                ProUpgradeSection(),
-                AboutSection(),
-                const Spacer(),
+                ),
                 DrawerFooter(),
               ],
             ),
@@ -481,6 +492,9 @@ class _ChefTabState extends ConsumerState<_ChefTab> {
   String? _methodFilter;
   String? _timeFilter; // '≤20', '≤45', or null
   bool _favouritesOnly = false;
+
+  /// Ad slots for the recipe grid (stable across rebuilds; see ad_slots.dart).
+  final NativeAdSlotCache _adSlotCache = NativeAdSlotCache();
   List<String> _cuisineChipOptions = List.of(TagLibraryService.suggestedCuisine);
 
   static const _methods = [
@@ -652,21 +666,35 @@ class _ChefTabState extends ConsumerState<_ChefTab> {
         return CustomScrollView(
           slivers: [
             headerSliver,
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.48,
+            Builder(builder: (context) {
+              // Native tile ads in ≤4 random slots near the start
+              // (user policy; see ad_slots.dart).
+              final slots = _adSlotCache(filtered.length);
+              final count = filtered.length + slots.length;
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.48,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) {
+                      if (isNativeAdSlot(i, slots)) {
+                        return const NativeAdWidget(
+                            style: NativeAdTileStyle.cocktailTile,
+                            contextHint: 'chef');
+                      }
+                      return _RecipeCard(
+                          recipe: filtered[nativeAdContentIndex(i, slots)]);
+                    },
+                    childCount: count,
+                  ),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) => _RecipeCard(recipe: filtered[i]),
-                  childCount: filtered.length,
-                ),
-              ),
-            ),
+              );
+            }),
           ],
         );
       },
@@ -1862,6 +1890,7 @@ class _PantryTab extends ConsumerStatefulWidget {
 
 class _PantryTabState extends ConsumerState<_PantryTab> {
   final TextEditingController _searchController = TextEditingController();
+  final NativeAdSlotCache _adSlotCache = NativeAdSlotCache();
   String _searchQuery = '';
   int _lastSortEpoch = -1;
 
@@ -1931,13 +1960,22 @@ class _PantryTabState extends ConsumerState<_PantryTab> {
               if (filtered.isEmpty) {
                 return const Center(child: Text('No ingredients found.'));
               }
+              // Native tile ads in ≤4 random slots near the start.
+              final adSlots = _adSlotCache(filtered.length);
               return ListView.builder(
-                itemCount: filtered.length,
-                itemBuilder: (_, idx) => _PantryIngredientTile(
-                  key: ValueKey(filtered[idx].supabaseId),
-                  ingredient: filtered[idx],
-                  allIngredients: filtered,
-                ),
+                itemCount: filtered.length + adSlots.length,
+                itemBuilder: (_, idx) {
+                  if (isNativeAdSlot(idx, adSlots)) {
+                    return const NativeAdWidget(contextHint: 'chef-pantry');
+                  }
+                  final ingredient =
+                      filtered[nativeAdContentIndex(idx, adSlots)];
+                  return _PantryIngredientTile(
+                    key: ValueKey(ingredient.supabaseId),
+                    ingredient: ingredient,
+                    allIngredients: filtered,
+                  );
+                },
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),

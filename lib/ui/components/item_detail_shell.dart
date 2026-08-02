@@ -184,44 +184,69 @@ class _ItemDetailShellState extends ConsumerState<ItemDetailShell> {
                   final image = widget.imageBuilder?.call(context, index);
                   final onPhoto = widget.onChangePhoto?.call(index);
                   final pageState = widget.stateColorForIndex?.call(index);
-                  return Column(
-                    children: [
-                      if (image != null)
-                        SizedBox(
-                          height: 200,
-                          width: double.infinity,
-                          child: Stack(
-                            fit: StackFit.expand,
+                  const imageHeight = 200.0;
+                  // A fixed-height image box + Expanded content can overflow
+                  // by a few px on some devices/frames — the image height is
+                  // non-negotiable, but Expanded's minimum is 0, so it can't
+                  // absorb the shortfall. LayoutBuilder + a scrollable with a
+                  // minHeight constraint keeps the "fill the page" look in
+                  // the normal case while degrading to a (imperceptible, a
+                  // few px) scroll instead of a hard overflow when it
+                  // doesn't quite fit (#161).
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(minHeight: constraints.maxHeight),
+                          child: Column(
                             children: [
-                              image,
-                              if (onPhoto != null)
-                                Positioned(
-                                  right: 12,
-                                  bottom: 12,
-                                  child: FloatingActionButton.small(
-                                    heroTag: 'detail_photo_$index',
-                                    onPressed: onPhoto,
-                                    tooltip: 'Change photo',
-                                    child: const Icon(Icons.add_a_photo),
+                              if (image != null)
+                                SizedBox(
+                                  height: imageHeight,
+                                  width: double.infinity,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      image,
+                                      if (onPhoto != null)
+                                        Positioned(
+                                          right: 12,
+                                          bottom: 12,
+                                          child: FloatingActionButton.small(
+                                            heroTag: 'detail_photo_$index',
+                                            onPressed: onPhoto,
+                                            tooltip: 'Change photo',
+                                            child:
+                                                const Icon(Icons.add_a_photo),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight -
+                                      (image != null ? imageHeight : 0),
+                                ),
+                                child: Container(
+                                  width: double.infinity,
+                                  color: pageState ??
+                                      SisuColors.getListSurface(isDark),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                                  child: widget.contentBuilder(
+                                    context,
+                                    index,
+                                    _isEditing && index == _currentIndex,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          color: pageState ??
-                              SisuColors.getListSurface(isDark),
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                          child: widget.contentBuilder(
-                            context,
-                            index,
-                            _isEditing && index == _currentIndex,
-                          ),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   );
                 },
               ),

@@ -99,6 +99,10 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
           builder: (context, ref, child) => Column(
             children: [
               DrawerHeaderWidget(title: 'Filters & Options'),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
               const Divider(),
               Consumer(
                 builder: (context, ref, child) {
@@ -133,7 +137,10 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
               DataManagementSection(),
               ProUpgradeSection(),
               AboutSection(),
-              const Spacer(),
+                    ],
+                  ),
+                ),
+              ),
               DrawerFooter(),
             ],
           ),

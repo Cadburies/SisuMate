@@ -484,7 +484,13 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
+            // Wrap (not Row+Spacer) — a Row can overflow horizontally on
+            // narrow screens when all three controls' natural widths don't
+            // fit; Wrap reflows to a second line instead (#173).
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 OutlinedButton.icon(
                   onPressed: (_loading || _locating)
@@ -496,13 +502,11 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                   ),
                   label: Text(_locating ? 'Locating...' : 'Use GPS'),
                 ),
-                const SizedBox(width: 8),
                 IconButton(
                   tooltip: 'Save place',
                   onPressed: _loading ? null : _saveFavorite,
                   icon: const Icon(Icons.bookmark_add_outlined),
                 ),
-                const Spacer(),
                 FilledButton(
                   onPressed: _loading ? null : () => _load(),
                   child: const Text('Get forecast'),

@@ -93,4 +93,48 @@ void main() {
     expect(find.text('Save'), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
   });
+
+  testWidgets(
+      'ItemDetailShell page with an image does not overflow on a short '
+      'viewport (#161: fixed-height image + Expanded content used to '
+      'overflow by a few px when available height fell just short of the '
+      'image height)', (tester) async {
+    tester.view.physicalSize = const Size(400, 500);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [noOutbox],
+        child: MaterialApp(
+          home: ItemDetailShell(
+            itemCount: 1,
+            initialIndex: 0,
+            titleForIndex: (i) => 'Item $i',
+            imageBuilder: (context, index) =>
+                Container(color: Colors.blue, key: const Key('image')),
+            contentBuilder: (context, index, isEditing) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [for (var i = 0; i < 6; i++) Text('Field line $i')],
+            ),
+            historyForIndex: (i) => ['Created $i'],
+            actionsForIndex:
+                (context, index, isEditing, startEdit, cancelEdit, saveEdit) =>
+                    [
+              DetailAction(
+                icon: Icons.edit,
+                label: 'Edit',
+                onPressed: startEdit,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('image')), findsOneWidget);
+  });
 }

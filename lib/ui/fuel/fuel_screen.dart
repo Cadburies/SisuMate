@@ -175,15 +175,22 @@ class FuelScreen extends ConsumerWidget {
           builder: (context, ref, child) => Column(
             children: [
               DrawerHeaderWidget(title: 'Menu'),
-              const Divider(),
-              SectionHeader(title: 'Account'),
-              AccountSection(),
-              const Divider(),
-              SectionHeader(title: 'Data Management'),
-              DataManagementSection(),
-              ProUpgradeSection(),
-              AboutSection(),
-              const Spacer(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const Divider(),
+                      SectionHeader(title: 'Account'),
+                      AccountSection(),
+                      const Divider(),
+                      SectionHeader(title: 'Data Management'),
+                      DataManagementSection(),
+                      ProUpgradeSection(),
+                      AboutSection(),
+                    ],
+                  ),
+                ),
+              ),
               DrawerFooter(),
             ],
           ),
