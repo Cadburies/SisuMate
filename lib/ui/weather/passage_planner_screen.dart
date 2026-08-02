@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../services/weather_service.dart';
+import 'passage_weather_briefing_dialog.dart';
 
 class _Wp {
   String name;
@@ -117,6 +118,16 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
       appBar: AppBar(
         title: const Text('Passage Planner'),
         actions: [
+          // #219/#208: distinct purple AI action, never blended with the
+          // offline add-waypoint control beside it.
+          IconButton(
+            icon: const Icon(Icons.auto_awesome, color: Colors.deepPurple),
+            tooltip: 'AI: Weather safety briefing',
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => const PassageWeatherBriefingDialog(),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.add_location_alt_outlined),
             tooltip: 'Add waypoint',

@@ -105,4 +105,40 @@ void main() {
 
     expect((payload['manualExcerpt'] as String).length, 4000);
   });
+
+  test('passageWeatherBriefing whitelists hourly wind/marine fields only, '
+      'never GPS-exact coordinates or charted depth', () {
+    final payload = LlmPayloadBuilder.passageWeatherBriefing(
+      placeName: 'Cabo San Lucas',
+      hourlyWind: [
+        (
+          time: DateTime.utc(2026, 8, 3, 14),
+          windKt: 18.5,
+          windDirDeg: 270.0,
+          precipProb: 10.0,
+        ),
+      ],
+      hourlyMarine: [
+        (
+          time: DateTime.utc(2026, 8, 3, 14),
+          waveHeightM: 1.2,
+          waveDirDeg: 260.0,
+          wavePeriodS: 7.0,
+        ),
+      ],
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('Cabo San Lucas'));
+    expect(encoded, contains('18.5'));
+    expect(encoded, contains('1.2'));
+    expect(payload.keys, {'placeName', 'hourlyWind', 'hourlyMarine'});
+    final wind = (payload['hourlyWind'] as List).first as Map;
+    expect(wind.keys, {'time', 'windKt', 'windDirDeg', 'precipProb'});
+    final marine = (payload['hourlyMarine'] as List).first as Map;
+    expect(marine.keys, {'time', 'waveHeightM', 'waveDirDeg', 'wavePeriodS'});
+    expect(encoded, isNot(contains('lat')));
+    expect(encoded, isNot(contains('lon')));
+    expect(encoded, isNot(contains('waterDepthM')));
+  });
 }

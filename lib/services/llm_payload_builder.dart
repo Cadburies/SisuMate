@@ -75,4 +75,43 @@ class LlmPayloadBuilder {
             ? manualExcerpt.substring(0, 4000)
             : manualExcerpt,
       };
+
+  /// Passage weather safety briefing (#219): the already-fetched hourly wind
+  /// + marine wave forecast window, whitelisted field-by-field rather than
+  /// forwarding `WeatherBundle`/`HourlyWeather`/`HourlyMarine` — same
+  /// discipline as every other builder here, even though weather data
+  /// carries no privacy risk on its own. Never GPS-exact coordinates or
+  /// charted depth; [placeName] is the only location context sent. Records
+  /// (not the model classes) as the parameter shape keeps this builder
+  /// structurally incapable of leaking a field added to those classes later
+  /// without a matching change here. Capped to 24h — a caller passing more
+  /// than that is a bug, not something to silently truncate further.
+  static Map<String, dynamic> passageWeatherBriefing({
+    String? placeName,
+    required Iterable<
+            ({DateTime time, double? windKt, double? windDirDeg, double? precipProb})>
+        hourlyWind,
+    required Iterable<
+            ({DateTime time, double? waveHeightM, double? waveDirDeg, double? wavePeriodS})>
+        hourlyMarine,
+  }) =>
+      {
+        'placeName': ?placeName,
+        'hourlyWind': hourlyWind
+            .map((h) => {
+                  'time': h.time.toIso8601String(),
+                  'windKt': ?h.windKt,
+                  'windDirDeg': ?h.windDirDeg,
+                  'precipProb': ?h.precipProb,
+                })
+            .toList(),
+        'hourlyMarine': hourlyMarine
+            .map((m) => {
+                  'time': m.time.toIso8601String(),
+                  'waveHeightM': ?m.waveHeightM,
+                  'waveDirDeg': ?m.waveDirDeg,
+                  'wavePeriodS': ?m.wavePeriodS,
+                })
+            .toList(),
+      };
 }
