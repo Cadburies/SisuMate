@@ -817,6 +817,12 @@ class _RecipeCard extends ConsumerWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+                // #225: up to 6 optional sections (chips/count/time/
+                // allergens/dietary badges) can stack for a fully-tagged
+                // recipe and exceed the grid cell's fixed height —
+                // scrollable rather than a bare Column so that combination
+                // never hard-overflows (same fix shape as #160/#178).
+                child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -912,6 +918,7 @@ class _RecipeCard extends ConsumerWidget {
                       ),
                     ],
                   ],
+                ),
                 ),
               ),
             ),
