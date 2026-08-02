@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131 (cocktail detail's missing-count banner read a constructor-time `widget.recipe` snapshot instead of the already-watched live streams). Audited + closed #1/#2/#3. Left #156 open — RLS 42501s look transient/self-healed via retry, uncertain without live repro (`emulator-5554` + dart-defines available).
+- **Last (claudevc):** fixed + closed #180, #178, #126, #128, #127, #131, #132 (Mixologist ranked-list ListTile had no onTap at all). Audited + closed #1/#2/#3. Left #156 open — RLS 42501s look transient/self-healed via retry, uncertain without live repro (`emulator-5554` + dart-defines available).
 - **Doing:** nothing claimed by claudevc.
 - **Open game bugs:** none
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs — see `liars_dice/live_test_setup.md`)

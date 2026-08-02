@@ -2745,6 +2745,10 @@ class _MixologistTabState extends ConsumerState<_MixologistTab> {
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
+                        onTap: () => context.push(
+                          AppRoutes.cocktailRecipe,
+                          extra: s.recipe,
+                        ),
                         leading: Icon(
                           s.isMakeable
                               ? (withSubs
