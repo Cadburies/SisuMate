@@ -1821,16 +1821,15 @@ class _PantryIngredientAvailabilityTile extends ConsumerWidget {
     return pantryAsync.when(
       data: (pantryIngredients) {
         final nameLower = ingredient.name.toLowerCase().trim();
-        final existsInSeed = pantryIngredients
-            .any((p) => p.name.toLowerCase().trim() == nameLower);
-        final inPantry = existsInSeed &&
-            pantryIngredients.any((p) =>
-                p.name.toLowerCase().trim() == nameLower && p.inMyPantry);
-        final pantryIngredient = existsInSeed
-            ? pantryIngredients
-                .where((p) => p.name.toLowerCase().trim() == nameLower)
-                .firstOrNull
-            : null;
+        // #186: every ingredient is physically in the pantry or not — no
+        // separate "seeded catalog row" tier. A recipe ingredient that's
+        // never been added yet is simply not in the pantry, same as one
+        // that is in the catalog but unstocked.
+        final inPantry = pantryIngredients.any((p) =>
+            p.name.toLowerCase().trim() == nameLower && p.inMyPantry);
+        final pantryIngredient = pantryIngredients
+            .where((p) => p.name.toLowerCase().trim() == nameLower)
+            .firstOrNull;
         final inShopping = shoppingNames.contains(nameLower);
 
         // Colour tells state — no bag/tick status icons, no stock prose.
@@ -1845,11 +1844,10 @@ class _PantryIngredientAvailabilityTile extends ConsumerWidget {
         } else if (inShopping) {
           state = ItemListState.shopping;
           leadingIcon = Icons.kitchen;
-        } else if (existsInSeed) {
-          state = ItemListState.unavailable;
-          leadingIcon = Icons.kitchen;
         } else {
-          state = ItemListState.defaults;
+          // #186: not in pantry reads the same (red/unavailable) whether or
+          // not this exact name has ever been added to the pantry catalog.
+          state = ItemListState.unavailable;
           leadingIcon = Icons.kitchen;
         }
 
@@ -1889,7 +1887,7 @@ class _PantryIngredientAvailabilityTile extends ConsumerWidget {
           if (idx < 0) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(
-                  '${ingredient.name} is not in My Pantry — swipe Track to add it'),
+                  '${ingredient.name} is not in My Pantry — swipe In Pantry to add it'),
               duration: const Duration(seconds: 2),
             ));
             return;
@@ -1949,47 +1947,40 @@ class _PantryIngredientAvailabilityTile extends ConsumerWidget {
               ),
             ],
           ),
+          // #186: one physical toggle — in the pantry or not — regardless
+          // of whether this ingredient already has a catalog row. If it
+          // doesn't, the first tap creates it (transparently) already
+          // marked in-pantry; that's still just "In Pantry", not a
+          // separate "Track" action.
           endActionPane: ActionPane(
-              motion: const DrawerMotion(),
-              extentRatio: 0.25,
-              children: [
-                if (existsInSeed && pantryIngredient != null)
-                  SlidableAction(
-                    onPressed: (_) => ref
+            motion: const DrawerMotion(),
+            extentRatio: 0.25,
+            children: [
+              SlidableAction(
+                onPressed: (ctx) async {
+                  if (pantryIngredient != null) {
+                    await ref
                         .read(pantryIngredientRepositoryProvider)
-                        .toggleInMyPantry(pantryIngredient),
-                    backgroundColor: SisuColors.completedBackground,
-                    foregroundColor: Colors.white,
-                    icon: inPantry
-                        ? Icons.remove_circle_outline
-                        : Icons.check,
-                    label: inPantry ? 'Remove' : 'In Pantry',
-                  )
-                else if (!existsInSeed)
-                  SlidableAction(
-                    onPressed: (ctx) async {
-                      final newIng = PantryIngredient()
-                        ..supabaseId =
-                            'pantry_custom_${nameLower.replaceAll(RegExp(r'[^a-z0-9]'), '_')}_${DateTime.now().millisecondsSinceEpoch}'
-                        ..name = ingredient.name
-                        ..inMyPantry = true
-                        ..isBundled = false;
-                      await ref
-                          .read(pantryIngredientRepositoryProvider)
-                          .addPantryIngredient(newIng);
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                            content: Text(
-                                '${ingredient.name} added to pantry')));
-                      }
-                    },
-                    backgroundColor: SisuColors.completedBackground,
-                    foregroundColor: Colors.white,
-                    icon: Icons.kitchen,
-                    label: 'Track',
-                  ),
-              ],
-            ),
+                        .toggleInMyPantry(pantryIngredient);
+                  } else {
+                    final newIng = PantryIngredient()
+                      ..supabaseId =
+                          'pantry_custom_${nameLower.replaceAll(RegExp(r'[^a-z0-9]'), '_')}_${DateTime.now().millisecondsSinceEpoch}'
+                      ..name = ingredient.name
+                      ..inMyPantry = true
+                      ..isBundled = false;
+                    await ref
+                        .read(pantryIngredientRepositoryProvider)
+                        .addPantryIngredient(newIng);
+                  }
+                },
+                backgroundColor: SisuColors.completedBackground,
+                foregroundColor: Colors.white,
+                icon: inPantry ? Icons.remove_circle_outline : Icons.check,
+                label: inPantry ? 'Remove' : 'In Pantry',
+              ),
+            ],
+          ),
           child: tile,
         );
       },

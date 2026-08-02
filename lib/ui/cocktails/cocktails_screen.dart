@@ -1741,14 +1741,13 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
     return barAsync.when(
       data: (barIngredients) {
         final nameLower = ingredient.name.toLowerCase().trim();
-        final existsInSeed = barIngredients.any(
-          (b) => b.name.toLowerCase().trim() == nameLower,
+        // #186: every ingredient is physically in the bar or not — no
+        // separate "seeded catalog row" tier. A recipe ingredient that's
+        // never been added yet is simply not in the bar, same as one that
+        // is in the catalog but unstocked.
+        final inBar = barIngredients.any(
+          (b) => b.name.toLowerCase().trim() == nameLower && b.inMyBar,
         );
-        final inBar =
-            existsInSeed &&
-            barIngredients.any(
-              (b) => b.name.toLowerCase().trim() == nameLower && b.inMyBar,
-            );
 
         // MIX2: catalog substitute1/2 OR static substitute graph.
         final viaIngredient = (!inBar && !ingredient.isGarnish)
@@ -1784,11 +1783,11 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
         } else if (inShopping) {
           state = ItemListState.shopping;
           leadingIcon = Icons.liquor;
-        } else if (existsInSeed) {
-          state = ItemListState.unavailable;
-          leadingIcon = Icons.liquor;
         } else {
-          state = ItemListState.defaults;
+          // #186: not in bar reads the same (red/unavailable) whether or
+          // not this exact name has ever been added to the bar catalog —
+          // there's no separate "unknown ingredient" tier to hint at.
+          state = ItemListState.unavailable;
           leadingIcon = Icons.liquor;
         }
 
@@ -1850,7 +1849,7 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  '${ingredient.name} is not in My Bar — swipe Track to add it',
+                  '${ingredient.name} is not in My Bar — swipe In Bar to add it',
                 ),
                 duration: const Duration(seconds: 2),
               ),
@@ -1890,45 +1889,40 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
               ),
             ],
           ),
-          endActionPane: existsInSeed && barIngredient != null
-              ? ActionPane(
-                  motion: const DrawerMotion(),
-                  extentRatio: 0.25,
-                  children: [
-                    SlidableAction(
-                      onPressed: (_) => ref
-                          .read(barIngredientRepositoryProvider)
-                          .toggleInMyBar(barIngredient),
-                      backgroundColor: SisuColors.completedBackground,
-                      foregroundColor: Colors.white,
-                      icon: inBar ? Icons.remove_circle_outline : Icons.check,
-                      label: inBar ? 'Remove' : 'In Bar',
-                    ),
-                  ],
-                )
-              : ActionPane(
-                  motion: const DrawerMotion(),
-                  extentRatio: 0.3,
-                  children: [
-                    SlidableAction(
-                      onPressed: (_) async {
-                        final newIng = BarIngredient()
-                          ..supabaseId =
-                              'custom_bar_${nameLower.replaceAll(RegExp(r'[^a-z0-9]'), '_')}_${DateTime.now().millisecondsSinceEpoch}'
-                          ..name = ingredient.name
-                          ..inMyBar = true
-                          ..isBundled = false;
-                        await ref
-                            .read(barIngredientRepositoryProvider)
-                            .addBarIngredient(newIng);
-                      },
-                      backgroundColor: SisuColors.completedBackground,
-                      foregroundColor: Colors.white,
-                      icon: Icons.add_circle_outline,
-                      label: 'Track',
-                    ),
-                  ],
-                ),
+          // #186: one physical toggle — in the bar or not — regardless of
+          // whether this ingredient already has a catalog row. If it
+          // doesn't, the first tap creates it (transparently) already
+          // marked in-bar; that's still just "In Bar", not a separate
+          // "Track" action.
+          endActionPane: ActionPane(
+            motion: const DrawerMotion(),
+            extentRatio: 0.25,
+            children: [
+              SlidableAction(
+                onPressed: (_) async {
+                  if (barIngredient != null) {
+                    await ref
+                        .read(barIngredientRepositoryProvider)
+                        .toggleInMyBar(barIngredient);
+                  } else {
+                    final newIng = BarIngredient()
+                      ..supabaseId =
+                          'custom_bar_${nameLower.replaceAll(RegExp(r'[^a-z0-9]'), '_')}_${DateTime.now().millisecondsSinceEpoch}'
+                      ..name = ingredient.name
+                      ..inMyBar = true
+                      ..isBundled = false;
+                    await ref
+                        .read(barIngredientRepositoryProvider)
+                        .addBarIngredient(newIng);
+                  }
+                },
+                backgroundColor: SisuColors.completedBackground,
+                foregroundColor: Colors.white,
+                icon: inBar ? Icons.remove_circle_outline : Icons.check,
+                label: inBar ? 'Remove' : 'In Bar',
+              ),
+            ],
+          ),
           child: tile,
         );
       },
