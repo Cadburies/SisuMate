@@ -55,4 +55,42 @@ void main() {
     expect(boats, hasLength(1));
     expect(boats.single.name, 'Sisu Renamed');
   });
+
+  group('#156: persisted guid must not be reused by a different identity', () {
+    test(
+        'a guid recorded under a different (known) identity is NOT reused — '
+        'mints a fresh one instead', () async {
+      // Simulates a device that previously enrolled as some other
+      // signed-in account (e.g. the debug bootstrap owner), then a
+      // different real account enrolls on the same device — no live
+      // Supabase session is available under `flutter test`, so
+      // BoatEnrollmentService's own currentUid() reads back null here;
+      // this test exercises the exact same "recorded owner uid conflicts
+      // with who's asking now" branch either way, since null is just
+      // another distinct identity value from the stale-recorded one.
+      SharedPreferences.setMockInitialValues({
+        'boat_guid': 'stale-guid-from-another-account',
+        'boat_guid_owner_uid': 'previous-identity-uid',
+      });
+
+      final guid = await svc.enroll(name: 'Sisu');
+
+      expect(guid, isNot('stale-guid-from-another-account'),
+          reason: 'must not adopt a boat identity minted by a different '
+              'account — every subsequent push for it would be RLS-rejected '
+              '(#156)');
+    });
+
+    test(
+        'a guid with no recorded owner (legacy / prior anonymous enroll) is '
+        'still reused — preserves idempotency', () async {
+      SharedPreferences.setMockInitialValues({
+        'boat_guid': 'previously-enrolled-guid',
+      });
+
+      final guid = await svc.enroll(name: 'Sisu');
+
+      expect(guid, 'previously-enrolled-guid');
+    });
+  });
 }
