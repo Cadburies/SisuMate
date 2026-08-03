@@ -22,6 +22,7 @@ import '../../services/revenuecat_service.dart';
 import '../../services/import_service.dart';
 import '../../services/email_service.dart';
 import '../../services/smart_shopping_service.dart';
+import 'customs_check_dialog.dart';
 
 enum SortOption { original, name, completed, price, priority }
 
@@ -979,7 +980,7 @@ class ShoppingItemTile extends ConsumerWidget {
       ?placeLine,
     ].join(' · ');
 
-    return SwipeableListItem(
+    final tile = SwipeableListItem(
       isHidden: item.isHidden,
       isCompleted: item.isBought,
       onComplete: () async {
@@ -1006,6 +1007,37 @@ class ShoppingItemTile extends ConsumerWidget {
         tertiary: tertiary.isEmpty ? null : tertiary,
         onTap: () => _openDetail(context, ref),
       ),
+    );
+    // #228/#208: AI customs-check badge — a visually distinct entry point,
+    // never mixed into the swipe-revealed Complete/Hide/Email actions above.
+    return Stack(
+      children: [
+        tile,
+        Positioned(
+          top: 6,
+          right: 6,
+          child: Material(
+            color: Colors.deepPurple,
+            shape: const CircleBorder(),
+            elevation: 2,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => showDialog(
+                context: context,
+                builder: (_) => const CustomsCheckDialog(),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(
+                  Icons.auto_awesome,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

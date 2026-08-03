@@ -156,6 +156,30 @@ void main() {
     expect((payload['policyExcerpt'] as String).length, 4000);
   });
 
+  test('customsQuery carries the item description and pasted rules '
+      'excerpt verbatim (no domain-object whitelist applies to user-pasted '
+      'text)', () {
+    final payload = LlmPayloadBuilder.customsQuery(
+      itemDescription: '2 bottles of rum, fresh fruit',
+      rulesExcerpt: 'Spirits over 1L per person must be declared.',
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('2 bottles of rum, fresh fruit'));
+    expect(encoded, contains('Spirits over 1L per person must be declared'));
+    expect(payload.keys, {'itemDescription', 'rulesExcerpt'});
+  });
+
+  test('customsQuery caps an oversized pasted excerpt at 4000 chars', () {
+    final huge = 'x' * 5000;
+    final payload = LlmPayloadBuilder.customsQuery(
+      itemDescription: 'Spearfishing gear',
+      rulesExcerpt: huge,
+    );
+
+    expect((payload['rulesExcerpt'] as String).length, 4000);
+  });
+
   test('parseLogEntryText passes the freeform text through verbatim — '
       'intentionally not whitelist-filtered, since the text itself is the '
       'whole payload', () {
