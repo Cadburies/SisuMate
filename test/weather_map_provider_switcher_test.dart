@@ -1,0 +1,43 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+
+/// #240/#241: multi-provider basemap + tile-download/cache framework wired
+/// into weather_screen.dart. Source-scan rather than a full WeatherScreen
+/// widget mount — same reason as #212's weather_map_recenter_test.dart:
+/// flutter_map's default tile provider needs path_provider's Pigeon-based
+/// getApplicationCacheDirectory channel, not mockable in this environment.
+/// Behavioral coverage for the actual caching/prefetch/clear mechanisms
+/// lives in map_tile_cache_service_test.dart and
+/// caching_tile_provider_test.dart, which don't need a live map render.
+void main() {
+  test('weather_screen.dart wires the basemap picker, seamarks overlay, '
+      'and tile download/clear actions into its drawer and map layers', () {
+    final source = File(
+      '${Directory.current.path}/lib/ui/weather/weather_screen.dart',
+    ).readAsStringSync();
+
+    expect(source.contains('_showProviderPicker(context)'), isTrue,
+        reason: 'the Basemap drawer tile must open the provider picker');
+    expect(source.contains('onChanged: _setSeamarksOverlay'), isTrue,
+        reason: 'the seamarks overlay toggle must be wired up');
+    expect(source.contains('onTap: _prefetching ? null : _downloadTilesForView'),
+        isTrue,
+        reason: '"Download tiles for this view" must call the prefetch action');
+    expect(source.contains('onTap: _clearTilesForView'), isTrue,
+        reason: '"Clear cached tiles for this view" must call the clear action');
+    expect(source.contains('onTap: _pickCacheFolder'), isTrue,
+        reason: 'the cache-folder setting must open the folder picker');
+
+    expect(source.contains('tileProvider: CachingTileProvider('), isTrue,
+        reason:
+            'the base TileLayer must render through the disk-caching provider, '
+            'not flutter_map\'s own unmanageable built-in cache');
+    expect(source.contains('providerId: _providerId,'), isTrue,
+        reason: 'the base tile layer must use the currently selected provider');
+    expect(source.contains("providerId: 'openseamap',"), isTrue,
+        reason: 'the overlay tile layer must be the openseamap provider');
+    expect(source.contains('if (_showSeamarks)'), isTrue,
+        reason: 'the OpenSeaMap overlay must be conditional, not always-on');
+  });
+}

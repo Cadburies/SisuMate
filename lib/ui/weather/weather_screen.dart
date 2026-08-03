@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,9 +13,12 @@ import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../services/error_log_service.dart';
 import '../../services/location_service.dart';
+import '../../services/map_tile_cache_service.dart';
+import '../../services/map_tile_providers.dart';
 import '../../services/weather_service.dart';
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
+import 'caching_tile_provider.dart';
 
 /// Weather hub — Open-Meteo forecast + map pin (S3) + device GPS (WX1).
 class WeatherScreen extends ConsumerStatefulWidget {
@@ -46,6 +50,12 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   bool _mapReady = false;
   late final LocationService _locationService =
       widget.locationService ?? const LocationService();
+  // #240/#241: multi-provider basemap + tile-download/cache framework.
+  final _tileCacheService = MapTileCacheService();
+  String _providerId = mapTileBaseProviders.first.id;
+  bool _showSeamarks = false;
+  bool _prefetching = false;
+  String? _cacheFolderOverride;
   WeatherBundle? _bundle;
   bool _loading = false;
   bool _locating = false;
@@ -82,8 +92,17 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     final lat = prefs.getDouble('weather_lat');
     final lon = prefs.getDouble('weather_lon');
     final savedName = prefs.getString('weather_place_name');
+    final savedProviderId = prefs.getString('map_tile_provider_id');
     final favs = await _service.loadNamedLocations();
-    if (mounted) setState(() => _favorites = favs);
+    final cacheFolder = await _tileCacheService.cacheFolderOverride();
+    if (mounted) {
+      setState(() {
+        _favorites = favs;
+        if (savedProviderId != null) _providerId = savedProviderId;
+        _showSeamarks = prefs.getBool('map_tile_seamarks_overlay') ?? false;
+        _cacheFolderOverride = cacheFolder;
+      });
+    }
     if (lat != null && lon != null) {
       _latCtrl.text = lat.toStringAsFixed(4);
       _lonCtrl.text = lon.toStringAsFixed(4);
@@ -240,6 +259,119 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     );
   }
 
+  void _showProviderPicker(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Basemap'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: RadioGroup<String>(
+            groupValue: _providerId,
+            onChanged: (id) {
+              if (id != null) _setProvider(id);
+              Navigator.of(dialogContext).pop();
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final provider in mapTileBaseProviders)
+                  RadioListTile<String>(
+                    value: provider.id,
+                    title: Text(provider.label),
+                    subtitle: provider.usageCaveat != null
+                        ? Text(provider.usageCaveat!,
+                            style: const TextStyle(fontSize: 11))
+                        : null,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // #240: basemap/overlay selection, persisted across launches.
+  Future<void> _setProvider(String id) async {
+    setState(() => _providerId = id);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('map_tile_provider_id', id);
+  }
+
+  Future<void> _setSeamarksOverlay(bool value) async {
+    setState(() => _showSeamarks = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('map_tile_seamarks_overlay', value);
+  }
+
+  Future<void> _pickCacheFolder() async {
+    final path = await FilePicker.platform.getDirectoryPath();
+    if (path == null || !mounted) return;
+    await _tileCacheService.setCacheFolderOverride(path);
+    if (!mounted) return;
+    setState(() => _cacheFolderOverride = path);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Tile cache folder set to $path')));
+  }
+
+  /// #241: downloads every tile covering the current viewport at the
+  /// current zoom for the active provider. Deliberately an explicit
+  /// user-triggered action, not automatic-on-pan — silent background
+  /// downloading on a boat with limited/metered satellite data could be an
+  /// unwelcome surprise.
+  Future<void> _downloadTilesForView() async {
+    if (!_mapReady || _prefetching) return;
+    setState(() => _prefetching = true);
+    try {
+      final bounds = _mapController.camera.visibleBounds;
+      final zoom = _mapController.camera.zoom.round();
+      final provider = mapTileProviderById(_providerId);
+      final count = await _tileCacheService.prefetchViewport(
+        providerId: provider.id,
+        urlTemplate: provider.urlTemplate,
+        bounds: bounds,
+        zoom: zoom,
+      );
+      if (!mounted) return;
+      if (count == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Too many tiles in this view to download — zoom in first'),
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content:
+              Text('Downloaded $count tile${count == 1 ? '' : 's'} for offline use'),
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _prefetching = false);
+    }
+  }
+
+  Future<void> _clearTilesForView() async {
+    if (!_mapReady) return;
+    final bounds = _mapController.camera.visibleBounds;
+    final zoom = _mapController.camera.zoom.round();
+    final provider = mapTileProviderById(_providerId);
+    final count = await _tileCacheService.clearRegion(
+      providerId: provider.id,
+      bounds: bounds,
+      zoom: zoom,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Cleared $count cached tile${count == 1 ? '' : 's'} for this view'),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -249,16 +381,53 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       backgroundColor: SisuColors.getAppBackground(isDark),
       endDrawer: Drawer(
         child: ListView(
-          children: const [
-            DrawerHeaderWidget(title: 'Weather'),
-            SectionHeader(title: 'Account'),
-            AccountSection(),
-            SectionHeader(title: 'Data'),
-            DataManagementSection(),
-            ProUpgradeSection(),
-            SectionHeader(title: 'About'),
-            AboutSection(),
-            DrawerFooter(),
+          children: [
+            const DrawerHeaderWidget(title: 'Weather'),
+            const SectionHeader(title: 'Map'),
+            ListTile(
+              leading: const Icon(Icons.layers_outlined),
+              title: const Text('Basemap'),
+              subtitle: Text(mapTileProviderById(_providerId).label),
+              onTap: () => _showProviderPicker(context),
+            ),
+            SwitchListTile(
+              title: const Text('Nautical marks overlay'),
+              subtitle: const Text('OpenSeaMap seamarks & buoys'),
+              value: _showSeamarks,
+              onChanged: _setSeamarksOverlay,
+            ),
+            ListTile(
+              leading: _prefetching
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download_outlined),
+              title: const Text('Download tiles for this view'),
+              subtitle: const Text('Caches the visible map area for offline use'),
+              onTap: _prefetching ? null : _downloadTilesForView,
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('Clear cached tiles for this view'),
+              subtitle: Text('${mapTileProviderById(_providerId).label} only'),
+              onTap: _clearTilesForView,
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_outlined),
+              title: const Text('Tile cache folder'),
+              subtitle: Text(_cacheFolderOverride ?? 'Default (app cache)'),
+              onTap: _pickCacheFolder,
+            ),
+            const SectionHeader(title: 'Account'),
+            const AccountSection(),
+            const SectionHeader(title: 'Data'),
+            const DataManagementSection(),
+            const ProUpgradeSection(),
+            const SectionHeader(title: 'About'),
+            const AboutSection(),
+            const DrawerFooter(),
           ],
         ),
       ),
@@ -328,9 +497,23 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                           children: [
                             TileLayer(
                               urlTemplate:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  mapTileProviderById(_providerId).urlTemplate,
                               userAgentPackageName: 'com.sisumate.app',
+                              tileProvider: CachingTileProvider(
+                                providerId: _providerId,
+                                cacheService: _tileCacheService,
+                              ),
                             ),
+                            if (_showSeamarks)
+                              TileLayer(
+                                urlTemplate: mapTileProviderById('openseamap')
+                                    .urlTemplate,
+                                userAgentPackageName: 'com.sisumate.app',
+                                tileProvider: CachingTileProvider(
+                                  providerId: 'openseamap',
+                                  cacheService: _tileCacheService,
+                                ),
+                              ),
                             MarkerLayer(
                               markers: [
                                 Marker(
