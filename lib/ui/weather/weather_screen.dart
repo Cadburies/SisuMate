@@ -35,6 +35,15 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   final _lonCtrl = TextEditingController(text: '$_fallbackLon');
   final _placeCtrl = TextEditingController();
   final _service = WeatherService();
+  // #212: MapOptions.initialCenter only applies on first load (flutter_map's
+  // own doc comment) — it's not reactive, so a GPS fix or search-selected
+  // place moved the marker (rebuilds from _latCtrl/_lonCtrl) but never the
+  // map viewport itself without an explicit MapController.move() call.
+  final _mapController = MapController();
+  // Guards MapController.move() — flutter_map throws if called before
+  // FlutterMap has rendered at least once, which can race the silent GPS
+  // lookup this screen fires from initState on first launch.
+  bool _mapReady = false;
   late final LocationService _locationService =
       widget.locationService ?? const LocationService();
   WeatherBundle? _bundle;
@@ -57,7 +66,15 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     _latCtrl.dispose();
     _lonCtrl.dispose();
     _placeCtrl.dispose();
+    _mapController.dispose();
     super.dispose();
+  }
+
+  /// #212: re-centers the map viewport, not just the marker — no-ops
+  /// before the map's first render (see [_mapReady]).
+  void _recenterMap(double lat, double lon) {
+    if (!_mapReady) return;
+    _mapController.move(LatLng(lat, lon), _mapController.camera.zoom);
   }
 
   Future<void> _restoreAndLoad() async {
@@ -127,6 +144,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
             _latCtrl.text = pos.latitude.toStringAsFixed(4);
             _lonCtrl.text = pos.longitude.toStringAsFixed(4);
           });
+          _recenterMap(pos.latitude, pos.longitude);
           if (!silent) await _load();
       }
     } finally {
@@ -196,6 +214,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       _placeCtrl.text = p.name;
       _searchHits = const [];
     });
+    _recenterMap(p.lat, p.lon);
     await _load(placeName: p.label);
   }
 
@@ -290,12 +309,14 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: FlutterMap(
+                          mapController: _mapController,
                           options: MapOptions(
                             initialCenter: LatLng(
                               double.tryParse(_latCtrl.text) ?? 33.45,
                               double.tryParse(_lonCtrl.text) ?? -112.07,
                             ),
                             initialZoom: 8,
+                            onMapReady: () => _mapReady = true,
                             onTap: (_, p) {
                               setState(() {
                                 _latCtrl.text = p.latitude.toStringAsFixed(4);
