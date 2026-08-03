@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -6,13 +8,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sisu_mate/core/di.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/models/models.dart';
+import 'package:sisu_mate/services/llm_client_service.dart';
 import 'package:sisu_mate/ui/settings/llm_api_key_dialog.dart';
 
 import 'test_helpers/platform_mocks.dart';
 
-/// #215: BYOK entry dialog — local-only by default. Everyone (owner or
-/// crew) gets the same editable form for their own device's key; only the
-/// owner's "Share with crew" switch is interactive.
+/// #215/#211: BYOK entry dialog — local-only by default, one row per
+/// provider. Everyone (owner or crew) gets the same editable form for their
+/// own device's keys; only the owner's per-row "Share with crew" switch is
+/// interactive.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
@@ -49,6 +53,14 @@ void main() {
     return container;
   }
 
+  Finder openAiKeyField() =>
+      find.widgetWithText(TextField, 'OpenAI API Key');
+  Finder xaiKeyField() => find.widgetWithText(TextField, 'xAI (Grok) API Key');
+  Finder openAiShareSwitch() => find.ancestor(
+        of: find.text('OpenAI'),
+        matching: find.byType(Card),
+      );
+
   testWidgets('shows the local-only/online/validity/tokens reminder text',
       (tester) async {
     await pumpDialog(
@@ -62,29 +74,49 @@ void main() {
         findsOneWidget);
   });
 
-  testWidgets('owner: the share switch is interactive', (tester) async {
+  testWidgets('a row exists for every provider', (tester) async {
     await pumpDialog(
       tester,
       LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1', isOwner: true),
     );
 
-    final tile = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
-    expect(tile.onChanged, isNotNull);
+    for (final p in LlmProvider.values) {
+      expect(find.text(p.label), findsOneWidget, reason: '${p.label} row');
+    }
   });
 
-  testWidgets('crew (non-owner): the share switch is disabled', (tester) async {
+  testWidgets('owner: every share switch is interactive', (tester) async {
+    await pumpDialog(
+      tester,
+      LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1', isOwner: true),
+    );
+
+    final switches =
+        tester.widgetList<SwitchListTile>(find.byType(SwitchListTile));
+    expect(switches, isNotEmpty);
+    for (final s in switches) {
+      expect(s.onChanged, isNotNull);
+    }
+  });
+
+  testWidgets('crew (non-owner): every share switch is disabled',
+      (tester) async {
     await pumpDialog(
       tester,
       LlmApiKeyDialog(boat: Boat()..supabaseId = 'boat_1', isOwner: false),
     );
 
-    final tile = tester.widget<SwitchListTile>(find.byType(SwitchListTile));
-    expect(tile.onChanged, isNull);
+    final switches =
+        tester.widgetList<SwitchListTile>(find.byType(SwitchListTile));
+    expect(switches, isNotEmpty);
+    for (final s in switches) {
+      expect(s.onChanged, isNull);
+    }
   });
 
   testWidgets(
-      'owner saving with sharing ON persists both the key and the shared '
-      'flag locally', (tester) async {
+      'owner saving with sharing ON persists both the OpenAI key and its '
+      'shared flag locally, without touching other providers', (tester) async {
     await db.into(db.boats).insert(BoatsCompanion.insert(
           supabaseId: const Value('boat_1'),
           name: const Value('Sisu'),
@@ -100,9 +132,12 @@ void main() {
       ),
     );
 
-    await tester.enterText(find.byType(TextField), 'sk-shared-key');
+    await tester.enterText(openAiKeyField(), 'sk-shared-key');
     await tester.pump();
-    await tester.tap(find.byType(SwitchListTile));
+    await tester.tap(find.descendant(
+      of: openAiShareSwitch(),
+      matching: find.byType(SwitchListTile),
+    ));
     await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pump();
@@ -111,17 +146,23 @@ void main() {
     final row = await (db.select(db.boats)
           ..where((t) => t.supabaseId.equals('boat_1')))
         .getSingle();
-    expect(row.llmApiKey, 'sk-shared-key');
-    expect(row.llmApiKeyShared, isTrue);
+    final entries = jsonDecode(row.llmApiKeys) as List;
+    expect(entries, hasLength(1));
+    expect(entries.single['provider'], 'openai');
+    expect(entries.single['apiKey'], 'sk-shared-key');
+    expect(entries.single['shared'], isTrue);
   });
 
   testWidgets(
       'non-owner saving persists their own key locally without ever '
-      'touching llmApiKeyShared (they can\'t change it)', (tester) async {
+      'touching that entry\'s shared flag (they can\'t change it)',
+      (tester) async {
     await db.into(db.boats).insert(BoatsCompanion.insert(
           supabaseId: const Value('boat_1'),
           name: const Value('Sisu'),
-          llmApiKeyShared: const Value(true), // owner already shares
+          llmApiKeys: Value(jsonEncode([
+            {'provider': 'xai', 'apiKey': '', 'shared': true}, // owner shares
+          ])),
         ));
 
     await pumpDialog(
@@ -130,12 +171,14 @@ void main() {
         boat: Boat()
           ..supabaseId = 'boat_1'
           ..name = 'Sisu'
-          ..llmApiKeyShared = true,
+          ..llmApiKeys = [
+            LlmApiKeyEntry(provider: 'xai', apiKey: '', shared: true),
+          ],
         isOwner: false,
       ),
     );
 
-    await tester.enterText(find.byType(TextField), 'sk-crew-personal');
+    await tester.enterText(xaiKeyField(), 'sk-crew-personal');
     await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pump();
@@ -144,11 +187,44 @@ void main() {
     final row = await (db.select(db.boats)
           ..where((t) => t.supabaseId.equals('boat_1')))
         .getSingle();
-    expect(row.llmApiKey, 'sk-crew-personal');
-    expect(row.llmApiKeyShared, isTrue,
+    final entry = (jsonDecode(row.llmApiKeys) as List).single;
+    expect(entry['apiKey'], 'sk-crew-personal');
+    expect(entry['shared'], isTrue,
         reason: 'a non-owner editing their own local key must not reset '
             'the shared flag the owner set — they can\'t change it either '
             'way, so it must be left exactly as it was');
+  });
+
+  testWidgets(
+      'saving sets activeLlmProvider to the picked radio, and clears it if '
+      'that provider\'s key was cleared before saving', (tester) async {
+    await db.into(db.boats).insert(BoatsCompanion.insert(
+          supabaseId: const Value('boat_1'),
+          name: const Value('Sisu'),
+        ));
+
+    await pumpDialog(
+      tester,
+      LlmApiKeyDialog(
+        boat: Boat()
+          ..supabaseId = 'boat_1'
+          ..name = 'Sisu',
+        isOwner: true,
+      ),
+    );
+
+    await tester.enterText(openAiKeyField(), 'sk-openai');
+    await tester.pump();
+    await tester.tap(find.byType(Radio<String>).first);
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    await tester.pump();
+
+    final row = await (db.select(db.boats)
+          ..where((t) => t.supabaseId.equals('boat_1')))
+        .getSingle();
+    expect(row.activeLlmProvider, 'openai');
   });
 
   testWidgets('#15: dialog shows a usage summary', (tester) async {

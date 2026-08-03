@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/di.dart';
+import '../models/models.dart';
 import '../providers/shopping_provider.dart';
 import 'revenuecat_service.dart';
 
@@ -79,12 +80,16 @@ class DebugBootstrap {
     final boat = await boatRepo.getBoatById(guid);
     if (boat != null) {
       // Never overwrite a key the developer deliberately set/changed by hand
-      // for a specific test — only fills a genuinely empty slot.
+      // for a specific test — only fills a genuinely empty xai slot.
       final xaiKey = _resolvedXaiKey;
-      if ((boat.llmApiKey == null || boat.llmApiKey!.isEmpty) &&
-          xaiKey.isNotEmpty) {
-        boat.llmApiKey = xaiKey;
-        boat.llmApiKeyProvider = 'xai';
+      final hasXaiKey = boat.llmApiKeys
+          .any((e) => e.provider == 'xai' && e.apiKey.isNotEmpty);
+      if (!hasXaiKey && xaiKey.isNotEmpty) {
+        boat.llmApiKeys = [
+          ...boat.llmApiKeys.where((e) => e.provider != 'xai'),
+          LlmApiKeyEntry(provider: 'xai', apiKey: xaiKey),
+        ];
+        boat.activeLlmProvider ??= 'xai';
       }
       await boatRepo.updateBoat(boat);
       try {

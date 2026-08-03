@@ -137,12 +137,13 @@ class Boats extends Table {
   // Supabase (owner stamped server-side, shareCode DB-generated) — never pushed.
   TextColumn get ownerId => text().nullable()();
   TextColumn get shareCode => text().nullable()();
-  // #203/#215: bring-your-own-key LLM support — local-only by default;
-  // llmApiKeyShared is an explicit owner opt-in to sync it. Never
-  // validated/billed by this app.
-  TextColumn get llmApiKey => text().nullable()();
-  TextColumn get llmApiKeyProvider => text().nullable()(); // 'openai' | 'xai'
-  BoolColumn get llmApiKeyShared => boolean().withDefault(const Constant(false))();
+  // #203/#215/#211: bring-your-own-key LLM support — local-only by default,
+  // one entry per provider (JSON list of {provider, apiKey, shared} —
+  // see `LlmApiKeyEntry`). Never validated/billed by this app.
+  TextColumn get llmApiKeys => text().withDefault(const Constant('[]'))();
+  // Which stored provider is active right now — per-device only, never
+  // synced (see `Boat.activeLlmProvider`'s doc comment).
+  TextColumn get activeLlmProvider => text().nullable()();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -587,7 +588,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

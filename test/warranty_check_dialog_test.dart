@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -41,8 +43,12 @@ void main() {
     await db.into(db.boats).insert(BoatsCompanion.insert(
           supabaseId: const Value('boat_1'),
           name: const Value('Sisu'),
-          llmApiKey: Value(llmApiKey),
-          llmApiKeyProvider: Value(llmApiKeyProvider),
+          llmApiKeys: Value(llmApiKey == null || llmApiKeyProvider == null
+              ? '[]'
+              : jsonEncode([
+                  {'provider': llmApiKeyProvider, 'apiKey': llmApiKey, 'shared': false},
+                ])),
+          activeLlmProvider: Value(llmApiKeyProvider),
         ));
     await db.into(db.userSettingsTable).insert(
           UserSettingsTableCompanion.insert(

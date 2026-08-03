@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -81,26 +83,30 @@ void main() {
       await DebugBootstrap.run(container);
 
       final boat = await db.select(db.boats).getSingle();
-      expect(boat.llmApiKey, 'xai-test-key');
-      expect(boat.llmApiKeyProvider, 'xai');
+      final entries = jsonDecode(boat.llmApiKeys) as List;
+      expect(entries.single['provider'], 'xai');
+      expect(entries.single['apiKey'], 'xai-test-key');
+      expect(boat.activeLlmProvider, 'xai');
     });
 
-    test('a boat that already has a manually-set key is left untouched',
+    test('a boat that already has a manually-set xai key is left untouched',
         () async {
       await (db.update(db.boats)
             ..where((b) => b.supabaseId.equals(BoatEnrollmentService.defaultBoatId)))
-          .write(const BoatsCompanion(
-        llmApiKey: Value('sk-manually-entered'),
-        llmApiKeyProvider: Value('openai'),
+          .write(BoatsCompanion(
+        llmApiKeys: Value(jsonEncode([
+          {'provider': 'xai', 'apiKey': 'sk-manually-entered', 'shared': false},
+        ])),
+        activeLlmProvider: const Value('xai'),
       ));
       DebugBootstrap.debugXaiKeyOverrideForTests = 'xai-test-key';
       backend.setUser(fakeOwnerUser());
       await DebugBootstrap.run(container);
 
       final boat = await db.select(db.boats).getSingle();
-      expect(boat.llmApiKey, 'sk-manually-entered',
+      final entries = jsonDecode(boat.llmApiKeys) as List;
+      expect(entries.single['apiKey'], 'sk-manually-entered',
           reason: 'must never clobber a key the developer deliberately set');
-      expect(boat.llmApiKeyProvider, 'openai');
     });
 
     test('no XAI_KEY dart-define configured: boat gets no key, no crash',
@@ -109,7 +115,7 @@ void main() {
       await DebugBootstrap.run(container);
 
       final boat = await db.select(db.boats).getSingle();
-      expect(boat.llmApiKey, null);
+      expect(jsonDecode(boat.llmApiKeys), isEmpty);
     });
   });
 }

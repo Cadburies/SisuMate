@@ -733,6 +733,23 @@ class InboundSyncApplier {
     final existing = await (db.select(db.boats)
           ..where((t) => t.supabaseId.equals(b.supabaseId)))
         .getSingleOrNull();
+
+    // #211 (generalizes #215 from one key to a list): only ever adopt an
+    // incoming entry actively shared by its owner — an unshared/missing
+    // provider in the incoming list leaves this device's own local entry
+    // for that provider untouched (survives someone else's "not sharing"
+    // state, and a once-shared-then-unshared key stays at its last-known
+    // value rather than being force-cleared).
+    final localKeys = existing == null
+        ? const <LlmApiKeyEntry>[]
+        : (jsonDecode(existing.llmApiKeys) as List)
+            .map((e) => LlmApiKeyEntry.fromJson(e as Map<String, dynamic>))
+            .toList();
+    final mergedKeys = LlmApiKeyEntry.mergeInbound(
+      local: localKeys,
+      incoming: b.llmApiKeys,
+    );
+
     final c = BoatsCompanion(
       supabaseId: Value(b.supabaseId),
       name: Value(b.name),
@@ -746,15 +763,10 @@ class InboundSyncApplier {
       ownerId: Value(b.ownerId),
       shareCode: Value(b.shareCode),
       lastModified: Value(b.lastModified),
-      llmApiKeyShared: Value(b.llmApiKeyShared),
-      // #215: only ever adopt an inbound key when it's actively being
-      // shared by the owner — Value.absent() leaves the column untouched,
-      // so a device's own local (unshared) key survives an inbound sync of
-      // someone else's "not sharing" state instead of being silently wiped.
-      llmApiKey: b.llmApiKeyShared ? Value(b.llmApiKey) : const Value.absent(),
-      llmApiKeyProvider: b.llmApiKeyShared
-          ? Value(b.llmApiKeyProvider)
-          : const Value.absent(),
+      llmApiKeys: Value(
+          jsonEncode(mergedKeys.map((e) => e.toStorageJson()).toList())),
+      // activeLlmProvider is never part of the wire payload (per-device
+      // preference) — Value.absent() leaves this device's own choice alone.
     );
     if (existing == null) {
       await db.into(db.boats).insert(c);

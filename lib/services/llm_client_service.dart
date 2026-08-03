@@ -18,6 +18,15 @@ import 'llm_usage_tracker.dart';
 /// only on its own Responses API — genuinely unimplemented here, not just
 /// unset by omission — so `openai.supportsGroundedSearch` stays false until
 /// a future issue adds that separate integration; never assume parity.
+/// #211: Anthropic uses a different auth header + request/response shape
+/// (`x-api-key` + Messages API, not `Authorization: Bearer` +
+/// `chat/completions`) — [LlmClientService.complete] branches on
+/// `provider == LlmProvider.anthropic` to build/parse it separately; Kimi
+/// (Moonshot) is OpenAI-compatible so it reuses the same request path as
+/// openai/xai. Model ids for anthropic/kimi are this app's pick of each
+/// provider's smallest/cheapest current tier — verify against the
+/// provider's own docs if either is renamed/deprecated later, don't assume
+/// these stay correct indefinitely.
 enum LlmProvider {
   openai('openai', 'OpenAI', 'https://api.openai.com/v1/chat/completions',
       'gpt-4o-mini',
@@ -25,7 +34,13 @@ enum LlmProvider {
   xai('xai', 'xAI (Grok)', 'https://api.x.ai/v1/chat/completions',
       'grok-3-mini',
       supportsGroundedSearch: true,
-      groundedSearchEndpoint: 'https://api.x.ai/v1/responses');
+      groundedSearchEndpoint: 'https://api.x.ai/v1/responses'),
+  anthropic('anthropic', 'Anthropic (Claude)',
+      'https://api.anthropic.com/v1/messages', 'claude-haiku-4-5-20251001',
+      supportsGroundedSearch: false, groundedSearchEndpoint: null),
+  kimi('kimi', 'Moonshot (Kimi)',
+      'https://api.moonshot.cn/v1/chat/completions', 'moonshot-v1-8k',
+      supportsGroundedSearch: false, groundedSearchEndpoint: null);
 
   const LlmProvider(
     this.id,
@@ -172,6 +187,17 @@ class LlmClientService {
     _cache[cacheKey] = _CacheEntry(result, DateTime.now().add(cacheTtl));
   }
 
+  /// #211: resolves [boat]'s currently-*active* stored key (not just
+  /// whichever key happens to be first) — null if no provider is selected,
+  /// the selection has no matching entry, or that entry's key is blank.
+  ({LlmProvider provider, String key})? _resolveActiveKey(Boat? boat) {
+    final entry = boat?.activeLlmApiKeyEntry;
+    if (entry == null || entry.apiKey.trim().isEmpty) return null;
+    final provider = LlmProvider.fromId(entry.provider);
+    if (provider == null) return null;
+    return (provider: provider, key: entry.apiKey);
+  }
+
   /// Sends [prompt] (already privacy-filtered by the caller — #16 owns
   /// building safe, summary-only payloads) through [boat]'s configured
   /// provider/key. Never throws; every outcome is a typed [LlmResult].
@@ -183,11 +209,10 @@ class LlmClientService {
     String? systemPrompt,
     bool useCache = true,
   }) async {
-    final provider = LlmProvider.fromId(boat?.llmApiKeyProvider);
-    final key = boat?.llmApiKey;
-    if (provider == null || key == null || key.trim().isEmpty) {
-      return const LlmResult.noKeyConfigured();
-    }
+    final resolved = _resolveActiveKey(boat);
+    if (resolved == null) return const LlmResult.noKeyConfigured();
+    final provider = resolved.provider;
+    final key = resolved.key;
 
     final cacheKey = _cacheKey(boat!, provider, systemPrompt, prompt);
     if (useCache) {
@@ -203,21 +228,38 @@ class LlmClientService {
       return const LlmResult.offline();
     }
 
+    final isAnthropic = provider == LlmProvider.anthropic;
+
     try {
       final response = await _http.post(
         Uri.parse(provider.endpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $key',
-        },
-        body: jsonEncode({
-          'model': provider.defaultModel,
-          'messages': [
-            if (systemPrompt != null)
-              {'role': 'system', 'content': systemPrompt},
-            {'role': 'user', 'content': prompt},
-          ],
-        }),
+        headers: isAnthropic
+            ? {
+                'Content-Type': 'application/json',
+                'x-api-key': key,
+                'anthropic-version': '2023-06-01',
+              }
+            : {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $key',
+              },
+        body: isAnthropic
+            ? jsonEncode({
+                'model': provider.defaultModel,
+                'max_tokens': 1024,
+                'system': ?systemPrompt,
+                'messages': [
+                  {'role': 'user', 'content': prompt},
+                ],
+              })
+            : jsonEncode({
+                'model': provider.defaultModel,
+                'messages': [
+                  if (systemPrompt != null)
+                    {'role': 'system', 'content': systemPrompt},
+                  {'role': 'user', 'content': prompt},
+                ],
+              }),
       );
 
       if (response.statusCode == 401 || response.statusCode == 403) {
@@ -232,31 +274,49 @@ class LlmClientService {
       }
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      final choices = decoded['choices'] as List?;
       String? content;
-      if (choices != null && choices.isNotEmpty) {
-        final message =
-            (choices.first as Map<String, dynamic>)['message']
-                as Map<String, dynamic>?;
-        content = message?['content'] as String?;
+      int promptTokens = 0;
+      int completionTokens = 0;
+      if (isAnthropic) {
+        // Messages API: {content: [{type: 'text', text: ...}], usage: {
+        // input_tokens, output_tokens}} — distinct shape from chat/completions.
+        final blocks = decoded['content'] as List?;
+        if (blocks != null) {
+          final buffer = StringBuffer();
+          for (final b in blocks) {
+            if (b is Map<String, dynamic> && b['type'] == 'text') {
+              buffer.write(b['text'] as String? ?? '');
+            }
+          }
+          content = buffer.isEmpty ? null : buffer.toString();
+        }
+        final usage = decoded['usage'] as Map<String, dynamic>?;
+        promptTokens = usage?['input_tokens'] as int? ?? 0;
+        completionTokens = usage?['output_tokens'] as int? ?? 0;
+      } else {
+        final choices = decoded['choices'] as List?;
+        if (choices != null && choices.isNotEmpty) {
+          final message =
+              (choices.first as Map<String, dynamic>)['message']
+                  as Map<String, dynamic>?;
+          content = message?['content'] as String?;
+        }
+        // #15: the provider's own reported token counts — informational-only
+        // local tracking, never enforced/billed by this app.
+        final usageJson = decoded['usage'] as Map<String, dynamic>?;
+        promptTokens = usageJson?['prompt_tokens'] as int? ?? 0;
+        completionTokens = usageJson?['completion_tokens'] as int? ?? 0;
       }
       if (content == null || content.isEmpty) {
         return const LlmResult.error('Provider returned no completion text');
       }
 
-      // #15: the provider's own reported token counts — informational-only
-      // local tracking, never enforced/billed by this app.
-      final usageJson = decoded['usage'] as Map<String, dynamic>?;
-      if (usageJson != null) {
-        final promptTokens = usageJson['prompt_tokens'] as int? ?? 0;
-        final completionTokens = usageJson['completion_tokens'] as int? ?? 0;
-        final totalTokens =
-            usageJson['total_tokens'] as int? ?? promptTokens + completionTokens;
+      if (promptTokens > 0 || completionTokens > 0) {
         unawaited(_usageTracker.record(
           usage: LlmUsage(
             promptTokens: promptTokens,
             completionTokens: completionTokens,
-            totalTokens: totalTokens,
+            totalTokens: promptTokens + completionTokens,
           ),
           modelId: provider.defaultModel,
         ));
@@ -298,11 +358,10 @@ class LlmClientService {
     String? systemPrompt,
     bool useCache = true,
   }) async {
-    final provider = LlmProvider.fromId(boat?.llmApiKeyProvider);
-    final key = boat?.llmApiKey;
-    if (provider == null || key == null || key.trim().isEmpty) {
-      return const LlmResult.noKeyConfigured();
-    }
+    final resolved = _resolveActiveKey(boat);
+    if (resolved == null) return const LlmResult.noKeyConfigured();
+    final provider = resolved.provider;
+    final key = resolved.key;
     if (!provider.supportsGroundedSearch ||
         provider.groundedSearchEndpoint == null) {
       return LlmResult.groundedSearchUnsupported(provider.label);

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import '../../domain/repositories/boat_repository.dart';
 import '../../models/models.dart';
@@ -24,9 +26,10 @@ class BoatRepositoryImpl implements BoatRepository {
     ..photoUrl = r.photoUrl
     ..ownerId = r.ownerId
     ..shareCode = r.shareCode
-    ..llmApiKey = r.llmApiKey
-    ..llmApiKeyProvider = r.llmApiKeyProvider
-    ..llmApiKeyShared = r.llmApiKeyShared
+    ..llmApiKeys = (jsonDecode(r.llmApiKeys) as List)
+        .map((e) => LlmApiKeyEntry.fromJson(e as Map<String, dynamic>))
+        .toList()
+    ..activeLlmProvider = r.activeLlmProvider
     ..lastModified = r.lastModified;
 
   BoatsCompanion _toCompanion(Boat b) => BoatsCompanion(
@@ -41,9 +44,9 @@ class BoatRepositoryImpl implements BoatRepository {
         photoUrl: Value(b.photoUrl),
         ownerId: Value(b.ownerId),
         shareCode: Value(b.shareCode),
-        llmApiKey: Value(b.llmApiKey),
-        llmApiKeyProvider: Value(b.llmApiKeyProvider),
-        llmApiKeyShared: Value(b.llmApiKeyShared),
+        llmApiKeys: Value(
+            jsonEncode(b.llmApiKeys.map((e) => e.toStorageJson()).toList())),
+        activeLlmProvider: Value(b.activeLlmProvider),
         lastModified: Value(b.lastModified),
       );
 

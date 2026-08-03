@@ -30,8 +30,10 @@ void main() {
 
   Boat boatWith({String? key, String? provider}) => Boat()
     ..supabaseId = 'boat_1'
-    ..llmApiKey = key
-    ..llmApiKeyProvider = provider;
+    ..llmApiKeys = key == null || provider == null
+        ? []
+        : [LlmApiKeyEntry(provider: provider, apiKey: key)]
+    ..activeLlmProvider = provider;
 
   test('no key configured returns noKeyConfigured without any network call',
       () async {
@@ -164,6 +166,158 @@ void main() {
     );
 
     expect(calledUri.host, 'api.x.ai');
+  });
+
+  group('#211: Anthropic uses a distinct auth header + request/response '
+      'shape from the OpenAI-compatible providers', () {
+    test('sends x-api-key + anthropic-version, never Authorization: Bearer',
+        () async {
+      final service = LlmClientService(
+        httpClient: MockClient((request) async {
+          expect(request.headers['x-api-key'], 'sk-ant-test');
+          expect(request.headers['anthropic-version'], isNotNull);
+          expect(request.headers.containsKey('Authorization'), isFalse);
+          return http.Response(
+            jsonEncode({
+              'content': [
+                {'type': 'text', 'text': 'claude says hi'}
+              ],
+            }),
+            200,
+          );
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.complete(
+        boat: boatWith(key: 'sk-ant-test', provider: 'anthropic'),
+        systemPrompt: 'be terse',
+        prompt: 'hello',
+      );
+
+      expect(result.status, LlmResultStatus.success);
+      expect(result.text, 'claude says hi');
+    });
+
+    test('the request body puts systemPrompt in a top-level "system" field, '
+        'never as a system-role message', () async {
+      late Map<String, dynamic> sentBody;
+      final service = LlmClientService(
+        httpClient: MockClient((request) async {
+          sentBody = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(
+            jsonEncode({
+              'content': [
+                {'type': 'text', 'text': 'ok'}
+              ],
+            }),
+            200,
+          );
+        }),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      await service.complete(
+        boat: boatWith(key: 'sk-ant-test', provider: 'anthropic'),
+        systemPrompt: 'be terse',
+        prompt: 'hello',
+      );
+
+      expect(sentBody['system'], 'be terse');
+      final messages = sentBody['messages'] as List;
+      expect(messages, hasLength(1));
+      expect(messages.single['role'], 'user');
+    });
+
+    test('concatenates multiple text content blocks', () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async => http.Response(
+              jsonEncode({
+                'content': [
+                  {'type': 'text', 'text': 'part one. '},
+                  {'type': 'text', 'text': 'part two.'},
+                ],
+              }),
+              200,
+            )),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.complete(
+        boat: boatWith(key: 'sk-ant-test', provider: 'anthropic'),
+        prompt: 'hello',
+      );
+
+      expect(result.text, 'part one. part two.');
+    });
+
+    test('reads input_tokens/output_tokens, not prompt_tokens/'
+        'completion_tokens', () async {
+      final service = LlmClientService(
+        usageTracker: LlmUsageTracker(),
+        httpClient: MockClient((_) async => http.Response(
+              jsonEncode({
+                'content': [
+                  {'type': 'text', 'text': 'ok'}
+                ],
+                'usage': {'input_tokens': 10, 'output_tokens': 5},
+              }),
+              200,
+            )),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.complete(
+        boat: boatWith(key: 'sk-ant-test', provider: 'anthropic'),
+        prompt: 'hello',
+      );
+
+      expect(result.status, LlmResultStatus.success);
+    });
+
+    test('401 still maps to invalidKey through the Anthropic branch',
+        () async {
+      final service = LlmClientService(
+        httpClient: MockClient((_) async => http.Response('{}', 401)),
+        connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+      );
+
+      final result = await service.complete(
+        boat: boatWith(key: 'sk-bad', provider: 'anthropic'),
+        prompt: 'hello',
+      );
+
+      expect(result.status, LlmResultStatus.invalidKey);
+    });
+  });
+
+  test('kimi (Moonshot) reuses the OpenAI-compatible request path', () async {
+    late Uri calledUri;
+    final service = LlmClientService(
+      httpClient: MockClient((request) async {
+        calledUri = request.url;
+        expect(request.headers['Authorization'], 'Bearer sk-kimi-test');
+        return http.Response(
+          jsonEncode({
+            'choices': [
+              {
+                'message': {'content': 'ok'}
+              }
+            ]
+          }),
+          200,
+        );
+      }),
+      connectivity: _FakeConnectivity([ConnectivityResult.wifi]),
+    );
+
+    final result = await service.complete(
+      boat: boatWith(key: 'sk-kimi-test', provider: 'kimi'),
+      prompt: 'hello',
+    );
+
+    expect(calledUri.host, 'api.moonshot.cn');
+    expect(result.status, LlmResultStatus.success);
   });
 
   group('#17 cost controls (caching)', () {

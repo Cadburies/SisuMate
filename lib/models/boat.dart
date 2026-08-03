@@ -1,5 +1,86 @@
 part of 'models.dart';
 
+/// #211: one stored provider key. Replaces #203/#215's single scalar
+/// `llmApiKey`/`llmApiKeyProvider` pair — a boat can now hold one key per
+/// provider (OpenAI/xAI/Anthropic/Moonshot) instead of the last one entered
+/// overwriting whichever was there before.
+class LlmApiKeyEntry {
+  String provider; // LlmProvider.id — 'openai' | 'xai' | 'anthropic' | 'kimi'
+  String apiKey;
+  /// #215's per-boat share opt-in, now per-entry: only an entry with
+  /// [shared] true is ever pushed with its real [apiKey] to Supabase.
+  bool shared;
+
+  LlmApiKeyEntry({
+    required this.provider,
+    required this.apiKey,
+    this.shared = false,
+  });
+
+  factory LlmApiKeyEntry.fromJson(Map<String, dynamic> json) => LlmApiKeyEntry(
+        provider: json['provider'] as String? ?? '',
+        apiKey: json['apiKey'] as String? ?? '',
+        shared: json['shared'] as bool? ?? false,
+      );
+
+  /// Full-fidelity local persistence (Drift's `Boats.llmApiKeys` column) —
+  /// always the real [apiKey], regardless of [shared]. Local storage must
+  /// have the whole truth; only the wire payload ([toJson]) is gated.
+  Map<String, dynamic> toStorageJson() => {
+        'provider': provider,
+        'apiKey': apiKey,
+        'shared': shared,
+      };
+
+  /// [apiKey] is nulled out when not [shared] — same rule #215 applied at
+  /// the whole-boat level, now per entry. An unshared entry still appears
+  /// (provider + shared:false) so a remote reader can tell "not shared"
+  /// apart from "never existed", matching #215's original field-level
+  /// behavior of always pushing the flag and only gating the secret value.
+  Map<String, dynamic> toJson() => {
+        'provider': provider,
+        'apiKey': shared ? apiKey : null,
+        'shared': shared,
+      };
+
+  /// #215's inbound guarantee, generalized from one key to a list: only an
+  /// *actively shared* incoming entry is adopted, so it can overwrite a
+  /// stale locally-adopted copy of the *same* provider's shared key (an
+  /// owner rotating their key must reach crew) or a crew member's own
+  /// independently-entered key for that provider (matching the old
+  /// design's "sharing always wins" precedent — not a new behavior). An
+  /// incoming entry with shared:false (or a provider missing from
+  /// [incoming] entirely) never touches [local]'s entry for that provider —
+  /// once shared then un-shared, the last-known-shared value is preserved
+  /// locally, not force-cleared (same test-covered behavior #215 shipped).
+  static List<LlmApiKeyEntry> mergeInbound({
+    required List<LlmApiKeyEntry> local,
+    required List<LlmApiKeyEntry> incoming,
+  }) {
+    final byProvider = {for (final e in local) e.provider: e};
+    for (final inc in incoming) {
+      if (inc.shared) byProvider[inc.provider] = inc;
+    }
+    return byProvider.values.toList();
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LlmApiKeyEntry &&
+          runtimeType == other.runtimeType &&
+          provider == other.provider &&
+          apiKey == other.apiKey &&
+          shared == other.shared;
+
+  @override
+  int get hashCode => Object.hash(provider, apiKey, shared);
+
+  @override
+  String toString() =>
+      'LlmApiKeyEntry(provider: $provider, shared: $shared)'; // never the key
+}
+
 class Boat {
   Boat();
 
@@ -18,19 +99,21 @@ class Boat {
   // shareCode: inbound-only (DB-generated), never pushed.
   String? ownerId;
   String? shareCode;
-  // #203/#215: bring-your-own-key LLM support. **Local-only by default** —
-  // stored on this device, never pushed to Supabase, never seen by other
-  // crew. [llmApiKeyShared] is an explicit owner-only opt-in: only when true
-  // does [toJson] actually push the real key (RLS still restricts the write
-  // to the owner); when false, [toJson] pushes null for both key fields so
-  // a previously-shared key gets actively cleared remotely, not just left
-  // stale. Inbound sync only ever adopts the key when the incoming boat's
-  // [llmApiKeyShared] is true — see `InboundSyncApplier._upsertBoat` — so a
-  // device's own local (unshared) key is never silently overwritten by
-  // someone else's "not sharing" state.
-  String? llmApiKey;
-  String? llmApiKeyProvider; // 'openai' | 'xai'
-  bool llmApiKeyShared = false;
+  // #203/#215/#211: bring-your-own-key LLM support, one entry per provider.
+  // **Local-only by default** — see [LlmApiKeyEntry.shared]/[toJson] for the
+  // per-entry sync gate, and [LlmApiKeyEntry.mergeInbound] for the inbound
+  // adopt-only-if-shared guard (`InboundSyncApplier._upsertBoat`).
+  List<LlmApiKeyEntry> llmApiKeys = [];
+  // Which stored provider to use for AI requests right now (e.g. "switch to
+  // Grok, Claude ran out of tokens"). Deliberately **not** in [toJson]/
+  // [fromJson] — this is a per-device preference, not per-boat/crew-shared
+  // state (a crew member may have entirely different keys configured than
+  // the owner), so it never syncs at all, not even opt-in.
+  String? activeLlmProvider;
+
+  LlmApiKeyEntry? get activeLlmApiKeyEntry => llmApiKeys
+      .where((e) => e.provider == activeLlmProvider)
+      .firstOrNull;
 
   factory Boat.fromJson(Map<String, dynamic> json) {
     return Boat()
@@ -46,9 +129,9 @@ class Boat {
       ..supabaseId = json['supabaseId'] ?? ''
       ..ownerId = json['ownerId']
       ..shareCode = json['shareCode']
-      ..llmApiKey = json['llmApiKey']
-      ..llmApiKeyProvider = json['llmApiKeyProvider']
-      ..llmApiKeyShared = json['llmApiKeyShared'] ?? false;
+      ..llmApiKeys = (json['llmApiKeys'] as List? ?? const [])
+          .map((e) => LlmApiKeyEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
   }
 
   Map<String, dynamic> toJson() => {
@@ -65,11 +148,8 @@ class Boat {
     // ownerId is pushed (only owners write boats) so RLS can validate ownership
     // on insert/update. shareCode stays inbound-only (DB-generated).
     'ownerId': ownerId,
-    'llmApiKeyShared': llmApiKeyShared,
-    // Local-only unless explicitly shared — never send the real value
-    // otherwise, and actively null it out remotely when un-sharing.
-    'llmApiKey': llmApiKeyShared ? llmApiKey : null,
-    'llmApiKeyProvider': llmApiKeyShared ? llmApiKeyProvider : null,
+    'llmApiKeys': llmApiKeys.map((e) => e.toJson()).toList(),
+    // activeLlmProvider intentionally absent — see the field's doc comment.
   };
 
   @override
@@ -90,9 +170,8 @@ class Boat {
           supabaseId == other.supabaseId &&
           ownerId == other.ownerId &&
           shareCode == other.shareCode &&
-          llmApiKey == other.llmApiKey &&
-          llmApiKeyProvider == other.llmApiKeyProvider &&
-          llmApiKeyShared == other.llmApiKeyShared;
+          listEquals(llmApiKeys, other.llmApiKeys) &&
+          activeLlmProvider == other.activeLlmProvider;
 
   @override
   int get hashCode => Object.hashAll([
@@ -109,9 +188,8 @@ class Boat {
         supabaseId,
         ownerId,
         shareCode,
-        llmApiKey,
-        llmApiKeyProvider,
-        llmApiKeyShared,
+        Object.hashAll(llmApiKeys),
+        activeLlmProvider,
       ]);
 
   @override
@@ -120,6 +198,6 @@ class Boat {
       'lastModified: $lastModified, lastPurchasePrice: $lastPurchasePrice, '
       'notes: $notes, origin: $origin, photoUrl: $photoUrl, '
       'ownerId: $ownerId, shareCode: $shareCode, '
-      'llmApiKeyProvider: $llmApiKeyProvider, '
-      'llmApiKeyShared: $llmApiKeyShared)'; // key itself never in toString
+      'llmApiKeys: $llmApiKeys, ' // entries' own toString never leaks a key
+      'activeLlmProvider: $activeLlmProvider)';
 }

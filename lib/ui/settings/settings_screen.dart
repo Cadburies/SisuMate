@@ -112,20 +112,24 @@ class SettingsScreen extends ConsumerWidget {
                         activeBoatAsync.maybeWhen(
                           data: (activeBoat) {
                             if (activeBoat == null) return const SizedBox.shrink();
-                            final configured = activeBoat.llmApiKey != null &&
-                                activeBoat.llmApiKey!.isNotEmpty;
+                            final keyCount = activeBoat.llmApiKeys
+                                .where((e) => e.apiKey.isNotEmpty)
+                                .length;
+                            final activeShared = activeBoat
+                                .activeLlmApiKeyEntry?.shared ??
+                                false;
                             final currentUserId =
                                 ref.watch(authStateProvider).value?.id;
                             final isOwner = activeBoat.ownerId == null ||
                                 activeBoat.ownerId == currentUserId;
                             return ListTile(
                               leading: const Icon(Icons.smart_toy_outlined),
-                              title: const Text('AI API Key'),
-                              subtitle: Text(configured
-                                  ? (activeBoat.llmApiKeyShared
-                                      ? 'Key configured — shared with crew'
-                                      : 'Key configured — this device only')
-                                  : 'None set — bring your own to use AI features'),
+                              title: const Text('AI API Keys'),
+                              subtitle: Text(keyCount == 0
+                                  ? 'None set — bring your own to use AI features'
+                                  : '$keyCount provider${keyCount == 1 ? '' : 's'} '
+                                      'configured'
+                                      '${activeShared ? ' — active key shared with crew' : ''}'),
                               trailing: const Icon(Icons.edit),
                               onTap: () => showDialog(
                                 context: context,
