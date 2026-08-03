@@ -366,5 +366,31 @@ void main() {
     test('networkTimeout is short enough for offline UX', () {
       expect(WeatherService.networkTimeout.inSeconds, lessThanOrEqualTo(15));
     });
+
+    // #242: Open-Meteo's actual default wind-speed unit is km/h, not m/s —
+    // windMs (and every UnitConverter.formatSpeedFromMs caller) treats the
+    // stored value as true m/s, so the request must ask for m/s explicitly
+    // or every displayed wind speed is inflated ~3.6x.
+    test('fetch() requests windspeed_unit=ms from Open-Meteo', () async {
+      Uri? capturedUri;
+      final client = MockClient((request) async {
+        if (request.url.host == 'api.open-meteo.com') {
+          capturedUri = request.url;
+        }
+        return http.Response(
+          jsonEncode({
+            'current': <String, dynamic>{},
+            'hourly': <String, dynamic>{'time': <String>[]},
+            'daily': <String, dynamic>{'time': <String>[]},
+          }),
+          200,
+        );
+      });
+
+      await WeatherService().fetch(lat: 1, lon: 2, client: client);
+
+      expect(capturedUri, isNotNull);
+      expect(capturedUri!.queryParameters['windspeed_unit'], 'ms');
+    });
   });
 }

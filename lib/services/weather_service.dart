@@ -93,7 +93,10 @@ class WeatherService {
             'temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability',
         'daily':
             'weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum',
-        // Default Open-Meteo unit is m/s — keep metric for storage; UI converts.
+        // #242: Open-Meteo's actual default is km/h — must request m/s
+        // explicitly, since windMs (and every UnitConverter.formatSpeedFromMs
+        // caller) treats the stored value as true m/s.
+        'windspeed_unit': 'ms',
         'timezone': 'auto',
         'forecast_days': '3',
       });
