@@ -38,6 +38,8 @@
 	<string>Sisu Mate uses your local network to host and join multiplayer games, and to share content with nearby devices.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Used to centre the weather forecast on your current location.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Used to centre the weather forecast on your current location.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to choose a photo for a bar ingredient from your photo library.</string>
 	<key>CFBundleURLTypes</key>
