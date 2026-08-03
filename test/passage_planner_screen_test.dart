@@ -1,7 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisu_mate/core/units.dart';
+import 'package:sisu_mate/services/weather_service.dart';
 import 'package:sisu_mate/ui/weather/passage_planner_screen.dart';
 
 /// Widget-level coverage for the passage planner (TEST1b, "weather UI pump").
@@ -17,11 +23,13 @@ void main() {
     binding.platformDispatcher.views.first.physicalSize = const Size(800, 2400);
     binding.platformDispatcher.views.first.devicePixelRatio = 1.0;
     addTearDown(binding.platformDispatcher.views.first.resetPhysicalSize);
+    SharedPreferences.setMockInitialValues({});
   });
 
   Future<ProviderContainer> pumpPlanner(
     WidgetTester tester, {
     bool imperial = false,
+    http.Client? weatherClient,
   }) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -31,7 +39,9 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: PassagePlannerScreen()),
+        child: MaterialApp(
+          home: PassagePlannerScreen(weatherClient: weatherClient),
+        ),
       ),
     );
     await tester.pump();
@@ -81,5 +91,129 @@ void main() {
         tester.widget<TextField>(find.widgetWithText(TextField, 'Speed (kn)'));
     expect(speedField.controller!.text, '12');
     expect(find.text('ETA'), findsOneWidget);
+  });
+
+  // #237: route-timeline forecast (weather at each waypoint's ETA).
+  group('cumulativeNmToWaypoint / closestHourlyForEta (pure functions)', () {
+    test('cumulativeNmToWaypoint sums leg distances up to index, 0 at the '
+        'first waypoint', () {
+      final wps = [
+        (lat: 0.0, lon: 0.0),
+        (lat: 1.0, lon: 0.0),
+        (lat: 2.0, lon: 0.0),
+      ];
+      expect(cumulativeNmToWaypoint(wps, 0), 0);
+      final toSecond = cumulativeNmToWaypoint(wps, 1);
+      final toThird = cumulativeNmToWaypoint(wps, 2);
+      expect(toSecond, greaterThan(0));
+      expect(toThird, closeTo(toSecond * 2, 0.5));
+    });
+
+    test('closestHourlyForEta returns the nearest hour within tolerance',
+        () {
+      final target = DateTime(2026, 7, 9, 14, 10);
+      final hourly = [
+        HourlyWeather(time: DateTime(2026, 7, 9, 13), windMs: 5),
+        HourlyWeather(time: DateTime(2026, 7, 9, 14), windMs: 8),
+        HourlyWeather(time: DateTime(2026, 7, 9, 15), windMs: 12),
+      ];
+      final match = closestHourlyForEta(hourly, target);
+      expect(match, isNotNull);
+      expect(match!.windMs, 8);
+    });
+
+    test('closestHourlyForEta returns null when the ETA falls beyond the '
+        'fetched forecast range — never a stale/wrong match', () {
+      final target = DateTime(2026, 7, 12, 9);
+      final hourly = [
+        HourlyWeather(time: DateTime(2026, 7, 9, 13), windMs: 5),
+        HourlyWeather(time: DateTime(2026, 7, 9, 14), windMs: 8),
+      ];
+      expect(closestHourlyForEta(hourly, target), isNull);
+    });
+
+    test('closestHourlyForEta returns null for an empty hourly list', () {
+      expect(closestHourlyForEta(const [], DateTime(2026, 7, 9)), isNull);
+    });
+  });
+
+  testWidgets(
+      '#237: Route forecast shows the ETA-matched hour for a near waypoint '
+      'and degrades gracefully to "beyond forecast range" for one with no '
+      'matching data', (tester) async {
+    final now = DateTime.now();
+    final hour0 = DateTime(now.year, now.month, now.day, now.hour);
+    final hour1 = hour0.add(const Duration(hours: 1));
+    String hh(DateTime t) => t.toIso8601String().substring(0, 16);
+
+    var forecastCalls = 0;
+    final client = MockClient((request) async {
+      switch (request.url.host) {
+        case 'api.open-meteo.com':
+          final call = forecastCalls++;
+          if (call == 0) {
+            // Departure (ETA ~0): a near match must be found.
+            return http.Response(
+              jsonEncode({
+                'hourly': {
+                  'time': [hh(hour0), hh(hour1)],
+                  'wind_speed_10m': [8.0, 9.0],
+                  'wind_direction_10m': [200.0, 205.0],
+                  'wind_gusts_10m': [10.0, 11.0],
+                  'precipitation_probability': [5, 6],
+                },
+                'daily': {'time': <String>[]},
+              }),
+              200,
+            );
+          }
+          // The second waypoint: an empty hourly array forces the
+          // "beyond forecast range" degrade path deterministically,
+          // regardless of the actual computed ETA/test timing.
+          return http.Response(
+            jsonEncode({
+              'hourly': {'time': <String>[]},
+              'daily': {'time': <String>[]},
+            }),
+            200,
+          );
+        case 'marine-api.open-meteo.com':
+          return http.Response(
+            jsonEncode({
+              'hourly': {'time': <String>[]}
+            }),
+            200,
+          );
+        case 'nominatim.openstreetmap.org':
+          return http.Response(jsonEncode({'display_name': 'Test Place'}), 200);
+        case 'api.opentopodata.org':
+          return http.Response(
+              jsonEncode({
+                'results': [
+                  {
+                    'elevation': -10.0,
+                    'location': {'lat': 1, 'lng': 2}
+                  }
+                ]
+              }),
+              200);
+        default:
+          return http.Response('not found', 404);
+      }
+    });
+
+    await pumpPlanner(tester, weatherClient: client);
+    await tester.tap(find.text('Route forecast'));
+    // Not pumpAndSettle: the button shows an indeterminate
+    // CircularProgressIndicator while loading, which never "settles".
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+
+    expect(find.textContaining('At ETA'), findsOneWidget,
+        reason: 'the departure waypoint (ETA ~now) must find a near match');
+    expect(find.textContaining('Beyond forecast range'), findsOneWidget,
+        reason: 'a waypoint with no matching hourly data must degrade '
+            'gracefully, never crash or show a stale match');
   });
 }

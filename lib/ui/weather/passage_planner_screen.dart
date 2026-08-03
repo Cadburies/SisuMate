@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../../core/colors.dart';
@@ -15,15 +16,60 @@ class _Wp {
   _Wp(this.name, this.lat, this.lon);
 }
 
+/// #237: cumulative distance (NM) from the first waypoint to [index],
+/// summing each leg via the same [haversineNm] `planPassage` already uses.
+double cumulativeNmToWaypoint(List<({double lat, double lon})> waypoints, int index) {
+  var nm = 0.0;
+  for (var i = 1; i <= index && i < waypoints.length; i++) {
+    nm += haversineNm(
+      waypoints[i - 1].lat,
+      waypoints[i - 1].lon,
+      waypoints[i].lat,
+      waypoints[i].lon,
+    );
+  }
+  return nm;
+}
+
+/// #237: matches a waypoint's ETA to the closest available hourly forecast
+/// entry. Returns null when nothing in [hourly] is within [maxDrift] of
+/// [target] — e.g. the ETA falls beyond Open-Meteo's fetched forecast
+/// range (`WeatherBundle.hourly` is capped short of the full 3-day window)
+/// — so the caller shows "beyond forecast range" rather than a stale or
+/// misleadingly distant match.
+HourlyWeather? closestHourlyForEta(
+  List<HourlyWeather> hourly,
+  DateTime target, {
+  Duration maxDrift = const Duration(minutes: 30),
+}) {
+  HourlyWeather? best;
+  Duration? bestDiff;
+  for (final h in hourly) {
+    final diff = h.time.difference(target).abs();
+    if (bestDiff == null || diff < bestDiff) {
+      best = h;
+      bestDiff = diff;
+    }
+  }
+  if (best == null || bestDiff! > maxDrift) return null;
+  return best;
+}
+
 /// Simple multi-waypoint passage plan: NM, ETA hours, fuel (S3 + SUG3 imperial).
 class PassagePlannerScreen extends ConsumerStatefulWidget {
   final double? initialLat;
   final double? initialLon;
+  // #237: injectable for tests — WeatherService.fetch() itself already
+  // accepts a client per-call; this just threads a test's MockClient
+  // through the widget boundary the same way LocationService is injected
+  // elsewhere in the weather module.
+  final http.Client? weatherClient;
 
   const PassagePlannerScreen({
     super.key,
     this.initialLat,
     this.initialLon,
+    this.weatherClient,
   });
 
   @override
@@ -35,6 +81,11 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
   final _speedCtrl = TextEditingController(text: '6');
   final _burnCtrl = TextEditingController(text: '4');
   late final List<_Wp> _wps;
+  // #237: route-timeline forecast — on-demand only (see _loadRouteForecast),
+  // never fetched automatically per waypoint edit/rebuild, since typing in
+  // the speed/burn fields would otherwise fire a fetch per keystroke.
+  final Map<int, WeatherBundle?> _wpForecasts = {};
+  bool _loadingRouteForecast = false;
   UnitSystem? _lastVolumeSystem;
   SpeedUnitPref? _lastSpeedUnit;
 
@@ -84,6 +135,59 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
     setState(() {
       _wps.add(_Wp('Waypoint ${_wps.length}', last.lat + 0.1, last.lon + 0.1));
     });
+  }
+
+  /// #237: fetches a forecast per waypoint and stores it for [_wpEditor] to
+  /// look up the hour matching that waypoint's ETA. On-demand only — see
+  /// [_wpForecasts]'s doc comment for why.
+  Future<void> _loadRouteForecast() async {
+    final speedDisplay = double.tryParse(_speedCtrl.text) ?? 6;
+    final speedKn = UnitConverter.speedDisplayToKnots(
+        speedDisplay, ref.read(unitPrefsProvider).boatSpeed);
+    if (speedKn <= 0) return;
+
+    setState(() => _loadingRouteForecast = true);
+    final service = WeatherService();
+    final results = <int, WeatherBundle?>{};
+    for (var i = 0; i < _wps.length; i++) {
+      try {
+        results[i] = await service.fetch(
+          lat: _wps[i].lat,
+          lon: _wps[i].lon,
+          client: widget.weatherClient,
+        );
+      } catch (_) {
+        // Best-effort per waypoint — one failed leg shouldn't blank the rest.
+        results[i] = null;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _wpForecasts
+        ..clear()
+        ..addAll(results);
+      _loadingRouteForecast = false;
+    });
+  }
+
+  /// #237: the ETA-matched forecast line for waypoint [i], or a clear
+  /// "beyond forecast range" note — never a stale/wrong match.
+  String? _routeForecastLabel(int i, double speedKn, SpeedUnitPref windUnit) {
+    if (!_wpForecasts.containsKey(i)) return null;
+    final bundle = _wpForecasts[i];
+    if (bundle == null) return 'Forecast unavailable for this waypoint.';
+    final waypoints = _wps.map((w) => (lat: w.lat, lon: w.lon)).toList();
+    final etaHours =
+        speedKn <= 0 ? 0.0 : cumulativeNmToWaypoint(waypoints, i) / speedKn;
+    final target = DateTime.now().add(
+        Duration(minutes: (etaHours * 60).round()));
+    final h = closestHourlyForEta(bundle.hourly, target);
+    if (h == null) return 'Beyond forecast range for this waypoint\'s ETA.';
+    final wind = h.windMs == null
+        ? '-'
+        : UnitConverter.formatSpeedFromMs(h.windMs!, windUnit);
+    final t = '${h.time.hour.toString().padLeft(2, '0')}:${h.time.minute.toString().padLeft(2, '0')}';
+    return 'At ETA ($t): wind $wind, rain ${h.precipProb?.round() ?? '-'}%';
   }
 
   @override
@@ -253,16 +357,32 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Waypoints',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: SisuColors.getTextPrimaryColor(isDark),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Waypoints',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: SisuColors.getTextPrimaryColor(isDark),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _loadingRouteForecast ? null : _loadRouteForecast,
+                icon: _loadingRouteForecast
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.route, size: 18),
+                label: const Text('Route forecast'),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           for (var i = 0; i < _wps.length; i++)
-            _wpEditor(i, isDark),
+            _wpEditor(i, isDark, speedKn, prefs.windSpeed),
         ],
       ),
     );
@@ -278,8 +398,9 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
     );
   }
 
-  Widget _wpEditor(int i, bool isDark) {
+  Widget _wpEditor(int i, bool isDark, double speedKn, SpeedUnitPref windUnit) {
     final w = _wps[i];
+    final forecastLabel = _routeForecastLabel(i, speedKn, windUnit);
     return Card(
       color: SisuColors.getTileColor(isDark),
       child: Padding(
@@ -361,6 +482,19 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
                 ),
               ],
             ),
+            if (forecastLabel != null) ...[
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  forecastLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: SisuColors.getTextSecondaryColor(isDark),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
