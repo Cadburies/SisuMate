@@ -9,6 +9,7 @@ import '../../core/units.dart';
 import '../../models/models.dart';
 import '../../services/location_service.dart';
 import '../../services/revenuecat_service.dart';
+import 'history_pattern_dialog.dart';
 
 final captainLogsProvider = StreamProvider<List<CaptainLogEntry>>((ref) {
   final repository = ref.watch(captainLogRepositoryProvider);
@@ -36,6 +37,10 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
   Widget build(BuildContext context) {
     final isProAsync = ref.watch(isProProvider);
     final logsAsync = ref.watch(captainLogsProvider);
+    final maintenanceTasks =
+        ref.watch(maintenanceTasksProvider).asData?.value ??
+            const <MaintenanceTask>[];
+    final logs = logsAsync.asData?.value ?? const <CaptainLogEntry>[];
 
     return Scaffold(
       body: SafeArea(
@@ -45,6 +50,22 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
               TitleTile(
                 title: "Captain's Log",
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
+                // #208: AI action gets its own distinct entry point, never
+                // blended into the offline list actions below.
+                actionsBuilder: (color) => [
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome,
+                        color: Colors.deepPurple),
+                    tooltip: 'AI: Find recurring issues',
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      builder: (_) => HistoryPatternDialog(
+                        logEntries: logs,
+                        maintenanceTasks: maintenanceTasks,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               MainListSearchBar(
                 controller: _searchController,

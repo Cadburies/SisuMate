@@ -106,6 +106,36 @@ void main() {
     expect((payload['manualExcerpt'] as String).length, 4000);
   });
 
+  test('historySnippets whitelists date/source/text only, never crew names, '
+      'exact position, or photos', () {
+    final payload = LlmPayloadBuilder.historySnippets(entries: [
+      (
+        date: DateTime.utc(2026, 6, 1),
+        source: 'log',
+        text: 'odd vibration around 2400 RPM',
+      ),
+      (
+        date: DateTime.utc(2026, 7, 1),
+        source: 'maintenance',
+        text: 'vibration again, same spot',
+      ),
+    ]);
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('odd vibration around 2400 RPM'));
+    expect(encoded, contains('2026-06-01'));
+    expect(payload.keys, {'entries'});
+    final entry = (payload['entries'] as List).first as Map;
+    expect(entry.keys, {'date', 'source', 'text'});
+    expect(encoded, isNot(contains(poisonEmail)));
+    expect(encoded, isNot(contains(poisonPhone)));
+    // The builder's signature has no lat/lon/crew/photo parameter at all —
+    // it is structurally incapable of receiving them.
+    expect(encoded, isNot(contains('positionLat')));
+    expect(encoded, isNot(contains('crewOnBoard')));
+    expect(encoded, isNot(contains('photos')));
+  });
+
   test('partSourcingQuery whitelists a coarse location, never exact GPS '
       'coordinates or address fields', () {
     final payload = LlmPayloadBuilder.partSourcingQuery(

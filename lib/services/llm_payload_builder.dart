@@ -76,6 +76,28 @@ class LlmPayloadBuilder {
             : manualExcerpt,
       };
 
+  /// Cross-history pattern detection (#218): free-text notes + dates only
+  /// from Captain's Log and maintenance notes — never crew names
+  /// (`watchCrew`/`crewOnBoard`/`doneBy`), exact position
+  /// (`positionLat`/`positionLng`), or photos. [source] is a caller-chosen
+  /// tag (e.g. `'log'` / `'maintenance'`) so the model can reason about
+  /// patterns that span both streams without losing where each note came
+  /// from. Records (not `CaptainLogEntry`/`MaintenanceTask`) as the shape
+  /// keeps this builder structurally incapable of leaking a field added to
+  /// either model later.
+  static Map<String, dynamic> historySnippets({
+    required Iterable<({DateTime date, String source, String text})> entries,
+  }) =>
+      {
+        'entries': entries
+            .map((e) => {
+                  'date': e.date.toIso8601String().split('T').first,
+                  'source': e.source,
+                  'text': e.text,
+                })
+            .toList(),
+      };
+
   /// Location-aware part sourcing (#217): the part/task description plus a
   /// **coarse** location string (city/region, e.g. from a reverse-geocode
   /// call already truncated to a short place label) — never exact GPS
