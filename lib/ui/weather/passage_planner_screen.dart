@@ -9,6 +9,7 @@ import '../../core/units.dart';
 import '../../models/models.dart' show PolarPoint;
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/boat_polar_service.dart';
+import '../../services/weather_routing_service.dart';
 import '../../services/weather_service.dart';
 import 'passage_weather_briefing_dialog.dart';
 
@@ -89,6 +90,11 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
   // the speed/burn fields would otherwise fire a fetch per keystroke.
   final Map<int, WeatherBundle?> _wpForecasts = {};
   bool _loadingRouteForecast = false;
+  // #238: isochrone-routed path, first waypoint to last — user-triggered
+  // only (see _computeRoute), additive to the existing great-circle
+  // polyline/marker layers, never replacing them.
+  IsochroneRoute? _computedRoute;
+  bool _computingRoute = false;
   UnitSystem? _lastVolumeSystem;
   SpeedUnitPref? _lastSpeedUnit;
 
@@ -218,6 +224,70 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
     return map;
   }
 
+  /// #238: computes an isochrone-routed path from the first to the last
+  /// waypoint. v1 uses a single wind sample (the departure waypoint's
+  /// current forecast) held constant across the whole route/time window —
+  /// explicitly sanctioned by #238's own design notes, since fetching wind
+  /// at every candidate isochrone point isn't practical. User-triggered
+  /// only, same discipline as [_loadRouteForecast]/[_compareModels]-style
+  /// actions elsewhere in the weather module.
+  Future<void> _computeRoute() async {
+    if (_wps.length < 2) return;
+    final polar = ref.read(activeBoatProvider).asData?.value?.polar ??
+        const <PolarPoint>[];
+    if (polar.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'Set boat polar data in Settings (Boat Polar Data) first.'),
+      ));
+      return;
+    }
+
+    setState(() => _computingRoute = true);
+    try {
+      final bundle = await WeatherService().fetch(
+        lat: _wps.first.lat,
+        lon: _wps.first.lon,
+        client: widget.weatherClient,
+      );
+      final sample = bundle.hourly.isNotEmpty ? bundle.hourly.first : null;
+      if (sample?.windDirDeg == null || sample?.windMs == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('No wind data available to compute a route.'),
+          ));
+        }
+        return;
+      }
+      final windDirDeg = sample!.windDirDeg!;
+      final windSpeedKt = sample.windMs! / UnitConverter.msPerKnot;
+      final route = computeIsochroneRoute(
+        start: (lat: _wps.first.lat, lon: _wps.first.lon),
+        end: (lat: _wps.last.lat, lon: _wps.last.lon),
+        polar: polar,
+        windAt: ({required lat, required lon, required time}) =>
+            (windDirDeg: windDirDeg, windSpeedKt: windSpeedKt),
+        startTime: DateTime.now(),
+      );
+      if (!mounted) return;
+      setState(() => _computedRoute = route);
+      if (route == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Could not compute a route with the current polar/wind data.'),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Route computation failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _computingRoute = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -281,6 +351,17 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
             ),
           ),
           IconButton(
+            icon: _computingRoute
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.alt_route),
+            tooltip: 'Compute isochrone route (needs boat polar data)',
+            onPressed: _computingRoute ? null : _computeRoute,
+          ),
+          IconButton(
             icon: const Icon(Icons.add_location_alt_outlined),
             tooltip: 'Add waypoint',
             onPressed: _addWp,
@@ -312,6 +393,17 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
                         color: SisuColors.completedBackground,
                         strokeWidth: 3,
                       ),
+                      // #238: isochrone-routed path, distinct color from
+                      // the great-circle line above — additive, never
+                      // replacing it.
+                      if (_computedRoute != null)
+                        Polyline(
+                          points: _computedRoute!.path
+                              .map((p) => LatLng(p.lat, p.lon))
+                              .toList(),
+                          color: Colors.deepOrange,
+                          strokeWidth: 3,
+                        ),
                     ],
                   ),
                   MarkerLayer(

@@ -1,12 +1,18 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Value;
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sisu_mate/core/di.dart';
 import 'package:sisu_mate/core/units.dart';
+import 'package:sisu_mate/data/drift/app_database.dart';
+import 'package:sisu_mate/models/models.dart';
 import 'package:sisu_mate/services/weather_service.dart';
 import 'package:sisu_mate/ui/weather/passage_planner_screen.dart';
 
@@ -30,9 +36,10 @@ void main() {
     WidgetTester tester, {
     bool imperial = false,
     http.Client? weatherClient,
+    ProviderContainer? existingContainer,
   }) async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = existingContainer ?? ProviderContainer();
+    if (existingContainer == null) addTearDown(container.dispose);
     if (imperial) {
       container.read(unitPrefsProvider.notifier).restore(AppUnitPrefs.us);
     }
@@ -215,5 +222,98 @@ void main() {
     expect(find.textContaining('Beyond forecast range'), findsOneWidget,
         reason: 'a waypoint with no matching hourly data must degrade '
             'gracefully, never crash or show a stale match');
+  });
+
+  const computeRouteTooltip = 'Compute isochrone route (needs boat polar data)';
+
+  http.Client mockForecastClient() => MockClient((request) async {
+        switch (request.url.host) {
+          case 'api.open-meteo.com':
+            return http.Response(
+              jsonEncode({
+                'hourly': {
+                  'time': ['2026-07-09T12:00'],
+                  'wind_speed_10m': [10.0],
+                  'wind_direction_10m': [200.0],
+                  'wind_gusts_10m': [12.0],
+                  'precipitation_probability': [5],
+                },
+                'daily': {'time': <String>[]},
+              }),
+              200,
+            );
+          case 'marine-api.open-meteo.com':
+            return http.Response(
+              jsonEncode({
+                'hourly': {'time': <String>[]}
+              }),
+              200,
+            );
+          case 'nominatim.openstreetmap.org':
+            return http.Response(jsonEncode({'display_name': 'Test Place'}), 200);
+          case 'api.opentopodata.org':
+            return http.Response(
+                jsonEncode({
+                  'results': [
+                    {
+                      'elevation': -10.0,
+                      'location': {'lat': 1, 'lng': 2}
+                    }
+                  ]
+                }),
+                200);
+          default:
+            return http.Response('not found', 404);
+        }
+      });
+
+  // #238: isochrone weather routing.
+  testWidgets('#238: with no boat polar data configured, computing a route '
+      'says so instead of guessing', (tester) async {
+    await pumpPlanner(tester, weatherClient: mockForecastClient());
+
+    await tester.tap(find.byTooltip(computeRouteTooltip));
+    await tester.pump();
+
+    expect(find.textContaining('Set boat polar data'), findsOneWidget);
+  });
+
+  testWidgets('#238: with boat polar data + wind, computes and renders a '
+      'second route polyline', (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await db.into(db.boats).insert(BoatsCompanion.insert(
+          supabaseId: const Value('boat_1'),
+          name: const Value('Sisu'),
+          polarJson: Value(encodePolarTable(const [
+            PolarPoint(twaDeg: 90, twsKt: 10, boatSpeedKt: 6),
+          ])),
+        ));
+    await db.into(db.userSettingsTable).insert(
+          UserSettingsTableCompanion.insert(
+            id: const Value(1),
+            activeBoatSupabaseId: const Value('boat_1'),
+          ),
+        );
+    final container = ProviderContainer(overrides: [
+      appDatabaseProvider.overrideWithValue(db),
+    ]);
+    addTearDown(container.dispose);
+
+    await pumpPlanner(
+      tester,
+      weatherClient: mockForecastClient(),
+      existingContainer: container,
+    );
+
+    await tester.tap(find.byTooltip(computeRouteTooltip));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+
+    final polylineLayer =
+        tester.widget<PolylineLayer>(find.byType(PolylineLayer));
+    expect(polylineLayer.polylines, hasLength(2),
+        reason: 'the great-circle line plus the computed isochrone route');
   });
 }
