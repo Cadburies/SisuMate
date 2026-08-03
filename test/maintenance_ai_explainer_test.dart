@@ -108,6 +108,8 @@ void main() {
     expect(find.text('Check warranty coverage'), findsOneWidget,
         reason: '#222: warranty check joins the explainer on the same AI '
             'badge instead of a second competing badge');
+    expect(find.text('Find a compatible part near me'), findsOneWidget,
+        reason: '#217: part sourcing joins the same AI badge too');
   });
 
   testWidgets('picking "Explain this task" from the AI menu opens the '

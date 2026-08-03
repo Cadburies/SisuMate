@@ -76,6 +76,21 @@ class LlmPayloadBuilder {
             : manualExcerpt,
       };
 
+  /// Location-aware part sourcing (#217): the part/task description plus a
+  /// **coarse** location string (city/region, e.g. from a reverse-geocode
+  /// call already truncated to a short place label) — never exact GPS
+  /// coordinates. [coarseLocation] is nullable because a user may decline
+  /// location permission and skip location entirely; the LLM still gets a
+  /// useful (if less targeted) answer from the part description alone.
+  static Map<String, dynamic> partSourcingQuery({
+    required String partDescription,
+    String? coarseLocation,
+  }) =>
+      {
+        'partDescription': partDescription,
+        'coarseLocation': ?coarseLocation,
+      };
+
   /// Risk-prioritized maintenance triage (#216): the whole outstanding
   /// backlog's description + interval/last-done fields only — never `notes`
   /// (free text may contain PII) or `doneBy` (a crew member's name), same

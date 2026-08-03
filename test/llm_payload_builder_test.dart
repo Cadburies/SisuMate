@@ -106,6 +106,32 @@ void main() {
     expect((payload['manualExcerpt'] as String).length, 4000);
   });
 
+  test('partSourcingQuery whitelists a coarse location, never exact GPS '
+      'coordinates or address fields', () {
+    final payload = LlmPayloadBuilder.partSourcingQuery(
+      partDescription: 'Oil filter for Yanmar 3YM30',
+      coarseLocation: 'Kaohsiung, Taiwan',
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('Yanmar 3YM30'));
+    expect(encoded, contains('Kaohsiung'));
+    expect(payload.keys, {'partDescription', 'coarseLocation'});
+    // The builder's signature has no lat/lon/address parameter at all — it
+    // is structurally incapable of receiving exact GPS coordinates.
+    expect(encoded, isNot(contains('lat')));
+    expect(encoded, isNot(contains('lon')));
+  });
+
+  test('partSourcingQuery omits coarseLocation entirely when the user '
+      'skipped/declined location, rather than sending it as null', () {
+    final payload = LlmPayloadBuilder.partSourcingQuery(
+      partDescription: 'Impeller for raw water pump',
+    );
+
+    expect(payload.keys, {'partDescription'});
+  });
+
   test('maintenanceBacklog whitelists description/interval/last-done fields '
       'only, never notes or doneBy (crew name)', () {
     final payload = LlmPayloadBuilder.maintenanceBacklog(

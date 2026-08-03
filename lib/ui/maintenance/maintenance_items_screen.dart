@@ -10,6 +10,7 @@ import '../components/add_checklist_item_dialog.dart';
 import '../checklists/check_page_viewer.dart';
 import 'maintenance_ai_explainer_dialog.dart';
 import 'warranty_check_dialog.dart';
+import 'part_sourcing_dialog.dart';
 
 import '../../providers/checklist_provider.dart';
 import '../../providers/package_info_provider.dart';
@@ -244,10 +245,11 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
     );
   }
 
-  /// #222: a second AI action (warranty check) joins #18's explainer on the
-  /// same per-tile badge — one distinct purple `auto_awesome` entry point
-  /// per item rather than two competing badges, per #208 separation from
-  /// the tile's offline Complete/Hide actions above.
+  /// #222/#217: a growing set of AI actions (warranty check, part sourcing)
+  /// joins #18's explainer on the same per-tile badge — one distinct purple
+  /// `auto_awesome` entry point per item rather than a competing badge per
+  /// feature, per #208 separation from the tile's offline Complete/Hide
+  /// actions above.
   void _showAiMenu(ChecklistItem item) {
     showModalBottomSheet<void>(
       context: context,
@@ -273,6 +275,17 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                 showDialog(
                   context: context,
                   builder: (_) => const WarrantyCheckDialog(),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_awesome, color: Colors.deepPurple),
+              title: const Text('Find a compatible part near me'),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (_) => PartSourcingDialog(item: item),
                 );
               },
             ),
