@@ -131,6 +131,31 @@ void main() {
     expect((payload['excerptText'] as String).length, 4000);
   });
 
+  test('insuranceClaimQuery carries the incident description and pasted '
+      'policy excerpt verbatim (no domain-object whitelist applies to '
+      'user-pasted text)', () {
+    final payload = LlmPayloadBuilder.insuranceClaimQuery(
+      incidentDescription: 'Boom broke loose in a storm and cracked the rail',
+      policyExcerpt: 'Storm damage to fittings is covered up to \$5,000.',
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('Boom broke loose in a storm'));
+    expect(encoded, contains('Storm damage to fittings is covered'));
+    expect(payload.keys, {'incidentDescription', 'policyExcerpt'});
+  });
+
+  test('insuranceClaimQuery caps an oversized pasted excerpt at 4000 chars',
+      () {
+    final huge = 'x' * 5000;
+    final payload = LlmPayloadBuilder.insuranceClaimQuery(
+      incidentDescription: 'Dinghy stolen from davits overnight',
+      policyExcerpt: huge,
+    );
+
+    expect((payload['policyExcerpt'] as String).length, 4000);
+  });
+
   test('parseLogEntryText passes the freeform text through verbatim — '
       'intentionally not whitelist-filtered, since the text itself is the '
       'whole payload', () {

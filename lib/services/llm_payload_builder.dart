@@ -94,6 +94,24 @@ class LlmPayloadBuilder {
             : excerptText,
       };
 
+  /// Insurance claim likelihood check (#227): incident description + a
+  /// user-pasted excerpt of the relevant policy clause (coverage,
+  /// exclusions, deductible terms). Same shape/reasoning as [warrantyQuery]
+  /// above — no `Document` OCR/text-extraction pipeline, so the only
+  /// content sent is exactly what the user typed/pasted into the dialog for
+  /// this one query. Capped for token-budget reasons (BYOK), not as a
+  /// privacy filter.
+  static Map<String, dynamic> insuranceClaimQuery({
+    required String incidentDescription,
+    required String policyExcerpt,
+  }) =>
+      {
+        'incidentDescription': incidentDescription,
+        'policyExcerpt': policyExcerpt.length > 4000
+            ? policyExcerpt.substring(0, 4000)
+            : policyExcerpt,
+      };
+
   /// Freeform Captain's Log entry parsing (#220): **intentionally not
   /// whitelist-filtered** like every other builder in this file — the
   /// user's own freeform typed/dictated text *is* the payload; there is no

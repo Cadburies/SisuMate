@@ -16,6 +16,7 @@ import '../../models/models.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/record_share_service.dart';
 import '../../services/import_service.dart';
+import 'insurance_claim_check_dialog.dart';
 
 final documentsProvider = StreamProvider<List<Document>>((ref) {
   return ref.watch(documentRepositoryProvider).watchDocuments();
@@ -244,7 +245,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                             attention = 'Expires in $daysLeft days';
                           }
                         }
-                        return MainListTile(
+                        final tile = MainListTile(
                           onTap: () =>
                               _showDetail(context, ref, document, isPro),
                           header: MainListTile.iconHeader(
@@ -258,6 +259,40 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                               ? 'Expires ${_formatDate(expiry)}'
                               : null,
                           attentionLine: attention,
+                        );
+                        // #227/#208: AI claim-check badge, Insurance
+                        // documents only — a visually distinct entry point,
+                        // never mixed into the tile's own tap-to-view.
+                        if (document.type != 'Insurance') return tile;
+                        return Stack(
+                          children: [
+                            tile,
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Material(
+                                color: Colors.deepPurple,
+                                shape: const CircleBorder(),
+                                elevation: 2,
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => showDialog(
+                                    context: context,
+                                    builder: (_) =>
+                                        const InsuranceClaimCheckDialog(),
+                                  ),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(6),
+                                    child: Icon(
+                                      Icons.auto_awesome,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         );
                       },
                     );
