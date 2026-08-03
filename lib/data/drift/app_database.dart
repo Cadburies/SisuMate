@@ -144,6 +144,11 @@ class Boats extends Table {
   // Which stored provider is active right now — per-device only, never
   // synced (see `Boat.activeLlmProvider`'s doc comment).
   TextColumn get activeLlmProvider => text().nullable()();
+  // #236: boat polar performance data — JSON list of {twaDeg, twsKt,
+  // boatSpeedKt} triples (see `PolarPoint`), manually entered. Foundation
+  // for real weather routing (#238) — no privacy/sync-gating concerns
+  // unlike llmApiKeys, so it's pushed/pulled plainly like any other field.
+  TextColumn get polarJson => text().withDefault(const Constant('[]'))();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -588,7 +593,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

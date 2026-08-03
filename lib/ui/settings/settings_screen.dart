@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../components/title_tile.dart';
+import 'boat_polar_dialog.dart';
 import 'llm_api_key_dialog.dart';
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
@@ -137,6 +138,27 @@ class SettingsScreen extends ConsumerWidget {
                                   boat: activeBoat,
                                   isOwner: isOwner,
                                 ),
+                              ),
+                            );
+                          },
+                          orElse: () => const SizedBox.shrink(),
+                        ),
+
+                        // #236: boat polar performance data (routing foundation).
+                        activeBoatAsync.maybeWhen(
+                          data: (activeBoat) {
+                            if (activeBoat == null) return const SizedBox.shrink();
+                            final pointCount = activeBoat.polar.length;
+                            return ListTile(
+                              leading: const Icon(Icons.speed_outlined),
+                              title: const Text('Boat Polar Data'),
+                              subtitle: Text(pointCount == 0
+                                  ? 'Not set — used for more realistic ETAs'
+                                  : '$pointCount point${pointCount == 1 ? '' : 's'} set'),
+                              trailing: const Icon(Icons.edit),
+                              onTap: () => showDialog(
+                                context: context,
+                                builder: (_) => BoatPolarDialog(boat: activeBoat),
                               ),
                             );
                           },

@@ -30,6 +30,7 @@ class BoatRepositoryImpl implements BoatRepository {
         .map((e) => LlmApiKeyEntry.fromJson(e as Map<String, dynamic>))
         .toList()
     ..activeLlmProvider = r.activeLlmProvider
+    ..polar = parsePolarTable(r.polarJson)
     ..lastModified = r.lastModified;
 
   BoatsCompanion _toCompanion(Boat b) => BoatsCompanion(
@@ -47,6 +48,7 @@ class BoatRepositoryImpl implements BoatRepository {
         llmApiKeys: Value(
             jsonEncode(b.llmApiKeys.map((e) => e.toStorageJson()).toList())),
         activeLlmProvider: Value(b.activeLlmProvider),
+        polarJson: Value(encodePolarTable(b.polar)),
         lastModified: Value(b.lastModified),
       );
 

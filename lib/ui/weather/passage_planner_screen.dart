@@ -6,6 +6,9 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/colors.dart';
 import '../../core/units.dart';
+import '../../models/models.dart' show PolarPoint;
+import '../../providers/shopping_provider.dart' show activeBoatProvider;
+import '../../services/boat_polar_service.dart';
 import '../../services/weather_service.dart';
 import 'passage_weather_briefing_dialog.dart';
 
@@ -190,6 +193,31 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
     return 'At ETA ($t): wind $wind, rain ${h.precipProb?.round() ?? '-'}%';
   }
 
+  /// #236: per-leg wind (destination waypoint's ETA-matched hour, same
+  /// match #237's route-forecast label uses) for [planPassageWithPolar].
+  /// A leg with no fetched forecast, or no hour within tolerance of its
+  /// ETA, simply has no entry — that leg falls back to flat speed.
+  Map<int, ({double windDirDeg, double windSpeedKt})?> _windByLegIndex(
+      double speedKn) {
+    final waypoints = _wps.map((w) => (lat: w.lat, lon: w.lon)).toList();
+    final map = <int, ({double windDirDeg, double windSpeedKt})?>{};
+    for (var i = 1; i < _wps.length; i++) {
+      final bundle = _wpForecasts[i];
+      if (bundle == null) continue;
+      final etaHours =
+          speedKn <= 0 ? 0.0 : cumulativeNmToWaypoint(waypoints, i) / speedKn;
+      final target =
+          DateTime.now().add(Duration(minutes: (etaHours * 60).round()));
+      final h = closestHourlyForEta(bundle.hourly, target);
+      if (h == null || h.windDirDeg == null || h.windMs == null) continue;
+      map[i] = (
+        windDirDeg: h.windDirDeg!,
+        windSpeedKt: h.windMs! / UnitConverter.msPerKnot,
+      );
+    }
+    return map;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -207,6 +235,26 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
       speedKn: speedKn,
       litersPerHour: litersPerHour,
     );
+    // #236: additive only — the plan above (and its display) is completely
+    // unchanged; this just optionally computes a second, clearly-labeled
+    // readout when the boat has polar data AND at least one leg has wind
+    // data from #237's "Route forecast". No polar data configured (the
+    // overwhelmingly common case) means this block never runs.
+    final polar = ref.watch(activeBoatProvider).asData?.value?.polar ??
+        const <PolarPoint>[];
+    final windByLeg = polar.isEmpty
+        ? const <int, ({double windDirDeg, double windSpeedKt})?>{}
+        : _windByLegIndex(speedKn);
+    final hasLegWind = windByLeg.values.any((w) => w != null);
+    final polarPlan = (polar.isNotEmpty && hasLegWind)
+        ? planPassageWithPolar(
+            waypoints: _wps.map((w) => (lat: w.lat, lon: w.lon)).toList(),
+            flatSpeedKn: speedKn,
+            litersPerHour: litersPerHour,
+            polar: polar,
+            windByLegIndex: windByLeg,
+          )
+        : null;
     final fuelLabel = UnitConverter.fuelVolumeLabel(unitSystem);
     final burnLabel = 'Fuel $fuelLabel/h';
     final speedLabel = 'Speed (${UnitConverter.speedUnitLabel(prefs.boatSpeed)})';
@@ -352,6 +400,17 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
                       _stat('Fuel', fuelDisplay),
                     ],
                   ),
+                  if (polarPlan != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Polar-adjusted ETA: ${polarPlan.hours.toStringAsFixed(1)} h '
+                      '(uses boat polar + route wind)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: SisuColors.getTextSecondaryColor(isDark),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -52,6 +52,26 @@ void main() {
       expect((await repo.getBoatById('boat_1'))!.name, 'Final');
     });
 
+    // #236: boat polar table persists across Drift round-trip.
+    test('polar table persists, and a boat with none defaults to empty '
+        '(not null/crashing)', () async {
+      final boat = Boat()
+        ..supabaseId = 'boat_polar'
+        ..name = 'Sisu';
+      await repo.addBoat(boat);
+      expect((await repo.getBoatById('boat_polar'))!.polar, isEmpty);
+
+      boat.polar = const [
+        PolarPoint(twaDeg: 90, twsKt: 15, boatSpeedKt: 7.0),
+        PolarPoint(twaDeg: 120, twsKt: 15, boatSpeedKt: 8.5),
+      ];
+      await repo.updateBoat(boat);
+
+      final reloaded = await repo.getBoatById('boat_polar');
+      expect(reloaded!.polar, hasLength(2));
+      expect(reloaded.polar.first.boatSpeedKt, 7.0);
+    });
+
     test('Delete removes it', () async {
       final boat = Boat()..supabaseId = 'boat_1';
       await repo.addBoat(boat);

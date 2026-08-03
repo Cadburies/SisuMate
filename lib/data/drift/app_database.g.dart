@@ -4139,6 +4139,18 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _polarJsonMeta = const VerificationMeta(
+    'polarJson',
+  );
+  @override
+  late final GeneratedColumn<String> polarJson = GeneratedColumn<String>(
+    'polar_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
     'lastModified',
   );
@@ -4167,6 +4179,7 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
     shareCode,
     llmApiKeys,
     activeLlmProvider,
+    polarJson,
     lastModified,
   ];
   @override
@@ -4271,6 +4284,12 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
         ),
       );
     }
+    if (data.containsKey('polar_json')) {
+      context.handle(
+        _polarJsonMeta,
+        polarJson.isAcceptableOrUnknown(data['polar_json']!, _polarJsonMeta),
+      );
+    }
     if (data.containsKey('last_modified')) {
       context.handle(
         _lastModifiedMeta,
@@ -4345,6 +4364,10 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
         DriftSqlType.string,
         data['${effectivePrefix}active_llm_provider'],
       ),
+      polarJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}polar_json'],
+      )!,
       lastModified: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_modified'],
@@ -4373,6 +4396,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
   final String? shareCode;
   final String llmApiKeys;
   final String? activeLlmProvider;
+  final String polarJson;
   final DateTime lastModified;
   const BoatRow({
     required this.id,
@@ -4389,6 +4413,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     this.shareCode,
     required this.llmApiKeys,
     this.activeLlmProvider,
+    required this.polarJson,
     required this.lastModified,
   });
   @override
@@ -4422,6 +4447,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     if (!nullToAbsent || activeLlmProvider != null) {
       map['active_llm_provider'] = Variable<String>(activeLlmProvider);
     }
+    map['polar_json'] = Variable<String>(polarJson);
     map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
   }
@@ -4456,6 +4482,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       activeLlmProvider: activeLlmProvider == null && nullToAbsent
           ? const Value.absent()
           : Value(activeLlmProvider),
+      polarJson: Value(polarJson),
       lastModified: Value(lastModified),
     );
   }
@@ -4484,6 +4511,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       activeLlmProvider: serializer.fromJson<String?>(
         json['activeLlmProvider'],
       ),
+      polarJson: serializer.fromJson<String>(json['polarJson']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
   }
@@ -4505,6 +4533,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       'shareCode': serializer.toJson<String?>(shareCode),
       'llmApiKeys': serializer.toJson<String>(llmApiKeys),
       'activeLlmProvider': serializer.toJson<String?>(activeLlmProvider),
+      'polarJson': serializer.toJson<String>(polarJson),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
   }
@@ -4524,6 +4553,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     Value<String?> shareCode = const Value.absent(),
     String? llmApiKeys,
     Value<String?> activeLlmProvider = const Value.absent(),
+    String? polarJson,
     DateTime? lastModified,
   }) => BoatRow(
     id: id ?? this.id,
@@ -4544,6 +4574,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     activeLlmProvider: activeLlmProvider.present
         ? activeLlmProvider.value
         : this.activeLlmProvider,
+    polarJson: polarJson ?? this.polarJson,
     lastModified: lastModified ?? this.lastModified,
   );
   BoatRow copyWithCompanion(BoatsCompanion data) {
@@ -4570,6 +4601,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       activeLlmProvider: data.activeLlmProvider.present
           ? data.activeLlmProvider.value
           : this.activeLlmProvider,
+      polarJson: data.polarJson.present ? data.polarJson.value : this.polarJson,
       lastModified: data.lastModified.present
           ? data.lastModified.value
           : this.lastModified,
@@ -4593,6 +4625,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
           ..write('shareCode: $shareCode, ')
           ..write('llmApiKeys: $llmApiKeys, ')
           ..write('activeLlmProvider: $activeLlmProvider, ')
+          ..write('polarJson: $polarJson, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -4614,6 +4647,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     shareCode,
     llmApiKeys,
     activeLlmProvider,
+    polarJson,
     lastModified,
   );
   @override
@@ -4634,6 +4668,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
           other.shareCode == this.shareCode &&
           other.llmApiKeys == this.llmApiKeys &&
           other.activeLlmProvider == this.activeLlmProvider &&
+          other.polarJson == this.polarJson &&
           other.lastModified == this.lastModified);
 }
 
@@ -4652,6 +4687,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
   final Value<String?> shareCode;
   final Value<String> llmApiKeys;
   final Value<String?> activeLlmProvider;
+  final Value<String> polarJson;
   final Value<DateTime> lastModified;
   const BoatsCompanion({
     this.id = const Value.absent(),
@@ -4668,6 +4704,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     this.shareCode = const Value.absent(),
     this.llmApiKeys = const Value.absent(),
     this.activeLlmProvider = const Value.absent(),
+    this.polarJson = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   BoatsCompanion.insert({
@@ -4685,6 +4722,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     this.shareCode = const Value.absent(),
     this.llmApiKeys = const Value.absent(),
     this.activeLlmProvider = const Value.absent(),
+    this.polarJson = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   static Insertable<BoatRow> custom({
@@ -4702,6 +4740,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     Expression<String>? shareCode,
     Expression<String>? llmApiKeys,
     Expression<String>? activeLlmProvider,
+    Expression<String>? polarJson,
     Expression<DateTime>? lastModified,
   }) {
     return RawValuesInsertable({
@@ -4719,6 +4758,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
       if (shareCode != null) 'share_code': shareCode,
       if (llmApiKeys != null) 'llm_api_keys': llmApiKeys,
       if (activeLlmProvider != null) 'active_llm_provider': activeLlmProvider,
+      if (polarJson != null) 'polar_json': polarJson,
       if (lastModified != null) 'last_modified': lastModified,
     });
   }
@@ -4738,6 +4778,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     Value<String?>? shareCode,
     Value<String>? llmApiKeys,
     Value<String?>? activeLlmProvider,
+    Value<String>? polarJson,
     Value<DateTime>? lastModified,
   }) {
     return BoatsCompanion(
@@ -4755,6 +4796,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
       shareCode: shareCode ?? this.shareCode,
       llmApiKeys: llmApiKeys ?? this.llmApiKeys,
       activeLlmProvider: activeLlmProvider ?? this.activeLlmProvider,
+      polarJson: polarJson ?? this.polarJson,
       lastModified: lastModified ?? this.lastModified,
     );
   }
@@ -4804,6 +4846,9 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     if (activeLlmProvider.present) {
       map['active_llm_provider'] = Variable<String>(activeLlmProvider.value);
     }
+    if (polarJson.present) {
+      map['polar_json'] = Variable<String>(polarJson.value);
+    }
     if (lastModified.present) {
       map['last_modified'] = Variable<DateTime>(lastModified.value);
     }
@@ -4827,6 +4872,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
           ..write('shareCode: $shareCode, ')
           ..write('llmApiKeys: $llmApiKeys, ')
           ..write('activeLlmProvider: $activeLlmProvider, ')
+          ..write('polarJson: $polarJson, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -21768,6 +21814,7 @@ typedef $$BoatsTableCreateCompanionBuilder =
       Value<String?> shareCode,
       Value<String> llmApiKeys,
       Value<String?> activeLlmProvider,
+      Value<String> polarJson,
       Value<DateTime> lastModified,
     });
 typedef $$BoatsTableUpdateCompanionBuilder =
@@ -21786,6 +21833,7 @@ typedef $$BoatsTableUpdateCompanionBuilder =
       Value<String?> shareCode,
       Value<String> llmApiKeys,
       Value<String?> activeLlmProvider,
+      Value<String> polarJson,
       Value<DateTime> lastModified,
     });
 
@@ -21864,6 +21912,11 @@ class $$BoatsTableFilterComposer extends Composer<_$AppDatabase, $BoatsTable> {
 
   ColumnFilters<String> get activeLlmProvider => $composableBuilder(
     column: $table.activeLlmProvider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get polarJson => $composableBuilder(
+    column: $table.polarJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21952,6 +22005,11 @@ class $$BoatsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get polarJson => $composableBuilder(
+    column: $table.polarJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => ColumnOrderings(column),
@@ -22017,6 +22075,9 @@ class $$BoatsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get polarJson =>
+      $composableBuilder(column: $table.polarJson, builder: (column) => column);
+
   GeneratedColumn<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => column,
@@ -22065,6 +22126,7 @@ class $$BoatsTableTableManager
                 Value<String?> shareCode = const Value.absent(),
                 Value<String> llmApiKeys = const Value.absent(),
                 Value<String?> activeLlmProvider = const Value.absent(),
+                Value<String> polarJson = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => BoatsCompanion(
                 id: id,
@@ -22081,6 +22143,7 @@ class $$BoatsTableTableManager
                 shareCode: shareCode,
                 llmApiKeys: llmApiKeys,
                 activeLlmProvider: activeLlmProvider,
+                polarJson: polarJson,
                 lastModified: lastModified,
               ),
           createCompanionCallback:
@@ -22099,6 +22162,7 @@ class $$BoatsTableTableManager
                 Value<String?> shareCode = const Value.absent(),
                 Value<String> llmApiKeys = const Value.absent(),
                 Value<String?> activeLlmProvider = const Value.absent(),
+                Value<String> polarJson = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => BoatsCompanion.insert(
                 id: id,
@@ -22115,6 +22179,7 @@ class $$BoatsTableTableManager
                 shareCode: shareCode,
                 llmApiKeys: llmApiKeys,
                 activeLlmProvider: activeLlmProvider,
+                polarJson: polarJson,
                 lastModified: lastModified,
               ),
           withReferenceMapper: (p0) => p0

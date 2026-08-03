@@ -81,6 +81,64 @@ class LlmApiKeyEntry {
       'LlmApiKeyEntry(provider: $provider, shared: $shared)'; // never the key
 }
 
+/// #236: one manually-entered polar data point — boat speed (kt) at a given
+/// true wind angle (deg, 0=head-to-wind, 180=dead downwind) and true wind
+/// speed (kt). Foundation for real weather routing (#238); no privacy/
+/// sync-gating concerns unlike `LlmApiKeyEntry`, so it's pushed/pulled
+/// plainly like any other field.
+class PolarPoint {
+  final double twaDeg;
+  final double twsKt;
+  final double boatSpeedKt;
+
+  const PolarPoint({
+    required this.twaDeg,
+    required this.twsKt,
+    required this.boatSpeedKt,
+  });
+
+  factory PolarPoint.fromJson(Map<String, dynamic> j) => PolarPoint(
+        twaDeg: (j['twaDeg'] as num).toDouble(),
+        twsKt: (j['twsKt'] as num).toDouble(),
+        boatSpeedKt: (j['boatSpeedKt'] as num).toDouble(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'twaDeg': twaDeg,
+        'twsKt': twsKt,
+        'boatSpeedKt': boatSpeedKt,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PolarPoint &&
+          twaDeg == other.twaDeg &&
+          twsKt == other.twsKt &&
+          boatSpeedKt == other.boatSpeedKt;
+
+  @override
+  int get hashCode => Object.hash(twaDeg, twsKt, boatSpeedKt);
+}
+
+/// Parses a stored polar JSON string (`Boat.polarJson`). Malformed/empty
+/// input degrades to an empty table, never throws — an empty table means
+/// "no polar data configured" (routing/ETA falls back to flat speed).
+List<PolarPoint> parsePolarTable(String? json) {
+  if (json == null || json.isEmpty) return const [];
+  try {
+    final list = jsonDecode(json) as List;
+    return list
+        .map((e) => PolarPoint.fromJson(e as Map<String, dynamic>))
+        .toList();
+  } catch (_) {
+    return const [];
+  }
+}
+
+String encodePolarTable(List<PolarPoint> points) =>
+    jsonEncode(points.map((p) => p.toJson()).toList());
+
 class Boat {
   Boat();
 
@@ -110,6 +168,8 @@ class Boat {
   // state (a crew member may have entirely different keys configured than
   // the owner), so it never syncs at all, not even opt-in.
   String? activeLlmProvider;
+  // #236: manually-entered boat polar table — see `PolarPoint`.
+  List<PolarPoint> polar = [];
 
   LlmApiKeyEntry? get activeLlmApiKeyEntry => llmApiKeys
       .where((e) => e.provider == activeLlmProvider)
@@ -131,6 +191,9 @@ class Boat {
       ..shareCode = json['shareCode']
       ..llmApiKeys = (json['llmApiKeys'] as List? ?? const [])
           .map((e) => LlmApiKeyEntry.fromJson(e as Map<String, dynamic>))
+          .toList()
+      ..polar = (json['polar'] as List? ?? const [])
+          .map((e) => PolarPoint.fromJson(e as Map<String, dynamic>))
           .toList();
   }
 
@@ -150,6 +213,7 @@ class Boat {
     'ownerId': ownerId,
     'llmApiKeys': llmApiKeys.map((e) => e.toJson()).toList(),
     // activeLlmProvider intentionally absent — see the field's doc comment.
+    'polar': polar.map((p) => p.toJson()).toList(),
   };
 
   @override
@@ -171,7 +235,8 @@ class Boat {
           ownerId == other.ownerId &&
           shareCode == other.shareCode &&
           listEquals(llmApiKeys, other.llmApiKeys) &&
-          activeLlmProvider == other.activeLlmProvider;
+          activeLlmProvider == other.activeLlmProvider &&
+          listEquals(polar, other.polar);
 
   @override
   int get hashCode => Object.hashAll([
@@ -190,6 +255,7 @@ class Boat {
         shareCode,
         Object.hashAll(llmApiKeys),
         activeLlmProvider,
+        Object.hashAll(polar),
       ]);
 
   @override
