@@ -487,6 +487,11 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                     ),
                   ),
                   IconButton(
+                    icon: Icon(Icons.event_available, color: color),
+                    tooltip: 'Departure window planner',
+                    onPressed: () => context.push(AppRoutes.departureWindow),
+                  ),
+                  IconButton(
                     icon: Icon(
                       _locating ? Icons.hourglass_top : Icons.my_location,
                       color: color,

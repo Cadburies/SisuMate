@@ -36,6 +36,8 @@ void main() {
       expect(AppRoutes.syncStatus, startsWith('/settings'));
       expect(AppRoutes.conflicts, startsWith('/settings'));
       expect(AppRoutes.passage, startsWith('/weather'));
+      // #232.
+      expect(AppRoutes.departureWindow, startsWith('/weather'));
     });
 
     test('detail and game paths are nested under modules (NAV1)', () {
