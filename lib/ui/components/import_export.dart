@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/shopping_provider.dart';
 import '../../services/error_log_service.dart';
 import '../../services/import_service.dart';
+import 'ai_messy_import_dialog.dart';
 
 /// Result of persisting an import batch (SUG7 — show updated vs inserted).
 class ImportPersistResult {
@@ -101,6 +102,20 @@ Future<void> showImportExportSheet(
               Navigator.of(sheetContext).pop();
               if (isPro) {
                 unawaited(_runImport(context, io, ref: ref));
+              } else {
+                onProRequired();
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.auto_awesome, color: Colors.deepPurple),
+            title: const Text('Paste messy list'),
+            subtitle: const Text('AI maps pasted text/CSV to this format'),
+            trailing: isPro ? null : const Icon(Icons.lock, size: 18),
+            onTap: () {
+              Navigator.of(sheetContext).pop();
+              if (isPro) {
+                unawaited(_runAiMessyImport(context, io));
               } else {
                 onProRequired();
               }
@@ -268,6 +283,20 @@ Future<void> _runImport(
     messenger.showSnackBar(SnackBar(content: Text(result.snackbarMessage)));
   } catch (e) {
     messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
+  }
+}
+
+Future<void> _runAiMessyImport(
+  BuildContext context,
+  ModuleImportExport io,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final result = await showDialog<ImportPersistResult>(
+    context: context,
+    builder: (_) => AiMessyImportDialog(io: io),
+  );
+  if (result != null) {
+    messenger.showSnackBar(SnackBar(content: Text(result.snackbarMessage)));
   }
 }
 

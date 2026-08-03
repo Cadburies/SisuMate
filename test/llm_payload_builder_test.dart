@@ -190,6 +190,22 @@ void main() {
     expect(payload, {'freeformText': freeform});
   });
 
+  test('messyImportQuery passes the pasted text through verbatim — '
+      'intentionally not whitelist-filtered, since the text itself is the '
+      'whole payload', () {
+    const pasted = 'Fenders,4,pcs\nEngine oil,2,L';
+    final payload = LlmPayloadBuilder.messyImportQuery(pasted);
+
+    expect(payload, {'rawText': pasted});
+  });
+
+  test('messyImportQuery caps an oversized paste at 8000 chars', () {
+    final huge = 'x' * 9000;
+    final payload = LlmPayloadBuilder.messyImportQuery(huge);
+
+    expect((payload['rawText'] as String).length, 8000);
+  });
+
   test('historySnippets whitelists date/source/text only, never crew names, '
       'exact position, or photos', () {
     final payload = LlmPayloadBuilder.historySnippets(entries: [

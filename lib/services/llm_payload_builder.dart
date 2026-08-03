@@ -146,6 +146,17 @@ class LlmPayloadBuilder {
         'freeformText': freeform,
       };
 
+  /// Messy import parsing (#221): **intentionally not whitelist-filtered**,
+  /// same exception class as [parseLogEntryText] — the user's own pasted
+  /// text/CSV *is* the payload; there is no larger domain object to filter
+  /// fields out of. Capped at 8000 chars (larger than the excerpt-style
+  /// builders above since a provisioning/spares list can run long) for
+  /// token-budget reasons (BYOK), not as a privacy filter.
+  static Map<String, dynamic> messyImportQuery(String rawText) => {
+        'rawText':
+            rawText.length > 8000 ? rawText.substring(0, 8000) : rawText,
+      };
+
   /// Cross-history pattern detection (#218): free-text notes + dates only
   /// from Captain's Log and maintenance notes — never crew names
   /// (`watchCrew`/`crewOnBoard`/`doneBy`), exact position
