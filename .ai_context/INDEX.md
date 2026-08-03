@@ -6,7 +6,7 @@
 ## NEXT
 
 - **Last (claude, CLI):** shipped **#218** cross-history pattern detection. New `history_pattern_dialog.dart` — AI title-bar icon on Captain's Log (#208) reasons across *all* dated free-text notes (Captain's Log + `MaintenanceTask.notes`, 180-day lookback, capped 40 entries) for paraphrased recurring themes ("not a diagnosis" framing), via new `LlmPayloadBuilder.historySnippets` (date/source/text only — never crew names, exact position, photos). Gates on `<3` qualifying notes so it never burns BYOK tokens on a query with nothing to find. Complements rather than duplicates #216 (that's current overdue state; this is historical notes). 19 new/changed tests, suite green.
-- **Last (claudevc):** shipped **#240/#241** multi-provider basemap framework + viewport prefetch (`map_tile_providers.dart`, `map_tile_cache_service.dart`, `caching_tile_provider.dart`); weather drawer gained basemap picker/seamarks/cache controls. 13 new tests, live-verified on Android emulator.
+- **Last (claudevc):** shipped **#231** wind gusts (`wind_gusts_10m`, nullable `HourlyWeather.windGustMs`). Working a dependency-ordered weather-issues batch (#231→#229→#230→#233→#237→#232→#236→#238→#234→#239→#235); currently on **#229** (ensemble forecast ingestion). Prior: **#240/#241** multi-provider basemap framework + viewport prefetch.
 - **Shipped (claude/claudecli):** LLM line #203/#16/#17/#15/#208/#18/#215/#223/#224 (BYOK, grounded search) + #216 (maintenance risk triage) + #217 (location-aware part sourcing).
 - **Doing:** nothing claimed. #211 (multi-provider key storage UI, re-scoped), #219/#220/#221/#222 (LLM backlog from research pass) filed, unimplemented.
 - **Open game bugs:** none
