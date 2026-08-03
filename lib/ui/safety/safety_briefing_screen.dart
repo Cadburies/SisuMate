@@ -7,6 +7,7 @@ import '../components/checklist_item_tile.dart';
 import '../components/native_ad_widget.dart';
 import '../components/ad_slots.dart';
 import '../components/add_checklist_item_dialog.dart';
+import 'safety_compliance_check_dialog.dart';
 
 import '../checklists/check_page_viewer.dart';
 import '../../core/app_router.dart';
@@ -167,16 +168,48 @@ class _SafetyBriefingItemsScreenState
                     final item =
                         filteredItems[nativeAdContentIndex(i, adSlots)];
                     widgets.add(
-                      ChecklistItemTile(
-                        item: item,
-                        groupName: widget.group.title,
-                        fallbackIcon: Icons.health_and_safety,
-                        onComplete: isPro
-                            ? () => _toggleComplete(item)
-                            : _proGatedComplete,
-                        onHide: () => _toggleHide(item),
-                        onUnhide: () => _unhideItem(item),
-                        onTap: () => _openViewer(item),
+                      Stack(
+                        children: [
+                          ChecklistItemTile(
+                            item: item,
+                            groupName: widget.group.title,
+                            fallbackIcon: Icons.health_and_safety,
+                            onComplete: isPro
+                                ? () => _toggleComplete(item)
+                                : _proGatedComplete,
+                            onHide: () => _toggleHide(item),
+                            onUnhide: () => _unhideItem(item),
+                            onTap: () => _openViewer(item),
+                          ),
+                          // #226/#208: AI compliance-check badge — a
+                          // visually distinct entry point, never mixed into
+                          // the tile's offline Complete/Hide actions above.
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: Material(
+                              color: Colors.deepPurple,
+                              shape: const CircleBorder(),
+                              elevation: 2,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => showDialog(
+                                  context: context,
+                                  builder: (_) =>
+                                      const SafetyComplianceCheckDialog(),
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(6),
+                                  child: Icon(
+                                    Icons.auto_awesome,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }

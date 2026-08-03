@@ -106,6 +106,31 @@ void main() {
     expect((payload['manualExcerpt'] as String).length, 4000);
   });
 
+  test('safetyComplianceQuery carries the item description and pasted '
+      'excerpt verbatim (no domain-object whitelist applies to user-pasted '
+      'text)', () {
+    final payload = LlmPayloadBuilder.safetyComplianceQuery(
+      itemDescription: 'Offshore life raft, last serviced 2023',
+      excerptText: 'Life rafts must be serviced every 12 months.',
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('Offshore life raft, last serviced 2023'));
+    expect(encoded, contains('Life rafts must be serviced'));
+    expect(payload.keys, {'itemDescription', 'excerptText'});
+  });
+
+  test('safetyComplianceQuery caps an oversized pasted excerpt at 4000 '
+      'chars', () {
+    final huge = 'x' * 5000;
+    final payload = LlmPayloadBuilder.safetyComplianceQuery(
+      itemDescription: 'EPIRB',
+      excerptText: huge,
+    );
+
+    expect((payload['excerptText'] as String).length, 4000);
+  });
+
   test('parseLogEntryText passes the freeform text through verbatim — '
       'intentionally not whitelist-filtered, since the text itself is the '
       'whole payload', () {

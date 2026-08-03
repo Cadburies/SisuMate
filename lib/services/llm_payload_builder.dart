@@ -76,6 +76,24 @@ class LlmPayloadBuilder {
             : manualExcerpt,
       };
 
+  /// Safety equipment compliance check (#226): item description + a
+  /// user-pasted excerpt of a flare/life-raft/EPIRB/fire-extinguisher
+  /// service manual or certification card. Same shape/reasoning as
+  /// [warrantyQuery] above — no `Document` OCR/text-extraction pipeline, so
+  /// the only content sent is exactly what the user typed/pasted into the
+  /// dialog for this one query. Capped for token-budget reasons (BYOK), not
+  /// as a privacy filter.
+  static Map<String, dynamic> safetyComplianceQuery({
+    required String itemDescription,
+    required String excerptText,
+  }) =>
+      {
+        'itemDescription': itemDescription,
+        'excerptText': excerptText.length > 4000
+            ? excerptText.substring(0, 4000)
+            : excerptText,
+      };
+
   /// Freeform Captain's Log entry parsing (#220): **intentionally not
   /// whitelist-filtered** like every other builder in this file — the
   /// user's own freeform typed/dictated text *is* the payload; there is no
