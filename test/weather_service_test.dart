@@ -178,6 +178,72 @@ void main() {
       expect(roundTrip.tempC, 22.5);
       expect(roundTrip.hourly, hasLength(2));
     });
+
+    // #231: wind gusts alongside sustained wind.
+    test('fromJson maps wind_gusts_10m onto HourlyWeather.windGustMs', () {
+      final b = WeatherBundle.fromJson(
+        forecast: {
+          'hourly': {
+            'time': ['2026-07-09T12:00', '2026-07-09T13:00'],
+            'wind_speed_10m': [10.0, 11.0],
+            'wind_gusts_10m': [14.0, 18.5],
+          },
+        },
+        lat: 1,
+        lon: 2,
+        fetchedAt: DateTime(2026, 7, 9),
+        fromCache: false,
+      );
+      expect(b.hourly[0].windMs, 10.0);
+      expect(b.hourly[0].windGustMs, 14.0);
+      expect(b.hourly[1].windGustMs, 18.5);
+    });
+
+    test('fromJson leaves windGustMs null when the response has no gust '
+        'field (older cache / provider response)', () {
+      final b = WeatherBundle.fromJson(
+        forecast: {
+          'hourly': {
+            'time': ['2026-07-09T12:00'],
+            'wind_speed_10m': [10.0],
+          },
+        },
+        lat: 1,
+        lon: 2,
+        fetchedAt: DateTime(2026, 7, 9),
+        fromCache: false,
+      );
+      expect(b.hourly.single.windMs, 10.0);
+      expect(b.hourly.single.windGustMs, isNull);
+    });
+
+    test('toJson/fromStorage round-trips windGustMs, and fromStorage on '
+        'pre-#231 cached JSON (no windGustMs key) degrades to null', () {
+      final withGust = WeatherBundle.fromJson(
+        forecast: {
+          'hourly': {
+            'time': ['2026-07-09T12:00'],
+            'wind_speed_10m': [10.0],
+            'wind_gusts_10m': [16.0],
+          },
+        },
+        lat: 1,
+        lon: 2,
+        fetchedAt: DateTime(2026, 7, 9),
+        fromCache: false,
+      );
+      final roundTrip = WeatherBundle.fromStorage(withGust.toJson());
+      expect(roundTrip.hourly.single.windGustMs, 16.0);
+
+      final legacyJson = withGust.toJson();
+      (legacyJson['hourly'] as List)
+          .cast<Map<String, dynamic>>()
+          .first
+          .remove('windGustMs');
+      final legacy = WeatherBundle.fromStorage(legacyJson);
+      expect(legacy.hourly.single.windGustMs, isNull);
+      expect(legacy.hourly.single.windMs, 10.0);
+    });
   });
 
   /// TEST26 — offline / stale cache: never hang; fail only with no cache.

@@ -90,7 +90,7 @@ class WeatherService {
         'current':
             'temperature_2m,wind_speed_10m,wind_direction_10m,weather_code,relative_humidity_2m',
         'hourly':
-            'temperature_2m,wind_speed_10m,wind_direction_10m,precipitation_probability',
+            'temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation_probability',
         'daily':
             'weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum',
         // Default Open-Meteo unit is m/s — keep metric for storage; UI converts.
@@ -403,6 +403,7 @@ class WeatherBundle {
     final hTemp = (hourly['temperature_2m'] as List? ?? const []);
     final hWind = (hourly['wind_speed_10m'] as List? ?? const []);
     final hDir = (hourly['wind_direction_10m'] as List? ?? const []);
+    final hGust = (hourly['wind_gusts_10m'] as List? ?? const []);
     final hPop = (hourly['precipitation_probability'] as List? ?? const []);
 
     final hourlyOut = <HourlyWeather>[];
@@ -413,6 +414,7 @@ class WeatherBundle {
         tempC: _num(hTemp, i),
         windMs: _num(hWind, i),
         windDirDeg: _num(hDir, i),
+        windGustMs: _num(hGust, i),
         precipProb: _num(hPop, i),
       ));
     }
@@ -553,6 +555,7 @@ class HourlyWeather {
   final double? tempC;
   final double? windMs;
   final double? windDirDeg;
+  final double? windGustMs;
   final double? precipProb;
 
   const HourlyWeather({
@@ -560,6 +563,7 @@ class HourlyWeather {
     this.tempC,
     this.windMs,
     this.windDirDeg,
+    this.windGustMs,
     this.precipProb,
   });
 
@@ -568,6 +572,7 @@ class HourlyWeather {
         tempC: (j['tempC'] as num?)?.toDouble(),
         windMs: (j['windMs'] as num?)?.toDouble(),
         windDirDeg: (j['windDirDeg'] as num?)?.toDouble(),
+        windGustMs: (j['windGustMs'] as num?)?.toDouble(),
         precipProb: (j['precipProb'] as num?)?.toDouble(),
       );
 
@@ -576,6 +581,7 @@ class HourlyWeather {
         'tempC': tempC,
         'windMs': windMs,
         'windDirDeg': windDirDeg,
+        'windGustMs': windGustMs,
         'precipProb': precipProb,
       };
 }

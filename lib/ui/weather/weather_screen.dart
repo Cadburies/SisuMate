@@ -842,6 +842,9 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     final wind = h.windMs == null
         ? '-'
         : UnitConverter.formatSpeedFromMs(h.windMs!, prefs.windSpeed);
+    final gust = h.windGustMs == null
+        ? ''
+        : ' (gusting ${UnitConverter.formatSpeedFromMs(h.windGustMs!, prefs.windSpeed)})';
     final temp = h.tempC == null
         ? '-'
         : UnitConverter.formatTempC(h.tempC!, units, temp: prefs.temperature);
@@ -851,7 +854,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       title: Text(t,
           style: TextStyle(color: SisuColors.getTextPrimaryColor(isDark))),
       subtitle: Text(
-        'Wind $wind · rain ${h.precipProb?.round() ?? '-'}%',
+        'Wind $wind$gust · rain ${h.precipProb?.round() ?? '-'}%',
         style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
       ),
       trailing: Text(
