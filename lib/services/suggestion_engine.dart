@@ -77,7 +77,7 @@ class SuggestionEngine {
 
     for (final task in maintenanceTasks) {
       if (task.isHidden) continue;
-      final due = _dueInfo(task, at);
+      final due = dueInfoFor(task, at);
       if (due == null) continue;
       out.add(BoatSuggestion(
         id: 'maint_${task.supabaseId.isNotEmpty ? task.supabaseId : task.id}',
@@ -208,7 +208,7 @@ class SuggestionEngine {
 
     final overdueMaint = maintenanceTasks.where((t) {
       if (t.isHidden) return false;
-      return _dueInfo(t, at)?.overdue ?? false;
+      return dueInfoFor(t, at)?.overdue ?? false;
     }).length;
     if (overdueMaint > 0) {
       blockers.add('$overdueMaint maintenance task'
@@ -286,7 +286,10 @@ class SuggestionEngine {
     return out;
   }
 
-  _DueInfo? _dueInfo(MaintenanceTask task, DateTime at) {
+  /// Public so callers outside this engine (e.g. a maintenance-task list
+  /// screen, or the #216 risk-triage payload) can show/reason about the
+  /// same overdue definition used here, instead of re-deriving their own.
+  MaintenanceDueInfo? dueInfoFor(MaintenanceTask task, DateTime at) {
     final months = task.intervalMonths;
     final hours = task.intervalHours;
     if (months == null && hours == null) return null;
@@ -295,7 +298,7 @@ class SuggestionEngine {
     if (months != null && months > 0) {
       final last = task.lastDoneDate?.toUtc();
       if (last == null) {
-        return _DueInfo(
+        return MaintenanceDueInfo(
           overdue: true,
           detail: 'No completion date recorded — interval is every $months mo.',
         );
@@ -303,13 +306,13 @@ class SuggestionEngine {
       final dueAt = DateTime.utc(last.year, last.month + months, last.day);
       final days = dueAt.difference(at).inDays;
       if (days < 0) {
-        return _DueInfo(
+        return MaintenanceDueInfo(
           overdue: true,
           detail: 'Last done ${_fmt(last)}; overdue by ${-days} day(s).',
         );
       }
       if (days <= 14) {
-        return _DueInfo(
+        return MaintenanceDueInfo(
           overdue: false,
           detail: 'Last done ${_fmt(last)}; due in $days day(s).',
         );
@@ -319,7 +322,7 @@ class SuggestionEngine {
 
     // Engine-hour style interval without a live hour meter: only flag if never done.
     if (hours != null && hours > 0 && task.lastDoneHours == null) {
-      return _DueInfo(
+      return MaintenanceDueInfo(
         overdue: false,
         detail: 'Interval every $hours engine hours — log completion when done.',
       );
@@ -372,8 +375,8 @@ class SuggestionEngine {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
-class _DueInfo {
+class MaintenanceDueInfo {
   final bool overdue;
   final String detail;
-  const _DueInfo({required this.overdue, required this.detail});
+  const MaintenanceDueInfo({required this.overdue, required this.detail});
 }

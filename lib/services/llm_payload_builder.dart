@@ -76,6 +76,40 @@ class LlmPayloadBuilder {
             : manualExcerpt,
       };
 
+  /// Risk-prioritized maintenance triage (#216): the whole outstanding
+  /// backlog's description + interval/last-done fields only — never `notes`
+  /// (free text may contain PII) or `doneBy` (a crew member's name), same
+  /// exclusions as [maintenanceAlert] above. [asOf] is today's date so the
+  /// model reasons about "overdue by how much" against a fixed reference
+  /// point rather than its own guess at the current date. Records (not
+  /// `MaintenanceTask` itself) as the parameter shape keeps this builder
+  /// structurally incapable of leaking a field added to that model later.
+  static Map<String, dynamic> maintenanceBacklog({
+    required DateTime asOf,
+    required Iterable<
+            ({
+              String description,
+              int? intervalHours,
+              int? intervalMonths,
+              int? lastDoneHours,
+              DateTime? lastDoneDate,
+            })>
+        tasks,
+  }) =>
+      {
+        'asOfDate': asOf.toIso8601String().split('T').first,
+        'tasks': tasks
+            .map((t) => {
+                  'description': t.description,
+                  'intervalHours': ?t.intervalHours,
+                  'intervalMonths': ?t.intervalMonths,
+                  'lastDoneHours': ?t.lastDoneHours,
+                  'lastDoneDate':
+                      ?t.lastDoneDate?.toIso8601String().split('T').first,
+                })
+            .toList(),
+      };
+
   /// Passage weather safety briefing (#219): the already-fetched hourly wind
   /// + marine wave forecast window, whitelisted field-by-field rather than
   /// forwarding `WeatherBundle`/`HourlyWeather`/`HourlyMarine` — same

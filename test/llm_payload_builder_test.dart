@@ -106,6 +106,51 @@ void main() {
     expect((payload['manualExcerpt'] as String).length, 4000);
   });
 
+  test('maintenanceBacklog whitelists description/interval/last-done fields '
+      'only, never notes or doneBy (crew name)', () {
+    final payload = LlmPayloadBuilder.maintenanceBacklog(
+      asOf: DateTime.utc(2026, 8, 3),
+      tasks: [
+        (
+          description: 'Replace impeller',
+          intervalHours: 500,
+          intervalMonths: null,
+          lastDoneHours: 100,
+          lastDoneDate: DateTime.utc(2026, 1, 1),
+        ),
+      ],
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(encoded, contains('Replace impeller'));
+    expect(encoded, contains('2026-08-03'));
+    expect(payload.keys, {'asOfDate', 'tasks'});
+    final task = (payload['tasks'] as List).first as Map;
+    expect(task.keys,
+        {'description', 'intervalHours', 'lastDoneHours', 'lastDoneDate'});
+    expect(encoded, isNot(contains(poisonEmail)));
+    expect(encoded, isNot(contains(poisonPhone)));
+    expect(encoded, isNot(contains(poisonNotes)));
+  });
+
+  test('maintenanceBacklog omits null interval/last-done fields per task '
+      'rather than sending them as null', () {
+    final payload = LlmPayloadBuilder.maintenanceBacklog(
+      asOf: DateTime.utc(2026, 8, 3),
+      tasks: [
+        (
+          description: 'Check rig tension',
+          intervalHours: null,
+          intervalMonths: 12,
+          lastDoneHours: null,
+          lastDoneDate: null,
+        ),
+      ],
+    );
+    final task = (payload['tasks'] as List).first as Map;
+    expect(task.keys, {'description', 'intervalMonths'});
+  });
+
   test('passageWeatherBriefing whitelists hourly wind/marine fields only, '
       'never GPS-exact coordinates or charted depth', () {
     final payload = LlmPayloadBuilder.passageWeatherBriefing(

@@ -14,6 +14,7 @@ import '../ui/checklists/checklist_screen.dart';
 import '../ui/checklists/checklist_items_screen.dart';
 import '../ui/maintenance/maintenance_screen.dart';
 import '../ui/maintenance/maintenance_items_screen.dart';
+import '../ui/maintenance/maintenance_hours_screen.dart';
 import '../ui/logbook/logbook_screen.dart';
 import '../ui/fuel/fuel_screen.dart';
 import '../ui/inventory/inventory_screen.dart';
@@ -76,6 +77,8 @@ abstract final class AppRoutes {
   static const maintenance = '/maintenance';
   static const maintenanceItems = '/maintenance/items';
   static const maintenanceItemDetail = '/maintenance/items/detail';
+  static const maintenanceHours = '/maintenance/hours';
+  static const maintenanceHoursDetail = '/maintenance/hours/detail';
   static const logbook = '/logbook';
   static const fuel = '/fuel';
   static const fuelDetail = '/fuel/detail';
@@ -456,6 +459,19 @@ GoRouter createAppRouter() {
                 name: 'maintenanceItemDetail',
                 builder: (context, state) =>
                     _checkPageViewerBuilder(state, AppRoutes.maintenance),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'hours',
+            name: 'maintenanceHours',
+            builder: (context, state) => const MaintenanceHoursScreen(),
+            routes: [
+              GoRoute(
+                path: 'detail',
+                name: 'maintenanceHoursDetail',
+                builder: (context, state) =>
+                    _recordDetailBuilder(state, AppRoutes.maintenanceHours),
               ),
             ],
           ),

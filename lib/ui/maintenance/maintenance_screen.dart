@@ -42,6 +42,13 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
               TitleTile(
                 title: 'Maintenance',
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
+                actionsBuilder: (color) => [
+                  IconButton(
+                    icon: Icon(Icons.speed, color: color),
+                    tooltip: 'Engine Hours & Service Log',
+                    onPressed: () => context.push(AppRoutes.maintenanceHours),
+                  ),
+                ],
               ),
               MainListSearchBar(
                 controller: _searchController,
