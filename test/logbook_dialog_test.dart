@@ -44,6 +44,7 @@ Future<void> _pump(
   WidgetTester tester, {
   CaptainLogEntry? existing,
   CaptainLogEntry? previousEntry,
+  CaptainLogEntry? aiDraft,
   LocationService? locationService,
   required Future<void> Function(CaptainLogEntry) onSave,
 }) {
@@ -52,6 +53,7 @@ Future<void> _pump(
       body: AddEditCaptainLogDialog(
         existing: existing,
         previousEntry: previousEntry,
+        aiDraft: aiDraft,
         locationService: locationService,
         onSave: onSave,
       ),
@@ -121,6 +123,53 @@ void main() {
       expect(saved!.supabaseId, 'log_existing');
       expect(saved!.notes, 'Night watch');
       expect(saved!.crewOnBoard, ['Alex', 'Sam']);
+    });
+
+    testWidgets(
+        '#220: an AI-parsed draft pre-fills weather/wind/notes for review, '
+        'and nothing is auto-saved until the user taps Save', (tester) async {
+      final draft = CaptainLogEntry()
+        ..notes = 'saw dolphins, engine ran rough at first'
+        ..weather = 'Sunny'
+        ..windSpeedKt = 12
+        ..windDir = 'SW';
+
+      CaptainLogEntry? saved;
+      await _pump(tester, aiDraft: draft, onSave: (e) async => saved = e);
+
+      expect(find.text('saw dolphins, engine ran rough at first'),
+          findsOneWidget);
+      expect(find.text('Sunny'), findsOneWidget);
+      expect(saved, isNull,
+          reason: 'the draft must not be saved just by opening the form');
+
+      await tester.tap(find.text('Save'));
+      await tester.pump();
+
+      expect(saved, isNotNull);
+      expect(saved!.notes, 'saw dolphins, engine ran rough at first');
+      expect(saved!.weather, 'Sunny');
+      expect(saved!.windSpeedKt, 12);
+      expect(saved!.windDir, 'SW');
+    });
+
+    testWidgets(
+        '#220: an aiDraft is ignored when editing an existing entry — '
+        'existing values win', (tester) async {
+      final existing = CaptainLogEntry()
+        ..supabaseId = 'log_existing'
+        ..notes = 'Night watch'
+        ..weather = 'Overcast';
+      final draft = CaptainLogEntry()
+        ..notes = 'should not appear'
+        ..weather = 'should not appear either';
+
+      await _pump(tester,
+          existing: existing, aiDraft: draft, onSave: (_) async {});
+
+      expect(find.text('Night watch'), findsOneWidget);
+      expect(find.text('Overcast'), findsOneWidget);
+      expect(find.text('should not appear'), findsNothing);
     });
 
     testWidgets('saves the new #213 fields (SOG/COG/pressure/sea state/'

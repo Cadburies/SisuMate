@@ -76,6 +76,23 @@ class LlmPayloadBuilder {
             : manualExcerpt,
       };
 
+  /// Freeform Captain's Log entry parsing (#220): **intentionally not
+  /// whitelist-filtered** like every other builder in this file — the
+  /// user's own freeform typed/dictated text *is* the payload; there is no
+  /// larger domain object to filter fields out of, so there is nothing to
+  /// whitelist against. This is a deliberate exception to the class-level
+  /// discipline documented above, not an oversight.
+  ///
+  /// Boundary this exception does NOT extend past: never forward this raw
+  /// text into any *other* LLM feature's payload (e.g. #218's cross-history
+  /// pattern detection) without the user separately opting in for that
+  /// specific feature — freeform log prose can carry crew names, exact
+  /// plans, or health notes the user typed for this one entry, not for a
+  /// different downstream AI call to reason over.
+  static Map<String, dynamic> parseLogEntryText(String freeform) => {
+        'freeformText': freeform,
+      };
+
   /// Cross-history pattern detection (#218): free-text notes + dates only
   /// from Captain's Log and maintenance notes — never crew names
   /// (`watchCrew`/`crewOnBoard`/`doneBy`), exact position

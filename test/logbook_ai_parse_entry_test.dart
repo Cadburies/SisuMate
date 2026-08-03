@@ -6,13 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sisu_mate/core/di.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/services/revenuecat_service.dart';
-import 'package:sisu_mate/ui/logbook/history_pattern_dialog.dart';
+import 'package:sisu_mate/ui/logbook/ai_log_entry_parse_dialog.dart';
 import 'package:sisu_mate/ui/logbook/logbook_screen.dart';
 
 import 'test_helpers/platform_mocks.dart';
 
-/// #218 / #208: the AI entry point on Captain's Log must be its own
-/// distinct icon, not blended into the log list's own actions.
+/// #220 / #208: the AI-assisted "parse from freeform text" FAB must be
+/// distinct from the normal offline "Add Entry" FAB, never blended into it.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
@@ -56,22 +56,37 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('the AI badge renders on the title bar', (tester) async {
-    await pumpScreen(tester);
-
-    // #220 also adds an auto_awesome FAB to this screen, so disambiguate
-    // by tooltip rather than icon alone.
-    expect(find.byTooltip('AI: Find recurring issues'), findsOneWidget);
-  });
-
-  testWidgets('tapping the AI badge opens the history pattern dialog',
+  testWidgets('both the AI-parse and normal add FABs render, distinctly',
       (tester) async {
     await pumpScreen(tester);
 
-    await tester.tap(find.byTooltip('AI: Find recurring issues'));
+    // #218 also puts an auto_awesome icon in the title bar, so disambiguate
+    // by widget type rather than icon alone.
+    expect(find.widgetWithIcon(FloatingActionButton, Icons.auto_awesome),
+        findsOneWidget);
+    expect(find.widgetWithIcon(FloatingActionButton, Icons.add),
+        findsOneWidget);
+  });
+
+  testWidgets('tapping the AI FAB opens the freeform parse dialog first, '
+      'not the normal entry form', (tester) async {
+    await pumpScreen(tester);
+
+    await tester.tap(find.byTooltip('AI: Parse freeform entry'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(HistoryPatternDialog), findsOneWidget);
-    expect(find.text('AI: Recurring Issues'), findsOneWidget);
+    expect(find.byType(AiLogEntryParseDialog), findsOneWidget);
+    expect(find.text('New Log Entry'), findsNothing);
+  });
+
+  testWidgets('the normal add FAB still opens the plain entry form directly',
+      (tester) async {
+    await pumpScreen(tester);
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New Log Entry'), findsOneWidget);
+    expect(find.byType(AiLogEntryParseDialog), findsNothing);
   });
 }

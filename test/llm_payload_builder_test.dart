@@ -106,6 +106,16 @@ void main() {
     expect((payload['manualExcerpt'] as String).length, 4000);
   });
 
+  test('parseLogEntryText passes the freeform text through verbatim — '
+      'intentionally not whitelist-filtered, since the text itself is the '
+      'whole payload', () {
+    const freeform = 'motored out past the point around 0800, 12kt SW '
+        'breeze, saw dolphins, engine ran a bit rough at first';
+    final payload = LlmPayloadBuilder.parseLogEntryText(freeform);
+
+    expect(payload, {'freeformText': freeform});
+  });
+
   test('historySnippets whitelists date/source/text only, never crew names, '
       'exact position, or photos', () {
     final payload = LlmPayloadBuilder.historySnippets(entries: [

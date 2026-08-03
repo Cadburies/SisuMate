@@ -10,6 +10,7 @@ import '../../models/models.dart';
 import '../../services/location_service.dart';
 import '../../services/revenuecat_service.dart';
 import 'history_pattern_dialog.dart';
+import 'ai_log_entry_parse_dialog.dart';
 
 final captainLogsProvider = StreamProvider<List<CaptainLogEntry>>((ref) {
   final repository = ref.watch(captainLogRepositoryProvider);
@@ -158,16 +159,40 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          final isPro = ref.read(isProProvider).value ?? false;
-          if (isPro) {
-            _showAddEditDialog(context);
-          } else {
-            _showProRequiredDialog(context);
-          }
-        },
-        child: const Icon(Icons.add),
+      // #220/#208: the AI-assisted "parse from freeform text" entry point is
+      // a distinct purple FAB next to the normal offline "Add Entry" FAB,
+      // never blended into it.
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: 'logbookAiParseFab',
+            backgroundColor: Colors.deepPurple,
+            tooltip: 'AI: Parse freeform entry',
+            onPressed: () {
+              final isPro = ref.read(isProProvider).value ?? false;
+              if (isPro) {
+                _showAiParseDialog(context);
+              } else {
+                _showProRequiredDialog(context);
+              }
+            },
+            child: const Icon(Icons.auto_awesome),
+          ),
+          const SizedBox(width: 12),
+          FloatingActionButton(
+            heroTag: 'logbookAddFab',
+            onPressed: () {
+              final isPro = ref.read(isProProvider).value ?? false;
+              if (isPro) {
+                _showAddEditDialog(context);
+              } else {
+                _showProRequiredDialog(context);
+              }
+            },
+            child: const Icon(Icons.add),
+          ),
+        ],
       ),
       endDrawer: _buildEndDrawer(),
     );
@@ -196,7 +221,21 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
     );
   }
 
-  void _showAddEditDialog(BuildContext context, {CaptainLogEntry? existing}) {
+  /// #220: opens the freeform-text-first dialog; on a successful parse,
+  /// feeds the result into the normal add/edit form as a review-before-save
+  /// draft (never auto-saves).
+  Future<void> _showAiParseDialog(BuildContext context) async {
+    final draft = await showDialog<CaptainLogEntry>(
+      context: context,
+      builder: (_) => const AiLogEntryParseDialog(),
+    );
+    if (draft != null && context.mounted) {
+      _showAddEditDialog(context, aiDraft: draft);
+    }
+  }
+
+  void _showAddEditDialog(BuildContext context,
+      {CaptainLogEntry? existing, CaptainLogEntry? aiDraft}) {
     final messenger = ScaffoldMessenger.of(context);
     // Carry-forward source: the most recent entry, only relevant when adding
     // a new one — never for edit (existing already has its own values).
@@ -207,6 +246,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
       builder: (_) => AddEditCaptainLogDialog(
         existing: existing,
         previousEntry: previousEntry,
+        aiDraft: aiDraft,
         onSave: (entry) async {
           final repo = ref.read(captainLogRepositoryProvider);
           if (existing == null) {
@@ -368,6 +408,13 @@ class AddEditCaptainLogDialog extends StatefulWidget {
   final CaptainLogEntry? previousEntry;
   final Future<void> Function(CaptainLogEntry entry) onSave;
   final LocationService? locationService;
+  /// #220: AI-parsed field draft from a freeform entry, only relevant when
+  /// adding a new entry (never for edit — `existing` already has its own
+  /// values). Distinct from [previousEntry] (crew carry-forward) — this
+  /// pre-fills weather/wind/notes instead. The user still reviews/edits
+  /// every field here before Save; nothing from the AI parse is committed
+  /// on its own.
+  final CaptainLogEntry? aiDraft;
 
   const AddEditCaptainLogDialog({
     super.key,
@@ -375,6 +422,7 @@ class AddEditCaptainLogDialog extends StatefulWidget {
     this.previousEntry,
     required this.onSave,
     this.locationService,
+    this.aiDraft,
   });
 
   @override
@@ -408,11 +456,12 @@ class _AddEditCaptainLogDialogState extends State<AddEditCaptainLogDialog> {
     super.initState();
     final e = widget.existing;
     final prev = widget.previousEntry;
-    _notesCtrl = TextEditingController(text: e?.notes ?? '');
-    _weatherCtrl = TextEditingController(text: e?.weather ?? '');
-    _windSpeedCtrl =
-        TextEditingController(text: e?.windSpeedKt?.toString() ?? '');
-    _windDirCtrl = TextEditingController(text: e?.windDir ?? '');
+    final ai = widget.aiDraft;
+    _notesCtrl = TextEditingController(text: e?.notes ?? ai?.notes ?? '');
+    _weatherCtrl = TextEditingController(text: e?.weather ?? ai?.weather ?? '');
+    _windSpeedCtrl = TextEditingController(
+        text: e?.windSpeedKt?.toString() ?? ai?.windSpeedKt?.toString() ?? '');
+    _windDirCtrl = TextEditingController(text: e?.windDir ?? ai?.windDir ?? '');
     _latCtrl = TextEditingController(text: e?.positionLat?.toString() ?? '');
     _lngCtrl = TextEditingController(text: e?.positionLng?.toString() ?? '');
     _sogCtrl = TextEditingController(text: e?.sogKt?.toString() ?? '');
