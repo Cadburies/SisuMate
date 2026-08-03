@@ -62,4 +62,25 @@ void main() {
         reason: 'fetchMultiModel must only be called from the explicit '
             'compare action, never from _load()/_restoreAndLoad');
   });
+
+  test('#234: tide/current is user-triggered (station list fetch is '
+      'expensive) and degrades gracefully with no coverage', () {
+    final source = File(
+      '${Directory.current.path}/lib/ui/weather/weather_screen.dart',
+    ).readAsStringSync();
+
+    expect(source.contains('onPressed: _loadingTide ? null : _loadTideAndCurrent'),
+        isTrue,
+        reason: 'the "Load" tide/current button must call the on-demand action');
+    expect(source.contains('No tide station within range'), isTrue,
+        reason: 'no nearby station must show a clear message, not silence '
+            'or a crash');
+    expect(source.contains('No current station within range'), isTrue);
+
+    final tideStationCalls =
+        RegExp(r'\.fetchTideStations\(').allMatches(source).length;
+    expect(tideStationCalls, 1,
+        reason: 'fetchTideStations must only be called from the explicit '
+            'load action, never from _load()/_restoreAndLoad');
+  });
 }

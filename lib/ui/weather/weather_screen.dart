@@ -15,6 +15,7 @@ import '../../services/error_log_service.dart';
 import '../../services/location_service.dart';
 import '../../services/map_tile_cache_service.dart';
 import '../../services/map_tile_providers.dart';
+import '../../services/tide_service.dart';
 import '../../services/weather_service.dart';
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
@@ -64,6 +65,15 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   // #233: multi-model comparison is strictly user-triggered (see
   // _compareModels) — never fetched alongside the regular _load().
   bool _comparingModels = false;
+  // #234: tide/current predictions — user-triggered (see _loadTideAndCurrent),
+  // since the first call fetches a multi-MB NOAA station list.
+  final _tideService = TideService();
+  TideStation? _tideStation;
+  List<TidePrediction> _tidePredictions = const [];
+  TideStation? _currentStation;
+  List<CurrentPrediction> _currentPredictions = const [];
+  bool _loadingTide = false;
+  bool _tideLoadAttempted = false;
   bool _loading = false;
   bool _locating = false;
   bool _searching = false;
@@ -247,6 +257,45 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       context: context,
       builder: (_) => _ModelComparisonDialog(bundle: bundle, speedUnit: prefs.windSpeed),
     );
+  }
+
+  /// #234: nearest NOAA tide/current stations + their predictions — the
+  /// first call fetches a multi-MB station list (cached ~30 days after),
+  /// so this is strictly user-triggered, never part of the regular _load().
+  /// No coverage nearby degrades to "no data" (empty station), not an
+  /// error — matches the acceptance criterion.
+  Future<void> _loadTideAndCurrent() async {
+    final lat = double.tryParse(_latCtrl.text.trim());
+    final lon = double.tryParse(_lonCtrl.text.trim());
+    if (lat == null || lon == null) return;
+    setState(() {
+      _loadingTide = true;
+      _tideLoadAttempted = true;
+    });
+    try {
+      final tideStations = await _tideService.fetchTideStations();
+      final tideStation = nearestStation(tideStations, lat, lon);
+      final tidePredictions = tideStation == null
+          ? const <TidePrediction>[]
+          : await _tideService.fetchTidePredictions(stationId: tideStation.id);
+
+      final currentStations = await _tideService.fetchCurrentStations();
+      final currentStation = nearestStation(currentStations, lat, lon);
+      final currentPredictions = currentStation == null
+          ? const <CurrentPrediction>[]
+          : await _tideService.fetchCurrentPredictions(
+              stationId: currentStation.id);
+
+      if (!mounted) return;
+      setState(() {
+        _tideStation = tideStation;
+        _tidePredictions = tidePredictions;
+        _currentStation = currentStation;
+        _currentPredictions = currentPredictions;
+      });
+    } finally {
+      if (mounted) setState(() => _loadingTide = false);
+    }
   }
 
   Future<void> _searchPlaces() async {
@@ -619,6 +668,25 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                         _sectionTitle('Waves (next hours)', isDark),
                         ...b.marine.take(8).map((m) => _marineRow(m, isDark)),
                       ],
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _sectionTitle('Tide & current (US/territories)', isDark),
+                          TextButton.icon(
+                            onPressed: _loadingTide ? null : _loadTideAndCurrent,
+                            icon: _loadingTide
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.waves, size: 18),
+                            label: const Text('Load'),
+                          ),
+                        ],
+                      ),
+                      ..._tideAndCurrentSection(isDark),
                     ],
                   ],
                 ),
@@ -999,6 +1067,73 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       subtitle: Text(
         'Hs $hs · period ${m.wavePeriodS?.round() ?? '-'} s'
         '${m.waveDirDeg != null ? ' · dir ${m.waveDirDeg!.round()} deg' : ''}',
+        style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
+      ),
+    );
+  }
+
+  /// #234: tide/current rows, or a clear "not loaded yet" / "no nearby
+  /// station" message — never silently blank with no explanation.
+  List<Widget> _tideAndCurrentSection(bool isDark) {
+    if (!_tideLoadAttempted) {
+      return [
+        Text('Tap Load for the nearest NOAA tide/current station '
+            '(US/territories coverage only).',
+            style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark))),
+      ];
+    }
+    final widgets = <Widget>[];
+    if (_tideStation == null) {
+      widgets.add(Text('No tide station within range of this location.',
+          style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark))));
+    } else {
+      widgets.add(Text(_tideStation!.name,
+          style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: SisuColors.getTextPrimaryColor(isDark))));
+      widgets.addAll(
+          _tidePredictions.take(6).map((p) => _tideRow(p, isDark)));
+    }
+    widgets.add(const SizedBox(height: 8));
+    if (_currentStation == null) {
+      widgets.add(Text('No current station within range of this location.',
+          style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark))));
+    } else {
+      widgets.add(Text(_currentStation!.name,
+          style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: SisuColors.getTextPrimaryColor(isDark))));
+      widgets.addAll(
+          _currentPredictions.take(6).map((p) => _currentRow(p, isDark)));
+    }
+    return widgets;
+  }
+
+  Widget _tideRow(TidePrediction p, bool isDark) {
+    final t =
+        '${p.time.hour.toString().padLeft(2, '0')}:${p.time.minute.toString().padLeft(2, '0')}';
+    final label = p.type == 'H' ? 'High' : 'Low';
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(t,
+          style: TextStyle(color: SisuColors.getTextPrimaryColor(isDark))),
+      subtitle: Text('$label tide · ${p.heightFt.toStringAsFixed(1)} ft',
+          style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark))),
+    );
+  }
+
+  Widget _currentRow(CurrentPrediction p, bool isDark) {
+    final t =
+        '${p.time.hour.toString().padLeft(2, '0')}:${p.time.minute.toString().padLeft(2, '0')}';
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(t,
+          style: TextStyle(color: SisuColors.getTextPrimaryColor(isDark))),
+      subtitle: Text(
+        '${p.type[0].toUpperCase()}${p.type.substring(1)}'
+        '${p.velocityKt == 0 ? '' : ' · ${p.velocityKt.abs().toStringAsFixed(1)} kt'}',
         style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
       ),
     );
