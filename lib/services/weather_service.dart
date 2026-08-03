@@ -64,6 +64,9 @@ class WeatherService {
   static const _favoritesKey = 'weather_named_locations_v1';
   /// Per-request network timeout (TEST26 — no multi-minute hangs).
   static const networkTimeout = Duration(seconds: 12);
+  /// #229: ensemble forecast (wind confidence/spread).
+  static const _ensembleCacheKey = 'weather_ensemble_cache_v1';
+  static const defaultEnsembleModel = 'gfs_seamless';
 
   /// True when [fetchedAt] is within [cacheMaxAge] of [now].
   static bool isCacheFresh(DateTime fetchedAt, {DateTime? now}) {
@@ -300,6 +303,69 @@ class WeatherService {
     );
     await saveNamedLocations(list);
     return list;
+  }
+
+  /// #229: ensemble forecast wind confidence/spread — best-effort, same
+  /// enrichment pattern as [reverseGeocode]/[fetchWaterDepthM]: a failure
+  /// here never blocks the main forecast, returns null instead of throwing.
+  /// No marine/wave ensemble variant exists on Open-Meteo — wind-only.
+  Future<EnsembleBundle?> fetchEnsemble({
+    required double lat,
+    required double lon,
+    String model = defaultEnsembleModel,
+    http.Client? client,
+  }) async {
+    final c = client ?? http.Client();
+    try {
+      final uri = Uri.https('ensemble-api.open-meteo.com', '/v1/ensemble', {
+        'latitude': lat.toStringAsFixed(4),
+        'longitude': lon.toStringAsFixed(4),
+        'hourly': 'wind_speed_10m',
+        'models': model,
+        'windspeed_unit': 'ms',
+        'timezone': 'auto',
+        'forecast_days': '3',
+      });
+      final res = await c.get(uri).timeout(networkTimeout);
+      if (res.statusCode != 200) return loadEnsembleCache();
+      final bundle = parseEnsembleJson(
+        res.body,
+        lat: lat,
+        lon: lon,
+        fetchedAt: DateTime.now(),
+        model: model,
+      );
+      await _saveEnsembleCache(bundle);
+      return bundle;
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'ensemble fetch failed: $e',
+        context: 'weather_service: fetchEnsemble',
+      ));
+      return loadEnsembleCache();
+    } finally {
+      if (client == null) c.close();
+    }
+  }
+
+  Future<void> _saveEnsembleCache(EnsembleBundle b) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_ensembleCacheKey, jsonEncode(b.toJson()));
+  }
+
+  Future<EnsembleBundle?> loadEnsembleCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_ensembleCacheKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return EnsembleBundle.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'stored ensemble cache failed to parse: $e',
+        context: 'weather_service: loadEnsembleCache',
+      ));
+      return null;
+    }
   }
 
   Future<void> _saveCache(WeatherBundle b) async {
@@ -651,6 +717,145 @@ class HourlyMarine {
         'waveDirDeg': waveDirDeg,
         'wavePeriodS': wavePeriodS,
       };
+}
+
+/// #229: how tightly ensemble members agree for a given hour — derived from
+/// (max-min)/median wind speed spread, not a raw per-member dump.
+enum EnsembleConfidence { high, medium, low }
+
+class EnsembleHourly {
+  final DateTime time;
+  final double? windSpeedMinMs;
+  final double? windSpeedMedianMs;
+  final double? windSpeedMaxMs;
+  final EnsembleConfidence? confidence;
+
+  const EnsembleHourly({
+    required this.time,
+    this.windSpeedMinMs,
+    this.windSpeedMedianMs,
+    this.windSpeedMaxMs,
+    this.confidence,
+  });
+
+  /// Reduces raw per-member wind speeds (m/s) to a min/median/max band plus
+  /// a simple confidence label — tight clustering (<=30% spread of the
+  /// median) reads as high agreement, wide spread (>60%) as low.
+  factory EnsembleHourly.fromMembers({
+    required DateTime time,
+    required List<double> memberWindSpeedsMs,
+  }) {
+    if (memberWindSpeedsMs.isEmpty) return EnsembleHourly(time: time);
+    final sorted = [...memberWindSpeedsMs]..sort();
+    final min = sorted.first;
+    final max = sorted.last;
+    final mid = sorted.length ~/ 2;
+    final median = sorted.length.isOdd
+        ? sorted[mid]
+        : (sorted[mid - 1] + sorted[mid]) / 2;
+    final spreadRatio = median > 0.5 ? (max - min) / median : (max - min);
+    final confidence = spreadRatio <= 0.3
+        ? EnsembleConfidence.high
+        : (spreadRatio <= 0.6 ? EnsembleConfidence.medium : EnsembleConfidence.low);
+    return EnsembleHourly(
+      time: time,
+      windSpeedMinMs: min,
+      windSpeedMedianMs: median,
+      windSpeedMaxMs: max,
+      confidence: confidence,
+    );
+  }
+
+  factory EnsembleHourly.fromJson(Map<String, dynamic> j) => EnsembleHourly(
+        time: DateTime.parse(j['time'] as String),
+        windSpeedMinMs: (j['windSpeedMinMs'] as num?)?.toDouble(),
+        windSpeedMedianMs: (j['windSpeedMedianMs'] as num?)?.toDouble(),
+        windSpeedMaxMs: (j['windSpeedMaxMs'] as num?)?.toDouble(),
+        confidence: j['confidence'] == null
+            ? null
+            : EnsembleConfidence.values.byName(j['confidence'] as String),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'time': time.toIso8601String(),
+        'windSpeedMinMs': windSpeedMinMs,
+        'windSpeedMedianMs': windSpeedMedianMs,
+        'windSpeedMaxMs': windSpeedMaxMs,
+        if (confidence != null) 'confidence': confidence!.name,
+      };
+}
+
+class EnsembleBundle {
+  final double lat;
+  final double lon;
+  final DateTime fetchedAt;
+  final String model;
+  final List<EnsembleHourly> hourly;
+
+  const EnsembleBundle({
+    required this.lat,
+    required this.lon,
+    required this.fetchedAt,
+    required this.model,
+    this.hourly = const [],
+  });
+
+  factory EnsembleBundle.fromJson(Map<String, dynamic> j) => EnsembleBundle(
+        lat: (j['lat'] as num).toDouble(),
+        lon: (j['lon'] as num).toDouble(),
+        fetchedAt: DateTime.parse(j['fetchedAt'] as String),
+        model: j['model'] as String? ?? WeatherService.defaultEnsembleModel,
+        hourly: (j['hourly'] as List? ?? const [])
+            .map((e) => EnsembleHourly.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'lat': lat,
+        'lon': lon,
+        'fetchedAt': fetchedAt.toIso8601String(),
+        'model': model,
+        'hourly': hourly.map((e) => e.toJson()).toList(),
+      };
+}
+
+/// Parses an Open-Meteo Ensemble API response (`/v1/ensemble`). Per-member
+/// keys are `<var>_memberNN` (2-digit; e.g. `wind_speed_10m_member01`) —
+/// confirmed against a live response, not assumed from docs — with the
+/// unsuffixed key holding the control run. Reduced to min/median/max bands
+/// per hour rather than kept raw; see [EnsembleHourly.fromMembers].
+EnsembleBundle parseEnsembleJson(
+  String body, {
+  required double lat,
+  required double lon,
+  required DateTime fetchedAt,
+  required String model,
+}) {
+  final map = jsonDecode(body) as Map<String, dynamic>;
+  final hourly = map['hourly'] as Map<String, dynamic>? ?? {};
+  final times = (hourly['time'] as List? ?? const []).cast<String>();
+  final memberKeys = hourly.keys
+      .where((k) => k.startsWith('wind_speed_10m_member'))
+      .toList()
+    ..sort();
+
+  final out = <EnsembleHourly>[];
+  final limit = times.length.clamp(0, 24);
+  for (var i = 0; i < limit; i++) {
+    final members = <double>[];
+    for (final key in memberKeys) {
+      final list = hourly[key] as List? ?? const [];
+      if (i < list.length && list[i] is num) {
+        members.add((list[i] as num).toDouble());
+      }
+    }
+    out.add(EnsembleHourly.fromMembers(
+      time: DateTime.tryParse(times[i]) ?? DateTime.now(),
+      memberWindSpeedsMs: members,
+    ));
+  }
+
+  return EnsembleBundle(lat: lat, lon: lon, fetchedAt: fetchedAt, model: model, hourly: out);
 }
 
 /// Great-circle distance in nautical miles (S3 passage planning).

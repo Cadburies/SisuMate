@@ -393,4 +393,156 @@ void main() {
       expect(capturedUri!.queryParameters['windspeed_unit'], 'ms');
     });
   });
+
+  // #229: ensemble forecast ingestion + confidence/spread.
+  group('EnsembleBundle / parseEnsembleJson', () {
+    test('fromMembers: tight clustering reads as high confidence', () {
+      final h = EnsembleHourly.fromMembers(
+        time: DateTime(2026, 7, 9, 12),
+        memberWindSpeedsMs: [10.0, 10.5, 10.2, 9.8, 10.1],
+      );
+      expect(h.windSpeedMinMs, 9.8);
+      expect(h.windSpeedMaxMs, 10.5);
+      expect(h.confidence, EnsembleConfidence.high);
+    });
+
+    test('fromMembers: wide spread reads as low confidence', () {
+      final h = EnsembleHourly.fromMembers(
+        time: DateTime(2026, 7, 9, 12),
+        memberWindSpeedsMs: [5.0, 20.0, 12.0, 8.0, 25.0],
+      );
+      expect(h.confidence, EnsembleConfidence.low);
+    });
+
+    test('fromMembers: no members yields no band/confidence, not an error',
+        () {
+      final h = EnsembleHourly.fromMembers(
+        time: DateTime(2026, 7, 9, 12),
+        memberWindSpeedsMs: const [],
+      );
+      expect(h.windSpeedMedianMs, isNull);
+      expect(h.confidence, isNull);
+    });
+
+    test('parseEnsembleJson maps wind_speed_10m_memberNN keys to per-hour '
+        'bands (real Open-Meteo Ensemble API response shape)', () {
+      // Shape confirmed live against ensemble-api.open-meteo.com/v1/ensemble
+      // (models=gfs_seamless) before implementing — per-member keys are
+      // 2-digit-suffixed, unsuffixed key is the control run.
+      final body = jsonEncode({
+        'hourly': {
+          'time': ['2026-07-09T12:00', '2026-07-09T13:00'],
+          'wind_speed_10m': [10.0, 11.0],
+          'wind_speed_10m_member01': [9.0, 10.0],
+          'wind_speed_10m_member02': [11.0, 12.0],
+          'wind_speed_10m_member03': [10.0, 11.5],
+        },
+      });
+      final bundle = parseEnsembleJson(
+        body,
+        lat: 1,
+        lon: 2,
+        fetchedAt: DateTime(2026, 7, 9),
+        model: 'gfs_seamless',
+      );
+      expect(bundle.hourly, hasLength(2));
+      expect(bundle.hourly[0].windSpeedMinMs, 9.0);
+      expect(bundle.hourly[0].windSpeedMaxMs, 11.0);
+      expect(bundle.hourly[0].windSpeedMedianMs, 10.0);
+      expect(bundle.hourly[1].windSpeedMinMs, 10.0);
+      expect(bundle.hourly[1].windSpeedMaxMs, 12.0);
+    });
+
+    test('EnsembleBundle toJson/fromJson round-trips', () {
+      final bundle = parseEnsembleJson(
+        jsonEncode({
+          'hourly': {
+            'time': ['2026-07-09T12:00'],
+            'wind_speed_10m_member01': [9.0],
+            'wind_speed_10m_member02': [11.0],
+          },
+        }),
+        lat: 1,
+        lon: 2,
+        fetchedAt: DateTime(2026, 7, 9),
+        model: 'gfs_seamless',
+      );
+      final roundTrip = EnsembleBundle.fromJson(bundle.toJson());
+      expect(roundTrip.model, 'gfs_seamless');
+      expect(roundTrip.hourly.single.windSpeedMedianMs,
+          bundle.hourly.single.windSpeedMedianMs);
+      expect(roundTrip.hourly.single.confidence,
+          bundle.hourly.single.confidence);
+    });
+  });
+
+  group('WeatherService.fetchEnsemble (#229, TEST26 discipline)', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('requests windspeed_unit=ms and the given model', () async {
+      Uri? capturedUri;
+      final client = MockClient((request) async {
+        capturedUri = request.url;
+        return http.Response(
+          jsonEncode({
+            'hourly': {
+              'time': ['2026-07-09T12:00'],
+              'wind_speed_10m_member01': [9.0],
+            },
+          }),
+          200,
+        );
+      });
+
+      final bundle = await WeatherService()
+          .fetchEnsemble(lat: 1, lon: 2, client: client);
+
+      expect(bundle, isNotNull);
+      expect(capturedUri!.host, 'ensemble-api.open-meteo.com');
+      expect(capturedUri!.queryParameters['windspeed_unit'], 'ms');
+      expect(capturedUri!.queryParameters['models'],
+          WeatherService.defaultEnsembleModel);
+    });
+
+    test('network failure falls back to cache instead of throwing',
+        () async {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = EnsembleBundle(
+        lat: 1,
+        lon: 2,
+        fetchedAt: DateTime(2026, 7, 9),
+        model: 'gfs_seamless',
+        hourly: [
+          EnsembleHourly.fromMembers(
+            time: DateTime(2026, 7, 9, 12),
+            memberWindSpeedsMs: [10.0, 10.5],
+          ),
+        ],
+      );
+      await prefs.setString(
+          'weather_ensemble_cache_v1', jsonEncode(cached.toJson()));
+
+      final client = MockClient((request) async {
+        throw Exception('offline');
+      });
+
+      final bundle = await WeatherService()
+          .fetchEnsemble(lat: 1, lon: 2, client: client);
+      expect(bundle, isNotNull);
+      expect(bundle!.hourly.single.windSpeedMedianMs,
+          cached.hourly.single.windSpeedMedianMs);
+    });
+
+    test('network failure with no cache returns null, never throws',
+        () async {
+      final client = MockClient((request) async {
+        throw Exception('offline');
+      });
+      final bundle = await WeatherService()
+          .fetchEnsemble(lat: 1, lon: 2, client: client);
+      expect(bundle, isNull);
+    });
+  });
 }

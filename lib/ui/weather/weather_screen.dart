@@ -57,6 +57,10 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   bool _prefetching = false;
   String? _cacheFolderOverride;
   WeatherBundle? _bundle;
+  // #229: ensemble forecast confidence/spread — fetched alongside the main
+  // bundle (same trigger, not a second background poll); best-effort, so a
+  // null value here just means no confidence badge shows, never an error.
+  EnsembleBundle? _ensembleBundle;
   bool _loading = false;
   bool _locating = false;
   bool _searching = false;
@@ -112,9 +116,11 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       await _useDeviceLocation(silent: true);
     }
     final cached = await _service.loadCache();
+    final cachedEnsemble = await _service.loadEnsembleCache();
     if (cached != null && mounted) {
       setState(() {
         _bundle = cached;
+        _ensembleBundle = cachedEnsemble;
         _placeName = cached.placeName ?? _placeName;
       });
     }
@@ -191,14 +197,16 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       if (nameHint != null && nameHint.isNotEmpty) {
         await prefs.setString('weather_place_name', nameHint);
       }
-      final b = await _service.fetch(
-        lat: lat,
-        lon: lon,
-        placeName: nameHint,
-      );
+      final results = await Future.wait([
+        _service.fetch(lat: lat, lon: lon, placeName: nameHint),
+        _service.fetchEnsemble(lat: lat, lon: lon),
+      ]);
+      final b = results[0] as WeatherBundle;
+      final ensemble = results[1] as EnsembleBundle?;
       if (!mounted) return;
       setState(() {
         _bundle = b;
+        _ensembleBundle = ensemble;
         _placeName = b.placeName ?? nameHint;
         _loading = false;
       });
@@ -834,6 +842,26 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         ),
       );
 
+  /// #229: matches by hour (not exact timestamp) since the ensemble and
+  /// main forecast are two separate requests with their own time grids.
+  EnsembleConfidence? _ensembleConfidenceForHour(DateTime t) {
+    for (final e in _ensembleBundle?.hourly ?? const <EnsembleHourly>[]) {
+      if (e.time.year == t.year &&
+          e.time.month == t.month &&
+          e.time.day == t.day &&
+          e.time.hour == t.hour) {
+        return e.confidence;
+      }
+    }
+    return null;
+  }
+
+  String _confidenceLabel(EnsembleConfidence c) => switch (c) {
+        EnsembleConfidence.high => 'models agree',
+        EnsembleConfidence.medium => 'some model spread',
+        EnsembleConfidence.low => 'models disagree',
+      };
+
   Widget _hourRow(HourlyWeather h, bool isDark) {
     final prefs = ref.watch(unitPrefsProvider);
     final units = prefs.volumeSystem;
@@ -848,13 +876,16 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     final temp = h.tempC == null
         ? '-'
         : UnitConverter.formatTempC(h.tempC!, units, temp: prefs.temperature);
+    final confidence = _ensembleConfidenceForHour(h.time);
+    final confidenceText =
+        confidence == null ? '' : ' · ${_confidenceLabel(confidence)}';
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
       title: Text(t,
           style: TextStyle(color: SisuColors.getTextPrimaryColor(isDark))),
       subtitle: Text(
-        'Wind $wind$gust · rain ${h.precipProb?.round() ?? '-'}%',
+        'Wind $wind$gust$confidenceText · rain ${h.precipProb?.round() ?? '-'}%',
         style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
       ),
       trailing: Text(
