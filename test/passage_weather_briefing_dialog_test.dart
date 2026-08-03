@@ -68,11 +68,15 @@ void main() {
 
   Future<ProviderContainer> pumpScreen(WidgetTester tester,
       {WeatherBundle? cachedWeather,
+      EnsembleBundle? cachedEnsemble,
       String? llmApiKey,
       String? llmApiKeyProvider}) async {
-    SharedPreferences.setMockInitialValues(cachedWeather == null
-        ? {}
-        : {'weather_cache_v2': jsonEncode(cachedWeather.toJson())});
+    SharedPreferences.setMockInitialValues({
+      if (cachedWeather != null)
+        'weather_cache_v2': jsonEncode(cachedWeather.toJson()),
+      if (cachedEnsemble != null)
+        'weather_ensemble_cache_v1': jsonEncode(cachedEnsemble.toJson()),
+    });
 
     await db.into(db.boats).insert(BoatsCompanion.insert(
           supabaseId: const Value('boat_1'),
@@ -141,5 +145,36 @@ void main() {
 
     expect(find.textContaining('No AI API key is configured'), findsOneWidget);
     expect(find.text('Go to Settings'), findsOneWidget);
+  });
+
+  testWidgets(
+      '#230: an ensemble cache present alongside weather never blocks the '
+      'briefing — same degrade-gracefully path as no key configured',
+      (tester) async {
+    final weather = sampleBundle();
+    final ensemble = EnsembleBundle(
+      lat: weather.lat,
+      lon: weather.lon,
+      fetchedAt: DateTime.now(),
+      model: 'gfs_seamless',
+      hourly: [
+        EnsembleHourly.fromMembers(
+          time: weather.hourly.first.time,
+          memberWindSpeedsMs: [9.0, 9.5, 10.0],
+        ),
+      ],
+    );
+    await pumpScreen(tester, cachedWeather: weather, cachedEnsemble: ensemble);
+
+    await tester.tap(find.byIcon(Icons.auto_awesome));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('No AI API key is configured'), findsOneWidget,
+        reason:
+            'ensemble cache read must not throw/hang before reaching the '
+            'normal no-key-configured state');
   });
 }

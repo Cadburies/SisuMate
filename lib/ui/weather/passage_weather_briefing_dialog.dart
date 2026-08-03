@@ -10,6 +10,7 @@ import '../../providers/passage_readiness_provider.dart' show cachedWeatherProvi
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
+import '../../services/weather_service.dart';
 
 /// #219 (leftover from #18): synthesizes the already-fetched hourly wind +
 /// marine wave forecast into a risk-focused go/no-go narrative — no new
@@ -43,6 +44,23 @@ class _PassageWeatherBriefingDialogState
     }
 
     final boat = await ref.read(activeBoatProvider.future);
+    // #230: cache-only read (no network call) — matches this dialog's
+    // #219 discipline of never triggering a fetch of its own. A cache
+    // miss (#229's ensemble fetch never ran, or it's stale/absent) just
+    // means every hour's confidence stays null below.
+    final ensemble = await WeatherService().loadEnsembleCache();
+    String? confidenceForHour(DateTime t) {
+      for (final e in ensemble?.hourly ?? const <EnsembleHourly>[]) {
+        if (e.time.year == t.year &&
+            e.time.month == t.month &&
+            e.time.day == t.day &&
+            e.time.hour == t.hour) {
+          return e.confidence?.name;
+        }
+      }
+      return null;
+    }
+
     final payload = LlmPayloadBuilder.passageWeatherBriefing(
       placeName: bundle.placeName,
       hourlyWind: bundle.hourly.map((h) => (
@@ -50,6 +68,7 @@ class _PassageWeatherBriefingDialogState
             windKt: h.windMs == null ? null : h.windMs! / UnitConverter.msPerKnot,
             windDirDeg: h.windDirDeg,
             precipProb: h.precipProb,
+            confidence: confidenceForHour(h.time),
           )),
       hourlyMarine: bundle.marine.map((m) => (
             time: m.time,
@@ -65,8 +84,12 @@ class _PassageWeatherBriefingDialogState
           'write a short, risk-focused go/no-go briefing: call out any '
           'wind/wave/timing hazards you can infer (e.g. wind building '
           'against short wave periods, a window where conditions ease), '
-          'and suggest safer departure timing if relevant. 3-5 sentences, '
-          'no preamble.',
+          'and suggest safer departure timing if relevant. Some hours may '
+          'carry a "confidence" value (high/medium/low) reflecting forecast '
+          'model agreement — when present, let it shape your language '
+          '(e.g. treat a low-confidence hour\'s numbers as a rough guide, '
+          'not a plan); when absent, reason from the numbers alone as '
+          'usual. 3-5 sentences, no preamble.',
       prompt: jsonEncode(payload),
     );
     if (mounted) setState(() => _result = result);

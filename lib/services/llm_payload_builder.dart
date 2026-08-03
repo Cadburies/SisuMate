@@ -174,10 +174,22 @@ class LlmPayloadBuilder {
   /// structurally incapable of leaking a field added to those classes later
   /// without a matching change here. Capped to 24h — a caller passing more
   /// than that is a bug, not something to silently truncate further.
+  /// #230: [hourlyWind]'s `confidence` field is #229's ensemble-derived
+  /// high/medium/low agreement label — null whenever ensemble data isn't
+  /// available (offline, cache miss, or the fetch never ran), which the
+  /// caller must pass explicitly since Dart records have no optional
+  /// fields. A null/absent confidence must never block or alter anything
+  /// else about the briefing — it's an additive signal, not a requirement.
   static Map<String, dynamic> passageWeatherBriefing({
     String? placeName,
     required Iterable<
-            ({DateTime time, double? windKt, double? windDirDeg, double? precipProb})>
+            ({
+              DateTime time,
+              double? windKt,
+              double? windDirDeg,
+              double? precipProb,
+              String? confidence,
+            })>
         hourlyWind,
     required Iterable<
             ({DateTime time, double? waveHeightM, double? waveDirDeg, double? wavePeriodS})>
@@ -191,6 +203,7 @@ class LlmPayloadBuilder {
                   'windKt': ?h.windKt,
                   'windDirDeg': ?h.windDirDeg,
                   'precipProb': ?h.precipProb,
+                  'confidence': ?h.confidence,
                 })
             .toList(),
         'hourlyMarine': hourlyMarine

@@ -227,6 +227,7 @@ void main() {
           windKt: 18.5,
           windDirDeg: 270.0,
           precipProb: 10.0,
+          confidence: null,
         ),
       ],
       hourlyMarine: [
@@ -245,11 +246,43 @@ void main() {
     expect(encoded, contains('1.2'));
     expect(payload.keys, {'placeName', 'hourlyWind', 'hourlyMarine'});
     final wind = (payload['hourlyWind'] as List).first as Map;
+    // #230: confidence omitted (not just null) when absent — matches
+    // every other builder's `?field` null-aware-entry pattern.
     expect(wind.keys, {'time', 'windKt', 'windDirDeg', 'precipProb'});
     final marine = (payload['hourlyMarine'] as List).first as Map;
     expect(marine.keys, {'time', 'waveHeightM', 'waveDirDeg', 'wavePeriodS'});
     expect(encoded, isNot(contains('lat')));
     expect(encoded, isNot(contains('lon')));
     expect(encoded, isNot(contains('waterDepthM')));
+  });
+
+  // #230: fold ensemble confidence into the payload.
+  test('passageWeatherBriefing includes confidence per hour when present, '
+      'and omits it entirely when null', () {
+    final payload = LlmPayloadBuilder.passageWeatherBriefing(
+      hourlyWind: [
+        (
+          time: DateTime.utc(2026, 8, 3, 14),
+          windKt: 18.5,
+          windDirDeg: 270.0,
+          precipProb: 10.0,
+          confidence: 'high',
+        ),
+        (
+          time: DateTime.utc(2026, 8, 3, 15),
+          windKt: 20.0,
+          windDirDeg: 275.0,
+          precipProb: 15.0,
+          confidence: null,
+        ),
+      ],
+      hourlyMarine: const [],
+    );
+    final hours = (payload['hourlyWind'] as List).cast<Map>();
+    expect(hours[0].keys,
+        {'time', 'windKt', 'windDirDeg', 'precipProb', 'confidence'});
+    expect(hours[0]['confidence'], 'high');
+    expect(hours[1].keys, {'time', 'windKt', 'windDirDeg', 'precipProb'});
+    expect(hours[1].containsKey('confidence'), isFalse);
   });
 }
