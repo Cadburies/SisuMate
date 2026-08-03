@@ -67,6 +67,13 @@ class WeatherService {
   /// #229: ensemble forecast (wind confidence/spread).
   static const _ensembleCacheKey = 'weather_ensemble_cache_v1';
   static const defaultEnsembleModel = 'gfs_seamless';
+  /// #233: multi-model comparison — model-id list confirmed against a live
+  /// /v1/forecast response before implementing, not assumed from docs.
+  static const defaultComparisonModels = [
+    'gfs_seamless',
+    'ecmwf_ifs025',
+    'icon_seamless',
+  ];
 
   /// True when [fetchedAt] is within [cacheMaxAge] of [now].
   static bool isCacheFresh(DateTime fetchedAt, {DateTime? now}) {
@@ -365,6 +372,47 @@ class WeatherService {
         context: 'weather_service: loadEnsembleCache',
       ));
       return null;
+    }
+  }
+
+  /// #233: multi-model comparison — user-triggered only (see the compare
+  /// action in weather_screen.dart), never fired automatically alongside
+  /// the regular forecast fetch. No cache: this is an on-demand comparison
+  /// view, not part of the core offline-usable forecast.
+  Future<MultiModelBundle?> fetchMultiModel({
+    required double lat,
+    required double lon,
+    List<String> models = defaultComparisonModels,
+    http.Client? client,
+  }) async {
+    final c = client ?? http.Client();
+    try {
+      final uri = Uri.https('api.open-meteo.com', '/v1/forecast', {
+        'latitude': lat.toStringAsFixed(4),
+        'longitude': lon.toStringAsFixed(4),
+        'hourly': 'wind_speed_10m',
+        'models': models.join(','),
+        'windspeed_unit': 'ms',
+        'timezone': 'auto',
+        'forecast_days': '3',
+      });
+      final res = await c.get(uri).timeout(networkTimeout);
+      if (res.statusCode != 200) return null;
+      return parseMultiModelJson(
+        res.body,
+        lat: lat,
+        lon: lon,
+        fetchedAt: DateTime.now(),
+        models: models,
+      );
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'multi-model fetch failed: $e',
+        context: 'weather_service: fetchMultiModel',
+      ));
+      return null;
+    } finally {
+      if (client == null) c.close();
     }
   }
 
@@ -856,6 +904,81 @@ EnsembleBundle parseEnsembleJson(
   }
 
   return EnsembleBundle(lat: lat, lon: lon, fetchedAt: fetchedAt, model: model, hourly: out);
+}
+
+/// #233: one hour's wind speed (m/s) from each requested model, keyed by
+/// model id — a model missing from the response (shouldn't happen, but a
+/// partial/odd upstream response is possible) just leaves that key absent
+/// rather than throwing.
+class MultiModelHourly {
+  final DateTime time;
+  final Map<String, double?> windSpeedMsByModel;
+
+  const MultiModelHourly({
+    required this.time,
+    required this.windSpeedMsByModel,
+  });
+
+  factory MultiModelHourly.fromJson(Map<String, dynamic> j) => MultiModelHourly(
+        time: DateTime.parse(j['time'] as String),
+        windSpeedMsByModel:
+            (j['windSpeedMsByModel'] as Map<String, dynamic>? ?? {}).map(
+          (k, v) => MapEntry(k, (v as num?)?.toDouble()),
+        ),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'time': time.toIso8601String(),
+        'windSpeedMsByModel': windSpeedMsByModel,
+      };
+}
+
+class MultiModelBundle {
+  final double lat;
+  final double lon;
+  final DateTime fetchedAt;
+  final List<String> models;
+  final List<MultiModelHourly> hourly;
+
+  const MultiModelBundle({
+    required this.lat,
+    required this.lon,
+    required this.fetchedAt,
+    required this.models,
+    this.hourly = const [],
+  });
+}
+
+/// Parses a multi-model /v1/forecast response (`models=id1,id2,...`).
+/// Response key shape is `<variable>_<modelId>` (confirmed live — distinct
+/// from the ensemble API's `<variable>_memberNN` shape, a different
+/// Open-Meteo concept entirely).
+MultiModelBundle parseMultiModelJson(
+  String body, {
+  required double lat,
+  required double lon,
+  required DateTime fetchedAt,
+  required List<String> models,
+}) {
+  final map = jsonDecode(body) as Map<String, dynamic>;
+  final hourly = map['hourly'] as Map<String, dynamic>? ?? {};
+  final times = (hourly['time'] as List? ?? const []).cast<String>();
+
+  final out = <MultiModelHourly>[];
+  final limit = times.length.clamp(0, 24);
+  for (var i = 0; i < limit; i++) {
+    final perModel = <String, double?>{};
+    for (final m in models) {
+      final list = hourly['wind_speed_10m_$m'] as List? ?? const [];
+      perModel[m] = (i < list.length && list[i] is num) ? (list[i] as num).toDouble() : null;
+    }
+    out.add(MultiModelHourly(
+      time: DateTime.tryParse(times[i]) ?? DateTime.now(),
+      windSpeedMsByModel: perModel,
+    ));
+  }
+
+  return MultiModelBundle(lat: lat, lon: lon, fetchedAt: fetchedAt, models: models, hourly: out);
 }
 
 /// Great-circle distance in nautical miles (S3 passage planning).

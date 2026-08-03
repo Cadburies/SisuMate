@@ -61,6 +61,9 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   // bundle (same trigger, not a second background poll); best-effort, so a
   // null value here just means no confidence badge shows, never an error.
   EnsembleBundle? _ensembleBundle;
+  // #233: multi-model comparison is strictly user-triggered (see
+  // _compareModels) — never fetched alongside the regular _load().
+  bool _comparingModels = false;
   bool _loading = false;
   bool _locating = false;
   bool _searching = false;
@@ -219,6 +222,31 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         _loading = false;
       });
     }
+  }
+
+  /// #233: strictly user-triggered — never fired from _load()/_restoreAndLoad,
+  /// so a normal weather refresh never silently multiplies into N model
+  /// requests.
+  Future<void> _compareModels() async {
+    final lat = double.tryParse(_latCtrl.text.trim());
+    final lon = double.tryParse(_lonCtrl.text.trim());
+    if (lat == null || lon == null) return;
+    setState(() => _comparingModels = true);
+    final bundle = await _service.fetchMultiModel(lat: lat, lon: lon);
+    if (!mounted) return;
+    setState(() => _comparingModels = false);
+    if (bundle == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Could not load model comparison — try again.'),
+      ));
+      return;
+    }
+    if (!mounted) return;
+    final prefs = ref.read(unitPrefsProvider);
+    await showDialog<void>(
+      context: context,
+      builder: (_) => _ModelComparisonDialog(bundle: bundle, speedUnit: prefs.windSpeed),
+    );
   }
 
   Future<void> _searchPlaces() async {
@@ -560,7 +588,23 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                       const SizedBox(height: 12),
                       _currentCard(b, isDark),
                       const SizedBox(height: 12),
-                      _sectionTitle('Next 12 hours', isDark),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _sectionTitle('Next 12 hours', isDark),
+                          TextButton.icon(
+                            onPressed: _comparingModels ? null : _compareModels,
+                            icon: _comparingModels
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.compare_arrows, size: 18),
+                            label: const Text('Compare models'),
+                          ),
+                        ],
+                      ),
                       ...b.hourly.take(12).map((h) => _hourRow(h, isDark)),
                       const SizedBox(height: 12),
                       _sectionTitle('Daily', isDark),
@@ -952,6 +996,60 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         '${m.waveDirDeg != null ? ' · dir ${m.waveDirDeg!.round()} deg' : ''}',
         style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
       ),
+    );
+  }
+}
+
+/// #233: side-by-side wind speed per model, clearly labeled so a user
+/// reading "18kt / 24kt" knows why the numbers differ.
+class _ModelComparisonDialog extends StatelessWidget {
+  final MultiModelBundle bundle;
+  final SpeedUnitPref speedUnit;
+  const _ModelComparisonDialog({required this.bundle, required this.speedUnit});
+
+  static const _modelLabels = {
+    'gfs_seamless': 'GFS',
+    'ecmwf_ifs025': 'ECMWF',
+    'icon_seamless': 'ICON',
+  };
+
+  String _labelFor(String modelId) => _modelLabels[modelId] ?? modelId;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = bundle.hourly.take(12).toList();
+    return AlertDialog(
+      title: const Text('Wind: model comparison'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columns: [
+              const DataColumn(label: Text('Time')),
+              ...bundle.models.map((m) => DataColumn(label: Text(_labelFor(m)))),
+            ],
+            rows: rows
+                .map((h) => DataRow(cells: [
+                      DataCell(Text(
+                          '${h.time.hour.toString().padLeft(2, '0')}:${h.time.minute.toString().padLeft(2, '0')}')),
+                      ...bundle.models.map((m) {
+                        final ms = h.windSpeedMsByModel[m];
+                        return DataCell(Text(ms == null
+                            ? '-'
+                            : UnitConverter.formatSpeedFromMs(ms, speedUnit)));
+                      }),
+                    ]))
+                .toList(),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+      ],
     );
   }
 }

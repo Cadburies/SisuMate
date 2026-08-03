@@ -545,4 +545,99 @@ void main() {
       expect(bundle, isNull);
     });
   });
+
+  // #233: multi-model comparison (GFS vs ECMWF vs ICON).
+  group('MultiModelBundle / parseMultiModelJson', () {
+    test('parseMultiModelJson maps wind_speed_10m_<modelId> keys per hour '
+        '(real Open-Meteo /v1/forecast response shape confirmed live '
+        'before implementing)', () {
+      final body = jsonEncode({
+        'hourly': {
+          'time': ['2026-07-09T12:00', '2026-07-09T13:00'],
+          'wind_speed_10m_gfs_seamless': [10.0, 11.0],
+          'wind_speed_10m_ecmwf_ifs025': [9.5, 10.5],
+          'wind_speed_10m_icon_seamless': [10.2, 11.2],
+        },
+      });
+      final bundle = parseMultiModelJson(
+        body,
+        lat: 1,
+        lon: 2,
+        fetchedAt: DateTime(2026, 7, 9),
+        models: WeatherService.defaultComparisonModels,
+      );
+      expect(bundle.hourly, hasLength(2));
+      expect(bundle.hourly[0].windSpeedMsByModel['gfs_seamless'], 10.0);
+      expect(bundle.hourly[0].windSpeedMsByModel['ecmwf_ifs025'], 9.5);
+      expect(bundle.hourly[0].windSpeedMsByModel['icon_seamless'], 10.2);
+      expect(bundle.hourly[1].windSpeedMsByModel['gfs_seamless'], 11.0);
+    });
+
+    test('a model missing from the response leaves that key null, not an '
+        'error', () {
+      final body = jsonEncode({
+        'hourly': {
+          'time': ['2026-07-09T12:00'],
+          'wind_speed_10m_gfs_seamless': [10.0],
+          // ecmwf_ifs025 / icon_seamless absent from this response.
+        },
+      });
+      final bundle = parseMultiModelJson(
+        body,
+        lat: 1,
+        lon: 2,
+        fetchedAt: DateTime(2026, 7, 9),
+        models: WeatherService.defaultComparisonModels,
+      );
+      expect(bundle.hourly.single.windSpeedMsByModel['gfs_seamless'], 10.0);
+      expect(bundle.hourly.single.windSpeedMsByModel['ecmwf_ifs025'], isNull);
+      expect(bundle.hourly.single.windSpeedMsByModel['icon_seamless'], isNull);
+    });
+  });
+
+  group('WeatherService.fetchMultiModel (#233)', () {
+    test('requests windspeed_unit=ms and a comma-joined models list',
+        () async {
+      Uri? capturedUri;
+      final client = MockClient((request) async {
+        capturedUri = request.url;
+        return http.Response(
+          jsonEncode({
+            'hourly': {
+              'time': ['2026-07-09T12:00'],
+              'wind_speed_10m_gfs_seamless': [10.0],
+            },
+          }),
+          200,
+        );
+      });
+
+      final bundle =
+          await WeatherService().fetchMultiModel(lat: 1, lon: 2, client: client);
+
+      expect(bundle, isNotNull);
+      expect(capturedUri!.queryParameters['windspeed_unit'], 'ms');
+      expect(capturedUri!.queryParameters['models'],
+          WeatherService.defaultComparisonModels.join(','));
+    });
+
+    test('network failure returns null, never throws (on-demand only, no '
+        'cache to fall back to)', () async {
+      final client = MockClient((request) async {
+        throw Exception('offline');
+      });
+      final bundle =
+          await WeatherService().fetchMultiModel(lat: 1, lon: 2, client: client);
+      expect(bundle, isNull);
+    });
+
+    test('HTTP non-200 returns null, never throws', () async {
+      final client = MockClient((request) async {
+        return http.Response('error', 503);
+      });
+      final bundle =
+          await WeatherService().fetchMultiModel(lat: 1, lon: 2, client: client);
+      expect(bundle, isNull);
+    });
+  });
 }

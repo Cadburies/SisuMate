@@ -40,4 +40,26 @@ void main() {
     expect(source.contains('if (_showSeamarks)'), isTrue,
         reason: 'the OpenSeaMap overlay must be conditional, not always-on');
   });
+
+  test('#233: "Compare models" is user-triggered and never folded into '
+      'the automatic weather load', () {
+    final source = File(
+      '${Directory.current.path}/lib/ui/weather/weather_screen.dart',
+    ).readAsStringSync();
+
+    expect(source.contains('onPressed: _comparingModels ? null : _compareModels'),
+        isTrue,
+        reason: 'the "Compare models" button must call the on-demand action');
+    expect(source.contains('_ModelComparisonDialog('), isTrue,
+        reason: 'must open the comparison dialog on success');
+
+    // _load() (the automatic-on-refresh path) must not call fetchMultiModel
+    // — only _compareModels may. Crude but effective: fetchMultiModel()
+    // should appear exactly once in the whole file (inside _compareModels).
+    final occurrences =
+        RegExp(r'\.fetchMultiModel\(').allMatches(source).length;
+    expect(occurrences, 1,
+        reason: 'fetchMultiModel must only be called from the explicit '
+            'compare action, never from _load()/_restoreAndLoad');
+  });
 }
