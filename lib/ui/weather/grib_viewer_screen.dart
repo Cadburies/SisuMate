@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../services/grib_import_service.dart';
 import '../../services/grib_parser_service.dart';
@@ -102,6 +104,15 @@ class _GribViewerScreenState extends State<GribViewerScreen> {
       appBar: AppBar(
         title: const Text('GRIB viewer'),
         actions: [
+          // #245: request a GRIB over a low-bandwidth connection, then
+          // come back here to import the response — kept next to the
+          // import action since they're the two halves of one workflow.
+          IconButton(
+            icon: const Icon(Icons.mail_outline),
+            tooltip: 'Request GRIB (low-bandwidth)',
+            onPressed: () =>
+                context.push(AppRoutes.gribRequest),
+          ),
           IconButton(
             icon: _loading
                 ? const SizedBox(
