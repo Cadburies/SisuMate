@@ -1,26 +1,32 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
 import 'error_log_service.dart';
 
-/// #256 — connectivity layer for a PredictWind Datahub ("PW-Hub") reachable
-/// via a remote-access tunnel (`remote.rdsensing.com`, dart-defines
-/// `PREDICTWIND_HUB_URL` / `PREDICTWIND_HUB_HTTP_URL`).
+/// #256 — connectivity layer for a PredictWind Datahub ("PW-Hub", a "HUB-32m"
+/// device made by Remote Data Sensing LLC), reachable via a remote-access
+/// tunnel (`remote.rdsensing.com`, dart-defines `PREDICTWIND_HUB_URL` /
+/// `PREDICTWIND_HUB_HTTP_URL` + `PREDICTWIND_HUB_USERNAME` /
+/// `PREDICTWIND_HUB_PASSWORD`).
 ///
-/// Live-verified against the real endpoints (2026-08-04): both URLs serve
-/// the Hub's OpenWrt/LuCI admin interface (`/cgi-bin/luci/` responds
-/// `403` with header `X-LuCI-Login-Required: yes`) — not a data API. No
-/// unauthenticated SignalK/NMEA path is proxied through the same tunnel
-/// (`/signalk`, `/signalk/v1/api/vessels/self` both `404`). [fetchBoatData]
-/// therefore has no live data source yet and always returns null until
-/// LuCI credentials or a confirmed data endpoint are available — kept as a
-/// real, testable seam so wiring up a confirmed source later doesn't touch
-/// call sites.
+/// Live-verified against the real device (2026-08-04): it's an OpenWrt/LuCI
+/// admin interface, restricted to a small custom menu — logging in
+/// (`POST /cgi-bin/luci` with `luci_username`/`luci_password`, LuCI's
+/// standard form) returns a `sysauth` session cookie on success. Behind
+/// that login is a genuine NMEA bridge (`nmead`) with a live-data JSON
+/// endpoint at `admin/services/nmead/nmead_status` — confirmed to return
+/// real GPS (`lat`/`lon`/`sog`/`cog`) and wind (`tws`/`twd`/`aws`/`awa`)
+/// fields, among others (depth, heading, roll/pitch, sea temperature) not
+/// yet surfaced by [PredictWindBoatData]. No unauthenticated path was found
+/// (`/signalk*` on the same tunneled ports both 404) — a session is
+/// required for every fetch.
 enum PredictWindHubConnectionState {
   notConfigured,
-  reachable,
-  reachableAuthRequired,
+  missingCredentials,
+  connected,
+  authFailed,
   unreachable,
 }
 
@@ -46,20 +52,33 @@ class PredictWindBoatData {
 }
 
 class PredictWindDatahubService {
-  /// [baseUrlOverride] is a test-only seam — the real base URL is normally
-  /// baked in at compile time via `String.fromEnvironment`, which can't be
-  /// overridden at `flutter test` runtime the way `--dart-define` sets it
-  /// for a real build.
-  const PredictWindDatahubService({String? baseUrlOverride})
-      : _baseUrlOverride = baseUrlOverride;
+  /// The override params are a test-only seam — the real values are
+  /// normally baked in at compile time via `String.fromEnvironment`, which
+  /// can't be overridden at `flutter test` runtime the way `--dart-define`
+  /// sets them for a real build.
+  const PredictWindDatahubService({
+    String? baseUrlOverride,
+    String? usernameOverride,
+    String? passwordOverride,
+  })  : _baseUrlOverride = baseUrlOverride,
+        _usernameOverride = usernameOverride,
+        _passwordOverride = passwordOverride;
 
   final String? _baseUrlOverride;
+  final String? _usernameOverride;
+  final String? _passwordOverride;
 
   static const _hubUrl = String.fromEnvironment('PREDICTWIND_HUB_URL');
   static const _hubHttpUrl =
       String.fromEnvironment('PREDICTWIND_HUB_HTTP_URL');
+  static const _hubUsername =
+      String.fromEnvironment('PREDICTWIND_HUB_USERNAME');
+  static const _hubPassword =
+      String.fromEnvironment('PREDICTWIND_HUB_PASSWORD');
   static const _timeout = Duration(seconds: 8);
-  static const _probePath = 'cgi-bin/luci/';
+  static const _loginPath = 'cgi-bin/luci';
+  static const _statusPath = 'cgi-bin/luci/admin/services/nmead/nmead_status';
+  static final _sysauthCookie = RegExp(r'sysauth=([0-9a-fA-F]+)');
 
   String? get _baseUrl =>
       _baseUrlOverride ??
@@ -67,7 +86,11 @@ class PredictWindDatahubService {
           ? _hubUrl
           : (_hubHttpUrl.isNotEmpty ? _hubHttpUrl : null));
 
+  String get _username => _usernameOverride ?? _hubUsername;
+  String get _password => _passwordOverride ?? _hubPassword;
+
   bool get isConfigured => _baseUrl != null;
+  bool get hasCredentials => _username.isNotEmpty && _password.isNotEmpty;
 
   Future<PredictWindHubStatus> checkConnection({http.Client? client}) async {
     final base = _baseUrl;
@@ -75,27 +98,16 @@ class PredictWindDatahubService {
       return const PredictWindHubStatus(
           PredictWindHubConnectionState.notConfigured);
     }
+    if (!hasCredentials) {
+      return const PredictWindHubStatus(
+          PredictWindHubConnectionState.missingCredentials);
+    }
     final c = client ?? http.Client();
     try {
-      final res =
-          await c.get(Uri.parse('$base/$_probePath')).timeout(_timeout);
-      if (res.headers['x-luci-login-required'] == 'yes' ||
-          res.statusCode == 403) {
-        return PredictWindHubStatus(
-          PredictWindHubConnectionState.reachableAuthRequired,
-          detail: 'HTTP ${res.statusCode}',
-        );
-      }
-      if (res.statusCode >= 200 && res.statusCode < 400) {
-        return PredictWindHubStatus(
-          PredictWindHubConnectionState.reachable,
-          detail: 'HTTP ${res.statusCode}',
-        );
-      }
-      return PredictWindHubStatus(
-        PredictWindHubConnectionState.unreachable,
-        detail: 'HTTP ${res.statusCode}',
-      );
+      final sysauth = await _login(c, base);
+      return PredictWindHubStatus(sysauth != null
+          ? PredictWindHubConnectionState.connected
+          : PredictWindHubConnectionState.authFailed);
     } catch (e) {
       unawaited(ErrorLogService().logWarning(
         'PredictWind Hub unreachable: $e',
@@ -110,8 +122,59 @@ class PredictWindDatahubService {
     }
   }
 
-  /// See class doc — no confirmed unauthenticated data endpoint exists yet.
   Future<PredictWindBoatData?> fetchBoatData({http.Client? client}) async {
-    return null;
+    final base = _baseUrl;
+    if (base == null || !hasCredentials) return null;
+    final c = client ?? http.Client();
+    try {
+      final sysauth = await _login(c, base);
+      if (sysauth == null) return null;
+
+      final res = await c
+          .get(
+            Uri.parse('$base/$_statusPath'),
+            headers: {'Cookie': 'sysauth=$sysauth'},
+          )
+          .timeout(_timeout);
+      if (res.statusCode != 200) return null;
+
+      final json = jsonDecode(res.body) as Map<String, dynamic>;
+      final unixtime = json['unixtime'];
+      return PredictWindBoatData(
+        latitude: _asDouble(json['lat']),
+        longitude: _asDouble(json['lon']),
+        windSpeedKt: _asDouble(json['tws']),
+        windDirectionDeg: _asDouble(json['twd']),
+        observedAt: unixtime is num
+            ? DateTime.fromMillisecondsSinceEpoch(
+                unixtime.toInt() * 1000,
+                isUtc: true,
+              )
+            : DateTime.now(),
+      );
+    } catch (e) {
+      unawaited(ErrorLogService().logWarning(
+        'PredictWind Hub fetchBoatData failed: $e',
+        context: 'predictwind_datahub_service: fetchBoatData',
+      ));
+      return null;
+    } finally {
+      if (client == null) c.close();
+    }
   }
+
+  /// LuCI's standard login form (`luci_username`/`luci_password`) — a
+  /// successful login redirects (`302`) with a `Set-Cookie: sysauth=...`
+  /// session token; a failed one re-renders the same login page.
+  Future<String?> _login(http.Client c, String base) async {
+    final res = await c.post(
+      Uri.parse('$base/$_loginPath'),
+      body: {'luci_username': _username, 'luci_password': _password},
+    ).timeout(_timeout);
+    final setCookie = res.headers['set-cookie'];
+    if (setCookie == null) return null;
+    return _sysauthCookie.firstMatch(setCookie)?.group(1);
+  }
+
+  double? _asDouble(dynamic v) => v is num ? v.toDouble() : null;
 }

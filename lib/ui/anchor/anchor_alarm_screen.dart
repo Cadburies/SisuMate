@@ -170,16 +170,20 @@ class _HubStatusCard extends StatelessWidget {
             'Add PREDICTWIND_HUB_URL to dart-defines.json to connect.';
         icon = Icons.link_off;
         color = theme.colorScheme.outline;
-      case PredictWindHubConnectionState.reachable:
-        title = 'PredictWind Hub reachable';
-        detail = s?.detail ?? '';
+      case PredictWindHubConnectionState.missingCredentials:
+        title = 'PredictWind Hub found — no login configured';
+        detail = 'Add PREDICTWIND_HUB_USERNAME/PASSWORD to '
+            'dart-defines.json to sign in.';
+        icon = Icons.lock_outline;
+        color = theme.colorScheme.tertiary;
+      case PredictWindHubConnectionState.connected:
+        title = 'PredictWind Hub connected';
+        detail = '';
         icon = Icons.wifi;
         color = theme.colorScheme.primary;
-      case PredictWindHubConnectionState.reachableAuthRequired:
-        title = 'PredictWind Hub found — sign-in required';
-        detail = "The Hub is online but its admin login blocks data "
-            "access. Live GPS/wind data isn't wired up yet — see issue "
-            '#256.';
+      case PredictWindHubConnectionState.authFailed:
+        title = 'PredictWind Hub sign-in failed';
+        detail = 'Check PREDICTWIND_HUB_USERNAME/PASSWORD.';
         icon = Icons.lock_outline;
         color = theme.colorScheme.tertiary;
       case PredictWindHubConnectionState.unreachable:
@@ -269,11 +273,8 @@ class _WindCard extends StatelessWidget {
               : 'Wind data unavailable',
         ),
         subtitle: speed == null
-            ? const Text(
-                'Requires a live PredictWind Hub connection — not wired '
-                'up yet (issue #256).',
-              )
-            : null,
+            ? const Text('Requires a connected PredictWind Hub.')
+            : const Text('True wind, from the PredictWind Hub'),
       ),
     );
   }

@@ -63,13 +63,14 @@ void main() {
   Future<void> pumpScreen(
     WidgetTester tester, {
     http.Client? httpClient,
+    PredictWindDatahubService hubService = const PredictWindDatahubService(),
   }) async {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: ProviderContainer(),
         child: MaterialApp(
           home: AnchorAlarmScreen(
-            hubService: const PredictWindDatahubService(),
+            hubService: hubService,
             httpClient: httpClient,
           ),
         ),
@@ -100,6 +101,39 @@ void main() {
 
     expect(find.text('Position unavailable'), findsOneWidget);
     expect(find.text('Location services are turned off.'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a connected Hub with live nmead data shows GPS+wind from the Hub, '
+      'not the phone', (tester) async {
+    // No GPS fix set on fakeGeo — if the screen fell back to phone GPS
+    // here, it would show "Position unavailable", not a real position.
+    final client = MockClient((request) async {
+      if (request.method == 'POST') {
+        return http.Response('', 302,
+            headers: {'set-cookie': 'sysauth=abc123; path=/cgi-bin/luci/'});
+      }
+      return http.Response(
+        '{"lat":12.005442,"lon":-61.731507,"tws":6.837343,"twd":115.384747,'
+        '"unixtime":1785872083}',
+        200,
+      );
+    });
+
+    await pumpScreen(
+      tester,
+      httpClient: client,
+      hubService: const PredictWindDatahubService(
+        baseUrlOverride: 'https://fake-hub.test',
+        usernameOverride: 'user',
+        passwordOverride: 'pass',
+      ),
+    );
+
+    expect(find.text('PredictWind Hub connected'), findsOneWidget);
+    expect(find.text('12.00544, -61.73151'), findsOneWidget);
+    expect(find.text('Source: PredictWind Hub'), findsOneWidget);
+    expect(find.text('6.8 kt @ 115°'), findsOneWidget);
   });
 
   testWidgets('refresh button re-runs the connection check', (tester) async {
