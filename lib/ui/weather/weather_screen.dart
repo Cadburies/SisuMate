@@ -15,6 +15,7 @@ import '../../services/error_log_service.dart';
 import '../../services/location_service.dart';
 import '../../services/map_tile_cache_service.dart';
 import '../../services/map_tile_providers.dart';
+import '../../services/marine_hazard_service.dart';
 import '../../services/tide_service.dart';
 import '../../services/weather_service.dart';
 import '../components/title_tile.dart';
@@ -65,6 +66,13 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   // #233: multi-model comparison is strictly user-triggered (see
   // _compareModels) — never fetched alongside the regular _load().
   bool _comparingModels = false;
+  // #239: marine hazard alerts — fetched alongside the main bundle (same
+  // trigger as #229's ensemble, not a second background poll); a single
+  // lightweight point query, unlike #234's multi-MB tide station list, so
+  // no separate manual gate. Never cached — hazard alerts are time-
+  // sensitive; a stale "all clear" from an old cache would be misleading.
+  final _marineHazardService = MarineHazardService();
+  List<MarineHazardAlert> _hazardAlerts = const [];
   // #234: tide/current predictions — user-triggered (see _loadTideAndCurrent),
   // since the first call fetches a multi-MB NOAA station list.
   final _tideService = TideService();
@@ -213,13 +221,16 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       final results = await Future.wait([
         _service.fetch(lat: lat, lon: lon, placeName: nameHint),
         _service.fetchEnsemble(lat: lat, lon: lon),
+        _marineHazardService.fetchActiveAlerts(lat: lat, lon: lon),
       ]);
       final b = results[0] as WeatherBundle;
       final ensemble = results[1] as EnsembleBundle?;
+      final hazards = results[2] as List<MarineHazardAlert>;
       if (!mounted) return;
       setState(() {
         _bundle = b;
         _ensembleBundle = ensemble;
+        _hazardAlerts = hazards;
         _placeName = b.placeName ?? nameHint;
         _loading = false;
       });
@@ -640,6 +651,13 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                     ],
                     if (b != null) ...[
                       const SizedBox(height: 12),
+                      // #239: shown clearly, distinct from routine forecast
+                      // data — no banner at all when there's nothing active
+                      // (silence, not a false "all clear" claim).
+                      if (_hazardAlerts.isNotEmpty) ...[
+                        _hazardBanner(isDark),
+                        const SizedBox(height: 12),
+                      ],
                       _currentCard(b, isDark),
                       const SizedBox(height: 12),
                       Row(
@@ -839,6 +857,45 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// #239: active marine hazard alerts — a visually distinct warning card,
+  /// never blended with the routine forecast display below it.
+  Widget _hazardBanner(bool isDark) {
+    return Material(
+      color: Colors.red.withValues(alpha: isDark ? 0.25 : 0.1),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.warning_amber, color: Colors.red),
+                const SizedBox(width: 8),
+                Text(
+                  'Active marine advisories',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: SisuColors.getTextPrimaryColor(isDark),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            for (final a in _hazardAlerts)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${a.event} — ${a.areaDesc}',
+                  style: TextStyle(color: SisuColors.getTextPrimaryColor(isDark)),
+                ),
+              ),
           ],
         ),
       ),

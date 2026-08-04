@@ -83,4 +83,18 @@ void main() {
         reason: 'fetchTideStations must only be called from the explicit '
             'load action, never from _load()/_restoreAndLoad');
   });
+
+  test('#239: marine hazard alerts are fetched alongside the automatic '
+      'weather load (a single lightweight query, unlike #234\'s multi-MB '
+      'station list) and shown as a distinct banner only when active', () {
+    final source = File(
+      '${Directory.current.path}/lib/ui/weather/weather_screen.dart',
+    ).readAsStringSync();
+
+    expect(source.contains('_marineHazardService.fetchActiveAlerts('), isTrue,
+        reason: 'must be part of the same Future.wait as the main fetch');
+    expect(source.contains('if (_hazardAlerts.isNotEmpty)'), isTrue,
+        reason: 'no active alerts must mean no banner at all — silence, '
+            'never a false "all clear" claim');
+  });
 }
