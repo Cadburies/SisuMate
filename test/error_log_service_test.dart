@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/data/repositories/error_log_repository_impl.dart';
 import 'package:sisu_mate/services/error_log_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// #121 — ErrorLogService capture, dedupe, and secret redaction.
 void main() {
@@ -315,5 +316,43 @@ void main() {
       ErrorLogService().logError('after close'),
       completes,
     );
+  });
+
+  group('#247/#249/#251/#254: logUncaughtError classification', () {
+    test('a RealtimeSubscribeException logs as warning, not exception',
+        () async {
+      const error = RealtimeSubscribeException(
+          RealtimeSubscribeStatus.timedOut, 'channel timed out');
+
+      await ErrorLogService().logUncaughtError(
+        error,
+        StackTrace.current,
+        context: 'uncaught async error',
+      );
+
+      final rows = await repo.getUnprocessed();
+      expect(rows, hasLength(1));
+      expect(rows.single.level, 'warning');
+      expect(rows.single.message, contains('realtime subscribe failed'));
+      expect(rows.single.message, contains('uncaught async error'));
+    });
+
+    test('a non-Realtime uncaught error still logs as exception (no regression)',
+        () async {
+      try {
+        throw StateError('some other uncaught bug');
+      } catch (e, st) {
+        await ErrorLogService().logUncaughtError(
+          e,
+          st,
+          context: 'uncaught async error',
+        );
+      }
+
+      final rows = await repo.getUnprocessed();
+      expect(rows, hasLength(1));
+      expect(rows.single.level, 'exception');
+      expect(rows.single.message, contains('some other uncaught bug'));
+    });
   });
 }

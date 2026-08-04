@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show RealtimeSubscribeException;
 
 import '../data/drift/app_database.dart';
 import '../data/repositories/error_log_repository_impl.dart';
@@ -109,6 +110,27 @@ class ErrorLogService {
         stack: stack,
         context: context,
       );
+
+  /// For `PlatformDispatcher.instance.onError`. Supabase's realtime client
+  /// already auto-retries a failed channel subscribe (timeout, expired-JWT
+  /// channelError, a 1001-going-away close, or a bare channelError during a
+  /// heartbeat reconnect) — logging every one as `exception` drowned real
+  /// crashes in reconnect noise (#247/#249/#251/#254; one fingerprint alone
+  /// fired 26x from plain timeouts). `warning` keeps the pattern visible in
+  /// triage without conflating it with an actual uncaught bug. Kept here
+  /// (not inline in `main.dart`) so it's covered by this file's own tests —
+  /// `main.dart` has side-effecting top-level `final`s that make it unsafe
+  /// to import from a test.
+  Future<void> logUncaughtError(Object error, StackTrace? stack,
+      {required String context}) {
+    if (error is RealtimeSubscribeException) {
+      return logWarning(
+        'realtime subscribe failed (client auto-retries): $error',
+        context: context,
+      );
+    }
+    return logException(error, stack, context: context);
+  }
 
   /// For `FlutterError.onError`. Always call the previous handler too (this
   /// only adds capture, it must not silence the normal debug red-screen).

@@ -40,8 +40,11 @@ void main() async {
     previousOnError?.call(details);
   };
   PlatformDispatcher.instance.onError = (error, stack) {
+    // #247/#249/#251/#254: classification (Realtime auto-retry noise vs. a
+    // real crash) lives in ErrorLogService.logUncaughtError, not here — see
+    // that method's doc comment for why.
     unawaited(
-      ErrorLogService().logException(error, stack, context: 'uncaught async error'),
+      ErrorLogService().logUncaughtError(error, stack, context: 'uncaught async error'),
     );
     return true;
   };

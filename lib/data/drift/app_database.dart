@@ -598,8 +598,20 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async => m.createAll(),
+        // #250/#253: no install base yet, so per CLAUDE.md a schema bump
+        // never needs a column-preserving upgrade path — wipe and recreate
+        // every table. Without this, `onUpgrade` used to be a no-op: bumping
+        // `schemaVersion` only changes `PRAGMA user_version`, so an
+        // already-installed device kept its physically stale table
+        // structure (e.g. `boats` missing `polar_json`, added at
+        // schemaVersion 11), and Drift's generated non-nullable column read
+        // crashed. Safe to wipe: `DatabaseService.init()` already detects an
+        // empty `checklistGroups` table and re-seeds on every app startup.
         onUpgrade: (m, from, to) async {
-          // Wipe/reinstall test devices if this fires on an old schema.
+          for (final table in allTables) {
+            await m.drop(table);
+          }
+          await m.createAll();
         },
       );
 
