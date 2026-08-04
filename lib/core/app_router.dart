@@ -24,6 +24,7 @@ import '../ui/community/community_browser_screen.dart';
 import '../ui/weather/weather_screen.dart';
 import '../ui/weather/passage_planner_screen.dart';
 import '../ui/weather/departure_window_screen.dart';
+import '../ui/weather/grib_viewer_screen.dart';
 import '../ui/games/games_screen.dart';
 import '../ui/games/lobby/lobby_screen.dart';
 import '../ui/games/components/game_help_screen.dart';
@@ -93,6 +94,7 @@ abstract final class AppRoutes {
   static const weather = '/weather';
   static const passage = '/weather/passage';
   static const departureWindow = '/weather/departure-window';
+  static const gribViewer = '/weather/grib';
   static const games = '/games';
   static const gamePlay = '/games/play/:gameId';
   static const gameLobby = '/games/lobby/:gameId';
@@ -561,6 +563,11 @@ GoRouter createAppRouter() {
             path: 'departure-window',
             name: 'departureWindow',
             builder: (context, state) => const DepartureWindowScreen(),
+          ),
+          GoRoute(
+            path: 'grib',
+            name: 'gribViewer',
+            builder: (context, state) => const GribViewerScreen(),
           ),
         ],
       ),

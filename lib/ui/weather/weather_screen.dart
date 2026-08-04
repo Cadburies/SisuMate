@@ -552,6 +552,11 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                     onPressed: () => context.push(AppRoutes.departureWindow),
                   ),
                   IconButton(
+                    icon: Icon(Icons.grid_on, color: color),
+                    tooltip: 'GRIB viewer',
+                    onPressed: () => context.push(AppRoutes.gribViewer),
+                  ),
+                  IconButton(
                     icon: Icon(
                       _locating ? Icons.hourglass_top : Icons.my_location,
                       color: color,
