@@ -128,6 +128,12 @@ class HomeScreen extends ConsumerWidget {
                       color: Colors.indigo,
                       onTap: () => context.push(AppRoutes.games),
                     ),
+                    _AppTile(
+                      title: 'Anchor Alarm',
+                      icon: Icons.anchor,
+                      color: Colors.blueGrey,
+                      onTap: () => context.push(AppRoutes.anchorAlarm),
+                    ),
                   ],
                 ),
               ),
