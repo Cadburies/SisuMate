@@ -1,6 +1,8 @@
+import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:sisu_mate/services/predictwind_datahub_service.dart';
 
 /// #256 — PredictWind Datahub connectivity. `dart-defines.json`'s
@@ -13,7 +15,27 @@ import 'package:sisu_mate/services/predictwind_datahub_service.dart';
 /// login at `POST /cgi-bin/luci` returns `302` + `Set-Cookie: sysauth=...`
 /// on success; the authenticated NMEA status JSON lives at
 /// `admin/services/nmead/nmead_status`).
+///
+/// #263 — WiFi state (for the local-vs-remote failover) is faked via
+/// `ConnectivityPlatform.instance`, the same swappable-singleton pattern
+/// `location_service_test.dart` uses for `GeolocatorPlatform.instance`.
+class _FakeConnectivityPlatform extends ConnectivityPlatform
+    with MockPlatformInterfaceMixin {
+  List<ConnectivityResult> result = [ConnectivityResult.none];
+
+  @override
+  Future<List<ConnectivityResult>> checkConnectivity() async => result;
+}
+
 void main() {
+  late _FakeConnectivityPlatform fakeConnectivity;
+
+  setUp(() {
+    fakeConnectivity = _FakeConnectivityPlatform();
+    ConnectivityPlatform.instance = fakeConnectivity;
+  });
+
+
   test('not configured in the test environment (no dart-defines passed)',
       () {
     const service = PredictWindDatahubService();
@@ -263,6 +285,127 @@ void main() {
       final data = PredictWindBoatData(observedAt: DateTime.now().toUtc());
       expect(data.isStale(), isFalse);
       expect(data.hasFix, isFalse);
+    });
+  });
+
+  group('#263 — local-WiFi-first, internet-fallback failover', () {
+    http.Response loginOk() => http.Response('', 302,
+        headers: {'set-cookie': 'sysauth=abc123; path=/cgi-bin/luci/'});
+
+    test('on WiFi, a working local Hub is used — remote is never tried',
+        () async {
+      fakeConnectivity.result = [ConnectivityResult.wifi];
+      var remoteCalled = false;
+      final client = MockClient((request) async {
+        if (request.url.host == 'remote-hub.test') {
+          remoteCalled = true;
+          return loginOk();
+        }
+        expect(request.url.host, 'local-hub.test');
+        return loginOk();
+      });
+      const service = PredictWindDatahubService(
+        baseUrlOverride: 'https://remote-hub.test',
+        localBaseUrlOverride: 'http://local-hub.test',
+        usernameOverride: 'user',
+        passwordOverride: 'pass',
+      );
+
+      final status = await service.checkConnection(client: client);
+
+      expect(status.state, PredictWindHubConnectionState.connected);
+      expect(status.viaLocalNetwork, isTrue);
+      expect(remoteCalled, isFalse);
+    });
+
+    test('on WiFi, a failing local Hub falls back to remote', () async {
+      fakeConnectivity.result = [ConnectivityResult.wifi];
+      final client = MockClient((request) async {
+        if (request.url.host == 'local-hub.test') {
+          throw Exception('connection refused');
+        }
+        return loginOk();
+      });
+      const service = PredictWindDatahubService(
+        baseUrlOverride: 'https://remote-hub.test',
+        localBaseUrlOverride: 'http://local-hub.test',
+        usernameOverride: 'user',
+        passwordOverride: 'pass',
+      );
+
+      final status = await service.checkConnection(client: client);
+
+      expect(status.state, PredictWindHubConnectionState.connected);
+      expect(status.viaLocalNetwork, isFalse);
+    });
+
+    test('off WiFi (mobile data), local is never attempted — goes straight to remote',
+        () async {
+      fakeConnectivity.result = [ConnectivityResult.mobile];
+      var localCalled = false;
+      final client = MockClient((request) async {
+        if (request.url.host == 'local-hub.test') {
+          localCalled = true;
+        }
+        return loginOk();
+      });
+      const service = PredictWindDatahubService(
+        baseUrlOverride: 'https://remote-hub.test',
+        localBaseUrlOverride: 'http://local-hub.test',
+        usernameOverride: 'user',
+        passwordOverride: 'pass',
+      );
+
+      final status = await service.checkConnection(client: client);
+
+      expect(status.state, PredictWindHubConnectionState.connected);
+      expect(status.viaLocalNetwork, isFalse);
+      expect(localCalled, isFalse);
+    });
+
+    test(
+        'off WiFi with only a local Hub URL configured (no remote) reports '
+        'unreachable without making any request', () async {
+      fakeConnectivity.result = [ConnectivityResult.none];
+      var called = false;
+      final client = MockClient((request) async {
+        called = true;
+        return loginOk();
+      });
+      const service = PredictWindDatahubService(
+        localBaseUrlOverride: 'http://local-hub.test',
+        usernameOverride: 'user',
+        passwordOverride: 'pass',
+      );
+
+      final status = await service.checkConnection(client: client);
+
+      expect(status.state, PredictWindHubConnectionState.unreachable);
+      expect(called, isFalse);
+    });
+
+    test('fetchBoatData reports viaLocalNetwork correctly for the local path',
+        () async {
+      fakeConnectivity.result = [ConnectivityResult.wifi];
+      final client = MockClient((request) async {
+        if (request.method == 'POST') return loginOk();
+        return http.Response(
+          '{"lat":12.0,"lon":-61.7,'
+          '"unixtime":${DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000}}',
+          200,
+        );
+      });
+      const service = PredictWindDatahubService(
+        baseUrlOverride: 'https://remote-hub.test',
+        localBaseUrlOverride: 'http://local-hub.test',
+        usernameOverride: 'user',
+        passwordOverride: 'pass',
+      );
+
+      final data = await service.fetchBoatData(client: client);
+
+      expect(data, isNotNull);
+      expect(data!.viaLocalNetwork, isTrue);
     });
   });
 }

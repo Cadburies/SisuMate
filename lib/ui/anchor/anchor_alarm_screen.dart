@@ -890,8 +890,10 @@ class _HubStatusCard extends StatelessWidget {
         color = theme.colorScheme.tertiary;
       case PredictWindHubConnectionState.connected:
         title = 'PredictWind Hub connected';
-        detail = '';
-        icon = Icons.wifi;
+        detail = s!.viaLocalNetwork
+            ? "Via the boat's local WiFi"
+            : 'Via internet (remote access)';
+        icon = s.viaLocalNetwork ? Icons.wifi : Icons.public;
         color = theme.colorScheme.primary;
       case PredictWindHubConnectionState.authFailed:
         title = 'PredictWind Hub sign-in failed';
@@ -948,7 +950,9 @@ class _PositionCard extends StatelessWidget {
     if (hasFix) {
       title = '${data!.latitude!.toStringAsFixed(5)}, '
           '${data.longitude!.toStringAsFixed(5)}';
-      subtitle = 'Source: PredictWind Hub';
+      subtitle = data.viaLocalNetwork
+          ? 'Source: PredictWind Hub (local WiFi)'
+          : 'Source: PredictWind Hub (internet)';
     } else if (data == null) {
       title = 'Position unavailable';
       subtitle = 'PredictWind Hub not connected.';
@@ -1049,7 +1053,10 @@ class _WindCard extends StatelessWidget {
         ),
         subtitle: speed == null
             ? const Text('Requires a connected PredictWind Hub.')
-            : const Text('True wind, from the PredictWind Hub'),
+            : Text(
+                'True wind, from the PredictWind Hub '
+                '(${boatData!.viaLocalNetwork ? 'local WiFi' : 'internet'})',
+              ),
       ),
     );
   }
