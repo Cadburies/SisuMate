@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last (grok):** #263 multi-source failover (local→internet) + Home Assistant settings (schema 16).
-- **Next open bugs:** #258/#259 boats.polar.
-- **Still open anchor:** #256 epic; #263 YDWG NMEA stream still deferred.
+- **Last (grok):** closed #258/#259 polar, #267 iOS triage, #263 YDWG NMEA + failover, #256 epic.
+- **Open backlog:** none from prior wave (re-check \`gh issue list\`).
+- **Apply:** run \`boats.polar\` SQL from #258 on Supabase if not yet applied.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 
