@@ -54,6 +54,38 @@ import 'error_log_service.dart';
 /// correct fix (pinning the HTTPS cert's actual fingerprint instead of
 /// rejecting or blindly trusting it) is a reasonable follow-up if this
 /// grows beyond a single-boat prototype.
+/// #270 — user-facing copy for a Hub connection failure. A real on-device
+/// report showed the *raw* `ClientException`/`SocketException` string
+/// (`"...errno = 61), address = remote.rdsensing.com, port = 51169..."`)
+/// surfacing verbatim in [PredictWindHubStatus.detail] and from there into
+/// [AnchorAlarmScreen]'s Hub status card — meaningless to a sailor and not
+/// something the app can act on either. The full raw string is still kept
+/// (separately) for the local error log, where it remains useful for
+/// debugging; this is only for what a person actually reads. Matches the
+/// `friendlyError` pattern in `join_boat_service.dart`.
+String friendlyConnectionError(Object e) {
+  final s = e.toString().toLowerCase();
+  if (s.contains('timeoutexception')) {
+    return 'Timed out waiting for a response.';
+  }
+  if (s.contains('connection refused')) {
+    return "Connection refused — the Hub isn't accepting connections right "
+        'now.';
+  }
+  if (s.contains('failed host lookup') ||
+      s.contains('no address associated')) {
+    return "Can't find that address — check the Hub's network settings.";
+  }
+  if (s.contains('network is unreachable') ||
+      s.contains('no route to host')) {
+    return 'Network unreachable.';
+  }
+  if (s.contains('certificate') || s.contains('handshake')) {
+    return 'Secure connection failed.';
+  }
+  return "Check the boat's network connection.";
+}
+
 enum PredictWindHubConnectionState {
   notConfigured,
   missingCredentials,
@@ -208,6 +240,7 @@ class PredictWindDatahubService {
     final c = client ?? http.Client();
     try {
       var lastState = PredictWindHubConnectionState.unreachable;
+      String? lastRawDetail;
       String? lastDetail;
       for (final candidate in candidates) {
         try {
@@ -219,15 +252,17 @@ class PredictWindDatahubService {
             );
           }
           lastState = PredictWindHubConnectionState.authFailed;
+          lastRawDetail = null;
           lastDetail = null;
         } catch (e) {
           lastState = PredictWindHubConnectionState.unreachable;
-          lastDetail = e.toString();
+          lastRawDetail = e.toString();
+          lastDetail = friendlyConnectionError(e);
         }
       }
       if (lastState == PredictWindHubConnectionState.unreachable) {
         unawaited(ErrorLogService().logWarning(
-          'PredictWind Hub unreachable: $lastDetail',
+          'PredictWind Hub unreachable: $lastRawDetail',
           context: 'predictwind_datahub_service: checkConnection',
         ));
       }

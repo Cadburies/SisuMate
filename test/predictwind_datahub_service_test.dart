@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -108,8 +110,9 @@ void main() {
     expect(status.state, PredictWindHubConnectionState.authFailed);
   });
 
-  test('a thrown error (timeout/connection refused) reports unreachable',
-      () async {
+  test(
+      'a thrown error (timeout/connection refused) reports unreachable with '
+      'a friendly, not raw, detail', () async {
     final client = MockClient((request) async {
       throw Exception('connection refused');
     });
@@ -122,7 +125,56 @@ void main() {
     final status = await service.checkConnection(client: client);
 
     expect(status.state, PredictWindHubConnectionState.unreachable);
-    expect(status.detail, contains('connection refused'));
+    // #270 — a real on-device report showed the raw ClientException/
+    // SocketException string (errno, local ephemeral port, address) leaking
+    // straight into the Hub status card. detail must be the friendly copy.
+    expect(status.detail, "Connection refused — the Hub isn't accepting "
+        'connections right now.');
+  });
+
+  group('#270 — friendlyConnectionError (no raw exception text to users)',
+      () {
+    test('maps a timeout', () {
+      expect(
+        friendlyConnectionError(TimeoutException('Future not completed')),
+        'Timed out waiting for a response.',
+      );
+    });
+
+    test('maps a connection-refused socket error', () {
+      expect(
+        friendlyConnectionError(Exception(
+          'ClientException with SocketException: Connection refused (OS '
+          'Error: Connection refused, errno = 61), address = '
+          'remote.rdsensing.com, port = 51169',
+        )),
+        "Connection refused — the Hub isn't accepting connections right "
+            'now.',
+      );
+    });
+
+    test('maps a DNS lookup failure', () {
+      expect(
+        friendlyConnectionError(
+            Exception('Failed host lookup: remote.rdsensing.com')),
+        "Can't find that address — check the Hub's network settings.",
+      );
+    });
+
+    test('maps a certificate/handshake failure', () {
+      expect(
+        friendlyConnectionError(Exception(
+            'HandshakeException: CERTIFICATE_VERIFY_FAILED: self signed certificate')),
+        'Secure connection failed.',
+      );
+    });
+
+    test('falls back to a generic message for anything unrecognized', () {
+      expect(
+        friendlyConnectionError(Exception('some new never-seen-before error')),
+        "Check the boat's network connection.",
+      );
+    });
   });
 
   test('fetchBoatData with no credentials returns null without a request',
