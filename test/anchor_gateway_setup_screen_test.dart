@@ -45,6 +45,10 @@ void main() {
     WidgetTester tester, {
     http.Client? httpClient,
   }) async {
+    // Tall surface so Discover + manual + Save fit without fighting
+    // ListView cache-extent / hit-test misses on the lower buttons.
+    await tester.binding.setSurfaceSize(const Size(400, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -62,12 +66,15 @@ void main() {
   // first one in the tree, which is the outer ListView's own (an ancestor
   // of every nested TextField, so it's always visited first in the
   // top-down element traversal `find.byType` walks).
-  Future<void> reveal(WidgetTester tester, Finder finder) =>
-      tester.scrollUntilVisible(
-        finder,
-        300.0,
-        scrollable: find.byType(Scrollable).first,
-      );
+  Future<void> reveal(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      300.0,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(finder);
+    await tester.pump();
+  }
 
   testWidgets('starts with empty fields and no discovery results',
       (tester) async {
@@ -77,9 +84,16 @@ void main() {
     expect(find.text('Found:'), findsNothing);
   });
 
-  testWidgets('Discover finds the known local address and selects it',
+  testWidgets('Discover finds a working remote tunnel and selects it',
       (tester) async {
-    final client = MockClient((request) async => loginOk());
+    // Only the vendor HTTP remote answers — simulates beach-bar internet.
+    final client = MockClient((request) async {
+      if (request.url.host == 'remote.rdsensing.com' &&
+          request.url.port == 36121) {
+        return loginOk();
+      }
+      throw Exception('connection refused');
+    });
     await pumpScreen(tester, httpClient: client);
 
     await tester.enterText(find.widgetWithText(TextField, 'Username'), 'u');
@@ -88,14 +102,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Found:'), findsOneWidget);
-    final address = PredictWindDatahubService.knownLocalAddresses.first;
     expect(
-      find.widgetWithText(RadioListTile<String>, address),
+      find.widgetWithText(
+          RadioListTile<String>, 'http://remote.rdsensing.com:36121'),
       findsOneWidget,
     );
+    // Subtitle on the radio + summary card both mention internet.
+    expect(find.textContaining('Internet'), findsWidgets);
   });
 
-  testWidgets('Discover with nothing reachable shows the manual-entry hint',
+  testWidgets('Discover with nothing reachable shows a helpful summary',
       (tester) async {
     final client = MockClient((request) async {
       throw Exception('connection refused');
@@ -108,8 +124,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Found:'), findsNothing);
-    final message =
-        find.textContaining("No gateway found among this app's known");
+    final message = find.textContaining('No gateway answered');
     await reveal(tester, message);
     expect(message, findsOneWidget);
   });
@@ -121,7 +136,7 @@ void main() {
 
     await tester.enterText(find.widgetWithText(TextField, 'Username'), 'u');
     await tester.enterText(find.widgetWithText(TextField, 'Password'), 'p');
-    final ipField = find.widgetWithText(TextField, 'IP : Port');
+    final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
     await tester.enterText(ipField, '10.10.10.5');
     final testButton = find.widgetWithText(OutlinedButton, 'Test');
@@ -129,7 +144,7 @@ void main() {
     await tester.tap(testButton);
     await tester.pumpAndSettle();
 
-    final message = find.textContaining('Connected — sign-in succeeded');
+    final message = find.textContaining('Connected at');
     await reveal(tester, message);
     expect(message, findsOneWidget);
   });
@@ -141,7 +156,7 @@ void main() {
 
     await tester.enterText(find.widgetWithText(TextField, 'Username'), 'u');
     await tester.enterText(find.widgetWithText(TextField, 'Password'), 'wrong');
-    final ipField = find.widgetWithText(TextField, 'IP : Port');
+    final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
     await tester.enterText(ipField, '10.10.10.5');
     final testButton = find.widgetWithText(OutlinedButton, 'Test');
@@ -149,12 +164,13 @@ void main() {
     await tester.tap(testButton);
     await tester.pumpAndSettle();
 
-    final message = find.textContaining("Couldn't sign in");
+    final message = find.textContaining("Couldn't connect");
     await reveal(tester, message);
     expect(message, findsOneWidget);
   });
 
-  testWidgets('Save persists username/password/address to UserSettings',
+  testWidgets(
+      'Save persists a typed remote URL even without a prior Test',
       (tester) async {
     await pumpScreen(tester);
 
@@ -162,9 +178,9 @@ void main() {
         find.widgetWithText(TextField, 'Username'), 'boatuser');
     await tester.enterText(
         find.widgetWithText(TextField, 'Password'), 'boatpass');
-    final ipField = find.widgetWithText(TextField, 'IP : Port');
+    final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
-    await tester.enterText(ipField, '10.10.10.1');
+    await tester.enterText(ipField, 'http://remote.rdsensing.com:36121');
 
     final saveButton = find.widgetWithText(ElevatedButton, 'Save');
     await reveal(tester, saveButton);
@@ -176,6 +192,8 @@ void main() {
     expect(saved, isNotNull);
     expect(saved!.predictwindHubUsername, 'boatuser');
     expect(saved.predictwindHubPassword, 'boatpass');
+    expect(saved.predictwindHubLocalUrl, 'http://remote.rdsensing.com:36121');
+    expect(find.textContaining('internet remote access'), findsOneWidget);
   });
 
   testWidgets('loads previously saved settings into the fields',
@@ -184,7 +202,7 @@ void main() {
     final settings = UserSettings()
       ..predictwindHubUsername = 'existing'
       ..predictwindHubPassword = 'secret'
-      ..predictwindHubLocalUrl = 'http://10.10.10.1';
+      ..predictwindHubLocalUrl = 'http://remote.rdsensing.com:36121';
     await repo.updateSettings(settings);
 
     await pumpScreen(tester);
@@ -194,8 +212,8 @@ void main() {
 
     expect(textOf(find.widgetWithText(TextField, 'Username')), 'existing');
 
-    final ipField = find.widgetWithText(TextField, 'IP : Port');
+    final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
-    expect(textOf(ipField), 'http://10.10.10.1');
+    expect(textOf(ipField), 'http://remote.rdsensing.com:36121');
   });
 }

@@ -8,14 +8,12 @@ import '../../models/models.dart';
 import '../../services/predictwind_datahub_service.dart';
 
 /// #263 — Anchor Alarm's gateway setup/onboarding screen: username/password,
-/// "Discover" (tries [PredictWindDatahubService.knownLocalAddresses]) or a
-/// manual IP:port fallback, "Test" to confirm a login actually works, then
-/// "Save" persists the choice to [UserSettings] so the Anchor Alarm screen
-/// uses it on every future connection instead of the dart-defines default.
+/// "Discover" (tries known **local** Hub IPs *and* PredictWind **remote**
+/// tunnel URLs with the entered credentials), manual address + "Test", then
+/// "Save" to [UserSettings].
 ///
 /// YDWG-02-style raw-NMEA gateways are out of scope here — that class of
-/// device isn't behind a LuCI login at all, so "discover" for it will need
-/// a different probe once one is available to test against (see #263).
+/// device isn't behind a LuCI login at all (see #263).
 class AnchorGatewaySetupScreen extends ConsumerStatefulWidget {
   const AnchorGatewaySetupScreen({
     super.key,
@@ -73,13 +71,20 @@ class _AnchorGatewaySetupScreenState
   Future<void> _discover() async {
     final username = _usernameCtrl.text.trim();
     final password = _passwordCtrl.text;
+    if (username.isEmpty || password.isEmpty) {
+      setState(() {
+        _message = 'Enter username and password before Discover.';
+        _messageIsError = true;
+      });
+      return;
+    }
     setState(() {
       _status = _Status.discovering;
       _discoveryRan = false;
       _discovered = [];
       _message = null;
     });
-    final found = await widget.hubService.discoverLocalGateways(
+    final result = await widget.hubService.discoverGateways(
       username: username,
       password: password,
       client: widget.httpClient,
@@ -87,16 +92,15 @@ class _AnchorGatewaySetupScreenState
     if (!mounted) return;
     setState(() {
       _status = _Status.idle;
-      _discovered = found;
+      _discovered = result.workingAddresses;
       _discoveryRan = true;
-      if (found.isNotEmpty) {
-        _selectedAddress = found.first;
-        _manualCtrl.text = found.first;
-      } else {
-        _message = "No gateway found among this app's known local "
-            "addresses — enter the IP:port shown on the Hub / router "
-            'directly below and tap Test.';
-        _messageIsError = false;
+      _message = result.summary;
+      _messageIsError = result.workingAddresses.isEmpty;
+      if (result.workingAddresses.isNotEmpty) {
+        // Prefer a remote hit when both exist? Prefer first (local first in
+        // list order) — on boat that's better; off boat only remotes succeed.
+        _selectedAddress = result.workingAddresses.first;
+        _manualCtrl.text = result.workingAddresses.first;
       }
     });
   }
@@ -105,8 +109,18 @@ class _AnchorGatewaySetupScreenState
     final address = _normalizedManualAddress();
     if (address == null) {
       setState(() {
-        _message = 'Enter an address first, e.g. 10.10.10.1 or '
-            '10.10.10.1:80.';
+        _message =
+            'Enter an address first, e.g. http://192.168.10.31 or '
+            'http://remote.rdsensing.com:36121';
+        _messageIsError = true;
+      });
+      return;
+    }
+    final username = _usernameCtrl.text.trim();
+    final password = _passwordCtrl.text;
+    if (username.isEmpty || password.isEmpty) {
+      setState(() {
+        _message = 'Enter username and password before Test.';
         _messageIsError = true;
       });
       return;
@@ -115,31 +129,34 @@ class _AnchorGatewaySetupScreenState
       _status = _Status.testing;
       _message = null;
     });
-    final ok = await widget.hubService.testConnection(
+    final result = await widget.hubService.probeConnection(
       baseUrl: address,
-      username: _usernameCtrl.text.trim(),
-      password: _passwordCtrl.text,
+      username: username,
+      password: password,
       client: widget.httpClient,
     );
     if (!mounted) return;
     setState(() {
       _status = _Status.idle;
-      if (ok) {
+      if (result.ok) {
         _selectedAddress = address;
-        _message = 'Connected — sign-in succeeded at $address.';
+        _manualCtrl.text = address;
+        _message = 'Connected at $address. ${result.detail ?? ''} '
+            'Tap Save to use this gateway.';
         _messageIsError = false;
       } else {
-        _selectedAddress = null;
-        _message = "Couldn't sign in at $address — check the address, "
-            'username, and password.';
+        // Keep the typed address selected so Save still works if the user
+        // wants to persist it for later (tunnel offline right now).
+        _selectedAddress = address;
+        _message = "Couldn't connect to $address. "
+            '${result.detail ?? "Check address, username, and password."}';
         _messageIsError = true;
       }
     });
   }
 
   /// Accepts a bare host/`host:port` and normalizes it to a full
-  /// `http://…` base URL (matching what [PredictWindDatahubService]
-  /// expects); passes a URL that already has a scheme through unchanged.
+  /// `http://…` base URL; passes a URL that already has a scheme through.
   String? _normalizedManualAddress() {
     final raw = _manualCtrl.text.trim();
     if (raw.isEmpty) return null;
@@ -147,20 +164,56 @@ class _AnchorGatewaySetupScreenState
     return 'http://$raw';
   }
 
+  /// Address to persist: selected radio, else whatever is in the manual
+  /// field (so typing a remote URL and tapping Save actually stores it —
+  /// previously onChanged cleared selection and Save wrote '').
+  String? _addressToSave() =>
+      _selectedAddress?.trim().isNotEmpty == true
+          ? _selectedAddress!.trim()
+          : _normalizedManualAddress();
+
   Future<void> _save() async {
+    final address = _addressToSave();
+    final username = _usernameCtrl.text.trim();
+    final password = _passwordCtrl.text;
+
+    if (username.isEmpty || password.isEmpty) {
+      setState(() {
+        _message = 'Enter username and password before saving.';
+        _messageIsError = true;
+      });
+      return;
+    }
+    if (address == null || address.isEmpty) {
+      setState(() {
+        _message =
+            'Enter or Discover a gateway address before saving '
+            '(e.g. http://remote.rdsensing.com:36121).';
+        _messageIsError = true;
+      });
+      return;
+    }
+
     final repo = ref.read(userSettingsRepositoryProvider);
     final current = await ref.read(userSettingsProvider.future);
     final settings = current ?? UserSettings();
     settings
-      ..predictwindHubUsername = _usernameCtrl.text.trim()
-      ..predictwindHubPassword = _passwordCtrl.text
-      ..predictwindHubLocalUrl = _selectedAddress ?? '';
+      ..predictwindHubUsername = username
+      ..predictwindHubPassword = password
+      ..predictwindHubLocalUrl = address;
     setState(() => _status = _Status.saving);
     await repo.updateSettings(settings);
     if (!mounted) return;
+    final kind = PredictWindDatahubService.isPrivateLanUrl(address)
+        ? 'boat WiFi (local)'
+        : 'internet remote access';
     setState(() {
       _status = _Status.idle;
-      _message = 'Saved — the Anchor Alarm will use this gateway from now on.';
+      _selectedAddress = address;
+      _manualCtrl.text = address;
+      _message =
+          'Saved $address as $kind. '
+          'The Anchor Alarm will use this login from now on.';
       _messageIsError = false;
     });
   }
@@ -193,8 +246,8 @@ class _AnchorGatewaySetupScreenState
                           const SizedBox(height: 4),
                           const Text(
                             'The same login you use on the Hub / PredictWind '
-                            'app — needed for both the local-WiFi and '
-                            'internet connection.',
+                            'app — needed for both the boat WiFi and the '
+                            'internet (remote.rdsensing.com) path.',
                           ),
                           const SizedBox(height: 12),
                           TextField(
@@ -202,6 +255,8 @@ class _AnchorGatewaySetupScreenState
                             decoration:
                                 const InputDecoration(labelText: 'Username'),
                             enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
                           ),
                           const SizedBox(height: 8),
                           TextField(
@@ -223,13 +278,15 @@ class _AnchorGatewaySetupScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Find the gateway on the boat’s WiFi',
+                            'Discover gateway',
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            "Connect your phone to the boat's own WiFi "
-                            'first, then tap Discover.',
+                            'Probes known boat-WiFi addresses and PredictWind '
+                            'internet tunnel URLs with the login above. '
+                            'Works at the dock (local) and away from the boat '
+                            '(remote) when the Hub tunnel is online.',
                           ),
                           const SizedBox(height: 12),
                           Align(
@@ -259,7 +316,7 @@ class _AnchorGatewaySetupScreenState
                                   ? (_) {}
                                   : (v) => setState(() {
                                         _selectedAddress = v;
-                                        _manualCtrl.text = v ?? '';
+                                        if (v != null) _manualCtrl.text = v;
                                       }),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
@@ -269,6 +326,12 @@ class _AnchorGatewaySetupScreenState
                                       contentPadding: EdgeInsets.zero,
                                       dense: true,
                                       title: Text(address),
+                                      subtitle: Text(
+                                        PredictWindDatahubService
+                                                .isPrivateLanUrl(address)
+                                            ? 'Boat WiFi (local)'
+                                            : 'Internet (remote access)',
+                                      ),
                                       value: address,
                                     ),
                                 ],
@@ -287,14 +350,15 @@ class _AnchorGatewaySetupScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Didn't find it? Enter it manually",
+                            'Or enter an address manually',
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            'The IP address (and port, if shown) printed on '
-                            "the Hub or your router's device list, e.g. "
-                            '10.10.10.1.',
+                            'Local example: http://192.168.10.31\n'
+                            'Remote example: http://remote.rdsensing.com:36121\n'
+                            '(Prefer http for remote — https often uses a '
+                            'self-signed certificate the phone rejects.)',
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -303,12 +367,28 @@ class _AnchorGatewaySetupScreenState
                                 child: TextField(
                                   controller: _manualCtrl,
                                   decoration: const InputDecoration(
-                                    labelText: 'IP : Port',
-                                    hintText: '10.10.10.1',
+                                    labelText: 'Hub address',
+                                    hintText:
+                                        'http://remote.rdsensing.com:36121',
                                   ),
                                   enabled: !busy,
-                                  onChanged: (_) =>
-                                      setState(() => _selectedAddress = null),
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  onChanged: (raw) {
+                                    final trimmed = raw.trim();
+                                    setState(() {
+                                      // Keep selection in sync with what the
+                                      // user typed so Save persists it.
+                                      if (trimmed.isEmpty) {
+                                        _selectedAddress = null;
+                                      } else if (trimmed.startsWith('http://') ||
+                                          trimmed.startsWith('https://')) {
+                                        _selectedAddress = trimmed;
+                                      } else {
+                                        _selectedAddress = 'http://$trimmed';
+                                      }
+                                    });
+                                  },
                                 ),
                               ),
                               const SizedBox(width: 8),

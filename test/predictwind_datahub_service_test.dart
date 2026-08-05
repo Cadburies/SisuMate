@@ -461,8 +461,7 @@ void main() {
     });
   });
 
-  group('#263 — gateway setup screen: testConnection/discoverLocalGateways',
-      () {
+  group('#263 — gateway setup: testConnection / discoverGateways', () {
     http.Response loginOk() => http.Response('', 302,
         headers: {'set-cookie': 'sysauth=abc123; path=/cgi-bin/luci/'});
 
@@ -486,58 +485,117 @@ void main() {
       expect(ok, isTrue);
     });
 
-    test('testConnection fails on a rejected login', () async {
+    test('probeConnection reports auth failure distinctly', () async {
       final client = MockClient((request) async => http.Response('', 403));
       const service = PredictWindDatahubService();
 
-      final ok = await service.testConnection(
+      final result = await service.probeConnection(
         baseUrl: 'http://some-hub.test',
         username: 'user',
         password: 'wrong',
         client: client,
       );
 
-      expect(ok, isFalse);
+      expect(result.ok, isFalse);
+      expect(result.detail, contains("Couldn't sign in"));
     });
 
-    test('testConnection fails (not throws) on a connection error', () async {
+    test('probeConnection reports friendly network errors', () async {
       final client = MockClient((request) async {
         throw Exception('connection refused');
       });
       const service = PredictWindDatahubService();
 
-      final ok = await service.testConnection(
+      final result = await service.probeConnection(
         baseUrl: 'http://unreachable.test',
         username: 'user',
         password: 'pass',
         client: client,
       );
 
-      expect(ok, isFalse);
+      expect(result.ok, isFalse);
+      expect(result.detail, isNotNull);
+      expect(result.detail!.toLowerCase(), contains('refused'));
+    });
+
+    test('isPrivateLanUrl classifies boat LAN vs internet tunnels', () {
+      expect(
+        PredictWindDatahubService.isPrivateLanUrl('http://192.168.10.31'),
+        isTrue,
+      );
+      expect(
+        PredictWindDatahubService.isPrivateLanUrl('http://10.10.10.1'),
+        isTrue,
+      );
+      expect(
+        PredictWindDatahubService.isPrivateLanUrl(
+            'http://remote.rdsensing.com:36121'),
+        isFalse,
+      );
+      expect(
+        PredictWindDatahubService.isPrivateLanUrl(
+            'https://remote.rdsensing.com:36122'),
+        isFalse,
+      );
+    });
+
+    test('knownRemoteAddresses always includes the vendor HTTP tunnel', () {
+      expect(
+        PredictWindDatahubService.knownRemoteAddresses,
+        contains('http://remote.rdsensing.com:36121'),
+      );
     });
 
     test(
-        'discoverLocalGateways returns the known address when it accepts '
-        'the login', () async {
+        'discoverGateways returns working local + remote addresses',
+        () async {
       final client = MockClient((request) async {
-        expect(request.url.toString(),
-            'http://10.10.10.1/cgi-bin/luci');
-        return loginOk();
+        final host = request.url.host;
+        // Local 10.10.10.1 and remote HTTP tunnel succeed; others fail.
+        if (host == '10.10.10.1' ||
+            (host == 'remote.rdsensing.com' && request.url.port == 36121)) {
+          return loginOk();
+        }
+        throw Exception('connection refused');
       });
       const service = PredictWindDatahubService();
 
-      final found = await service.discoverLocalGateways(
+      final result = await service.discoverGateways(
         username: 'user',
         password: 'pass',
         client: client,
       );
 
-      expect(found, PredictWindDatahubService.knownLocalAddresses);
+      expect(result.workingAddresses, contains('http://10.10.10.1'));
+      expect(
+        result.workingAddresses,
+        contains('http://remote.rdsensing.com:36121'),
+      );
+      expect(result.summary.toLowerCase(), contains('internet'));
     });
 
-    test('discoverLocalGateways returns empty when nothing answers',
+    test('discoverGateways returns empty + summary when nothing answers',
         () async {
       final client = MockClient((request) async {
+        throw Exception('connection refused');
+      });
+      const service = PredictWindDatahubService();
+
+      final result = await service.discoverGateways(
+        username: 'user',
+        password: 'pass',
+        client: client,
+      );
+
+      expect(result.workingAddresses, isEmpty);
+      expect(result.summary, isNotEmpty);
+    });
+
+    test('discoverLocalGateways only probes local addresses', () async {
+      final seen = <String>[];
+      final client = MockClient((request) async {
+        seen.add(request.url.toString());
+        if (request.url.host == '10.10.10.1') return loginOk();
         throw Exception('connection refused');
       });
       const service = PredictWindDatahubService();
@@ -548,7 +606,11 @@ void main() {
         client: client,
       );
 
-      expect(found, isEmpty);
+      expect(found, contains('http://10.10.10.1'));
+      expect(
+        seen.any((u) => u.contains('remote.rdsensing.com')),
+        isFalse,
+      );
     });
   });
 }

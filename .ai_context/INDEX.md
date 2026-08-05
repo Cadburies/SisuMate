@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last (grok):** **#268** / **#273** / **#269** (TitleTile Row overflow: compact icons + Flexible trailing scroll; goldens updated). Suite green.
+- **Last (grok):** Gateway setup (#263 follow-up): Discover probes local + PredictWind remote tunnel URLs; Save keeps typed remotes; remote URLs applied as internet candidates (not WiFi-gated "local"). Suite green.
 - **Next bugs:** #258/#259 (boats.polar Supabase schema).
-- **Open:** #256 parent; #263 YDWG-02 deferred.
+- **Open:** #256 parent; #263 YDWG-02 half still deferred.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.

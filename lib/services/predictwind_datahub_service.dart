@@ -348,72 +348,250 @@ class PredictWindDatahubService {
     return _sysauthCookie.firstMatch(setCookie)?.group(1);
   }
 
-  /// #263 — known default local-WiFi addresses for PredictWind Datahub-
-  /// family devices, tried by [discoverLocalGateways]. Currently just
-  /// PredictWind's own documented default (`10.10.10.1` — see the class
-  /// doc's #263 note on why it's still unverified for *this* device);
-  /// structured as a list so more can be added as they're confirmed. A
-  /// bare Yacht Devices YDWG-02 or similar wouldn't be found by this
-  /// method even with its address added here — that class of device
-  /// speaks an unauthenticated raw-NMEA protocol this service doesn't
-  /// parse yet (tracked separately in #263, deferred until hardware is
-  /// available to verify against).
-  static const knownLocalAddresses = ['http://10.10.10.1'];
+  /// #263 — known default **local-WiFi** addresses for PredictWind Datahub-
+  /// family devices. Includes PredictWind's documented default
+  /// (`10.10.10.1`) plus the compile-time [PREDICTWIND_HUB_LOCAL_URL] when
+  /// set (this boat: `http://192.168.10.31`). A bare Yacht Devices YDWG-02
+  /// still wouldn't answer LuCI login (raw-NMEA — deferred in #263).
+  static List<String> get knownLocalAddresses {
+    final list = <String>['http://10.10.10.1'];
+    if (_hubLocalUrl.isNotEmpty && !list.contains(_hubLocalUrl)) {
+      list.insert(0, _hubLocalUrl);
+    }
+    return list;
+  }
+
+  /// #263 follow-up — PredictWind / RDS **internet tunnel** base URLs tried
+  /// by Discover when you're not on the boat WiFi (beach bar, marina cafe).
+  /// HTTP first: the HTTPS endpoint uses a self-signed cert that dart:io
+  /// rejects (#257/#260). Compile-time dart-defines are preferred when set;
+  /// the vendor hostnames are always included as a fallback so Discover
+  /// still works without rebuilds after a tunnel port change is typed in.
+  static List<String> get knownRemoteAddresses {
+    final list = <String>[];
+    void add(String? url) {
+      if (url == null || url.isEmpty) return;
+      if (!list.contains(url)) list.add(url);
+    }
+
+    add(_hubHttpUrl.isNotEmpty ? _hubHttpUrl : null);
+    add(_hubUrl.isNotEmpty ? _hubUrl : null);
+    // Vendor defaults (same host family as dart-defines).
+    add('http://remote.rdsensing.com:36121');
+    add('https://remote.rdsensing.com:36122');
+    return list;
+  }
+
+  /// True when [baseUrl]'s host looks like a private LAN address (only
+  /// reachable on the boat's own network). Used to pick timeouts and to
+  /// decide whether a user-saved URL is local vs remote for failover.
+  static bool isPrivateLanUrl(String baseUrl) {
+    try {
+      final host = Uri.parse(baseUrl).host.toLowerCase();
+      if (host == 'localhost' || host == '127.0.0.1') return true;
+      if (host.startsWith('10.')) return true;
+      if (host.startsWith('192.168.')) return true;
+      // 172.16.0.0 – 172.31.255.255
+      final m = RegExp(r'^172\.(\d+)\.').firstMatch(host);
+      if (m != null) {
+        final second = int.tryParse(m.group(1)!);
+        if (second != null && second >= 16 && second <= 31) return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Duration _timeoutFor(String baseUrl) =>
+      isPrivateLanUrl(baseUrl) ? _localTimeout : _remoteTimeout;
 
   /// Logs in at [baseUrl] directly with [username]/[password] — bypasses
   /// the WiFi-gating/candidate-ordering [checkConnection] normally applies,
   /// since this is for explicitly testing *one* address (the gateway setup
-  /// screen's "Discover" and manual "Connect" actions), not evaluating the
-  /// app's normal runtime failover.
+  /// screen's "Discover" and manual "Test" actions).
+  ///
+  /// Prefer [probeConnection] when the UI needs a friendly reason for
+  /// failure; this bool wrapper stays for existing call sites.
   Future<bool> testConnection({
     required String baseUrl,
     required String username,
     required String password,
     http.Client? client,
   }) async {
+    final result = await probeConnection(
+      baseUrl: baseUrl,
+      username: username,
+      password: password,
+      client: client,
+    );
+    return result.ok;
+  }
+
+  /// Like [testConnection] but returns a structured result so the setup
+  /// screen can show "wrong password" vs "unreachable" vs "certificate".
+  Future<GatewayProbeResult> probeConnection({
+    required String baseUrl,
+    required String username,
+    required String password,
+    http.Client? client,
+  }) async {
+    if (username.trim().isEmpty || password.isEmpty) {
+      return const GatewayProbeResult(
+        ok: false,
+        detail: 'Enter username and password first.',
+      );
+    }
     final c = client ?? http.Client();
     try {
       final probe = PredictWindDatahubService(
         usernameOverride: username,
         passwordOverride: password,
       );
-      final sysauth = await probe._login(c, baseUrl, _localTimeout);
-      return sysauth != null;
-    } catch (_) {
-      return false;
+      final sysauth =
+          await probe._login(c, baseUrl, _timeoutFor(baseUrl));
+      if (sysauth != null) {
+        return GatewayProbeResult(
+          ok: true,
+          detail: isPrivateLanUrl(baseUrl)
+              ? 'Connected on the boat network.'
+              : 'Connected via internet (remote access).',
+        );
+      }
+      return const GatewayProbeResult(
+        ok: false,
+        detail: "Couldn't sign in — check username and password.",
+      );
+    } catch (e) {
+      return GatewayProbeResult(
+        ok: false,
+        detail: friendlyConnectionError(e),
+      );
     } finally {
       if (client == null) c.close();
     }
   }
 
-  /// Tries every [knownLocalAddresses] entry concurrently with
-  /// [username]/[password] and returns the ones that actually worked — for
-  /// the gateway setup screen's "Discover" step.
+  /// Tries every [knownLocalAddresses] entry concurrently (legacy name kept
+  /// for tests). Prefer [discoverGateways] so internet tunnels are included.
   Future<List<String>> discoverLocalGateways({
     required String username,
     required String password,
     http.Client? client,
   }) async {
+    final result = await discoverGateways(
+      username: username,
+      password: password,
+      client: client,
+      includeRemote: false,
+    );
+    return result.workingAddresses;
+  }
+
+  /// #263 follow-up — Discover for the gateway setup screen: probes known
+  /// **local** addresses and (by default) PredictWind's **remote** tunnel
+  /// URLs with [username]/[password], concurrently. Returns every address
+  /// that accepted the login, plus a short human summary of what was tried.
+  Future<GatewayDiscoveryResult> discoverGateways({
+    required String username,
+    required String password,
+    http.Client? client,
+    bool includeRemote = true,
+  }) async {
+    if (username.trim().isEmpty || password.isEmpty) {
+      return const GatewayDiscoveryResult(
+        workingAddresses: [],
+        summary: 'Enter username and password before Discover.',
+      );
+    }
+
+    final candidates = <String>[
+      ...knownLocalAddresses,
+      if (includeRemote) ...knownRemoteAddresses,
+    ];
+    // De-dupe while preserving order.
+    final seen = <String>{};
+    final unique = <String>[
+      for (final a in candidates)
+        if (seen.add(a)) a,
+    ];
+
     final c = client ?? http.Client();
     try {
-      final results = await Future.wait(knownLocalAddresses.map(
-        (address) => testConnection(
+      final results = await Future.wait(unique.map(
+        (address) => probeConnection(
           baseUrl: address,
           username: username,
           password: password,
           client: c,
         ),
       ));
-      return [
-        for (var i = 0; i < knownLocalAddresses.length; i++)
-          if (results[i]) knownLocalAddresses[i],
+      final working = <String>[
+        for (var i = 0; i < unique.length; i++)
+          if (results[i].ok) unique[i],
       ];
+      final localHits =
+          working.where(isPrivateLanUrl).toList(growable: false);
+      final remoteHits =
+          working.where((a) => !isPrivateLanUrl(a)).toList(growable: false);
+
+      String summary;
+      if (working.isEmpty) {
+        // Surface the most useful failure from remote probes if any.
+        String? remoteDetail;
+        for (var i = 0; i < unique.length; i++) {
+          if (!isPrivateLanUrl(unique[i]) && !results[i].ok) {
+            remoteDetail = results[i].detail;
+            break;
+          }
+        }
+        summary = remoteDetail != null
+            ? 'No gateway answered. Remote check: $remoteDetail '
+                'Try again on boat WiFi for the local Hub, or enter the '
+                'address manually and tap Test.'
+            : 'No gateway answered among local and internet addresses. '
+                'On the boat, join the boat WiFi and try again; off the boat, '
+                'confirm the Hub remote-access tunnel is online.';
+      } else if (localHits.isNotEmpty && remoteHits.isNotEmpty) {
+        summary =
+            'Found ${working.length}: ${localHits.length} on boat WiFi, '
+            '${remoteHits.length} via internet.';
+      } else if (localHits.isNotEmpty) {
+        summary =
+            'Found ${localHits.length} on the boat network (local WiFi).';
+      } else {
+        summary =
+            'Found ${remoteHits.length} via internet (remote access) — '
+            'usable away from the boat.';
+      }
+
+      return GatewayDiscoveryResult(
+        workingAddresses: working,
+        summary: summary,
+      );
     } finally {
       if (client == null) c.close();
     }
   }
 
   double? _asDouble(dynamic v) => v is num ? v.toDouble() : null;
+}
+
+/// Result of probing a single Hub base URL (setup screen Test / Discover).
+class GatewayProbeResult {
+  final bool ok;
+  final String? detail;
+  const GatewayProbeResult({required this.ok, this.detail});
+}
+
+/// Result of [PredictWindDatahubService.discoverGateways].
+class GatewayDiscoveryResult {
+  final List<String> workingAddresses;
+  final String summary;
+  const GatewayDiscoveryResult({
+    required this.workingAddresses,
+    required this.summary,
+  });
 }
 
 class _Candidate {

@@ -115,24 +115,37 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
   double? get _boatLon => _boatData?.hasFix ?? false ? _boatData!.longitude : null;
 
   /// #263 — [widget.hubService] stays the dart-defines-backed default (and
-  /// the test-injection point); when the gateway setup screen has saved a
-  /// local address/credentials to [UserSettings], build a one-off service
-  /// instance layered on top of it for this refresh instead. Username/
-  /// password are shared across local+remote (same physical Hub login), so
-  /// a saved credential overrides even when only the address was set.
+  /// the test-injection point); when the gateway setup screen has saved an
+  /// address/credentials to [UserSettings], layer them on. A **private LAN**
+  /// URL becomes the local candidate (WiFi-gated); a **remote** URL
+  /// (`remote.rdsensing.com`, etc.) becomes the remote/internet candidate so
+  /// it still works at a beach bar on cellular or public WiFi — not only
+  /// when the phone thinks it's on "boat WiFi".
   Future<PredictWindDatahubService> _effectiveHubService() async {
     final settings = await ref.read(userSettingsProvider.future);
-    if (settings == null || settings.predictwindHubLocalUrl.isEmpty) {
+    if (settings == null) return widget.hubService;
+
+    final savedUrl = settings.predictwindHubLocalUrl.trim();
+    final user = settings.predictwindHubUsername.isNotEmpty
+        ? settings.predictwindHubUsername
+        : null;
+    final pass = settings.predictwindHubPassword.isNotEmpty
+        ? settings.predictwindHubPassword
+        : null;
+
+    if (savedUrl.isEmpty && user == null && pass == null) {
       return widget.hubService;
     }
+
+    final isLan = savedUrl.isNotEmpty &&
+        PredictWindDatahubService.isPrivateLanUrl(savedUrl);
     return PredictWindDatahubService(
-      localBaseUrlOverride: settings.predictwindHubLocalUrl,
-      usernameOverride: settings.predictwindHubUsername.isNotEmpty
-          ? settings.predictwindHubUsername
-          : null,
-      passwordOverride: settings.predictwindHubPassword.isNotEmpty
-          ? settings.predictwindHubPassword
-          : null,
+      localBaseUrlOverride: isLan ? savedUrl : null,
+      // Remote (or credentials-only) override keeps dart-define remote as
+      // fallback when only username/password were saved.
+      baseUrlOverride: !isLan && savedUrl.isNotEmpty ? savedUrl : null,
+      usernameOverride: user,
+      passwordOverride: pass,
     );
   }
 
