@@ -71,6 +71,17 @@ void main() {
     expect(find.byIcon(Icons.delete_outline), findsNothing);
   });
 
+  testWidgets(
+      '#265 — map shows numbered long-press waypoint handles (not MarkerLayer)',
+      (tester) async {
+    await pumpPlanner(tester);
+    // Handles are numbered 1, 2 for the two default waypoints.
+    expect(find.text('1'), findsWidgets);
+    expect(find.text('2'), findsWidgets);
+    // GestureDetectors host the long-press-then-drag handles.
+    expect(find.byType(GestureDetector), findsWidgets);
+  });
+
   testWidgets('SUG3: US unit prefs label fuel as gal/h', (tester) async {
     await pumpPlanner(tester, imperial: true);
     expect(find.widgetWithText(TextField, 'Fuel gal/h'), findsOneWidget);

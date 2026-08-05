@@ -79,6 +79,8 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   late double _dangerInnerRadiusMeters;
   late double _dangerOuterRadiusMeters;
   bool _dragging = false;
+  /// #265 — which handle is armed after long-press (null = map pan free).
+  String? _armedHandleId;
   /// #264 — same SharedPreferences key as Weather so basemap choice is shared.
   String _tileProviderId = 'esri_world_imagery';
   /// Per-screen instance is fine: [MapTileCacheService] is disk-keyed under
@@ -163,11 +165,6 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     await ref.read(anchorWatchRepositoryProvider).updateWatch(updated);
   }
 
-  void _setDragging(bool value) {
-    if (_dragging == value) return;
-    setState(() => _dragging = value);
-  }
-
   @override
   Widget build(BuildContext context) {
     final anchorPoint = LatLng(_anchorLat, _anchorLon);
@@ -246,6 +243,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                 return Stack(
                   children: [
                     _handle(
+                      id: 'anchor',
                       camera: camera,
                       point: anchorPoint,
                       icon: Icons.anchor,
@@ -256,6 +254,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                       }),
                     ),
                     _handle(
+                      id: 'geofence',
                       camera: camera,
                       point: _geofenceHandlePoint(),
                       icon: Icons.radio_button_unchecked,
@@ -282,6 +281,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                       // handle). Inner tip sets bearing *and* inner radius
                       // (clock-hand control the outer tip used to own).
                       _handle(
+                        id: 'danger_inner',
                         camera: camera,
                         point: _dangerInnerHandlePoint(),
                         icon: Icons.remove_circle_outline,
@@ -303,6 +303,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                       // Width edge sits on the geofence perimeter; drag
                       // changes only angular width, center bearing fixed.
                       _handle(
+                        id: 'danger_edge',
                         camera: camera,
                         point: _dangerEdgeHandlePoint(),
                         icon: Icons.unfold_more,
@@ -397,6 +398,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   }
 
   Widget _handle({
+    required String id,
     required MapCamera camera,
     required LatLng point,
     required IconData icon,
@@ -416,9 +418,14 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     if (!offset.dx.isFinite || !offset.dy.isFinite) {
       return const SizedBox.shrink();
     }
+    // #265 — long-press to arm, then drag. Instant pan on a handle used to
+    // steal map pans / move the fence by accident; armed state scales up
+    // and swaps to a grip icon so the user sees the grab before moving.
+    final armed = _armedHandleId == id;
+    final size = armed ? handleSize * 1.25 : handleSize;
     return Positioned(
-      left: offset.dx - handleSize / 2,
-      top: offset.dy - handleSize / 2,
+      left: offset.dx - size / 2,
+      top: offset.dy - size / 2,
       // #268 — ExcludeSemantics: even a finite Positioned can briefly
       // hand the semantics pipeline a non-finite rect while flutter_map's
       // camera is mid-fit (widget-test symptom: "SemanticsNode tried to
@@ -426,38 +433,58 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
       // the anchorage itself lives on the surrounding screen chrome.
       child: ExcludeSemantics(
         child: GestureDetector(
-          onPanStart: (_) => _setDragging(true),
-          onPanUpdate: (details) {
-            // #261 — must NOT rebase from `point`/`offset` here: both are the
-            // handle's *current* position, itself set by the previous
-            // onPanUpdate call in this same gesture, so recomputing the drag
-            // base from them every frame compounds (each frame's delta lands
-            // on top of an already-shifted base) — a runaway feedback loop
-            // that read as "way faster than my finger, almost exponential"
-            // and, worst case, the handle "jumping off screen" entirely.
-            // Converting the pointer's true *global* position through the
-            // map area's own stable RenderBox sidesteps this: it asks "where
-            // is the finger right now" fresh every frame, independent of any
-            // prior update, so the handle tracks 1:1 with the touch.
+          onLongPressStart: (_) {
+            setState(() {
+              _armedHandleId = id;
+              _dragging = true;
+            });
+          },
+          onLongPressMoveUpdate: (details) {
+            if (_armedHandleId != id) return;
+            // #261 — convert the pointer's true global position each frame
+            // (not a delta from an already-moved handle) so tracking is 1:1.
             final box =
                 _mapAreaKey.currentContext!.findRenderObject()! as RenderBox;
             final local = box.globalToLocal(details.globalPosition);
             onDragUpdate(camera.screenOffsetToLatLng(local));
           },
-          onPanEnd: (_) {
-            _setDragging(false);
+          onLongPressEnd: (_) {
+            setState(() {
+              _armedHandleId = null;
+              _dragging = false;
+            });
             _persist();
           },
-          child: Container(
-            width: handleSize,
-            height: handleSize,
+          onLongPressCancel: () {
+            setState(() {
+              _armedHandleId = null;
+              _dragging = false;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
+              border: Border.all(
+                color: armed ? Colors.amberAccent : Colors.white,
+                width: armed ? 3 : 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: armed ? color.withValues(alpha: 0.7) : Colors.black45,
+                  blurRadius: armed ? 12 : 4,
+                  spreadRadius: armed ? 2 : 0,
+                ),
+              ],
             ),
-            child: Icon(icon, color: Colors.white, size: 18),
+            child: Icon(
+              armed ? Icons.open_with : icon,
+              color: Colors.white,
+              size: armed ? 22 : 18,
+            ),
           ),
         ),
       ),

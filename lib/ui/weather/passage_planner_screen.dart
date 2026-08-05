@@ -97,10 +97,15 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
   bool _computingRoute = false;
   UnitSystem? _lastVolumeSystem;
   SpeedUnitPref? _lastSpeedUnit;
+  // #265 — long-press-then-drag waypoints (same pattern as anchor handles).
+  late final MapController _mapController;
+  final _mapAreaKey = GlobalKey();
+  int? _armedWpIndex;
 
   @override
   void initState() {
     super.initState();
+    _mapController = MapController();
     final lat = widget.initialLat ?? 33.45;
     final lon = widget.initialLon ?? -112.07;
     _wps = [
@@ -111,6 +116,7 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
 
   @override
   void dispose() {
+    _mapController.dispose();
     _speedCtrl.dispose();
     _burnCtrl.dispose();
     super.dispose();
@@ -375,58 +381,62 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
             height: 200,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: center,
-                  initialZoom: 7,
-                ),
+              // #265 — Stack + overlay handles (like AnchorChartMap): MarkerLayer
+              // children don't get reliable long-press-then-drag over map pan.
+              child: Stack(
+                key: _mapAreaKey,
                 children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.sisumate.app',
-                  ),
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: _wps.map((w) => LatLng(w.lat, w.lon)).toList(),
-                        color: SisuColors.completedBackground,
-                        strokeWidth: 3,
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: center,
+                      initialZoom: 7,
+                      interactionOptions: InteractionOptions(
+                        flags: _armedWpIndex != null
+                            ? InteractiveFlag.all & ~InteractiveFlag.drag
+                            : InteractiveFlag.all,
                       ),
-                      // #238: isochrone-routed path, distinct color from
-                      // the great-circle line above — additive, never
-                      // replacing it.
-                      if (_computedRoute != null)
-                        Polyline(
-                          points: _computedRoute!.path
-                              .map((p) => LatLng(p.lat, p.lon))
-                              .toList(),
-                          color: Colors.deepOrange,
-                          strokeWidth: 3,
-                        ),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.sisumate.app',
+                      ),
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points:
+                                _wps.map((w) => LatLng(w.lat, w.lon)).toList(),
+                            color: SisuColors.completedBackground,
+                            strokeWidth: 3,
+                          ),
+                          // #238: isochrone-routed path, distinct color from
+                          // the great-circle line above — additive, never
+                          // replacing it.
+                          if (_computedRoute != null)
+                            Polyline(
+                              points: _computedRoute!.path
+                                  .map((p) => LatLng(p.lat, p.lon))
+                                  .toList(),
+                              color: Colors.deepOrange,
+                              strokeWidth: 3,
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                  MarkerLayer(
-                    markers: [
-                      for (var i = 0; i < _wps.length; i++)
-                        Marker(
-                          point: LatLng(_wps[i].lat, _wps[i].lon),
-                          width: 28,
-                          height: 28,
-                          child: CircleAvatar(
-                            radius: 12,
-                            backgroundColor: SisuColors.completedBackground,
-                            child: Text(
-                              '${i + 1}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                  StreamBuilder<MapEvent>(
+                    stream: _mapController.mapEventStream,
+                    builder: (context, _) {
+                      final camera = _mapController.camera;
+                      return Stack(
+                        children: [
+                          for (var i = 0; i < _wps.length; i++)
+                            _waypointHandle(i, camera),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -549,6 +559,73 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
     );
   }
 
+  /// #265 — long-press to arm, then drag. Matches Anchor Alarm handles.
+  Widget _waypointHandle(int i, MapCamera camera) {
+    const handleSize = 36.0;
+    final w = _wps[i];
+    final offset = camera.latLngToScreenOffset(LatLng(w.lat, w.lon));
+    if (!offset.dx.isFinite || !offset.dy.isFinite) {
+      return const SizedBox.shrink();
+    }
+    final armed = _armedWpIndex == i;
+    final size = armed ? handleSize * 1.25 : handleSize;
+    final color = SisuColors.completedBackground;
+    return Positioned(
+      left: offset.dx - size / 2,
+      top: offset.dy - size / 2,
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onLongPressStart: (_) => setState(() => _armedWpIndex = i),
+          onLongPressMoveUpdate: (details) {
+            if (_armedWpIndex != i) return;
+            final box =
+                _mapAreaKey.currentContext?.findRenderObject() as RenderBox?;
+            if (box == null) return;
+            final local = box.globalToLocal(details.globalPosition);
+            final ll = camera.screenOffsetToLatLng(local);
+            setState(() {
+              w.lat = ll.latitude;
+              w.lon = ll.longitude;
+            });
+          },
+          onLongPressEnd: (_) => setState(() => _armedWpIndex = null),
+          onLongPressCancel: () => setState(() => _armedWpIndex = null),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            width: size,
+            height: size,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: armed ? Colors.amberAccent : Colors.white,
+                width: armed ? 3 : 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: armed ? color.withValues(alpha: 0.7) : Colors.black45,
+                  blurRadius: armed ? 12 : 4,
+                  spreadRadius: armed ? 2 : 0,
+                ),
+              ],
+            ),
+            child: armed
+                ? const Icon(Icons.open_with, color: Colors.white, size: 18)
+                : Text(
+                    '${i + 1}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _wpEditor(int i, bool isDark, double speedKn, SpeedUnitPref windUnit) {
     final w = _wps[i];
     final forecastLabel = _routeForecastLabel(i, speedKn, windUnit);
@@ -592,6 +669,9 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
               children: [
                 Expanded(
                   child: TextFormField(
+                    // #265 — Key remounts the field when the map drag moves
+                    // the waypoint so the text matches the pin.
+                    key: ValueKey('lat_${i}_${w.lat.toStringAsFixed(4)}'),
                     initialValue: w.lat.toStringAsFixed(4),
                     decoration: const InputDecoration(
                       labelText: 'Lat',
@@ -613,6 +693,7 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextFormField(
+                    key: ValueKey('lon_${i}_${w.lon.toStringAsFixed(4)}'),
                     initialValue: w.lon.toStringAsFixed(4),
                     decoration: const InputDecoration(
                       labelText: 'Lon',
