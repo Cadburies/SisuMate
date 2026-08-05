@@ -73,8 +73,10 @@ void main() {
   }
 
   /// Finite pumps — avoid pumpAndSettle (never settles with pending frames).
+  /// Connectivity check has a short timeout inside failover (~250ms) plus
+  /// hub HTTP; budget enough real pumps for that to finish.
   Future<void> settleUi(WidgetTester tester) async {
-    for (var i = 0; i < 15; i++) {
+    for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
   }
@@ -155,9 +157,9 @@ void main() {
     expect(find.text('Anchor Alarm'), findsOneWidget);
     expect(find.text('Watch'), findsOneWidget);
     expect(find.text('Info'), findsOneWidget);
-    expect(find.text('PredictWind Hub not configured'), findsOneWidget);
+    expect(find.text('No instrument source configured'), findsOneWidget);
     expect(find.text('Position unavailable'), findsOneWidget);
-    expect(find.text('PredictWind Hub not connected.'), findsOneWidget);
+    expect(find.text('No instrument source connected.'), findsOneWidget);
     expect(find.text('Wind data unavailable'), findsOneWidget);
     await unmount(tester);
   });
@@ -181,9 +183,9 @@ void main() {
     await pumpScreen(tester,
         httpClient: hubClient(), hubService: connectedHubService);
 
-    expect(find.text('PredictWind Hub connected'), findsOneWidget);
+    expect(find.textContaining('DataHub'), findsWidgets);
     expect(find.text('12.00000, -61.70000'), findsOneWidget);
-    expect(find.textContaining('Source: PredictWind Hub'), findsOneWidget);
+    expect(find.textContaining('Source:'), findsOneWidget);
     expect(find.text('6.8 kt @ 115°'), findsOneWidget);
     await unmount(tester);
   });
@@ -196,7 +198,7 @@ void main() {
 
     expect(find.text('Position unavailable'), findsOneWidget);
     expect(
-        find.text('Connected to the Hub, waiting for a GPS fix.'),
+        find.text('Connected, waiting for a GPS fix.'),
         findsOneWidget);
     await unmount(tester);
   });
@@ -212,7 +214,7 @@ void main() {
 
     expect(find.text('Position unavailable'), findsOneWidget);
     expect(
-        find.text('Last Hub reading is stale — instruments may be off.'),
+        find.text('Last reading is stale — instruments may be off.'),
         findsOneWidget);
     await unmount(tester);
   });
@@ -227,7 +229,7 @@ void main() {
     });
 
     await pumpScreen(tester, httpClient: client);
-    expect(find.text('PredictWind Hub not configured'), findsOneWidget);
+    expect(find.text('No instrument source configured'), findsOneWidget);
     final before = requestCount;
 
     await tester.tap(find.byIcon(Icons.refresh));
@@ -235,8 +237,9 @@ void main() {
     // Must never fall back to a full-page spinner after the first load —
     // that used to tear down in-progress edits on every refresh (#256
     // follow-up: "in your face refresh" made editing the anchor
-    // effectively impossible).
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    // effectively impossible). A small inline spinner on the refresh icon
+    // is fine; the body must stay mounted (cards still findable).
+    expect(find.text('No instrument source configured'), findsOneWidget);
     await settleUi(tester);
 
     // Not configured in this test env, so checkConnection short-circuits

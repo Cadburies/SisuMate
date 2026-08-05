@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../components/title_tile.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
+import '../../services/home_assistant_service.dart';
 import '../../services/predictwind_datahub_service.dart';
 
 /// #263 — Anchor Alarm's gateway setup/onboarding screen.
@@ -12,10 +13,12 @@ import '../../services/predictwind_datahub_service.dart';
 /// **PredictWind DataHub** (LuCI / nmead): username/password, Discover
 /// (local + remote tunnel URLs), manual address + Test, Save.
 ///
-/// **YDWG-02** (Yacht Devices web UI + NMEA): separate address +
-/// username/password fields (defaults from dart-defines / factory admin),
-/// Test (web login `POST /login`), Save. NMEA stream parse is still a
-/// follow-up; this ships config + login verification.
+/// **YDWG-02** (Yacht Devices web UI + NMEA): address + username/password,
+/// Test web login. NMEA stream still deferred.
+///
+/// **Home Assistant**: local URL + optional remote URL (Nabu Casa), long-lived
+/// token, GPS entity IDs. Used in multi-source failover (local first, then
+/// internet) with DataHub.
 class AnchorGatewaySetupScreen extends ConsumerStatefulWidget {
   const AnchorGatewaySetupScreen({
     super.key,
@@ -34,7 +37,14 @@ class AnchorGatewaySetupScreen extends ConsumerStatefulWidget {
       _AnchorGatewaySetupScreenState();
 }
 
-enum _Status { idle, discovering, testing, testingYdwg, saving }
+enum _Status {
+  idle,
+  discovering,
+  testing,
+  testingYdwg,
+  testingHa,
+  saving,
+}
 
 class _AnchorGatewaySetupScreenState
     extends ConsumerState<AnchorGatewaySetupScreen> {
@@ -45,6 +55,16 @@ class _AnchorGatewaySetupScreenState
   late final TextEditingController _ydwgUrlCtrl;
   late final TextEditingController _ydwgUserCtrl;
   late final TextEditingController _ydwgPassCtrl;
+
+  late final TextEditingController _haUrlCtrl;
+  late final TextEditingController _haRemoteUrlCtrl;
+  late final TextEditingController _haTokenCtrl;
+  late final TextEditingController _haGpsEntityCtrl;
+  late final TextEditingController _haLatEntityCtrl;
+  late final TextEditingController _haLonEntityCtrl;
+  late final TextEditingController _haWindSpeedCtrl;
+  late final TextEditingController _haWindDirCtrl;
+  late final TextEditingController _haDepthCtrl;
 
   _Status _status = _Status.idle;
   List<String> _discovered = [];
@@ -75,6 +95,38 @@ class _AnchorGatewaySetupScreenState
     _ydwgPassCtrl = TextEditingController(
       text: PredictWindDatahubService.defaultYdwgPasswordResolved,
     );
+
+    _haUrlCtrl = TextEditingController(
+      text: HomeAssistantService.defaultUrl.isNotEmpty
+          ? HomeAssistantService.defaultUrl
+          : 'http://homeassistant.local:8123',
+    );
+    _haRemoteUrlCtrl = TextEditingController(
+      text: HomeAssistantService.defaultRemoteUrl,
+    );
+    _haTokenCtrl = TextEditingController(
+      text: HomeAssistantService.defaultToken,
+    );
+    _haGpsEntityCtrl = TextEditingController(
+      text: HomeAssistantService.defaultGpsEntity.isNotEmpty
+          ? HomeAssistantService.defaultGpsEntity
+          : 'device_tracker.boat',
+    );
+    _haLatEntityCtrl = TextEditingController(
+      text: HomeAssistantService.defaultLatEntity,
+    );
+    _haLonEntityCtrl = TextEditingController(
+      text: HomeAssistantService.defaultLonEntity,
+    );
+    _haWindSpeedCtrl = TextEditingController(
+      text: HomeAssistantService.defaultWindSpeedEntity,
+    );
+    _haWindDirCtrl = TextEditingController(
+      text: HomeAssistantService.defaultWindDirEntity,
+    );
+    _haDepthCtrl = TextEditingController(
+      text: HomeAssistantService.defaultDepthEntity,
+    );
   }
 
   @override
@@ -85,6 +137,15 @@ class _AnchorGatewaySetupScreenState
     _ydwgUrlCtrl.dispose();
     _ydwgUserCtrl.dispose();
     _ydwgPassCtrl.dispose();
+    _haUrlCtrl.dispose();
+    _haRemoteUrlCtrl.dispose();
+    _haTokenCtrl.dispose();
+    _haGpsEntityCtrl.dispose();
+    _haLatEntityCtrl.dispose();
+    _haLonEntityCtrl.dispose();
+    _haWindSpeedCtrl.dispose();
+    _haWindDirCtrl.dispose();
+    _haDepthCtrl.dispose();
     super.dispose();
   }
 
@@ -105,6 +166,33 @@ class _AnchorGatewaySetupScreenState
     }
     if (settings.ydwgPassword.isNotEmpty) {
       _ydwgPassCtrl.text = settings.ydwgPassword;
+    }
+    if (settings.homeAssistantUrl.isNotEmpty) {
+      _haUrlCtrl.text = settings.homeAssistantUrl;
+    }
+    if (settings.homeAssistantRemoteUrl.isNotEmpty) {
+      _haRemoteUrlCtrl.text = settings.homeAssistantRemoteUrl;
+    }
+    if (settings.homeAssistantToken.isNotEmpty) {
+      _haTokenCtrl.text = settings.homeAssistantToken;
+    }
+    if (settings.homeAssistantGpsEntity.isNotEmpty) {
+      _haGpsEntityCtrl.text = settings.homeAssistantGpsEntity;
+    }
+    if (settings.homeAssistantLatEntity.isNotEmpty) {
+      _haLatEntityCtrl.text = settings.homeAssistantLatEntity;
+    }
+    if (settings.homeAssistantLonEntity.isNotEmpty) {
+      _haLonEntityCtrl.text = settings.homeAssistantLonEntity;
+    }
+    if (settings.homeAssistantWindSpeedEntity.isNotEmpty) {
+      _haWindSpeedCtrl.text = settings.homeAssistantWindSpeedEntity;
+    }
+    if (settings.homeAssistantWindDirEntity.isNotEmpty) {
+      _haWindDirCtrl.text = settings.homeAssistantWindDirEntity;
+    }
+    if (settings.homeAssistantDepthEntity.isNotEmpty) {
+      _haDepthCtrl.text = settings.homeAssistantDepthEntity;
     }
   }
 
@@ -296,6 +384,63 @@ class _AnchorGatewaySetupScreenState
           ? _selectedAddress!.trim()
           : _normalizedManualAddress();
 
+  String? _normalizedHaUrl(String raw) {
+    final t = raw.trim();
+    if (t.isEmpty) return null;
+    if (t.startsWith('http://') || t.startsWith('https://')) {
+      return t.endsWith('/') ? t.substring(0, t.length - 1) : t;
+    }
+    return 'http://$t';
+  }
+
+  Future<void> _testHa({required bool remote}) async {
+    final url = _normalizedHaUrl(
+      remote ? _haRemoteUrlCtrl.text : _haUrlCtrl.text,
+    );
+    final token = _haTokenCtrl.text.trim();
+    if (url == null) {
+      setState(() {
+        _message = remote
+            ? 'Enter a Home Assistant remote URL first '
+                '(e.g. https://….ui.nabu.casa).'
+            : 'Enter a Home Assistant local URL first '
+                '(e.g. http://homeassistant.local:8123).';
+        _messageIsError = true;
+      });
+      return;
+    }
+    if (token.isEmpty) {
+      setState(() {
+        _message =
+            'Enter a Home Assistant long-lived access token before Test.';
+        _messageIsError = true;
+      });
+      return;
+    }
+    setState(() {
+      _status = _Status.testingHa;
+      _message = null;
+    });
+    final svc = HomeAssistantService(baseUrl: url, token: token);
+    final result = await svc.probeConnection(client: widget.httpClient);
+    if (!mounted) return;
+    setState(() {
+      _status = _Status.idle;
+      if (result.ok) {
+        _message =
+            '${result.detail ?? "Home Assistant OK."} '
+            'Failover will try this ${remote ? "internet" : "local"} path. '
+            'Tap Save to keep settings.';
+        _messageIsError = false;
+      } else {
+        _message =
+            "Couldn't reach Home Assistant at $url. "
+            '${result.detail ?? "Check URL and token."}';
+        _messageIsError = true;
+      }
+    });
+  }
+
   Future<void> _save() async {
     final address = _addressToSave();
     final username = _usernameCtrl.text.trim();
@@ -303,6 +448,9 @@ class _AnchorGatewaySetupScreenState
     final ydwgAddress = _normalizedYdwgAddress();
     final ydwgUser = _ydwgUserCtrl.text.trim();
     final ydwgPass = _ydwgPassCtrl.text;
+    final haUrl = _normalizedHaUrl(_haUrlCtrl.text);
+    final haRemote = _normalizedHaUrl(_haRemoteUrlCtrl.text);
+    final haToken = _haTokenCtrl.text.trim();
 
     final hubUrl = (address != null && address.isNotEmpty) ? address : null;
     final yUrl =
@@ -311,12 +459,13 @@ class _AnchorGatewaySetupScreenState
         username.isNotEmpty && password.isNotEmpty && hubUrl != null;
     final hasYdwg =
         ydwgUser.isNotEmpty && ydwgPass.isNotEmpty && yUrl != null;
+    final hasHa = haToken.isNotEmpty && (haUrl != null || haRemote != null);
 
-    if (!hasDataHub && !hasYdwg) {
+    if (!hasDataHub && !hasYdwg && !hasHa) {
       setState(() {
         _message =
-            'Fill in DataHub (address + login) and/or YDWG-02 '
-            '(address + login) before saving.';
+            'Fill in at least one source: DataHub, YDWG-02, or Home Assistant '
+            '(URL + token) before saving.';
         _messageIsError = true;
       });
       return;
@@ -345,6 +494,23 @@ class _AnchorGatewaySetupScreenState
       parts.add('YDWG-02 $yUrl');
       _ydwgUrlCtrl.text = yUrl;
     }
+    if (hasHa) {
+      settings
+        ..homeAssistantUrl = haUrl ?? ''
+        ..homeAssistantRemoteUrl = haRemote ?? ''
+        ..homeAssistantToken = haToken
+        ..homeAssistantGpsEntity = _haGpsEntityCtrl.text.trim()
+        ..homeAssistantLatEntity = _haLatEntityCtrl.text.trim()
+        ..homeAssistantLonEntity = _haLonEntityCtrl.text.trim()
+        ..homeAssistantWindSpeedEntity = _haWindSpeedCtrl.text.trim()
+        ..homeAssistantWindDirEntity = _haWindDirCtrl.text.trim()
+        ..homeAssistantDepthEntity = _haDepthCtrl.text.trim();
+      parts.add(
+        'Home Assistant'
+        '${haUrl != null ? ' local $haUrl' : ''}'
+        '${haRemote != null ? ' remote $haRemote' : ''}',
+      );
+    }
 
     setState(() => _status = _Status.saving);
     await repo.updateSettings(settings);
@@ -356,8 +522,9 @@ class _AnchorGatewaySetupScreenState
         _manualCtrl.text = hubUrl;
       }
       _message =
-          'Saved ${parts.join(' and ')}. '
-          'The Anchor Alarm will use these settings from now on.';
+          'Saved ${parts.join(' · ')}. '
+          'Failover order: local DataHub → local HA → internet DataHub → '
+          'internet HA (YDWG NMEA later).';
       _messageIsError = false;
     });
   }
@@ -536,7 +703,7 @@ class _AnchorGatewaySetupScreenState
                                         child: CircularProgressIndicator(
                                             strokeWidth: 2),
                                       )
-                                    : const Text('Test'),
+                                    : const Text('Test DataHub'),
                               ),
                             ],
                           ),
@@ -613,6 +780,165 @@ class _AnchorGatewaySetupScreenState
                                   : const Icon(Icons.login),
                               label: const Text('Test YDWG login'),
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Home Assistant',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Optional second instrument path. Local URL for '
+                            'boat LAN; remote URL (Nabu Casa / reverse proxy) '
+                            'for beach-bar internet failover when DataHub '
+                            'tunnel is down.\n'
+                            'Create a long-lived access token in HA Profile. '
+                            'GPS entity should expose latitude/longitude '
+                            'attributes (e.g. device_tracker.boat), or use '
+                            'separate lat/lon sensors.\n'
+                            'Failover: local DataHub → local HA → internet '
+                            'DataHub → internet HA.',
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _haUrlCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'HA local URL',
+                              hintText: 'http://homeassistant.local:8123',
+                              helperText: 'Boat network / intranet',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haRemoteUrlCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'HA remote URL (optional)',
+                              hintText: 'https://….ui.nabu.casa',
+                              helperText: 'Internet failover (Nabu Casa, etc.)',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haTokenCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Long-lived access token',
+                              hintText: 'eyJ…',
+                            ),
+                            obscureText: true,
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haGpsEntityCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'GPS entity (preferred)',
+                              hintText: 'device_tracker.boat',
+                              helperText:
+                                  'Entity with latitude/longitude attributes',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haLatEntityCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Lat sensor (optional)',
+                              hintText: 'sensor.boat_latitude',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haLonEntityCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Lon sensor (optional)',
+                              hintText: 'sensor.boat_longitude',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haWindSpeedCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Wind speed entity (optional)',
+                              hintText: 'sensor.true_wind_speed',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haWindDirCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Wind direction entity (optional)',
+                              hintText: 'sensor.true_wind_direction',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haDepthCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Depth entity (optional)',
+                              hintText: 'sensor.water_depth',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: busy
+                                    ? null
+                                    : () => _testHa(remote: false),
+                                icon: _status == _Status.testingHa
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.home_outlined),
+                                label: const Text('Test HA local'),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed:
+                                    busy ? null : () => _testHa(remote: true),
+                                icon: const Icon(Icons.public),
+                                label: const Text('Test HA remote'),
+                              ),
+                            ],
                           ),
                         ],
                       ),

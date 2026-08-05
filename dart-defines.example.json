@@ -13,5 +13,14 @@
   "YDWG_URL": "http://192.168.10.30",
   "YDWG_USERNAME": "admin",
   "YDWG_PASSWORD": "admin",
-  "DATAHUBIP": "192.168.10.31"
+  "DATAHUBIP": "192.168.10.31",
+  "HA_URL": "http://homeassistant.local:8123",
+  "HA_REMOTE_URL": "",
+  "HA_TOKEN": "",
+  "HA_GPS_ENTITY": "device_tracker.boat",
+  "HA_LAT_ENTITY": "",
+  "HA_LON_ENTITY": "",
+  "HA_WIND_SPEED_ENTITY": "",
+  "HA_WIND_DIR_ENTITY": "",
+  "HA_DEPTH_ENTITY": ""
 }

@@ -133,6 +133,9 @@ class PredictWindBoatData {
   /// #263 — true when this reading came from the boat's local WiFi rather
   /// than the internet/remote-access tunnel.
   final bool viaLocalNetwork;
+  /// #263 — human label for the winning failover source
+  /// (e.g. `DataHub (local)`, `Home Assistant (internet)`).
+  final String? sourceLabel;
   final DateTime observedAt;
   const PredictWindBoatData({
     this.latitude,
@@ -145,8 +148,39 @@ class PredictWindBoatData {
     this.apparentWindSpeedKt,
     this.apparentWindDirectionDeg,
     this.viaLocalNetwork = false,
+    this.sourceLabel,
     required this.observedAt,
   });
+
+  PredictWindBoatData copyWith({
+    double? latitude,
+    double? longitude,
+    double? windSpeedKt,
+    double? windDirectionDeg,
+    double? depthMeters,
+    double? sogKt,
+    double? cogDeg,
+    double? apparentWindSpeedKt,
+    double? apparentWindDirectionDeg,
+    bool? viaLocalNetwork,
+    String? sourceLabel,
+    DateTime? observedAt,
+  }) =>
+      PredictWindBoatData(
+        latitude: latitude ?? this.latitude,
+        longitude: longitude ?? this.longitude,
+        windSpeedKt: windSpeedKt ?? this.windSpeedKt,
+        windDirectionDeg: windDirectionDeg ?? this.windDirectionDeg,
+        depthMeters: depthMeters ?? this.depthMeters,
+        sogKt: sogKt ?? this.sogKt,
+        cogDeg: cogDeg ?? this.cogDeg,
+        apparentWindSpeedKt: apparentWindSpeedKt ?? this.apparentWindSpeedKt,
+        apparentWindDirectionDeg:
+            apparentWindDirectionDeg ?? this.apparentWindDirectionDeg,
+        viaLocalNetwork: viaLocalNetwork ?? this.viaLocalNetwork,
+        sourceLabel: sourceLabel ?? this.sourceLabel,
+        observedAt: observedAt ?? this.observedAt,
+      );
 
   /// #256 follow-up — true once [observedAt] is older than [maxAge]. The
   /// Hub can stay reachable and keep answering with its *last-known*
@@ -398,6 +432,9 @@ class PredictWindDatahubService {
             apparentWindSpeedKt: _asDouble(json['aws']),
             apparentWindDirectionDeg: _asDouble(json['awa']),
             viaLocalNetwork: candidate.isLocal,
+            sourceLabel: candidate.isLocal
+                ? 'DataHub (local)'
+                : 'DataHub (internet)',
             observedAt: unixtime is num
                 ? DateTime.fromMillisecondsSinceEpoch(
                     unixtime.toInt() * 1000,

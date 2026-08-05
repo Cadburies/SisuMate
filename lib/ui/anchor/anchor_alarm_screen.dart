@@ -13,6 +13,7 @@ import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/anchor_alarm_service.dart';
+import '../../services/boat_instrument_failover_service.dart';
 import '../../services/predictwind_datahub_service.dart';
 import 'anchor_chart_map.dart';
 import 'anchor_info_panel.dart';
@@ -31,15 +32,13 @@ const _maxSliderRadiusMeters = 120.0;
 /// geofence circle (default ratio from Settings, always adjustable), and
 /// an optional wind-swing danger-zone sector.
 ///
-/// GPS/wind come **only** from the PredictWind Hub — deliberately no phone
-/// GPS fallback (a phone can be carried off the boat, or just be less
-/// accurate than the boat's own instrument; either masks a real drag or
-/// invents a false one). When the Hub has no usable fix — not connected,
-/// connected but no fix yet, or a stale/frozen reading (the Hub can stay
-/// powered and keep answering after the boat's NMEA instruments are
-/// switched off) — the screen shows a calm warning instead of a phone
-/// position, and the drag/danger-zone alarm simply doesn't evaluate
-/// (losing the Hub must never itself read as "the boat dragged").
+/// GPS/wind come **only** from boat instruments via multi-source failover
+/// ([BoatInstrumentFailoverService]) — deliberately no phone GPS fallback
+/// (a phone can be carried off the boat). Order: local DataHub → local
+/// Home Assistant → internet DataHub → internet HA. When no source has a
+/// usable fix, the screen shows a calm warning and the drag/danger-zone
+/// alarm does not evaluate (losing instruments must never itself read as
+/// "the boat dragged").
 ///
 /// The alarm (system sound + haptic, repeating every 2s while triggered)
 /// only fires while this screen is open and the app is in the foreground —
@@ -120,13 +119,9 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
   double? get _boatLat => _boatData?.hasFix ?? false ? _boatData!.latitude : null;
   double? get _boatLon => _boatData?.hasFix ?? false ? _boatData!.longitude : null;
 
-  /// #263 — [widget.hubService] stays the dart-defines-backed default (and
-  /// the test-injection point); when the gateway setup screen has saved an
-  /// address/credentials to [UserSettings], layer them on. A **private LAN**
-  /// URL becomes the local candidate (WiFi-gated); a **remote** URL
-  /// (`remote.rdsensing.com`, etc.) becomes the remote/internet candidate so
-  /// it still works at a beach bar on cellular or public WiFi — not only
-  /// when the phone thinks it's on "boat WiFi".
+  /// #263 — dart-defines-backed [widget.hubService] is the base; saved
+  /// DataHub settings layer on top. Multi-source failover (HA, remote) is
+  /// handled by [BoatInstrumentFailoverService].
   Future<PredictWindDatahubService> _effectiveHubService() async {
     final settings = await ref.read(userSettingsProvider.future);
     if (settings == null) return widget.hubService;
@@ -147,8 +142,6 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
         PredictWindDatahubService.isPrivateLanUrl(savedUrl);
     return PredictWindDatahubService(
       localBaseUrlOverride: isLan ? savedUrl : null,
-      // Remote (or credentials-only) override keeps dart-define remote as
-      // fallback when only username/password were saved.
       baseUrlOverride: !isLan && savedUrl.isNotEmpty ? savedUrl : null,
       usernameOverride: user,
       passwordOverride: pass,
@@ -157,15 +150,18 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
 
   Future<void> _refresh() async {
     setState(() => _isRefreshing = true);
+    final settings = await ref.read(userSettingsProvider.future);
     final hubService = await _effectiveHubService();
-    final hubStatus =
-        await hubService.checkConnection(client: widget.httpClient);
-    final boatData =
-        await hubService.fetchBoatData(client: widget.httpClient);
+    const failover = BoatInstrumentFailoverService();
+    final snap = await failover.fetch(
+      settings: settings,
+      hubService: hubService,
+      client: widget.httpClient,
+    );
     if (!mounted) return;
     setState(() {
-      _hubStatus = hubStatus;
-      _boatData = boatData;
+      _hubStatus = snap.hubStatus;
+      _boatData = snap.boatData;
       _initialLoadDone = true;
       _isRefreshing = false;
     });
@@ -959,37 +955,39 @@ class _HubStatusCard extends StatelessWidget {
 
     switch (s?.state) {
       case null:
-        title = 'Checking PredictWind Hub…';
-        detail = '';
+        title = 'Checking boat instruments…';
+        detail = 'DataHub / Home Assistant failover';
         icon = Icons.hourglass_top;
         color = theme.colorScheme.outline;
       case PredictWindHubConnectionState.notConfigured:
-        title = 'PredictWind Hub not configured';
+        title = 'No instrument source configured';
         detail =
-            'Add PREDICTWIND_HUB_URL to dart-defines.json to connect.';
+            'Open Gateway Setup to add DataHub, YDWG, or Home Assistant.';
         icon = Icons.link_off;
         color = theme.colorScheme.outline;
       case PredictWindHubConnectionState.missingCredentials:
-        title = 'PredictWind Hub found — no login configured';
-        detail = 'Add PREDICTWIND_HUB_USERNAME/PASSWORD to '
-            'dart-defines.json to sign in.';
+        title = 'Instrument login missing';
+        detail = 'Add DataHub login or Home Assistant token in Gateway Setup.';
         icon = Icons.lock_outline;
         color = theme.colorScheme.tertiary;
       case PredictWindHubConnectionState.connected:
-        title = 'PredictWind Hub connected';
+        title = s?.detail?.isNotEmpty == true
+            ? s!.detail!
+            : 'Boat instruments connected';
         detail = s!.viaLocalNetwork
-            ? "Via the boat's local WiFi"
-            : 'Via internet (remote access)';
+            ? "Via the boat's local network (WiFi)"
+            : 'Via internet (remote / beach-bar path)';
         icon = s.viaLocalNetwork ? Icons.wifi : Icons.public;
         color = theme.colorScheme.primary;
       case PredictWindHubConnectionState.authFailed:
-        title = 'PredictWind Hub sign-in failed';
-        detail = 'Check PREDICTWIND_HUB_USERNAME/PASSWORD.';
+        title = 'Instrument sign-in failed';
+        detail = s?.detail ?? 'Check DataHub password or HA token.';
         icon = Icons.lock_outline;
         color = theme.colorScheme.tertiary;
       case PredictWindHubConnectionState.unreachable:
-        title = 'PredictWind Hub unreachable';
-        detail = s?.detail ?? "Check the boat's network connection.";
+        title = 'Boat instruments unreachable';
+        detail = s?.detail ??
+            'Tried local then internet sources. Check Gateway Setup.';
         icon = Icons.wifi_off;
         color = theme.colorScheme.error;
     }
@@ -1048,18 +1046,20 @@ class _PositionCard extends StatelessWidget {
     if (hasFix) {
       title = '${data!.latitude!.toStringAsFixed(5)}, '
           '${data.longitude!.toStringAsFixed(5)}';
-      subtitle = data.viaLocalNetwork
-          ? 'Source: PredictWind Hub (local WiFi)'
-          : 'Source: PredictWind Hub (internet)';
+      subtitle = data.sourceLabel != null
+          ? 'Source: ${data.sourceLabel}'
+          : (data.viaLocalNetwork
+              ? 'Source: local network'
+              : 'Source: internet');
     } else if (data == null) {
       title = 'Position unavailable';
-      subtitle = 'PredictWind Hub not connected.';
+      subtitle = 'No instrument source connected.';
     } else if (data.isStale()) {
       title = 'Position unavailable';
-      subtitle = 'Last Hub reading is stale — instruments may be off.';
+      subtitle = 'Last reading is stale — instruments may be off.';
     } else {
       title = 'Position unavailable';
-      subtitle = 'Connected to the Hub, waiting for a GPS fix.';
+      subtitle = 'Connected, waiting for a GPS fix.';
     }
 
     return Card(
@@ -1150,10 +1150,10 @@ class _WindCard extends StatelessWidget {
               : 'Wind data unavailable',
         ),
         subtitle: speed == null
-            ? const Text('Requires a connected PredictWind Hub.')
+            ? const Text('Requires a connected boat instrument source.')
             : Text(
-                'True wind, from the PredictWind Hub '
-                '(${boatData!.viaLocalNetwork ? 'local WiFi' : 'internet'})',
+                'True wind, from '
+                '${boatData!.sourceLabel ?? (boatData!.viaLocalNetwork ? 'local network' : 'internet')}',
               ),
       ),
     );

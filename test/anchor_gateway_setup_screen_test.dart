@@ -35,8 +35,8 @@ void main() {
     WidgetTester tester, {
     http.Client? httpClient,
   }) async {
-    // Tall surface: DataHub + YDWG cards + Save below the fold.
-    await tester.binding.setSurfaceSize(const Size(400, 1600));
+    // Tall surface: DataHub + YDWG + HA cards + Save below the fold.
+    await tester.binding.setSurfaceSize(const Size(400, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -211,7 +211,7 @@ void main() {
     final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
     await tester.enterText(ipField, '10.10.10.5');
-    final testButton = find.widgetWithText(OutlinedButton, 'Test');
+    final testButton = find.widgetWithText(OutlinedButton, 'Test DataHub');
     await reveal(tester, testButton);
     await tester.tap(testButton);
     await tester.pumpAndSettle();
@@ -233,7 +233,7 @@ void main() {
     final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
     await tester.enterText(ipField, '10.10.10.5');
-    final testButton = find.widgetWithText(OutlinedButton, 'Test');
+    final testButton = find.widgetWithText(OutlinedButton, 'Test DataHub');
     await reveal(tester, testButton);
     await tester.tap(testButton);
     await tester.pumpAndSettle();

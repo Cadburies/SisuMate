@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last (grok):** #263 YDWG setup fields + web login Test/Save (`YDWG_*` dart-defines, schema 15).
+- **Last (grok):** #263 multi-source failover (local→internet) + Home Assistant settings (schema 16).
 - **Next open bugs:** #258/#259 boats.polar.
-- **Still open anchor:** #256 epic; #263 NMEA stream from YDWG still deferred (config+login done).
+- **Still open anchor:** #256 epic; #263 YDWG NMEA stream still deferred.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

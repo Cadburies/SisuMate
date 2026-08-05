@@ -33,7 +33,16 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
     ..predictwindHubPassword = r.predictwindHubPassword
     ..ydwgUrl = r.ydwgUrl
     ..ydwgUsername = r.ydwgUsername
-    ..ydwgPassword = r.ydwgPassword;
+    ..ydwgPassword = r.ydwgPassword
+    ..homeAssistantUrl = r.homeAssistantUrl
+    ..homeAssistantRemoteUrl = r.homeAssistantRemoteUrl
+    ..homeAssistantToken = r.homeAssistantToken
+    ..homeAssistantGpsEntity = r.homeAssistantGpsEntity
+    ..homeAssistantLatEntity = r.homeAssistantLatEntity
+    ..homeAssistantLonEntity = r.homeAssistantLonEntity
+    ..homeAssistantWindSpeedEntity = r.homeAssistantWindSpeedEntity
+    ..homeAssistantWindDirEntity = r.homeAssistantWindDirEntity
+    ..homeAssistantDepthEntity = r.homeAssistantDepthEntity;
 
   UserSettingsTableCompanion _companion(UserSettings s) =>
       UserSettingsTableCompanion(
@@ -60,6 +69,15 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
         ydwgUrl: Value(s.ydwgUrl),
         ydwgUsername: Value(s.ydwgUsername),
         ydwgPassword: Value(s.ydwgPassword),
+        homeAssistantUrl: Value(s.homeAssistantUrl),
+        homeAssistantRemoteUrl: Value(s.homeAssistantRemoteUrl),
+        homeAssistantToken: Value(s.homeAssistantToken),
+        homeAssistantGpsEntity: Value(s.homeAssistantGpsEntity),
+        homeAssistantLatEntity: Value(s.homeAssistantLatEntity),
+        homeAssistantLonEntity: Value(s.homeAssistantLonEntity),
+        homeAssistantWindSpeedEntity: Value(s.homeAssistantWindSpeedEntity),
+        homeAssistantWindDirEntity: Value(s.homeAssistantWindDirEntity),
+        homeAssistantDepthEntity: Value(s.homeAssistantDepthEntity),
       );
 
   @override

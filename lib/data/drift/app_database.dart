@@ -466,6 +466,24 @@ class UserSettingsTable extends Table {
   TextColumn get ydwgUsername => text().withDefault(const Constant(''))();
   TextColumn get ydwgPassword => text().withDefault(const Constant(''))();
 
+  /// #263 — Home Assistant (local + optional remote URL, token, entities).
+  TextColumn get homeAssistantUrl => text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantRemoteUrl =>
+      text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantToken => text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantGpsEntity =>
+      text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantLatEntity =>
+      text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantLonEntity =>
+      text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantWindSpeedEntity =>
+      text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantWindDirEntity =>
+      text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantDepthEntity =>
+      text().withDefault(const Constant(''))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -642,7 +660,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

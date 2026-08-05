@@ -15995,6 +15995,114 @@ class $UserSettingsTableTable extends UserSettingsTable
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _homeAssistantUrlMeta = const VerificationMeta(
+    'homeAssistantUrl',
+  );
+  @override
+  late final GeneratedColumn<String> homeAssistantUrl = GeneratedColumn<String>(
+    'home_assistant_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _homeAssistantRemoteUrlMeta =
+      const VerificationMeta('homeAssistantRemoteUrl');
+  @override
+  late final GeneratedColumn<String> homeAssistantRemoteUrl =
+      GeneratedColumn<String>(
+        'home_assistant_remote_url',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _homeAssistantTokenMeta =
+      const VerificationMeta('homeAssistantToken');
+  @override
+  late final GeneratedColumn<String> homeAssistantToken =
+      GeneratedColumn<String>(
+        'home_assistant_token',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _homeAssistantGpsEntityMeta =
+      const VerificationMeta('homeAssistantGpsEntity');
+  @override
+  late final GeneratedColumn<String> homeAssistantGpsEntity =
+      GeneratedColumn<String>(
+        'home_assistant_gps_entity',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _homeAssistantLatEntityMeta =
+      const VerificationMeta('homeAssistantLatEntity');
+  @override
+  late final GeneratedColumn<String> homeAssistantLatEntity =
+      GeneratedColumn<String>(
+        'home_assistant_lat_entity',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _homeAssistantLonEntityMeta =
+      const VerificationMeta('homeAssistantLonEntity');
+  @override
+  late final GeneratedColumn<String> homeAssistantLonEntity =
+      GeneratedColumn<String>(
+        'home_assistant_lon_entity',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _homeAssistantWindSpeedEntityMeta =
+      const VerificationMeta('homeAssistantWindSpeedEntity');
+  @override
+  late final GeneratedColumn<String> homeAssistantWindSpeedEntity =
+      GeneratedColumn<String>(
+        'home_assistant_wind_speed_entity',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _homeAssistantWindDirEntityMeta =
+      const VerificationMeta('homeAssistantWindDirEntity');
+  @override
+  late final GeneratedColumn<String> homeAssistantWindDirEntity =
+      GeneratedColumn<String>(
+        'home_assistant_wind_dir_entity',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _homeAssistantDepthEntityMeta =
+      const VerificationMeta('homeAssistantDepthEntity');
+  @override
+  late final GeneratedColumn<String> homeAssistantDepthEntity =
+      GeneratedColumn<String>(
+        'home_assistant_depth_entity',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -16020,6 +16128,15 @@ class $UserSettingsTableTable extends UserSettingsTable
     ydwgUrl,
     ydwgUsername,
     ydwgPassword,
+    homeAssistantUrl,
+    homeAssistantRemoteUrl,
+    homeAssistantToken,
+    homeAssistantGpsEntity,
+    homeAssistantLatEntity,
+    homeAssistantLonEntity,
+    homeAssistantWindSpeedEntity,
+    homeAssistantWindDirEntity,
+    homeAssistantDepthEntity,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -16216,6 +16333,87 @@ class $UserSettingsTableTable extends UserSettingsTable
         ),
       );
     }
+    if (data.containsKey('home_assistant_url')) {
+      context.handle(
+        _homeAssistantUrlMeta,
+        homeAssistantUrl.isAcceptableOrUnknown(
+          data['home_assistant_url']!,
+          _homeAssistantUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_remote_url')) {
+      context.handle(
+        _homeAssistantRemoteUrlMeta,
+        homeAssistantRemoteUrl.isAcceptableOrUnknown(
+          data['home_assistant_remote_url']!,
+          _homeAssistantRemoteUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_token')) {
+      context.handle(
+        _homeAssistantTokenMeta,
+        homeAssistantToken.isAcceptableOrUnknown(
+          data['home_assistant_token']!,
+          _homeAssistantTokenMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_gps_entity')) {
+      context.handle(
+        _homeAssistantGpsEntityMeta,
+        homeAssistantGpsEntity.isAcceptableOrUnknown(
+          data['home_assistant_gps_entity']!,
+          _homeAssistantGpsEntityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_lat_entity')) {
+      context.handle(
+        _homeAssistantLatEntityMeta,
+        homeAssistantLatEntity.isAcceptableOrUnknown(
+          data['home_assistant_lat_entity']!,
+          _homeAssistantLatEntityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_lon_entity')) {
+      context.handle(
+        _homeAssistantLonEntityMeta,
+        homeAssistantLonEntity.isAcceptableOrUnknown(
+          data['home_assistant_lon_entity']!,
+          _homeAssistantLonEntityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_wind_speed_entity')) {
+      context.handle(
+        _homeAssistantWindSpeedEntityMeta,
+        homeAssistantWindSpeedEntity.isAcceptableOrUnknown(
+          data['home_assistant_wind_speed_entity']!,
+          _homeAssistantWindSpeedEntityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_wind_dir_entity')) {
+      context.handle(
+        _homeAssistantWindDirEntityMeta,
+        homeAssistantWindDirEntity.isAcceptableOrUnknown(
+          data['home_assistant_wind_dir_entity']!,
+          _homeAssistantWindDirEntityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_depth_entity')) {
+      context.handle(
+        _homeAssistantDepthEntityMeta,
+        homeAssistantDepthEntity.isAcceptableOrUnknown(
+          data['home_assistant_depth_entity']!,
+          _homeAssistantDepthEntityMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -16317,6 +16515,42 @@ class $UserSettingsTableTable extends UserSettingsTable
         DriftSqlType.string,
         data['${effectivePrefix}ydwg_password'],
       )!,
+      homeAssistantUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_url'],
+      )!,
+      homeAssistantRemoteUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_remote_url'],
+      )!,
+      homeAssistantToken: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_token'],
+      )!,
+      homeAssistantGpsEntity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_gps_entity'],
+      )!,
+      homeAssistantLatEntity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_lat_entity'],
+      )!,
+      homeAssistantLonEntity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_lon_entity'],
+      )!,
+      homeAssistantWindSpeedEntity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_wind_speed_entity'],
+      )!,
+      homeAssistantWindDirEntity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_wind_dir_entity'],
+      )!,
+      homeAssistantDepthEntity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_depth_entity'],
+      )!,
     );
   }
 
@@ -16363,6 +16597,17 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
   final String ydwgUrl;
   final String ydwgUsername;
   final String ydwgPassword;
+
+  /// #263 — Home Assistant (local + optional remote URL, token, entities).
+  final String homeAssistantUrl;
+  final String homeAssistantRemoteUrl;
+  final String homeAssistantToken;
+  final String homeAssistantGpsEntity;
+  final String homeAssistantLatEntity;
+  final String homeAssistantLonEntity;
+  final String homeAssistantWindSpeedEntity;
+  final String homeAssistantWindDirEntity;
+  final String homeAssistantDepthEntity;
   const UserSettingsRow({
     required this.id,
     this.activeBoatSupabaseId,
@@ -16387,6 +16632,15 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     required this.ydwgUrl,
     required this.ydwgUsername,
     required this.ydwgPassword,
+    required this.homeAssistantUrl,
+    required this.homeAssistantRemoteUrl,
+    required this.homeAssistantToken,
+    required this.homeAssistantGpsEntity,
+    required this.homeAssistantLatEntity,
+    required this.homeAssistantLonEntity,
+    required this.homeAssistantWindSpeedEntity,
+    required this.homeAssistantWindDirEntity,
+    required this.homeAssistantDepthEntity,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -16430,6 +16684,21 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     map['ydwg_url'] = Variable<String>(ydwgUrl);
     map['ydwg_username'] = Variable<String>(ydwgUsername);
     map['ydwg_password'] = Variable<String>(ydwgPassword);
+    map['home_assistant_url'] = Variable<String>(homeAssistantUrl);
+    map['home_assistant_remote_url'] = Variable<String>(homeAssistantRemoteUrl);
+    map['home_assistant_token'] = Variable<String>(homeAssistantToken);
+    map['home_assistant_gps_entity'] = Variable<String>(homeAssistantGpsEntity);
+    map['home_assistant_lat_entity'] = Variable<String>(homeAssistantLatEntity);
+    map['home_assistant_lon_entity'] = Variable<String>(homeAssistantLonEntity);
+    map['home_assistant_wind_speed_entity'] = Variable<String>(
+      homeAssistantWindSpeedEntity,
+    );
+    map['home_assistant_wind_dir_entity'] = Variable<String>(
+      homeAssistantWindDirEntity,
+    );
+    map['home_assistant_depth_entity'] = Variable<String>(
+      homeAssistantDepthEntity,
+    );
     return map;
   }
 
@@ -16472,6 +16741,15 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       ydwgUrl: Value(ydwgUrl),
       ydwgUsername: Value(ydwgUsername),
       ydwgPassword: Value(ydwgPassword),
+      homeAssistantUrl: Value(homeAssistantUrl),
+      homeAssistantRemoteUrl: Value(homeAssistantRemoteUrl),
+      homeAssistantToken: Value(homeAssistantToken),
+      homeAssistantGpsEntity: Value(homeAssistantGpsEntity),
+      homeAssistantLatEntity: Value(homeAssistantLatEntity),
+      homeAssistantLonEntity: Value(homeAssistantLonEntity),
+      homeAssistantWindSpeedEntity: Value(homeAssistantWindSpeedEntity),
+      homeAssistantWindDirEntity: Value(homeAssistantWindDirEntity),
+      homeAssistantDepthEntity: Value(homeAssistantDepthEntity),
     );
   }
 
@@ -16514,6 +16792,31 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       ydwgUrl: serializer.fromJson<String>(json['ydwgUrl']),
       ydwgUsername: serializer.fromJson<String>(json['ydwgUsername']),
       ydwgPassword: serializer.fromJson<String>(json['ydwgPassword']),
+      homeAssistantUrl: serializer.fromJson<String>(json['homeAssistantUrl']),
+      homeAssistantRemoteUrl: serializer.fromJson<String>(
+        json['homeAssistantRemoteUrl'],
+      ),
+      homeAssistantToken: serializer.fromJson<String>(
+        json['homeAssistantToken'],
+      ),
+      homeAssistantGpsEntity: serializer.fromJson<String>(
+        json['homeAssistantGpsEntity'],
+      ),
+      homeAssistantLatEntity: serializer.fromJson<String>(
+        json['homeAssistantLatEntity'],
+      ),
+      homeAssistantLonEntity: serializer.fromJson<String>(
+        json['homeAssistantLonEntity'],
+      ),
+      homeAssistantWindSpeedEntity: serializer.fromJson<String>(
+        json['homeAssistantWindSpeedEntity'],
+      ),
+      homeAssistantWindDirEntity: serializer.fromJson<String>(
+        json['homeAssistantWindDirEntity'],
+      ),
+      homeAssistantDepthEntity: serializer.fromJson<String>(
+        json['homeAssistantDepthEntity'],
+      ),
     );
   }
   @override
@@ -16551,6 +16854,29 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       'ydwgUrl': serializer.toJson<String>(ydwgUrl),
       'ydwgUsername': serializer.toJson<String>(ydwgUsername),
       'ydwgPassword': serializer.toJson<String>(ydwgPassword),
+      'homeAssistantUrl': serializer.toJson<String>(homeAssistantUrl),
+      'homeAssistantRemoteUrl': serializer.toJson<String>(
+        homeAssistantRemoteUrl,
+      ),
+      'homeAssistantToken': serializer.toJson<String>(homeAssistantToken),
+      'homeAssistantGpsEntity': serializer.toJson<String>(
+        homeAssistantGpsEntity,
+      ),
+      'homeAssistantLatEntity': serializer.toJson<String>(
+        homeAssistantLatEntity,
+      ),
+      'homeAssistantLonEntity': serializer.toJson<String>(
+        homeAssistantLonEntity,
+      ),
+      'homeAssistantWindSpeedEntity': serializer.toJson<String>(
+        homeAssistantWindSpeedEntity,
+      ),
+      'homeAssistantWindDirEntity': serializer.toJson<String>(
+        homeAssistantWindDirEntity,
+      ),
+      'homeAssistantDepthEntity': serializer.toJson<String>(
+        homeAssistantDepthEntity,
+      ),
     };
   }
 
@@ -16578,6 +16904,15 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     String? ydwgUrl,
     String? ydwgUsername,
     String? ydwgPassword,
+    String? homeAssistantUrl,
+    String? homeAssistantRemoteUrl,
+    String? homeAssistantToken,
+    String? homeAssistantGpsEntity,
+    String? homeAssistantLatEntity,
+    String? homeAssistantLonEntity,
+    String? homeAssistantWindSpeedEntity,
+    String? homeAssistantWindDirEntity,
+    String? homeAssistantDepthEntity,
   }) => UserSettingsRow(
     id: id ?? this.id,
     activeBoatSupabaseId: activeBoatSupabaseId.present
@@ -16610,6 +16945,22 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     ydwgUrl: ydwgUrl ?? this.ydwgUrl,
     ydwgUsername: ydwgUsername ?? this.ydwgUsername,
     ydwgPassword: ydwgPassword ?? this.ydwgPassword,
+    homeAssistantUrl: homeAssistantUrl ?? this.homeAssistantUrl,
+    homeAssistantRemoteUrl:
+        homeAssistantRemoteUrl ?? this.homeAssistantRemoteUrl,
+    homeAssistantToken: homeAssistantToken ?? this.homeAssistantToken,
+    homeAssistantGpsEntity:
+        homeAssistantGpsEntity ?? this.homeAssistantGpsEntity,
+    homeAssistantLatEntity:
+        homeAssistantLatEntity ?? this.homeAssistantLatEntity,
+    homeAssistantLonEntity:
+        homeAssistantLonEntity ?? this.homeAssistantLonEntity,
+    homeAssistantWindSpeedEntity:
+        homeAssistantWindSpeedEntity ?? this.homeAssistantWindSpeedEntity,
+    homeAssistantWindDirEntity:
+        homeAssistantWindDirEntity ?? this.homeAssistantWindDirEntity,
+    homeAssistantDepthEntity:
+        homeAssistantDepthEntity ?? this.homeAssistantDepthEntity,
   );
   UserSettingsRow copyWithCompanion(UserSettingsTableCompanion data) {
     return UserSettingsRow(
@@ -16668,6 +17019,33 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       ydwgPassword: data.ydwgPassword.present
           ? data.ydwgPassword.value
           : this.ydwgPassword,
+      homeAssistantUrl: data.homeAssistantUrl.present
+          ? data.homeAssistantUrl.value
+          : this.homeAssistantUrl,
+      homeAssistantRemoteUrl: data.homeAssistantRemoteUrl.present
+          ? data.homeAssistantRemoteUrl.value
+          : this.homeAssistantRemoteUrl,
+      homeAssistantToken: data.homeAssistantToken.present
+          ? data.homeAssistantToken.value
+          : this.homeAssistantToken,
+      homeAssistantGpsEntity: data.homeAssistantGpsEntity.present
+          ? data.homeAssistantGpsEntity.value
+          : this.homeAssistantGpsEntity,
+      homeAssistantLatEntity: data.homeAssistantLatEntity.present
+          ? data.homeAssistantLatEntity.value
+          : this.homeAssistantLatEntity,
+      homeAssistantLonEntity: data.homeAssistantLonEntity.present
+          ? data.homeAssistantLonEntity.value
+          : this.homeAssistantLonEntity,
+      homeAssistantWindSpeedEntity: data.homeAssistantWindSpeedEntity.present
+          ? data.homeAssistantWindSpeedEntity.value
+          : this.homeAssistantWindSpeedEntity,
+      homeAssistantWindDirEntity: data.homeAssistantWindDirEntity.present
+          ? data.homeAssistantWindDirEntity.value
+          : this.homeAssistantWindDirEntity,
+      homeAssistantDepthEntity: data.homeAssistantDepthEntity.present
+          ? data.homeAssistantDepthEntity.value
+          : this.homeAssistantDepthEntity,
     );
   }
 
@@ -16696,7 +17074,18 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           ..write('predictwindHubPassword: $predictwindHubPassword, ')
           ..write('ydwgUrl: $ydwgUrl, ')
           ..write('ydwgUsername: $ydwgUsername, ')
-          ..write('ydwgPassword: $ydwgPassword')
+          ..write('ydwgPassword: $ydwgPassword, ')
+          ..write('homeAssistantUrl: $homeAssistantUrl, ')
+          ..write('homeAssistantRemoteUrl: $homeAssistantRemoteUrl, ')
+          ..write('homeAssistantToken: $homeAssistantToken, ')
+          ..write('homeAssistantGpsEntity: $homeAssistantGpsEntity, ')
+          ..write('homeAssistantLatEntity: $homeAssistantLatEntity, ')
+          ..write('homeAssistantLonEntity: $homeAssistantLonEntity, ')
+          ..write(
+            'homeAssistantWindSpeedEntity: $homeAssistantWindSpeedEntity, ',
+          )
+          ..write('homeAssistantWindDirEntity: $homeAssistantWindDirEntity, ')
+          ..write('homeAssistantDepthEntity: $homeAssistantDepthEntity')
           ..write(')'))
         .toString();
   }
@@ -16726,6 +17115,15 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     ydwgUrl,
     ydwgUsername,
     ydwgPassword,
+    homeAssistantUrl,
+    homeAssistantRemoteUrl,
+    homeAssistantToken,
+    homeAssistantGpsEntity,
+    homeAssistantLatEntity,
+    homeAssistantLonEntity,
+    homeAssistantWindSpeedEntity,
+    homeAssistantWindDirEntity,
+    homeAssistantDepthEntity,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -16753,7 +17151,17 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           other.predictwindHubPassword == this.predictwindHubPassword &&
           other.ydwgUrl == this.ydwgUrl &&
           other.ydwgUsername == this.ydwgUsername &&
-          other.ydwgPassword == this.ydwgPassword);
+          other.ydwgPassword == this.ydwgPassword &&
+          other.homeAssistantUrl == this.homeAssistantUrl &&
+          other.homeAssistantRemoteUrl == this.homeAssistantRemoteUrl &&
+          other.homeAssistantToken == this.homeAssistantToken &&
+          other.homeAssistantGpsEntity == this.homeAssistantGpsEntity &&
+          other.homeAssistantLatEntity == this.homeAssistantLatEntity &&
+          other.homeAssistantLonEntity == this.homeAssistantLonEntity &&
+          other.homeAssistantWindSpeedEntity ==
+              this.homeAssistantWindSpeedEntity &&
+          other.homeAssistantWindDirEntity == this.homeAssistantWindDirEntity &&
+          other.homeAssistantDepthEntity == this.homeAssistantDepthEntity);
 }
 
 class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
@@ -16780,6 +17188,15 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
   final Value<String> ydwgUrl;
   final Value<String> ydwgUsername;
   final Value<String> ydwgPassword;
+  final Value<String> homeAssistantUrl;
+  final Value<String> homeAssistantRemoteUrl;
+  final Value<String> homeAssistantToken;
+  final Value<String> homeAssistantGpsEntity;
+  final Value<String> homeAssistantLatEntity;
+  final Value<String> homeAssistantLonEntity;
+  final Value<String> homeAssistantWindSpeedEntity;
+  final Value<String> homeAssistantWindDirEntity;
+  final Value<String> homeAssistantDepthEntity;
   const UserSettingsTableCompanion({
     this.id = const Value.absent(),
     this.activeBoatSupabaseId = const Value.absent(),
@@ -16804,6 +17221,15 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.ydwgUrl = const Value.absent(),
     this.ydwgUsername = const Value.absent(),
     this.ydwgPassword = const Value.absent(),
+    this.homeAssistantUrl = const Value.absent(),
+    this.homeAssistantRemoteUrl = const Value.absent(),
+    this.homeAssistantToken = const Value.absent(),
+    this.homeAssistantGpsEntity = const Value.absent(),
+    this.homeAssistantLatEntity = const Value.absent(),
+    this.homeAssistantLonEntity = const Value.absent(),
+    this.homeAssistantWindSpeedEntity = const Value.absent(),
+    this.homeAssistantWindDirEntity = const Value.absent(),
+    this.homeAssistantDepthEntity = const Value.absent(),
   });
   UserSettingsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -16829,6 +17255,15 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.ydwgUrl = const Value.absent(),
     this.ydwgUsername = const Value.absent(),
     this.ydwgPassword = const Value.absent(),
+    this.homeAssistantUrl = const Value.absent(),
+    this.homeAssistantRemoteUrl = const Value.absent(),
+    this.homeAssistantToken = const Value.absent(),
+    this.homeAssistantGpsEntity = const Value.absent(),
+    this.homeAssistantLatEntity = const Value.absent(),
+    this.homeAssistantLonEntity = const Value.absent(),
+    this.homeAssistantWindSpeedEntity = const Value.absent(),
+    this.homeAssistantWindDirEntity = const Value.absent(),
+    this.homeAssistantDepthEntity = const Value.absent(),
   });
   static Insertable<UserSettingsRow> custom({
     Expression<int>? id,
@@ -16854,6 +17289,15 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Expression<String>? ydwgUrl,
     Expression<String>? ydwgUsername,
     Expression<String>? ydwgPassword,
+    Expression<String>? homeAssistantUrl,
+    Expression<String>? homeAssistantRemoteUrl,
+    Expression<String>? homeAssistantToken,
+    Expression<String>? homeAssistantGpsEntity,
+    Expression<String>? homeAssistantLatEntity,
+    Expression<String>? homeAssistantLonEntity,
+    Expression<String>? homeAssistantWindSpeedEntity,
+    Expression<String>? homeAssistantWindDirEntity,
+    Expression<String>? homeAssistantDepthEntity,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -16884,6 +17328,23 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       if (ydwgUrl != null) 'ydwg_url': ydwgUrl,
       if (ydwgUsername != null) 'ydwg_username': ydwgUsername,
       if (ydwgPassword != null) 'ydwg_password': ydwgPassword,
+      if (homeAssistantUrl != null) 'home_assistant_url': homeAssistantUrl,
+      if (homeAssistantRemoteUrl != null)
+        'home_assistant_remote_url': homeAssistantRemoteUrl,
+      if (homeAssistantToken != null)
+        'home_assistant_token': homeAssistantToken,
+      if (homeAssistantGpsEntity != null)
+        'home_assistant_gps_entity': homeAssistantGpsEntity,
+      if (homeAssistantLatEntity != null)
+        'home_assistant_lat_entity': homeAssistantLatEntity,
+      if (homeAssistantLonEntity != null)
+        'home_assistant_lon_entity': homeAssistantLonEntity,
+      if (homeAssistantWindSpeedEntity != null)
+        'home_assistant_wind_speed_entity': homeAssistantWindSpeedEntity,
+      if (homeAssistantWindDirEntity != null)
+        'home_assistant_wind_dir_entity': homeAssistantWindDirEntity,
+      if (homeAssistantDepthEntity != null)
+        'home_assistant_depth_entity': homeAssistantDepthEntity,
     });
   }
 
@@ -16911,6 +17372,15 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Value<String>? ydwgUrl,
     Value<String>? ydwgUsername,
     Value<String>? ydwgPassword,
+    Value<String>? homeAssistantUrl,
+    Value<String>? homeAssistantRemoteUrl,
+    Value<String>? homeAssistantToken,
+    Value<String>? homeAssistantGpsEntity,
+    Value<String>? homeAssistantLatEntity,
+    Value<String>? homeAssistantLonEntity,
+    Value<String>? homeAssistantWindSpeedEntity,
+    Value<String>? homeAssistantWindDirEntity,
+    Value<String>? homeAssistantDepthEntity,
   }) {
     return UserSettingsTableCompanion(
       id: id ?? this.id,
@@ -16940,6 +17410,22 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       ydwgUrl: ydwgUrl ?? this.ydwgUrl,
       ydwgUsername: ydwgUsername ?? this.ydwgUsername,
       ydwgPassword: ydwgPassword ?? this.ydwgPassword,
+      homeAssistantUrl: homeAssistantUrl ?? this.homeAssistantUrl,
+      homeAssistantRemoteUrl:
+          homeAssistantRemoteUrl ?? this.homeAssistantRemoteUrl,
+      homeAssistantToken: homeAssistantToken ?? this.homeAssistantToken,
+      homeAssistantGpsEntity:
+          homeAssistantGpsEntity ?? this.homeAssistantGpsEntity,
+      homeAssistantLatEntity:
+          homeAssistantLatEntity ?? this.homeAssistantLatEntity,
+      homeAssistantLonEntity:
+          homeAssistantLonEntity ?? this.homeAssistantLonEntity,
+      homeAssistantWindSpeedEntity:
+          homeAssistantWindSpeedEntity ?? this.homeAssistantWindSpeedEntity,
+      homeAssistantWindDirEntity:
+          homeAssistantWindDirEntity ?? this.homeAssistantWindDirEntity,
+      homeAssistantDepthEntity:
+          homeAssistantDepthEntity ?? this.homeAssistantDepthEntity,
     );
   }
 
@@ -17025,6 +17511,47 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     if (ydwgPassword.present) {
       map['ydwg_password'] = Variable<String>(ydwgPassword.value);
     }
+    if (homeAssistantUrl.present) {
+      map['home_assistant_url'] = Variable<String>(homeAssistantUrl.value);
+    }
+    if (homeAssistantRemoteUrl.present) {
+      map['home_assistant_remote_url'] = Variable<String>(
+        homeAssistantRemoteUrl.value,
+      );
+    }
+    if (homeAssistantToken.present) {
+      map['home_assistant_token'] = Variable<String>(homeAssistantToken.value);
+    }
+    if (homeAssistantGpsEntity.present) {
+      map['home_assistant_gps_entity'] = Variable<String>(
+        homeAssistantGpsEntity.value,
+      );
+    }
+    if (homeAssistantLatEntity.present) {
+      map['home_assistant_lat_entity'] = Variable<String>(
+        homeAssistantLatEntity.value,
+      );
+    }
+    if (homeAssistantLonEntity.present) {
+      map['home_assistant_lon_entity'] = Variable<String>(
+        homeAssistantLonEntity.value,
+      );
+    }
+    if (homeAssistantWindSpeedEntity.present) {
+      map['home_assistant_wind_speed_entity'] = Variable<String>(
+        homeAssistantWindSpeedEntity.value,
+      );
+    }
+    if (homeAssistantWindDirEntity.present) {
+      map['home_assistant_wind_dir_entity'] = Variable<String>(
+        homeAssistantWindDirEntity.value,
+      );
+    }
+    if (homeAssistantDepthEntity.present) {
+      map['home_assistant_depth_entity'] = Variable<String>(
+        homeAssistantDepthEntity.value,
+      );
+    }
     return map;
   }
 
@@ -17053,7 +17580,18 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
           ..write('predictwindHubPassword: $predictwindHubPassword, ')
           ..write('ydwgUrl: $ydwgUrl, ')
           ..write('ydwgUsername: $ydwgUsername, ')
-          ..write('ydwgPassword: $ydwgPassword')
+          ..write('ydwgPassword: $ydwgPassword, ')
+          ..write('homeAssistantUrl: $homeAssistantUrl, ')
+          ..write('homeAssistantRemoteUrl: $homeAssistantRemoteUrl, ')
+          ..write('homeAssistantToken: $homeAssistantToken, ')
+          ..write('homeAssistantGpsEntity: $homeAssistantGpsEntity, ')
+          ..write('homeAssistantLatEntity: $homeAssistantLatEntity, ')
+          ..write('homeAssistantLonEntity: $homeAssistantLonEntity, ')
+          ..write(
+            'homeAssistantWindSpeedEntity: $homeAssistantWindSpeedEntity, ',
+          )
+          ..write('homeAssistantWindDirEntity: $homeAssistantWindDirEntity, ')
+          ..write('homeAssistantDepthEntity: $homeAssistantDepthEntity')
           ..write(')'))
         .toString();
   }
@@ -28322,6 +28860,15 @@ typedef $$UserSettingsTableTableCreateCompanionBuilder =
       Value<String> ydwgUrl,
       Value<String> ydwgUsername,
       Value<String> ydwgPassword,
+      Value<String> homeAssistantUrl,
+      Value<String> homeAssistantRemoteUrl,
+      Value<String> homeAssistantToken,
+      Value<String> homeAssistantGpsEntity,
+      Value<String> homeAssistantLatEntity,
+      Value<String> homeAssistantLonEntity,
+      Value<String> homeAssistantWindSpeedEntity,
+      Value<String> homeAssistantWindDirEntity,
+      Value<String> homeAssistantDepthEntity,
     });
 typedef $$UserSettingsTableTableUpdateCompanionBuilder =
     UserSettingsTableCompanion Function({
@@ -28348,6 +28895,15 @@ typedef $$UserSettingsTableTableUpdateCompanionBuilder =
       Value<String> ydwgUrl,
       Value<String> ydwgUsername,
       Value<String> ydwgPassword,
+      Value<String> homeAssistantUrl,
+      Value<String> homeAssistantRemoteUrl,
+      Value<String> homeAssistantToken,
+      Value<String> homeAssistantGpsEntity,
+      Value<String> homeAssistantLatEntity,
+      Value<String> homeAssistantLonEntity,
+      Value<String> homeAssistantWindSpeedEntity,
+      Value<String> homeAssistantWindDirEntity,
+      Value<String> homeAssistantDepthEntity,
     });
 
 class $$UserSettingsTableTableFilterComposer
@@ -28471,6 +29027,51 @@ class $$UserSettingsTableTableFilterComposer
 
   ColumnFilters<String> get ydwgPassword => $composableBuilder(
     column: $table.ydwgPassword,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantUrl => $composableBuilder(
+    column: $table.homeAssistantUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantRemoteUrl => $composableBuilder(
+    column: $table.homeAssistantRemoteUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantToken => $composableBuilder(
+    column: $table.homeAssistantToken,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantGpsEntity => $composableBuilder(
+    column: $table.homeAssistantGpsEntity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantLatEntity => $composableBuilder(
+    column: $table.homeAssistantLatEntity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantLonEntity => $composableBuilder(
+    column: $table.homeAssistantLonEntity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantWindSpeedEntity => $composableBuilder(
+    column: $table.homeAssistantWindSpeedEntity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantWindDirEntity => $composableBuilder(
+    column: $table.homeAssistantWindDirEntity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantDepthEntity => $composableBuilder(
+    column: $table.homeAssistantDepthEntity,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -28598,6 +29199,52 @@ class $$UserSettingsTableTableOrderingComposer
     column: $table.ydwgPassword,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get homeAssistantUrl => $composableBuilder(
+    column: $table.homeAssistantUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homeAssistantRemoteUrl => $composableBuilder(
+    column: $table.homeAssistantRemoteUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homeAssistantToken => $composableBuilder(
+    column: $table.homeAssistantToken,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homeAssistantGpsEntity => $composableBuilder(
+    column: $table.homeAssistantGpsEntity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homeAssistantLatEntity => $composableBuilder(
+    column: $table.homeAssistantLatEntity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homeAssistantLonEntity => $composableBuilder(
+    column: $table.homeAssistantLonEntity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homeAssistantWindSpeedEntity =>
+      $composableBuilder(
+        column: $table.homeAssistantWindSpeedEntity,
+        builder: (column) => ColumnOrderings(column),
+      );
+
+  ColumnOrderings<String> get homeAssistantWindDirEntity => $composableBuilder(
+    column: $table.homeAssistantWindDirEntity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homeAssistantDepthEntity => $composableBuilder(
+    column: $table.homeAssistantDepthEntity,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$UserSettingsTableTableAnnotationComposer
@@ -28709,6 +29356,52 @@ class $$UserSettingsTableTableAnnotationComposer
     column: $table.ydwgPassword,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get homeAssistantUrl => $composableBuilder(
+    column: $table.homeAssistantUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get homeAssistantRemoteUrl => $composableBuilder(
+    column: $table.homeAssistantRemoteUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get homeAssistantToken => $composableBuilder(
+    column: $table.homeAssistantToken,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get homeAssistantGpsEntity => $composableBuilder(
+    column: $table.homeAssistantGpsEntity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get homeAssistantLatEntity => $composableBuilder(
+    column: $table.homeAssistantLatEntity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get homeAssistantLonEntity => $composableBuilder(
+    column: $table.homeAssistantLonEntity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get homeAssistantWindSpeedEntity =>
+      $composableBuilder(
+        column: $table.homeAssistantWindSpeedEntity,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get homeAssistantWindDirEntity => $composableBuilder(
+    column: $table.homeAssistantWindDirEntity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get homeAssistantDepthEntity => $composableBuilder(
+    column: $table.homeAssistantDepthEntity,
+    builder: (column) => column,
+  );
 }
 
 class $$UserSettingsTableTableTableManager
@@ -28774,6 +29467,16 @@ class $$UserSettingsTableTableTableManager
                 Value<String> ydwgUrl = const Value.absent(),
                 Value<String> ydwgUsername = const Value.absent(),
                 Value<String> ydwgPassword = const Value.absent(),
+                Value<String> homeAssistantUrl = const Value.absent(),
+                Value<String> homeAssistantRemoteUrl = const Value.absent(),
+                Value<String> homeAssistantToken = const Value.absent(),
+                Value<String> homeAssistantGpsEntity = const Value.absent(),
+                Value<String> homeAssistantLatEntity = const Value.absent(),
+                Value<String> homeAssistantLonEntity = const Value.absent(),
+                Value<String> homeAssistantWindSpeedEntity =
+                    const Value.absent(),
+                Value<String> homeAssistantWindDirEntity = const Value.absent(),
+                Value<String> homeAssistantDepthEntity = const Value.absent(),
               }) => UserSettingsTableCompanion(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -28798,6 +29501,15 @@ class $$UserSettingsTableTableTableManager
                 ydwgUrl: ydwgUrl,
                 ydwgUsername: ydwgUsername,
                 ydwgPassword: ydwgPassword,
+                homeAssistantUrl: homeAssistantUrl,
+                homeAssistantRemoteUrl: homeAssistantRemoteUrl,
+                homeAssistantToken: homeAssistantToken,
+                homeAssistantGpsEntity: homeAssistantGpsEntity,
+                homeAssistantLatEntity: homeAssistantLatEntity,
+                homeAssistantLonEntity: homeAssistantLonEntity,
+                homeAssistantWindSpeedEntity: homeAssistantWindSpeedEntity,
+                homeAssistantWindDirEntity: homeAssistantWindDirEntity,
+                homeAssistantDepthEntity: homeAssistantDepthEntity,
               ),
           createCompanionCallback:
               ({
@@ -28824,6 +29536,16 @@ class $$UserSettingsTableTableTableManager
                 Value<String> ydwgUrl = const Value.absent(),
                 Value<String> ydwgUsername = const Value.absent(),
                 Value<String> ydwgPassword = const Value.absent(),
+                Value<String> homeAssistantUrl = const Value.absent(),
+                Value<String> homeAssistantRemoteUrl = const Value.absent(),
+                Value<String> homeAssistantToken = const Value.absent(),
+                Value<String> homeAssistantGpsEntity = const Value.absent(),
+                Value<String> homeAssistantLatEntity = const Value.absent(),
+                Value<String> homeAssistantLonEntity = const Value.absent(),
+                Value<String> homeAssistantWindSpeedEntity =
+                    const Value.absent(),
+                Value<String> homeAssistantWindDirEntity = const Value.absent(),
+                Value<String> homeAssistantDepthEntity = const Value.absent(),
               }) => UserSettingsTableCompanion.insert(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -28848,6 +29570,15 @@ class $$UserSettingsTableTableTableManager
                 ydwgUrl: ydwgUrl,
                 ydwgUsername: ydwgUsername,
                 ydwgPassword: ydwgPassword,
+                homeAssistantUrl: homeAssistantUrl,
+                homeAssistantRemoteUrl: homeAssistantRemoteUrl,
+                homeAssistantToken: homeAssistantToken,
+                homeAssistantGpsEntity: homeAssistantGpsEntity,
+                homeAssistantLatEntity: homeAssistantLatEntity,
+                homeAssistantLonEntity: homeAssistantLonEntity,
+                homeAssistantWindSpeedEntity: homeAssistantWindSpeedEntity,
+                homeAssistantWindDirEntity: homeAssistantWindDirEntity,
+                homeAssistantDepthEntity: homeAssistantDepthEntity,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

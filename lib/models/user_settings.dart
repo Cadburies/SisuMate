@@ -44,6 +44,20 @@ class UserSettings {
   String ydwgUsername = '';
   String ydwgPassword = '';
 
+  /// #263 — Home Assistant as another instrument path (local and/or remote
+  /// Nabu Casa / reverse-proxy URL). Token is a long-lived access token.
+  /// Entity IDs optional — GPS entity should expose lat/lon attributes
+  /// (e.g. `device_tracker.boat`) or use separate lat/lon sensors.
+  String homeAssistantUrl = '';
+  String homeAssistantRemoteUrl = '';
+  String homeAssistantToken = '';
+  String homeAssistantGpsEntity = '';
+  String homeAssistantLatEntity = '';
+  String homeAssistantLonEntity = '';
+  String homeAssistantWindSpeedEntity = '';
+  String homeAssistantWindDirEntity = '';
+  String homeAssistantDepthEntity = '';
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -71,7 +85,16 @@ class UserSettings {
           predictwindHubPassword == other.predictwindHubPassword &&
           ydwgUrl == other.ydwgUrl &&
           ydwgUsername == other.ydwgUsername &&
-          ydwgPassword == other.ydwgPassword;
+          ydwgPassword == other.ydwgPassword &&
+          homeAssistantUrl == other.homeAssistantUrl &&
+          homeAssistantRemoteUrl == other.homeAssistantRemoteUrl &&
+          homeAssistantToken == other.homeAssistantToken &&
+          homeAssistantGpsEntity == other.homeAssistantGpsEntity &&
+          homeAssistantLatEntity == other.homeAssistantLatEntity &&
+          homeAssistantLonEntity == other.homeAssistantLonEntity &&
+          homeAssistantWindSpeedEntity == other.homeAssistantWindSpeedEntity &&
+          homeAssistantWindDirEntity == other.homeAssistantWindDirEntity &&
+          homeAssistantDepthEntity == other.homeAssistantDepthEntity;
 
   @override
   int get hashCode => Object.hashAll([
@@ -98,6 +121,15 @@ class UserSettings {
         ydwgUrl,
         ydwgUsername,
         ydwgPassword,
+        homeAssistantUrl,
+        homeAssistantRemoteUrl,
+        homeAssistantToken,
+        homeAssistantGpsEntity,
+        homeAssistantLatEntity,
+        homeAssistantLonEntity,
+        homeAssistantWindSpeedEntity,
+        homeAssistantWindDirEntity,
+        homeAssistantDepthEntity,
       ]);
 
   @override
@@ -113,5 +145,6 @@ class UserSettings {
       'defaultAnchorScopeRatio: $defaultAnchorScopeRatio, '
       'predictwindHubLocalUrl: $predictwindHubLocalUrl, '
       'predictwindHubUsername: $predictwindHubUsername, '
-      'ydwgUrl: $ydwgUrl, ydwgUsername: $ydwgUsername)';
+      'ydwgUrl: $ydwgUrl, ydwgUsername: $ydwgUsername, '
+      'homeAssistantUrl: $homeAssistantUrl)';
 }
