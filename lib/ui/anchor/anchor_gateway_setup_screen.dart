@@ -539,8 +539,8 @@ class _AnchorGatewaySetupScreenState
       }
       _message =
           'Saved ${parts.join(' · ')}. '
-          'Failover order: local DataHub → local HA → internet DataHub → '
-          'internet HA (YDWG NMEA later).';
+          'Failover: DataHub local → YDWG NMEA → HA local → '
+          'DataHub internet → HA internet.';
       _messageIsError = false;
     });
   }
@@ -742,8 +742,9 @@ class _AnchorGatewaySetupScreenState
                           Text(
                             'Yacht Devices YDWG-02 on the boat network. '
                             'Web UI at …/home.html (factory login admin / admin). '
-                            'Defaults below are examples for this boat — change '
-                            'if your device uses another IP or password.\n'
+                            'NMEA 0183 GPS/wind is read over TCP port 1456 '
+                            '(YDWG factory default) on the same host — used in '
+                            'local failover after DataHub.\n'
                             'Default: ${PredictWindDatahubService.defaultYdwgUrl}',
                           ),
                           const SizedBox(height: 12),

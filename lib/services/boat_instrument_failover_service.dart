@@ -4,26 +4,30 @@ import 'package:http/http.dart' as http;
 import '../models/models.dart';
 import 'home_assistant_service.dart';
 import 'predictwind_datahub_service.dart';
+import 'ydwg_nmea_service.dart';
 
 /// #263 — which path produced the active boat instrument reading.
 enum BoatInstrumentSource {
   dataHubLocal,
-  dataHubRemote,
+  ydwgNmeaLocal,
   homeAssistantLocal,
+  dataHubRemote,
   homeAssistantRemote,
 }
 
 extension BoatInstrumentSourceLabel on BoatInstrumentSource {
   String get label => switch (this) {
         BoatInstrumentSource.dataHubLocal => 'DataHub (local)',
-        BoatInstrumentSource.dataHubRemote => 'DataHub (internet)',
+        BoatInstrumentSource.ydwgNmeaLocal => 'YDWG-02 (NMEA local)',
         BoatInstrumentSource.homeAssistantLocal => 'Home Assistant (local)',
+        BoatInstrumentSource.dataHubRemote => 'DataHub (internet)',
         BoatInstrumentSource.homeAssistantRemote =>
           'Home Assistant (internet)',
       };
 
   bool get isLocal => switch (this) {
         BoatInstrumentSource.dataHubLocal ||
+        BoatInstrumentSource.ydwgNmeaLocal ||
         BoatInstrumentSource.homeAssistantLocal =>
           true,
         _ => false,
@@ -67,13 +71,10 @@ class BoatInstrumentSnapshot {
 /// Assistant are peers — each has a **local** and an **internet** path:
 ///
 /// 1. **DataHub local** (boat WiFi / IoT LAN) — WiFi-gated.
-/// 2. **Home Assistant local** — WiFi-gated (boat LAN HA).
-/// 3. **DataHub internet** (`remote.rdsensing.com`) — beach-bar path.
-/// 4. **Home Assistant internet** (Nabu Casa / reverse proxy) — same
-///    off-boat role as DataHub remote.
-///
-/// YDWG-02 is **not** in this list yet (raw NMEA stream still deferred);
-/// its credentials live in settings for config/Test only.
+/// 2. **YDWG-02 NMEA local** (TCP, default port 1456) — WiFi-gated.
+/// 3. **Home Assistant local** — WiFi-gated (boat LAN HA).
+/// 4. **DataHub internet** (`remote.rdsensing.com`) — beach-bar path.
+/// 5. **Home Assistant internet** (Nabu Casa / reverse proxy).
 ///
 /// First source that returns a usable [PredictWindBoatData] with a GPS fix
 /// wins. If a source connects but has no fix, the next source is still tried.
@@ -113,6 +114,9 @@ class BoatInstrumentFailoverService {
     if (onWifi && hub.isConfigured) {
       // Local only meaningful if a local URL is present or dart-define local.
       list.add(BoatInstrumentSource.dataHubLocal);
+    }
+    if (onWifi && _ydwgHost(settings) != null) {
+      list.add(BoatInstrumentSource.ydwgNmeaLocal);
     }
     if (onWifi && haLocal.isConfigured && haLocal.hasGpsConfig) {
       list.add(BoatInstrumentSource.homeAssistantLocal);
@@ -179,6 +183,36 @@ class BoatInstrumentFailoverService {
           );
         } else {
           failures.add('DataHub local: no data');
+        }
+      }
+
+      // YDWG NMEA 0183 over TCP (default 1456) — after DataHub local.
+      final ydwgHost = _ydwgHost(settings);
+      if (ydwgHost != null) {
+        tried.add(BoatInstrumentSource.ydwgNmeaLocal.label);
+        final ydwg = YdwgNmeaService(
+          host: ydwgHost,
+          port: _ydwgPort(settings),
+        );
+        final data = await ydwg.fetchBoatData();
+        if (data != null && data.hasFix) {
+          return BoatInstrumentSnapshot(
+            boatData: data,
+            activeSource: BoatInstrumentSource.ydwgNmeaLocal,
+            hubStatus: PredictWindHubStatus(
+              PredictWindHubConnectionState.connected,
+              viaLocalNetwork: true,
+              detail: data.sourceLabel,
+            ),
+            tried: tried,
+            failures: failures,
+          );
+        }
+        if (data != null) {
+          keepSoft(data, BoatInstrumentSource.ydwgNmeaLocal);
+          failures.add('YDWG NMEA: no GPS fix yet');
+        } else {
+          failures.add('YDWG NMEA: no data on port ${_ydwgPort(settings)}');
         }
       }
 
@@ -394,4 +428,19 @@ class BoatInstrumentFailoverService {
         windDirEntity: s?.homeAssistantWindDirEntity,
         depthEntity: s?.homeAssistantDepthEntity,
       );
+
+  /// Only when the user has saved a YDWG URL (Gateway Setup) — do not
+  /// auto-probe the factory default IP (would hang tests / off-boat phones
+  /// on an unreachable LAN address for the full NMEA listen window).
+  String? _ydwgHost(UserSettings? s) {
+    final raw = s?.ydwgUrl.trim() ?? '';
+    if (raw.isEmpty) return null;
+    return YdwgNmeaService.hostFromUrl(raw);
+  }
+
+  int _ydwgPort(UserSettings? s) {
+    // Optional `:port` on ydwgUrl host is not used for HTTP UI; NMEA port is
+    // independent (YDWG factory default 1456).
+    return YdwgNmeaService.defaultPortResolved;
+  }
 }
