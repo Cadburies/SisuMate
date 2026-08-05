@@ -12,6 +12,9 @@ class NmeaFix {
   double? windDirectionDeg;
   bool windIsTrue = true;
   double? depthMeters;
+  /// Engine shaft RPM by engine instance (1 → port, 2 → stbd) when RPM/ERRPM seen.
+  double? enginePortRpm;
+  double? engineStbdRpm;
   DateTime? observedAt;
 
   bool get hasPosition => latitude != null && longitude != null;
@@ -49,6 +52,8 @@ class NmeaSentenceParser {
         _parseDbt(parts);
       case 'DPT':
         _parseDpt(parts);
+      case 'RPM':
+        _parseRpm(parts);
     }
   }
 
@@ -154,6 +159,20 @@ class NmeaSentenceParser {
     final d = double.tryParse(p[1]);
     final offset = p.length > 2 ? double.tryParse(p[2]) ?? 0 : 0;
     if (d != null) fix.depthMeters = d + offset;
+  }
+
+  void _parseRpm(List<String> p) {
+    // RPM,source,engine#,speed,pitch,status — NMEA 0183
+    // e.g. $IIRPM,E,1,0.0,100.0,A
+    if (p.length < 4) return;
+    final eng = int.tryParse(p[2]);
+    final rpm = double.tryParse(p[3]);
+    if (rpm == null) return;
+    if (eng == 1 || eng == null) {
+      fix.enginePortRpm = rpm;
+    } else if (eng == 2) {
+      fix.engineStbdRpm = rpm;
+    }
   }
 
   /// NMEA lat/lon: `ddmm.mmm` + hemisphere.

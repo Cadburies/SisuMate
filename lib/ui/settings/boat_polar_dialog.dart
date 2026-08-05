@@ -4,9 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 
-/// #236: manual boat polar table entry — foundation for weather routing
-/// (#238). No privacy/sync-gating like `LlmApiKeyDialog`'s keys; polar data
-/// is pushed/pulled plainly like any other boat field.
+/// #236 / #274: manual boat polar table + under-sail sample count and
+/// offline/LLM polar improve.
 class BoatPolarDialog extends ConsumerStatefulWidget {
   final Boat boat;
 
@@ -19,11 +18,41 @@ class BoatPolarDialog extends ConsumerStatefulWidget {
 class _BoatPolarDialogState extends ConsumerState<BoatPolarDialog> {
   late List<PolarPoint> _rows;
   bool _saving = false;
+  bool _improving = false;
+  int _sampleCount = 0;
+  String? _statusMsg;
 
   @override
   void initState() {
     super.initState();
     _rows = [...widget.boat.polar];
+    _loadSampleCount();
+  }
+
+  Future<void> _loadSampleCount() async {
+    final id = widget.boat.supabaseId;
+    if (id.isEmpty) return;
+    final n =
+        await ref.read(sailingPolarCollectorProvider).sampleCount(id);
+    if (mounted) setState(() => _sampleCount = n);
+  }
+
+  Future<void> _improvePolar({required bool tryLlm}) async {
+    setState(() {
+      _improving = true;
+      _statusMsg = null;
+    });
+    final svc = ref.read(polarLlmImproveServiceProvider);
+    final result = await svc.improve(boat: widget.boat, tryLlm: tryLlm);
+    if (!mounted) return;
+    setState(() {
+      _improving = false;
+      _statusMsg = result.message;
+      if (result.ok && result.polar != null) {
+        _rows = [...result.polar!];
+      }
+    });
+    await _loadSampleCount();
   }
 
   void _addRow() {
@@ -70,7 +99,51 @@ class _BoatPolarDialogState extends ConsumerState<BoatPolarDialog> {
                 'Boat speed (kt) at a given true wind angle (deg — 0 = head '
                 'to wind, 180 = dead downwind) and true wind speed (kt). '
                 'Used for a more realistic ETA once wind data is available '
-                'along a route.',
+                'along a route.\n\n'
+                'While sailing (instruments online, engines not showing revs), '
+                'the app stores offline SOG/TWA/TWS samples. Improve the '
+                'polar from those samples anytime — works offline with '
+                'bucket statistics; uses your boat LLM key when online to '
+                'smooth and fill gaps.',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Under-sail samples stored: $_sampleCount',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (_statusMsg != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _statusMsg!,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: (_improving || _saving)
+                        ? null
+                        : () => _improvePolar(tryLlm: false),
+                    icon: _improving
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.analytics_outlined, size: 18),
+                    label: const Text('Improve offline'),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: (_improving || _saving)
+                        ? null
+                        : () => _improvePolar(tryLlm: true),
+                    icon: const Icon(Icons.auto_awesome, size: 18),
+                    label: const Text('Improve with AI'),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               for (var i = 0; i < _rows.length; i++) _row(i),
@@ -85,11 +158,13 @@ class _BoatPolarDialogState extends ConsumerState<BoatPolarDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          onPressed: (_saving || _improving)
+              ? null
+              : () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: _saving ? null : _save,
+          onPressed: (_saving || _improving) ? null : _save,
           child: _saving
               ? const SizedBox(
                   width: 16,

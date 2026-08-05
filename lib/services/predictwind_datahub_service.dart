@@ -136,6 +136,10 @@ class PredictWindBoatData {
   /// #263 — human label for the winning failover source
   /// (e.g. `DataHub (local)`, `Home Assistant (internet)`).
   final String? sourceLabel;
+  /// #274 — engine shaft RPM when present (NMEA RPM / Hub fields). Null =
+  /// not reported ("engines not showing revs").
+  final double? enginePortRpm;
+  final double? engineStbdRpm;
   final DateTime observedAt;
   const PredictWindBoatData({
     this.latitude,
@@ -149,6 +153,8 @@ class PredictWindBoatData {
     this.apparentWindDirectionDeg,
     this.viaLocalNetwork = false,
     this.sourceLabel,
+    this.enginePortRpm,
+    this.engineStbdRpm,
     required this.observedAt,
   });
 
@@ -164,6 +170,8 @@ class PredictWindBoatData {
     double? apparentWindDirectionDeg,
     bool? viaLocalNetwork,
     String? sourceLabel,
+    double? enginePortRpm,
+    double? engineStbdRpm,
     DateTime? observedAt,
   }) =>
       PredictWindBoatData(
@@ -179,6 +187,8 @@ class PredictWindBoatData {
             apparentWindDirectionDeg ?? this.apparentWindDirectionDeg,
         viaLocalNetwork: viaLocalNetwork ?? this.viaLocalNetwork,
         sourceLabel: sourceLabel ?? this.sourceLabel,
+        enginePortRpm: enginePortRpm ?? this.enginePortRpm,
+        engineStbdRpm: engineStbdRpm ?? this.engineStbdRpm,
         observedAt: observedAt ?? this.observedAt,
       );
 
@@ -431,6 +441,13 @@ class PredictWindDatahubService {
             cogDeg: _asDouble(json['cog']),
             apparentWindSpeedKt: _asDouble(json['aws']),
             apparentWindDirectionDeg: _asDouble(json['awa']),
+            // #274 — optional engine RPM keys when Hub/nmead exposes them.
+            enginePortRpm: _asDouble(json['rpm1']) ??
+                _asDouble(json['erpm1']) ??
+                _asDouble(json['engine1_rpm']),
+            engineStbdRpm: _asDouble(json['rpm2']) ??
+                _asDouble(json['erpm2']) ??
+                _asDouble(json['engine2_rpm']),
             viaLocalNetwork: candidate.isLocal,
             sourceLabel: candidate.isLocal
                 ? 'DataHub (local)'

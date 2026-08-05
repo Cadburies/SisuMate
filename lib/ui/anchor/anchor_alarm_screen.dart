@@ -12,6 +12,7 @@ import '../components/common_drawer.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
+import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/anchor_alarm_service.dart';
 import '../../services/boat_instrument_failover_service.dart';
 import '../../services/predictwind_datahub_service.dart';
@@ -165,7 +166,29 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
       _initialLoadDone = true;
       _isRefreshing = false;
     });
+    // #274 — offline polar learning: store under-sail samples when engines
+    // are not showing revs and SOG/wind are valid.
+    final boatData = snap.boatData;
+    if (boatData != null) {
+      unawaited(_maybeCollectPolarSample(boatData));
+    }
     _recomputeAlarm();
+  }
+
+  Future<void> _maybeCollectPolarSample(PredictWindBoatData data) async {
+    final boat = ref.read(activeBoatProvider).asData?.value;
+    final boatId = boat?.supabaseId ?? '';
+    if (boatId.isEmpty) return;
+    try {
+      await ref.read(sailingPolarCollectorProvider).maybeRecord(
+            data: data,
+            boatSupabaseId: boatId,
+            enginePortRpm: data.enginePortRpm,
+            engineStbdRpm: data.engineStbdRpm,
+          );
+    } catch (_) {
+      // Best-effort; never break anchor alarm on polar collection.
+    }
   }
 
   void _recomputeAlarm() {

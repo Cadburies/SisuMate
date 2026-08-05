@@ -98,6 +98,8 @@ class YdwgNmeaService {
         depthMeters: f.depthMeters,
         sogKt: f.sogKt,
         cogDeg: f.cogDeg,
+        enginePortRpm: f.enginePortRpm,
+        engineStbdRpm: f.engineStbdRpm,
         viaLocalNetwork: true,
         sourceLabel: 'YDWG-02 (NMEA local)',
         observedAt: f.observedAt ?? DateTime.now().toUtc(),

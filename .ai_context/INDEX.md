@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last (grok):** closed #258/#259 polar, #267 iOS triage, #263 YDWG NMEA + failover, #256 epic.
-- **Open backlog:** none from prior wave (re-check \`gh issue list\`).
-- **Apply:** run \`boats.polar\` SQL from #258 on Supabase if not yet applied.
+- **Last (grok):** #274 AI polar learning from under-sail samples (schema 17).
+- **Open backlog:** re-check `gh issue list`.
+- **Apply:** boats.polar SQL from #258 if not yet on Supabase.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

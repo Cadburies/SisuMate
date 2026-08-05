@@ -21457,6 +21457,865 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
   }
 }
 
+class $SailingPolarSamplesTable extends SailingPolarSamples
+    with TableInfo<$SailingPolarSamplesTable, SailingPolarSampleRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SailingPolarSamplesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _boatSupabaseIdMeta = const VerificationMeta(
+    'boatSupabaseId',
+  );
+  @override
+  late final GeneratedColumn<String> boatSupabaseId = GeneratedColumn<String>(
+    'boat_supabase_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _observedAtMeta = const VerificationMeta(
+    'observedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> observedAt = GeneratedColumn<DateTime>(
+    'observed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _sogKtMeta = const VerificationMeta('sogKt');
+  @override
+  late final GeneratedColumn<double> sogKt = GeneratedColumn<double>(
+    'sog_kt',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _cogDegMeta = const VerificationMeta('cogDeg');
+  @override
+  late final GeneratedColumn<double> cogDeg = GeneratedColumn<double>(
+    'cog_deg',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _twsKtMeta = const VerificationMeta('twsKt');
+  @override
+  late final GeneratedColumn<double> twsKt = GeneratedColumn<double>(
+    'tws_kt',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _twdDegMeta = const VerificationMeta('twdDeg');
+  @override
+  late final GeneratedColumn<double> twdDeg = GeneratedColumn<double>(
+    'twd_deg',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _twaDegMeta = const VerificationMeta('twaDeg');
+  @override
+  late final GeneratedColumn<double> twaDeg = GeneratedColumn<double>(
+    'twa_deg',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _awsKtMeta = const VerificationMeta('awsKt');
+  @override
+  late final GeneratedColumn<double> awsKt = GeneratedColumn<double>(
+    'aws_kt',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _awaDegMeta = const VerificationMeta('awaDeg');
+  @override
+  late final GeneratedColumn<double> awaDeg = GeneratedColumn<double>(
+    'awa_deg',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _depthMetersMeta = const VerificationMeta(
+    'depthMeters',
+  );
+  @override
+  late final GeneratedColumn<double> depthMeters = GeneratedColumn<double>(
+    'depth_meters',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _enginePortRpmMeta = const VerificationMeta(
+    'enginePortRpm',
+  );
+  @override
+  late final GeneratedColumn<double> enginePortRpm = GeneratedColumn<double>(
+    'engine_port_rpm',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _engineStbdRpmMeta = const VerificationMeta(
+    'engineStbdRpm',
+  );
+  @override
+  late final GeneratedColumn<double> engineStbdRpm = GeneratedColumn<double>(
+    'engine_stbd_rpm',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceLabelMeta = const VerificationMeta(
+    'sourceLabel',
+  );
+  @override
+  late final GeneratedColumn<String> sourceLabel = GeneratedColumn<String>(
+    'source_label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _usedInPolarBuildMeta = const VerificationMeta(
+    'usedInPolarBuild',
+  );
+  @override
+  late final GeneratedColumn<bool> usedInPolarBuild = GeneratedColumn<bool>(
+    'used_in_polar_build',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("used_in_polar_build" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    boatSupabaseId,
+    observedAt,
+    sogKt,
+    cogDeg,
+    twsKt,
+    twdDeg,
+    twaDeg,
+    awsKt,
+    awaDeg,
+    depthMeters,
+    enginePortRpm,
+    engineStbdRpm,
+    sourceLabel,
+    usedInPolarBuild,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sailing_polar_samples';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SailingPolarSampleRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('boat_supabase_id')) {
+      context.handle(
+        _boatSupabaseIdMeta,
+        boatSupabaseId.isAcceptableOrUnknown(
+          data['boat_supabase_id']!,
+          _boatSupabaseIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('observed_at')) {
+      context.handle(
+        _observedAtMeta,
+        observedAt.isAcceptableOrUnknown(data['observed_at']!, _observedAtMeta),
+      );
+    }
+    if (data.containsKey('sog_kt')) {
+      context.handle(
+        _sogKtMeta,
+        sogKt.isAcceptableOrUnknown(data['sog_kt']!, _sogKtMeta),
+      );
+    }
+    if (data.containsKey('cog_deg')) {
+      context.handle(
+        _cogDegMeta,
+        cogDeg.isAcceptableOrUnknown(data['cog_deg']!, _cogDegMeta),
+      );
+    }
+    if (data.containsKey('tws_kt')) {
+      context.handle(
+        _twsKtMeta,
+        twsKt.isAcceptableOrUnknown(data['tws_kt']!, _twsKtMeta),
+      );
+    }
+    if (data.containsKey('twd_deg')) {
+      context.handle(
+        _twdDegMeta,
+        twdDeg.isAcceptableOrUnknown(data['twd_deg']!, _twdDegMeta),
+      );
+    }
+    if (data.containsKey('twa_deg')) {
+      context.handle(
+        _twaDegMeta,
+        twaDeg.isAcceptableOrUnknown(data['twa_deg']!, _twaDegMeta),
+      );
+    }
+    if (data.containsKey('aws_kt')) {
+      context.handle(
+        _awsKtMeta,
+        awsKt.isAcceptableOrUnknown(data['aws_kt']!, _awsKtMeta),
+      );
+    }
+    if (data.containsKey('awa_deg')) {
+      context.handle(
+        _awaDegMeta,
+        awaDeg.isAcceptableOrUnknown(data['awa_deg']!, _awaDegMeta),
+      );
+    }
+    if (data.containsKey('depth_meters')) {
+      context.handle(
+        _depthMetersMeta,
+        depthMeters.isAcceptableOrUnknown(
+          data['depth_meters']!,
+          _depthMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('engine_port_rpm')) {
+      context.handle(
+        _enginePortRpmMeta,
+        enginePortRpm.isAcceptableOrUnknown(
+          data['engine_port_rpm']!,
+          _enginePortRpmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('engine_stbd_rpm')) {
+      context.handle(
+        _engineStbdRpmMeta,
+        engineStbdRpm.isAcceptableOrUnknown(
+          data['engine_stbd_rpm']!,
+          _engineStbdRpmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_label')) {
+      context.handle(
+        _sourceLabelMeta,
+        sourceLabel.isAcceptableOrUnknown(
+          data['source_label']!,
+          _sourceLabelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('used_in_polar_build')) {
+      context.handle(
+        _usedInPolarBuildMeta,
+        usedInPolarBuild.isAcceptableOrUnknown(
+          data['used_in_polar_build']!,
+          _usedInPolarBuildMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SailingPolarSampleRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SailingPolarSampleRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      boatSupabaseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}boat_supabase_id'],
+      )!,
+      observedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}observed_at'],
+      )!,
+      sogKt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}sog_kt'],
+      )!,
+      cogDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cog_deg'],
+      ),
+      twsKt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}tws_kt'],
+      )!,
+      twdDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}twd_deg'],
+      ),
+      twaDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}twa_deg'],
+      )!,
+      awsKt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}aws_kt'],
+      ),
+      awaDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}awa_deg'],
+      ),
+      depthMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}depth_meters'],
+      ),
+      enginePortRpm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}engine_port_rpm'],
+      ),
+      engineStbdRpm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}engine_stbd_rpm'],
+      ),
+      sourceLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_label'],
+      )!,
+      usedInPolarBuild: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}used_in_polar_build'],
+      )!,
+    );
+  }
+
+  @override
+  $SailingPolarSamplesTable createAlias(String alias) {
+    return $SailingPolarSamplesTable(attachedDatabase, alias);
+  }
+}
+
+class SailingPolarSampleRow extends DataClass
+    implements Insertable<SailingPolarSampleRow> {
+  final int id;
+  final String boatSupabaseId;
+  final DateTime observedAt;
+  final double sogKt;
+  final double? cogDeg;
+  final double twsKt;
+  final double? twdDeg;
+  final double twaDeg;
+  final double? awsKt;
+  final double? awaDeg;
+  final double? depthMeters;
+  final double? enginePortRpm;
+  final double? engineStbdRpm;
+  final String sourceLabel;
+  final bool usedInPolarBuild;
+  const SailingPolarSampleRow({
+    required this.id,
+    required this.boatSupabaseId,
+    required this.observedAt,
+    required this.sogKt,
+    this.cogDeg,
+    required this.twsKt,
+    this.twdDeg,
+    required this.twaDeg,
+    this.awsKt,
+    this.awaDeg,
+    this.depthMeters,
+    this.enginePortRpm,
+    this.engineStbdRpm,
+    required this.sourceLabel,
+    required this.usedInPolarBuild,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['boat_supabase_id'] = Variable<String>(boatSupabaseId);
+    map['observed_at'] = Variable<DateTime>(observedAt);
+    map['sog_kt'] = Variable<double>(sogKt);
+    if (!nullToAbsent || cogDeg != null) {
+      map['cog_deg'] = Variable<double>(cogDeg);
+    }
+    map['tws_kt'] = Variable<double>(twsKt);
+    if (!nullToAbsent || twdDeg != null) {
+      map['twd_deg'] = Variable<double>(twdDeg);
+    }
+    map['twa_deg'] = Variable<double>(twaDeg);
+    if (!nullToAbsent || awsKt != null) {
+      map['aws_kt'] = Variable<double>(awsKt);
+    }
+    if (!nullToAbsent || awaDeg != null) {
+      map['awa_deg'] = Variable<double>(awaDeg);
+    }
+    if (!nullToAbsent || depthMeters != null) {
+      map['depth_meters'] = Variable<double>(depthMeters);
+    }
+    if (!nullToAbsent || enginePortRpm != null) {
+      map['engine_port_rpm'] = Variable<double>(enginePortRpm);
+    }
+    if (!nullToAbsent || engineStbdRpm != null) {
+      map['engine_stbd_rpm'] = Variable<double>(engineStbdRpm);
+    }
+    map['source_label'] = Variable<String>(sourceLabel);
+    map['used_in_polar_build'] = Variable<bool>(usedInPolarBuild);
+    return map;
+  }
+
+  SailingPolarSamplesCompanion toCompanion(bool nullToAbsent) {
+    return SailingPolarSamplesCompanion(
+      id: Value(id),
+      boatSupabaseId: Value(boatSupabaseId),
+      observedAt: Value(observedAt),
+      sogKt: Value(sogKt),
+      cogDeg: cogDeg == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cogDeg),
+      twsKt: Value(twsKt),
+      twdDeg: twdDeg == null && nullToAbsent
+          ? const Value.absent()
+          : Value(twdDeg),
+      twaDeg: Value(twaDeg),
+      awsKt: awsKt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(awsKt),
+      awaDeg: awaDeg == null && nullToAbsent
+          ? const Value.absent()
+          : Value(awaDeg),
+      depthMeters: depthMeters == null && nullToAbsent
+          ? const Value.absent()
+          : Value(depthMeters),
+      enginePortRpm: enginePortRpm == null && nullToAbsent
+          ? const Value.absent()
+          : Value(enginePortRpm),
+      engineStbdRpm: engineStbdRpm == null && nullToAbsent
+          ? const Value.absent()
+          : Value(engineStbdRpm),
+      sourceLabel: Value(sourceLabel),
+      usedInPolarBuild: Value(usedInPolarBuild),
+    );
+  }
+
+  factory SailingPolarSampleRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SailingPolarSampleRow(
+      id: serializer.fromJson<int>(json['id']),
+      boatSupabaseId: serializer.fromJson<String>(json['boatSupabaseId']),
+      observedAt: serializer.fromJson<DateTime>(json['observedAt']),
+      sogKt: serializer.fromJson<double>(json['sogKt']),
+      cogDeg: serializer.fromJson<double?>(json['cogDeg']),
+      twsKt: serializer.fromJson<double>(json['twsKt']),
+      twdDeg: serializer.fromJson<double?>(json['twdDeg']),
+      twaDeg: serializer.fromJson<double>(json['twaDeg']),
+      awsKt: serializer.fromJson<double?>(json['awsKt']),
+      awaDeg: serializer.fromJson<double?>(json['awaDeg']),
+      depthMeters: serializer.fromJson<double?>(json['depthMeters']),
+      enginePortRpm: serializer.fromJson<double?>(json['enginePortRpm']),
+      engineStbdRpm: serializer.fromJson<double?>(json['engineStbdRpm']),
+      sourceLabel: serializer.fromJson<String>(json['sourceLabel']),
+      usedInPolarBuild: serializer.fromJson<bool>(json['usedInPolarBuild']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'boatSupabaseId': serializer.toJson<String>(boatSupabaseId),
+      'observedAt': serializer.toJson<DateTime>(observedAt),
+      'sogKt': serializer.toJson<double>(sogKt),
+      'cogDeg': serializer.toJson<double?>(cogDeg),
+      'twsKt': serializer.toJson<double>(twsKt),
+      'twdDeg': serializer.toJson<double?>(twdDeg),
+      'twaDeg': serializer.toJson<double>(twaDeg),
+      'awsKt': serializer.toJson<double?>(awsKt),
+      'awaDeg': serializer.toJson<double?>(awaDeg),
+      'depthMeters': serializer.toJson<double?>(depthMeters),
+      'enginePortRpm': serializer.toJson<double?>(enginePortRpm),
+      'engineStbdRpm': serializer.toJson<double?>(engineStbdRpm),
+      'sourceLabel': serializer.toJson<String>(sourceLabel),
+      'usedInPolarBuild': serializer.toJson<bool>(usedInPolarBuild),
+    };
+  }
+
+  SailingPolarSampleRow copyWith({
+    int? id,
+    String? boatSupabaseId,
+    DateTime? observedAt,
+    double? sogKt,
+    Value<double?> cogDeg = const Value.absent(),
+    double? twsKt,
+    Value<double?> twdDeg = const Value.absent(),
+    double? twaDeg,
+    Value<double?> awsKt = const Value.absent(),
+    Value<double?> awaDeg = const Value.absent(),
+    Value<double?> depthMeters = const Value.absent(),
+    Value<double?> enginePortRpm = const Value.absent(),
+    Value<double?> engineStbdRpm = const Value.absent(),
+    String? sourceLabel,
+    bool? usedInPolarBuild,
+  }) => SailingPolarSampleRow(
+    id: id ?? this.id,
+    boatSupabaseId: boatSupabaseId ?? this.boatSupabaseId,
+    observedAt: observedAt ?? this.observedAt,
+    sogKt: sogKt ?? this.sogKt,
+    cogDeg: cogDeg.present ? cogDeg.value : this.cogDeg,
+    twsKt: twsKt ?? this.twsKt,
+    twdDeg: twdDeg.present ? twdDeg.value : this.twdDeg,
+    twaDeg: twaDeg ?? this.twaDeg,
+    awsKt: awsKt.present ? awsKt.value : this.awsKt,
+    awaDeg: awaDeg.present ? awaDeg.value : this.awaDeg,
+    depthMeters: depthMeters.present ? depthMeters.value : this.depthMeters,
+    enginePortRpm: enginePortRpm.present
+        ? enginePortRpm.value
+        : this.enginePortRpm,
+    engineStbdRpm: engineStbdRpm.present
+        ? engineStbdRpm.value
+        : this.engineStbdRpm,
+    sourceLabel: sourceLabel ?? this.sourceLabel,
+    usedInPolarBuild: usedInPolarBuild ?? this.usedInPolarBuild,
+  );
+  SailingPolarSampleRow copyWithCompanion(SailingPolarSamplesCompanion data) {
+    return SailingPolarSampleRow(
+      id: data.id.present ? data.id.value : this.id,
+      boatSupabaseId: data.boatSupabaseId.present
+          ? data.boatSupabaseId.value
+          : this.boatSupabaseId,
+      observedAt: data.observedAt.present
+          ? data.observedAt.value
+          : this.observedAt,
+      sogKt: data.sogKt.present ? data.sogKt.value : this.sogKt,
+      cogDeg: data.cogDeg.present ? data.cogDeg.value : this.cogDeg,
+      twsKt: data.twsKt.present ? data.twsKt.value : this.twsKt,
+      twdDeg: data.twdDeg.present ? data.twdDeg.value : this.twdDeg,
+      twaDeg: data.twaDeg.present ? data.twaDeg.value : this.twaDeg,
+      awsKt: data.awsKt.present ? data.awsKt.value : this.awsKt,
+      awaDeg: data.awaDeg.present ? data.awaDeg.value : this.awaDeg,
+      depthMeters: data.depthMeters.present
+          ? data.depthMeters.value
+          : this.depthMeters,
+      enginePortRpm: data.enginePortRpm.present
+          ? data.enginePortRpm.value
+          : this.enginePortRpm,
+      engineStbdRpm: data.engineStbdRpm.present
+          ? data.engineStbdRpm.value
+          : this.engineStbdRpm,
+      sourceLabel: data.sourceLabel.present
+          ? data.sourceLabel.value
+          : this.sourceLabel,
+      usedInPolarBuild: data.usedInPolarBuild.present
+          ? data.usedInPolarBuild.value
+          : this.usedInPolarBuild,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SailingPolarSampleRow(')
+          ..write('id: $id, ')
+          ..write('boatSupabaseId: $boatSupabaseId, ')
+          ..write('observedAt: $observedAt, ')
+          ..write('sogKt: $sogKt, ')
+          ..write('cogDeg: $cogDeg, ')
+          ..write('twsKt: $twsKt, ')
+          ..write('twdDeg: $twdDeg, ')
+          ..write('twaDeg: $twaDeg, ')
+          ..write('awsKt: $awsKt, ')
+          ..write('awaDeg: $awaDeg, ')
+          ..write('depthMeters: $depthMeters, ')
+          ..write('enginePortRpm: $enginePortRpm, ')
+          ..write('engineStbdRpm: $engineStbdRpm, ')
+          ..write('sourceLabel: $sourceLabel, ')
+          ..write('usedInPolarBuild: $usedInPolarBuild')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    boatSupabaseId,
+    observedAt,
+    sogKt,
+    cogDeg,
+    twsKt,
+    twdDeg,
+    twaDeg,
+    awsKt,
+    awaDeg,
+    depthMeters,
+    enginePortRpm,
+    engineStbdRpm,
+    sourceLabel,
+    usedInPolarBuild,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SailingPolarSampleRow &&
+          other.id == this.id &&
+          other.boatSupabaseId == this.boatSupabaseId &&
+          other.observedAt == this.observedAt &&
+          other.sogKt == this.sogKt &&
+          other.cogDeg == this.cogDeg &&
+          other.twsKt == this.twsKt &&
+          other.twdDeg == this.twdDeg &&
+          other.twaDeg == this.twaDeg &&
+          other.awsKt == this.awsKt &&
+          other.awaDeg == this.awaDeg &&
+          other.depthMeters == this.depthMeters &&
+          other.enginePortRpm == this.enginePortRpm &&
+          other.engineStbdRpm == this.engineStbdRpm &&
+          other.sourceLabel == this.sourceLabel &&
+          other.usedInPolarBuild == this.usedInPolarBuild);
+}
+
+class SailingPolarSamplesCompanion
+    extends UpdateCompanion<SailingPolarSampleRow> {
+  final Value<int> id;
+  final Value<String> boatSupabaseId;
+  final Value<DateTime> observedAt;
+  final Value<double> sogKt;
+  final Value<double?> cogDeg;
+  final Value<double> twsKt;
+  final Value<double?> twdDeg;
+  final Value<double> twaDeg;
+  final Value<double?> awsKt;
+  final Value<double?> awaDeg;
+  final Value<double?> depthMeters;
+  final Value<double?> enginePortRpm;
+  final Value<double?> engineStbdRpm;
+  final Value<String> sourceLabel;
+  final Value<bool> usedInPolarBuild;
+  const SailingPolarSamplesCompanion({
+    this.id = const Value.absent(),
+    this.boatSupabaseId = const Value.absent(),
+    this.observedAt = const Value.absent(),
+    this.sogKt = const Value.absent(),
+    this.cogDeg = const Value.absent(),
+    this.twsKt = const Value.absent(),
+    this.twdDeg = const Value.absent(),
+    this.twaDeg = const Value.absent(),
+    this.awsKt = const Value.absent(),
+    this.awaDeg = const Value.absent(),
+    this.depthMeters = const Value.absent(),
+    this.enginePortRpm = const Value.absent(),
+    this.engineStbdRpm = const Value.absent(),
+    this.sourceLabel = const Value.absent(),
+    this.usedInPolarBuild = const Value.absent(),
+  });
+  SailingPolarSamplesCompanion.insert({
+    this.id = const Value.absent(),
+    this.boatSupabaseId = const Value.absent(),
+    this.observedAt = const Value.absent(),
+    this.sogKt = const Value.absent(),
+    this.cogDeg = const Value.absent(),
+    this.twsKt = const Value.absent(),
+    this.twdDeg = const Value.absent(),
+    this.twaDeg = const Value.absent(),
+    this.awsKt = const Value.absent(),
+    this.awaDeg = const Value.absent(),
+    this.depthMeters = const Value.absent(),
+    this.enginePortRpm = const Value.absent(),
+    this.engineStbdRpm = const Value.absent(),
+    this.sourceLabel = const Value.absent(),
+    this.usedInPolarBuild = const Value.absent(),
+  });
+  static Insertable<SailingPolarSampleRow> custom({
+    Expression<int>? id,
+    Expression<String>? boatSupabaseId,
+    Expression<DateTime>? observedAt,
+    Expression<double>? sogKt,
+    Expression<double>? cogDeg,
+    Expression<double>? twsKt,
+    Expression<double>? twdDeg,
+    Expression<double>? twaDeg,
+    Expression<double>? awsKt,
+    Expression<double>? awaDeg,
+    Expression<double>? depthMeters,
+    Expression<double>? enginePortRpm,
+    Expression<double>? engineStbdRpm,
+    Expression<String>? sourceLabel,
+    Expression<bool>? usedInPolarBuild,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (boatSupabaseId != null) 'boat_supabase_id': boatSupabaseId,
+      if (observedAt != null) 'observed_at': observedAt,
+      if (sogKt != null) 'sog_kt': sogKt,
+      if (cogDeg != null) 'cog_deg': cogDeg,
+      if (twsKt != null) 'tws_kt': twsKt,
+      if (twdDeg != null) 'twd_deg': twdDeg,
+      if (twaDeg != null) 'twa_deg': twaDeg,
+      if (awsKt != null) 'aws_kt': awsKt,
+      if (awaDeg != null) 'awa_deg': awaDeg,
+      if (depthMeters != null) 'depth_meters': depthMeters,
+      if (enginePortRpm != null) 'engine_port_rpm': enginePortRpm,
+      if (engineStbdRpm != null) 'engine_stbd_rpm': engineStbdRpm,
+      if (sourceLabel != null) 'source_label': sourceLabel,
+      if (usedInPolarBuild != null) 'used_in_polar_build': usedInPolarBuild,
+    });
+  }
+
+  SailingPolarSamplesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? boatSupabaseId,
+    Value<DateTime>? observedAt,
+    Value<double>? sogKt,
+    Value<double?>? cogDeg,
+    Value<double>? twsKt,
+    Value<double?>? twdDeg,
+    Value<double>? twaDeg,
+    Value<double?>? awsKt,
+    Value<double?>? awaDeg,
+    Value<double?>? depthMeters,
+    Value<double?>? enginePortRpm,
+    Value<double?>? engineStbdRpm,
+    Value<String>? sourceLabel,
+    Value<bool>? usedInPolarBuild,
+  }) {
+    return SailingPolarSamplesCompanion(
+      id: id ?? this.id,
+      boatSupabaseId: boatSupabaseId ?? this.boatSupabaseId,
+      observedAt: observedAt ?? this.observedAt,
+      sogKt: sogKt ?? this.sogKt,
+      cogDeg: cogDeg ?? this.cogDeg,
+      twsKt: twsKt ?? this.twsKt,
+      twdDeg: twdDeg ?? this.twdDeg,
+      twaDeg: twaDeg ?? this.twaDeg,
+      awsKt: awsKt ?? this.awsKt,
+      awaDeg: awaDeg ?? this.awaDeg,
+      depthMeters: depthMeters ?? this.depthMeters,
+      enginePortRpm: enginePortRpm ?? this.enginePortRpm,
+      engineStbdRpm: engineStbdRpm ?? this.engineStbdRpm,
+      sourceLabel: sourceLabel ?? this.sourceLabel,
+      usedInPolarBuild: usedInPolarBuild ?? this.usedInPolarBuild,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (boatSupabaseId.present) {
+      map['boat_supabase_id'] = Variable<String>(boatSupabaseId.value);
+    }
+    if (observedAt.present) {
+      map['observed_at'] = Variable<DateTime>(observedAt.value);
+    }
+    if (sogKt.present) {
+      map['sog_kt'] = Variable<double>(sogKt.value);
+    }
+    if (cogDeg.present) {
+      map['cog_deg'] = Variable<double>(cogDeg.value);
+    }
+    if (twsKt.present) {
+      map['tws_kt'] = Variable<double>(twsKt.value);
+    }
+    if (twdDeg.present) {
+      map['twd_deg'] = Variable<double>(twdDeg.value);
+    }
+    if (twaDeg.present) {
+      map['twa_deg'] = Variable<double>(twaDeg.value);
+    }
+    if (awsKt.present) {
+      map['aws_kt'] = Variable<double>(awsKt.value);
+    }
+    if (awaDeg.present) {
+      map['awa_deg'] = Variable<double>(awaDeg.value);
+    }
+    if (depthMeters.present) {
+      map['depth_meters'] = Variable<double>(depthMeters.value);
+    }
+    if (enginePortRpm.present) {
+      map['engine_port_rpm'] = Variable<double>(enginePortRpm.value);
+    }
+    if (engineStbdRpm.present) {
+      map['engine_stbd_rpm'] = Variable<double>(engineStbdRpm.value);
+    }
+    if (sourceLabel.present) {
+      map['source_label'] = Variable<String>(sourceLabel.value);
+    }
+    if (usedInPolarBuild.present) {
+      map['used_in_polar_build'] = Variable<bool>(usedInPolarBuild.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SailingPolarSamplesCompanion(')
+          ..write('id: $id, ')
+          ..write('boatSupabaseId: $boatSupabaseId, ')
+          ..write('observedAt: $observedAt, ')
+          ..write('sogKt: $sogKt, ')
+          ..write('cogDeg: $cogDeg, ')
+          ..write('twsKt: $twsKt, ')
+          ..write('twdDeg: $twdDeg, ')
+          ..write('twaDeg: $twaDeg, ')
+          ..write('awsKt: $awsKt, ')
+          ..write('awaDeg: $awaDeg, ')
+          ..write('depthMeters: $depthMeters, ')
+          ..write('enginePortRpm: $enginePortRpm, ')
+          ..write('engineStbdRpm: $engineStbdRpm, ')
+          ..write('sourceLabel: $sourceLabel, ')
+          ..write('usedInPolarBuild: $usedInPolarBuild')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -21497,6 +22356,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ConflictLogsTable conflictLogs = $ConflictLogsTable(this);
   late final $ErrorLogsTable errorLogs = $ErrorLogsTable(this);
   late final $AnchorWatchesTable anchorWatches = $AnchorWatchesTable(this);
+  late final $SailingPolarSamplesTable sailingPolarSamples =
+      $SailingPolarSamplesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -21526,6 +22387,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     conflictLogs,
     errorLogs,
     anchorWatches,
+    sailingPolarSamples,
   ];
 }
 
@@ -31437,6 +32299,420 @@ typedef $$AnchorWatchesTableProcessedTableManager =
       AnchorWatchRow,
       PrefetchHooks Function()
     >;
+typedef $$SailingPolarSamplesTableCreateCompanionBuilder =
+    SailingPolarSamplesCompanion Function({
+      Value<int> id,
+      Value<String> boatSupabaseId,
+      Value<DateTime> observedAt,
+      Value<double> sogKt,
+      Value<double?> cogDeg,
+      Value<double> twsKt,
+      Value<double?> twdDeg,
+      Value<double> twaDeg,
+      Value<double?> awsKt,
+      Value<double?> awaDeg,
+      Value<double?> depthMeters,
+      Value<double?> enginePortRpm,
+      Value<double?> engineStbdRpm,
+      Value<String> sourceLabel,
+      Value<bool> usedInPolarBuild,
+    });
+typedef $$SailingPolarSamplesTableUpdateCompanionBuilder =
+    SailingPolarSamplesCompanion Function({
+      Value<int> id,
+      Value<String> boatSupabaseId,
+      Value<DateTime> observedAt,
+      Value<double> sogKt,
+      Value<double?> cogDeg,
+      Value<double> twsKt,
+      Value<double?> twdDeg,
+      Value<double> twaDeg,
+      Value<double?> awsKt,
+      Value<double?> awaDeg,
+      Value<double?> depthMeters,
+      Value<double?> enginePortRpm,
+      Value<double?> engineStbdRpm,
+      Value<String> sourceLabel,
+      Value<bool> usedInPolarBuild,
+    });
+
+class $$SailingPolarSamplesTableFilterComposer
+    extends Composer<_$AppDatabase, $SailingPolarSamplesTable> {
+  $$SailingPolarSamplesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get boatSupabaseId => $composableBuilder(
+    column: $table.boatSupabaseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get observedAt => $composableBuilder(
+    column: $table.observedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get sogKt => $composableBuilder(
+    column: $table.sogKt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get cogDeg => $composableBuilder(
+    column: $table.cogDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get twsKt => $composableBuilder(
+    column: $table.twsKt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get twdDeg => $composableBuilder(
+    column: $table.twdDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get twaDeg => $composableBuilder(
+    column: $table.twaDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get awsKt => $composableBuilder(
+    column: $table.awsKt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get awaDeg => $composableBuilder(
+    column: $table.awaDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get depthMeters => $composableBuilder(
+    column: $table.depthMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get enginePortRpm => $composableBuilder(
+    column: $table.enginePortRpm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get engineStbdRpm => $composableBuilder(
+    column: $table.engineStbdRpm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceLabel => $composableBuilder(
+    column: $table.sourceLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get usedInPolarBuild => $composableBuilder(
+    column: $table.usedInPolarBuild,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SailingPolarSamplesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SailingPolarSamplesTable> {
+  $$SailingPolarSamplesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get boatSupabaseId => $composableBuilder(
+    column: $table.boatSupabaseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get observedAt => $composableBuilder(
+    column: $table.observedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get sogKt => $composableBuilder(
+    column: $table.sogKt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get cogDeg => $composableBuilder(
+    column: $table.cogDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get twsKt => $composableBuilder(
+    column: $table.twsKt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get twdDeg => $composableBuilder(
+    column: $table.twdDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get twaDeg => $composableBuilder(
+    column: $table.twaDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get awsKt => $composableBuilder(
+    column: $table.awsKt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get awaDeg => $composableBuilder(
+    column: $table.awaDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get depthMeters => $composableBuilder(
+    column: $table.depthMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get enginePortRpm => $composableBuilder(
+    column: $table.enginePortRpm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get engineStbdRpm => $composableBuilder(
+    column: $table.engineStbdRpm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceLabel => $composableBuilder(
+    column: $table.sourceLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get usedInPolarBuild => $composableBuilder(
+    column: $table.usedInPolarBuild,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SailingPolarSamplesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SailingPolarSamplesTable> {
+  $$SailingPolarSamplesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get boatSupabaseId => $composableBuilder(
+    column: $table.boatSupabaseId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get observedAt => $composableBuilder(
+    column: $table.observedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get sogKt =>
+      $composableBuilder(column: $table.sogKt, builder: (column) => column);
+
+  GeneratedColumn<double> get cogDeg =>
+      $composableBuilder(column: $table.cogDeg, builder: (column) => column);
+
+  GeneratedColumn<double> get twsKt =>
+      $composableBuilder(column: $table.twsKt, builder: (column) => column);
+
+  GeneratedColumn<double> get twdDeg =>
+      $composableBuilder(column: $table.twdDeg, builder: (column) => column);
+
+  GeneratedColumn<double> get twaDeg =>
+      $composableBuilder(column: $table.twaDeg, builder: (column) => column);
+
+  GeneratedColumn<double> get awsKt =>
+      $composableBuilder(column: $table.awsKt, builder: (column) => column);
+
+  GeneratedColumn<double> get awaDeg =>
+      $composableBuilder(column: $table.awaDeg, builder: (column) => column);
+
+  GeneratedColumn<double> get depthMeters => $composableBuilder(
+    column: $table.depthMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get enginePortRpm => $composableBuilder(
+    column: $table.enginePortRpm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get engineStbdRpm => $composableBuilder(
+    column: $table.engineStbdRpm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceLabel => $composableBuilder(
+    column: $table.sourceLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get usedInPolarBuild => $composableBuilder(
+    column: $table.usedInPolarBuild,
+    builder: (column) => column,
+  );
+}
+
+class $$SailingPolarSamplesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SailingPolarSamplesTable,
+          SailingPolarSampleRow,
+          $$SailingPolarSamplesTableFilterComposer,
+          $$SailingPolarSamplesTableOrderingComposer,
+          $$SailingPolarSamplesTableAnnotationComposer,
+          $$SailingPolarSamplesTableCreateCompanionBuilder,
+          $$SailingPolarSamplesTableUpdateCompanionBuilder,
+          (
+            SailingPolarSampleRow,
+            BaseReferences<
+              _$AppDatabase,
+              $SailingPolarSamplesTable,
+              SailingPolarSampleRow
+            >,
+          ),
+          SailingPolarSampleRow,
+          PrefetchHooks Function()
+        > {
+  $$SailingPolarSamplesTableTableManager(
+    _$AppDatabase db,
+    $SailingPolarSamplesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SailingPolarSamplesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SailingPolarSamplesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SailingPolarSamplesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> boatSupabaseId = const Value.absent(),
+                Value<DateTime> observedAt = const Value.absent(),
+                Value<double> sogKt = const Value.absent(),
+                Value<double?> cogDeg = const Value.absent(),
+                Value<double> twsKt = const Value.absent(),
+                Value<double?> twdDeg = const Value.absent(),
+                Value<double> twaDeg = const Value.absent(),
+                Value<double?> awsKt = const Value.absent(),
+                Value<double?> awaDeg = const Value.absent(),
+                Value<double?> depthMeters = const Value.absent(),
+                Value<double?> enginePortRpm = const Value.absent(),
+                Value<double?> engineStbdRpm = const Value.absent(),
+                Value<String> sourceLabel = const Value.absent(),
+                Value<bool> usedInPolarBuild = const Value.absent(),
+              }) => SailingPolarSamplesCompanion(
+                id: id,
+                boatSupabaseId: boatSupabaseId,
+                observedAt: observedAt,
+                sogKt: sogKt,
+                cogDeg: cogDeg,
+                twsKt: twsKt,
+                twdDeg: twdDeg,
+                twaDeg: twaDeg,
+                awsKt: awsKt,
+                awaDeg: awaDeg,
+                depthMeters: depthMeters,
+                enginePortRpm: enginePortRpm,
+                engineStbdRpm: engineStbdRpm,
+                sourceLabel: sourceLabel,
+                usedInPolarBuild: usedInPolarBuild,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> boatSupabaseId = const Value.absent(),
+                Value<DateTime> observedAt = const Value.absent(),
+                Value<double> sogKt = const Value.absent(),
+                Value<double?> cogDeg = const Value.absent(),
+                Value<double> twsKt = const Value.absent(),
+                Value<double?> twdDeg = const Value.absent(),
+                Value<double> twaDeg = const Value.absent(),
+                Value<double?> awsKt = const Value.absent(),
+                Value<double?> awaDeg = const Value.absent(),
+                Value<double?> depthMeters = const Value.absent(),
+                Value<double?> enginePortRpm = const Value.absent(),
+                Value<double?> engineStbdRpm = const Value.absent(),
+                Value<String> sourceLabel = const Value.absent(),
+                Value<bool> usedInPolarBuild = const Value.absent(),
+              }) => SailingPolarSamplesCompanion.insert(
+                id: id,
+                boatSupabaseId: boatSupabaseId,
+                observedAt: observedAt,
+                sogKt: sogKt,
+                cogDeg: cogDeg,
+                twsKt: twsKt,
+                twdDeg: twdDeg,
+                twaDeg: twaDeg,
+                awsKt: awsKt,
+                awaDeg: awaDeg,
+                depthMeters: depthMeters,
+                enginePortRpm: enginePortRpm,
+                engineStbdRpm: engineStbdRpm,
+                sourceLabel: sourceLabel,
+                usedInPolarBuild: usedInPolarBuild,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SailingPolarSamplesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SailingPolarSamplesTable,
+      SailingPolarSampleRow,
+      $$SailingPolarSamplesTableFilterComposer,
+      $$SailingPolarSamplesTableOrderingComposer,
+      $$SailingPolarSamplesTableAnnotationComposer,
+      $$SailingPolarSamplesTableCreateCompanionBuilder,
+      $$SailingPolarSamplesTableUpdateCompanionBuilder,
+      (
+        SailingPolarSampleRow,
+        BaseReferences<
+          _$AppDatabase,
+          $SailingPolarSamplesTable,
+          SailingPolarSampleRow
+        >,
+      ),
+      SailingPolarSampleRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -31489,4 +32765,6 @@ class $AppDatabaseManager {
       $$ErrorLogsTableTableManager(_db, _db.errorLogs);
   $$AnchorWatchesTableTableManager get anchorWatches =>
       $$AnchorWatchesTableTableManager(_db, _db.anchorWatches);
+  $$SailingPolarSamplesTableTableManager get sailingPolarSamples =>
+      $$SailingPolarSamplesTableTableManager(_db, _db.sailingPolarSamples);
 }

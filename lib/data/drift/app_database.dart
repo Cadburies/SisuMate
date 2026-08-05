@@ -613,6 +613,28 @@ class AnchorWatches extends Table {
       dateTime().withDefault(currentDateAndTime)();
 }
 
+/// #274 — under-sail polar learning samples. Local-only (not synced).
+@DataClassName('SailingPolarSampleRow')
+class SailingPolarSamples extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get boatSupabaseId => text().withDefault(const Constant(''))();
+  DateTimeColumn get observedAt =>
+      dateTime().withDefault(currentDateAndTime)();
+  RealColumn get sogKt => real().withDefault(const Constant(0))();
+  RealColumn get cogDeg => real().nullable()();
+  RealColumn get twsKt => real().withDefault(const Constant(0))();
+  RealColumn get twdDeg => real().nullable()();
+  RealColumn get twaDeg => real().withDefault(const Constant(0))();
+  RealColumn get awsKt => real().nullable()();
+  RealColumn get awaDeg => real().nullable()();
+  RealColumn get depthMeters => real().nullable()();
+  RealColumn get enginePortRpm => real().nullable()();
+  RealColumn get engineStbdRpm => real().nullable()();
+  TextColumn get sourceLabel => text().withDefault(const Constant(''))();
+  BoolColumn get usedInPolarBuild =>
+      boolean().withDefault(const Constant(false))();
+}
+
 /// The app's Drift database — the sole local store. Every table the app
 /// persists is registered in the `@DriftDatabase(tables: [...])` list below.
 @DriftDatabase(tables: [
@@ -640,6 +662,7 @@ class AnchorWatches extends Table {
   ConflictLogs,
   ErrorLogs,
   AnchorWatches,
+  SailingPolarSamples,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
@@ -660,7 +683,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

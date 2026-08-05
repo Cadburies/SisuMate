@@ -48,6 +48,9 @@ import '../domain/repositories/fuel_log_repository.dart';
 import '../data/repositories/fuel_log_repository_impl.dart';
 import '../domain/repositories/anchor_watch_repository.dart';
 import '../data/repositories/anchor_watch_repository_impl.dart';
+import '../data/repositories/sailing_polar_sample_repository.dart';
+import '../services/sailing_polar_collector.dart';
+import '../services/polar_llm_improve_service.dart';
 
 final databaseServiceProvider =
     Provider<DatabaseService>((ref) => DatabaseService());
@@ -233,6 +236,23 @@ final boatRepositoryProvider = Provider<BoatRepository>((ref) {
   return BoatRepositoryImpl(
     ref.watch(appDatabaseProvider),
     ref.watch(syncServiceProvider),
+  );
+});
+
+/// #274 — under-sail polar sample store (local-only).
+final sailingPolarSampleRepositoryProvider =
+    Provider<SailingPolarSampleRepository>((ref) {
+  return SailingPolarSampleRepository(ref.watch(appDatabaseProvider));
+});
+
+final sailingPolarCollectorProvider = Provider<SailingPolarCollector>((ref) {
+  return SailingPolarCollector(ref.watch(sailingPolarSampleRepositoryProvider));
+});
+
+final polarLlmImproveServiceProvider = Provider<PolarLlmImproveService>((ref) {
+  return PolarLlmImproveService(
+    samples: ref.watch(sailingPolarSampleRepositoryProvider),
+    boats: ref.watch(boatRepositoryProvider),
   );
 });
 
