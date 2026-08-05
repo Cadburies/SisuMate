@@ -765,6 +765,9 @@ class InboundSyncApplier {
       lastModified: Value(b.lastModified),
       llmApiKeys: Value(
           jsonEncode(mergedKeys.map((e) => e.toStorageJson()).toList())),
+      // #258/#259: polar is crew-shared boat performance data (wire key
+      // `polar` ↔ Drift `polarJson`).
+      polarJson: Value(encodePolarTable(b.polar)),
       // activeLlmProvider is never part of the wire payload (per-device
       // preference) — Value.absent() leaves this device's own choice alone.
     );
