@@ -16,9 +16,10 @@ import '../../services/predictwind_datahub_service.dart';
 /// **YDWG-02** (Yacht Devices web UI + NMEA): address + username/password,
 /// Test web login. NMEA stream still deferred.
 ///
-/// **Home Assistant**: local URL + optional remote URL (Nabu Casa), long-lived
-/// token, GPS entity IDs. Used in multi-source failover (local first, then
-/// internet) with DataHub.
+/// **Home Assistant**: same dual-path model as DataHub — local (boat LAN)
+/// and internet (Nabu Casa / reverse proxy), shared long-lived token +
+/// entity IDs. Failover tries HA local with other local sources, then HA
+/// internet with other remote sources.
 class AnchorGatewaySetupScreen extends ConsumerStatefulWidget {
   const AnchorGatewaySetupScreen({
     super.key,
@@ -448,9 +449,22 @@ class _AnchorGatewaySetupScreenState
     final ydwgAddress = _normalizedYdwgAddress();
     final ydwgUser = _ydwgUserCtrl.text.trim();
     final ydwgPass = _ydwgPassCtrl.text;
-    final haUrl = _normalizedHaUrl(_haUrlCtrl.text);
-    final haRemote = _normalizedHaUrl(_haRemoteUrlCtrl.text);
+    // HA dual-path: local + internet (same idea as DataHub). If only one
+    // URL is filled, classify by private-LAN vs public host.
+    var haUrl = _normalizedHaUrl(_haUrlCtrl.text);
+    var haRemote = _normalizedHaUrl(_haRemoteUrlCtrl.text);
     final haToken = _haTokenCtrl.text.trim();
+    if (haUrl != null && haRemote == null) {
+      if (!PredictWindDatahubService.isPrivateLanUrl(haUrl)) {
+        haRemote = haUrl;
+        haUrl = null;
+      }
+    } else if (haRemote != null && haUrl == null) {
+      if (PredictWindDatahubService.isPrivateLanUrl(haRemote)) {
+        haUrl = haRemote;
+        haRemote = null;
+      }
+    }
 
     final hubUrl = (address != null && address.isNotEmpty) ? address : null;
     final yUrl =
@@ -508,8 +522,10 @@ class _AnchorGatewaySetupScreenState
       parts.add(
         'Home Assistant'
         '${haUrl != null ? ' local $haUrl' : ''}'
-        '${haRemote != null ? ' remote $haRemote' : ''}',
+        '${haRemote != null ? ' internet $haRemote' : ''}',
       );
+      if (haUrl != null) _haUrlCtrl.text = haUrl;
+      if (haRemote != null) _haRemoteUrlCtrl.text = haRemote;
     }
 
     setState(() => _status = _Status.saving);
@@ -798,24 +814,26 @@ class _AnchorGatewaySetupScreenState
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            'Optional second instrument path. Local URL for '
-                            'boat LAN; remote URL (Nabu Casa / reverse proxy) '
-                            'for beach-bar internet failover when DataHub '
-                            'tunnel is down.\n'
-                            'Create a long-lived access token in HA Profile. '
-                            'GPS entity should expose latitude/longitude '
-                            'attributes (e.g. device_tracker.boat), or use '
-                            'separate lat/lon sensors.\n'
-                            'Failover: local DataHub → local HA → internet '
-                            'DataHub → internet HA.',
+                            'Same dual-path model as PredictWind DataHub: '
+                            'local on boat WiFi/intranet, and internet '
+                            '(Nabu Casa / reverse proxy) for beach-bar '
+                            'failover when you are off the boat.\n'
+                            'Shared long-lived access token (HA Profile → '
+                            'Create Token). GPS entity should expose '
+                            'latitude/longitude attributes '
+                            '(e.g. device_tracker.boat), or use separate '
+                            'lat/lon sensors.\n'
+                            'Failover order: DataHub local → HA local → '
+                            'DataHub internet → HA internet.',
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: _haUrlCtrl,
                             decoration: const InputDecoration(
-                              labelText: 'HA local URL',
+                              labelText: 'HA local URL (boat network)',
                               hintText: 'http://homeassistant.local:8123',
-                              helperText: 'Boat network / intranet',
+                              helperText:
+                                  'Like DataHub local — used first on boat WiFi',
                             ),
                             enabled: !busy,
                             autocorrect: false,
@@ -825,9 +843,10 @@ class _AnchorGatewaySetupScreenState
                           TextField(
                             controller: _haRemoteUrlCtrl,
                             decoration: const InputDecoration(
-                              labelText: 'HA remote URL (optional)',
+                              labelText: 'HA internet URL',
                               hintText: 'https://….ui.nabu.casa',
-                              helperText: 'Internet failover (Nabu Casa, etc.)',
+                              helperText:
+                                  'Like DataHub remote — beach-bar / cellular path',
                             ),
                             enabled: !busy,
                             autocorrect: false,
@@ -936,7 +955,7 @@ class _AnchorGatewaySetupScreenState
                                 onPressed:
                                     busy ? null : () => _testHa(remote: true),
                                 icon: const Icon(Icons.public),
-                                label: const Text('Test HA remote'),
+                                label: const Text('Test HA internet'),
                               ),
                             ],
                           ),

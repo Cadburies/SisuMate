@@ -63,16 +63,14 @@ class BoatInstrumentSnapshot {
 /// #263 — multi-source boat instrument failover for Anchor Alarm.
 ///
 /// **Order (local first — lower latency on the boat network, then internet
-/// for beach-bar / cellular when the boat is dragging):**
+/// for beach-bar / cellular when the boat is dragging).** DataHub and Home
+/// Assistant are peers — each has a **local** and an **internet** path:
 ///
-/// 1. **DataHub local** (boat WiFi / IoT LAN) — only while the phone is on
-///    WiFi (same gating as [PredictWindDatahubService]).
-/// 2. **Home Assistant local** — same WiFi gate; useful when HA aggregates
-///    NMEA/SignalK on the boat LAN.
-/// 3. **DataHub internet** (`remote.rdsensing.com` tunnel) — always tried
-///    when configured (beach bar path).
-/// 4. **Home Assistant remote** (Nabu Casa / public URL) — internet failover
-///    when DataHub tunnel is down but HA is reachable off-boat.
+/// 1. **DataHub local** (boat WiFi / IoT LAN) — WiFi-gated.
+/// 2. **Home Assistant local** — WiFi-gated (boat LAN HA).
+/// 3. **DataHub internet** (`remote.rdsensing.com`) — beach-bar path.
+/// 4. **Home Assistant internet** (Nabu Casa / reverse proxy) — same
+///    off-boat role as DataHub remote.
 ///
 /// YDWG-02 is **not** in this list yet (raw NMEA stream still deferred);
 /// its credentials live in settings for config/Test only.
