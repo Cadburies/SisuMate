@@ -34,13 +34,21 @@ import 'error_log_service.dart';
 /// unauthenticated path was found (`/signalk*` on the same tunneled ports
 /// both 404) — a session is required for every fetch.
 ///
-/// #263 — [PREDICTWIND_HUB_LOCAL_URL]'s default value is **unverified**: it
-/// was set to `http://10.10.10.1`, PredictWind's own documented default
-/// device IP for connecting chartplotter apps to the DataHub's WiFi
-/// (https://help.predictwind.com/en/articles/8332728), as a starting
-/// hypothesis to test against — not confirmed to be where *this* device's
-/// LuCI/nmead service actually answers locally. Verify live before relying
-/// on it; update the dart-define if the real local address differs.
+/// #263 — [PREDICTWIND_HUB_LOCAL_URL] is boat-specific, not a fixed
+/// default: `10.10.10.1` (PredictWind's own documented device IP for
+/// chartplotter apps, https://help.predictwind.com/en/articles/8332728) is
+/// only what a Hub answers on *if* it's the sole device on its own small
+/// network. On this boat the Hub instead sits on a dedicated IoT VLAN
+/// (`Sisu-IoT`, separate from the main `Sisu` WiFi7/MLO network because
+/// most IoT gear doesn't speak MLO) with a static reservation at
+/// `192.168.10.31` — confirmed and set in `dart-defines.json`. A phone on
+/// the *main* network still can't reach that address unless the router
+/// (here, a GL-iNet GL-BE9300) is configured to route between the two
+/// subnets, or the phone joins the IoT network directly — this service has
+/// no way to fix that itself; it can only time out on "local" and fall
+/// back to remote when the two subnets aren't bridged. A Yacht Devices
+/// YDWG-02 on the same IoT VLAN was set up alongside the Hub at
+/// `192.168.10.30` — not yet integrated (see [knownLocalAddresses]'s doc).
 ///
 /// #257/#260 — the HTTPS remote endpoint (`PREDICTWIND_HUB_URL`) serves a
 /// self-signed certificate, which `curl -k` masked during dev testing but
