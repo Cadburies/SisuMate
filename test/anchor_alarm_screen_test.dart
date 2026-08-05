@@ -284,11 +284,31 @@ void main() {
       await tester.tap(find.widgetWithText(ElevatedButton, 'Drop Anchor Here'));
       await tester.pumpAndSettle();
 
-      // Radius is the 2nd Slider (index 1): scope ratio, then radius.
+      // Radius is the 2nd Slider (index 1): scope ratio, then radius. Capped
+      // at 120m — real cruisers rarely pay out more rode than that.
       final radiusSlider = tester.widget<Slider>(find.byType(Slider).at(1));
-      radiusSlider.onChanged!(150);
+      expect(radiusSlider.max, 120);
+      radiusSlider.onChanged!(120);
       await tester.pump();
-      radiusSlider.onChangeEnd!(150);
+      radiusSlider.onChangeEnd!(120);
+      await tester.pumpAndSettle();
+
+      final active =
+          await container.read(anchorWatchRepositoryProvider).watchActive().first;
+      expect(active!.radiusMeters, 120);
+    });
+
+    testWidgets(
+        'the radius text field accepts a value beyond the 120m slider cap',
+        (tester) async {
+      await pumpScreen(tester,
+          httpClient: hubClient(), hubService: connectedHubService);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Drop Anchor Here'));
+      await tester.pumpAndSettle();
+
+      // Radius row's TextField is the first one on screen.
+      await tester.enterText(find.byType(TextField).first, '150');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
       final active =

@@ -11,10 +11,17 @@ import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/anchor_alarm_service.dart';
 import '../../services/predictwind_datahub_service.dart';
+import 'anchor_chart_map.dart';
 
 final activeAnchorWatchProvider = StreamProvider<AnchorWatch?>((ref) {
   return ref.watch(anchorWatchRepositoryProvider).watchActive();
 });
+
+/// #256 follow-up — cruisers rarely pay out more than ~120m of rode, so
+/// the radius sliders (scope circle + danger-zone sector) stay bounded to
+/// that common range. [_RadiusEditor]'s paired text field still accepts
+/// any value beyond it for the rare setup that needs more.
+const _maxSliderRadiusMeters = 120.0;
 
 /// #256 — Anchor Alarm: set/edit the anchor position, a chain-scope
 /// geofence circle (default ratio from Settings, always adjustable), and
@@ -310,6 +317,12 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
                                 onWeighAnchor: () => _weighAnchor(activeWatch.id),
                               ),
                               const SizedBox(height: 12),
+                              AnchorChartMap(
+                                activeWatch: activeWatch,
+                                boatLat: _boatLat,
+                                boatLon: _boatLon,
+                              ),
+                              const SizedBox(height: 12),
                               _ScopeCard(
                                 activeWatch: activeWatch,
                                 depthMeters: _boatData?.depthMeters,
@@ -572,22 +585,12 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
                 SizedBox(width: 48, child: Text('${_ratio.toStringAsFixed(1)}:1')),
               ],
             ),
-            Row(
-              children: [
-                const SizedBox(width: 90, child: Text('Radius')),
-                Expanded(
-                  child: Slider(
-                    value: _radius.clamp(5, 300),
-                    min: 5,
-                    max: 300,
-                    divisions: 59,
-                    label: '${_radius.toStringAsFixed(0)} m',
-                    onChanged: (v) => setState(() => _radius = v),
-                    onChangeEnd: (_) => _persist(),
-                  ),
-                ),
-                SizedBox(width: 48, child: Text('${_radius.toStringAsFixed(0)} m')),
-              ],
+            _RadiusEditor(
+              label: 'Radius',
+              value: _radius,
+              sliderMax: _maxSliderRadiusMeters,
+              onChanged: (v) => setState(() => _radius = v),
+              onCommit: _persist,
             ),
             if (depth != null)
               Align(
@@ -685,13 +688,12 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
                 unit: '°',
                 onChanged: (v) => setState(() => _widthDeg = v),
               ),
-              _sliderRow(
+              _RadiusEditor(
                 label: 'Radius',
                 value: _radiusMeters,
-                min: 5,
-                max: 300,
-                unit: ' m',
+                sliderMax: _maxSliderRadiusMeters,
                 onChanged: (v) => setState(() => _radiusMeters = v),
+                onCommit: _persist,
               ),
             ],
           ],
@@ -722,6 +724,105 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
           ),
         ),
         SizedBox(width: 56, child: Text('${value.toStringAsFixed(0)}$unit')),
+      ],
+    );
+  }
+}
+
+/// #256 follow-up — a capped [Slider] (the common cruising range) paired
+/// with a free-text field for an exact/uncapped override. Real anchor
+/// scope rarely exceeds ~120m of rode, so the slider stays bounded to
+/// that, but the text field still accepts any value for the rare setup
+/// that needs more — "the slider can stay max 120m" per the product ask,
+/// with the override living in the text field instead of raising the cap.
+class _RadiusEditor extends StatefulWidget {
+  final String label;
+  final double value;
+  final double sliderMax;
+  final ValueChanged<double> onChanged;
+  final VoidCallback onCommit;
+  const _RadiusEditor({
+    required this.label,
+    required this.value,
+    required this.sliderMax,
+    required this.onChanged,
+    required this.onCommit,
+  });
+
+  @override
+  State<_RadiusEditor> createState() => _RadiusEditorState();
+}
+
+class _RadiusEditorState extends State<_RadiusEditor> {
+  late final TextEditingController _textCtrl;
+  final _textFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _textCtrl = TextEditingController(text: widget.value.toStringAsFixed(0));
+  }
+
+  @override
+  void didUpdateWidget(covariant _RadiusEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Keep the field in sync with external changes (slider drag, "suggest
+    // from depth") without clobbering text the user is mid-typing.
+    final text = widget.value.toStringAsFixed(0);
+    if (!_textFocus.hasFocus && _textCtrl.text != text) {
+      _textCtrl.text = text;
+    }
+  }
+
+  @override
+  void dispose() {
+    _textCtrl.dispose();
+    _textFocus.dispose();
+    super.dispose();
+  }
+
+  void _submitText() {
+    final parsed = double.tryParse(_textCtrl.text.trim());
+    if (parsed != null && parsed > 0) {
+      widget.onChanged(parsed);
+      widget.onCommit();
+    } else {
+      _textCtrl.text = widget.value.toStringAsFixed(0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(width: 90, child: Text(widget.label)),
+        Expanded(
+          child: Slider(
+            value: widget.value.clamp(5, widget.sliderMax),
+            min: 5,
+            max: widget.sliderMax,
+            divisions: widget.sliderMax.round() - 5,
+            label: '${widget.value.toStringAsFixed(0)} m',
+            onChanged: widget.onChanged,
+            onChangeEnd: (_) => widget.onCommit(),
+          ),
+        ),
+        SizedBox(
+          width: 72,
+          child: TextField(
+            controller: _textCtrl,
+            focusNode: _textFocus,
+            textAlign: TextAlign.end,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              isDense: true,
+              suffixText: 'm',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => _submitText(),
+            onTapOutside: (_) => _submitText(),
+          ),
+        ),
       ],
     );
   }

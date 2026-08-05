@@ -56,7 +56,7 @@ class AnchorAlarmService {
     );
     if (dist > radiusMeters) return false;
     final boatBearing = bearingDeg(anchorLat, anchorLon, boatLat, boatLon);
-    return _angleDiff(boatBearing, centerDeg).abs() <= widthDeg / 2;
+    return angleDiff(boatBearing, centerDeg).abs() <= widthDeg / 2;
   }
 
   /// Suggested geofence radius: scope (chain paid out) ≈ depth × ratio.
@@ -68,8 +68,10 @@ class AnchorAlarmService {
   }) =>
       depthMeters * scopeRatio;
 
-  /// Signed difference `a - b` normalized to (-180, 180].
-  double _angleDiff(double a, double b) {
+  /// Signed difference `a - b` normalized to (-180, 180]. Public — also
+  /// used by the chart map's drag-handle math (#256 follow-up) to turn a
+  /// dragged bearing into a sector width/center.
+  double angleDiff(double a, double b) {
     var d = (a - b) % 360;
     if (d > 180) d -= 360;
     if (d <= -180) d += 360;
