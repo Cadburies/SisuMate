@@ -15959,6 +15959,42 @@ class $UserSettingsTableTable extends UserSettingsTable
         requiredDuringInsert: false,
         defaultValue: const Constant(''),
       );
+  static const VerificationMeta _ydwgUrlMeta = const VerificationMeta(
+    'ydwgUrl',
+  );
+  @override
+  late final GeneratedColumn<String> ydwgUrl = GeneratedColumn<String>(
+    'ydwg_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _ydwgUsernameMeta = const VerificationMeta(
+    'ydwgUsername',
+  );
+  @override
+  late final GeneratedColumn<String> ydwgUsername = GeneratedColumn<String>(
+    'ydwg_username',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _ydwgPasswordMeta = const VerificationMeta(
+    'ydwgPassword',
+  );
+  @override
+  late final GeneratedColumn<String> ydwgPassword = GeneratedColumn<String>(
+    'ydwg_password',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -15981,6 +16017,9 @@ class $UserSettingsTableTable extends UserSettingsTable
     predictwindHubLocalUrl,
     predictwindHubUsername,
     predictwindHubPassword,
+    ydwgUrl,
+    ydwgUsername,
+    ydwgPassword,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -16153,6 +16192,30 @@ class $UserSettingsTableTable extends UserSettingsTable
         ),
       );
     }
+    if (data.containsKey('ydwg_url')) {
+      context.handle(
+        _ydwgUrlMeta,
+        ydwgUrl.isAcceptableOrUnknown(data['ydwg_url']!, _ydwgUrlMeta),
+      );
+    }
+    if (data.containsKey('ydwg_username')) {
+      context.handle(
+        _ydwgUsernameMeta,
+        ydwgUsername.isAcceptableOrUnknown(
+          data['ydwg_username']!,
+          _ydwgUsernameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('ydwg_password')) {
+      context.handle(
+        _ydwgPasswordMeta,
+        ydwgPassword.isAcceptableOrUnknown(
+          data['ydwg_password']!,
+          _ydwgPasswordMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -16242,6 +16305,18 @@ class $UserSettingsTableTable extends UserSettingsTable
         DriftSqlType.string,
         data['${effectivePrefix}predictwind_hub_password'],
       )!,
+      ydwgUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ydwg_url'],
+      )!,
+      ydwgUsername: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ydwg_username'],
+      )!,
+      ydwgPassword: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ydwg_password'],
+      )!,
     );
   }
 
@@ -16283,6 +16358,11 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
   final String predictwindHubLocalUrl;
   final String predictwindHubUsername;
   final String predictwindHubPassword;
+
+  /// #263 — YDWG-02 (or equivalent) web/NMEA gateway settings.
+  final String ydwgUrl;
+  final String ydwgUsername;
+  final String ydwgPassword;
   const UserSettingsRow({
     required this.id,
     this.activeBoatSupabaseId,
@@ -16304,6 +16384,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     required this.predictwindHubLocalUrl,
     required this.predictwindHubUsername,
     required this.predictwindHubPassword,
+    required this.ydwgUrl,
+    required this.ydwgUsername,
+    required this.ydwgPassword,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -16344,6 +16427,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     map['predictwind_hub_local_url'] = Variable<String>(predictwindHubLocalUrl);
     map['predictwind_hub_username'] = Variable<String>(predictwindHubUsername);
     map['predictwind_hub_password'] = Variable<String>(predictwindHubPassword);
+    map['ydwg_url'] = Variable<String>(ydwgUrl);
+    map['ydwg_username'] = Variable<String>(ydwgUsername);
+    map['ydwg_password'] = Variable<String>(ydwgPassword);
     return map;
   }
 
@@ -16383,6 +16469,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       predictwindHubLocalUrl: Value(predictwindHubLocalUrl),
       predictwindHubUsername: Value(predictwindHubUsername),
       predictwindHubPassword: Value(predictwindHubPassword),
+      ydwgUrl: Value(ydwgUrl),
+      ydwgUsername: Value(ydwgUsername),
+      ydwgPassword: Value(ydwgPassword),
     );
   }
 
@@ -16422,6 +16511,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       predictwindHubPassword: serializer.fromJson<String>(
         json['predictwindHubPassword'],
       ),
+      ydwgUrl: serializer.fromJson<String>(json['ydwgUrl']),
+      ydwgUsername: serializer.fromJson<String>(json['ydwgUsername']),
+      ydwgPassword: serializer.fromJson<String>(json['ydwgPassword']),
     );
   }
   @override
@@ -16456,6 +16548,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       'predictwindHubPassword': serializer.toJson<String>(
         predictwindHubPassword,
       ),
+      'ydwgUrl': serializer.toJson<String>(ydwgUrl),
+      'ydwgUsername': serializer.toJson<String>(ydwgUsername),
+      'ydwgPassword': serializer.toJson<String>(ydwgPassword),
     };
   }
 
@@ -16480,6 +16575,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     String? predictwindHubLocalUrl,
     String? predictwindHubUsername,
     String? predictwindHubPassword,
+    String? ydwgUrl,
+    String? ydwgUsername,
+    String? ydwgPassword,
   }) => UserSettingsRow(
     id: id ?? this.id,
     activeBoatSupabaseId: activeBoatSupabaseId.present
@@ -16509,6 +16607,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
         predictwindHubUsername ?? this.predictwindHubUsername,
     predictwindHubPassword:
         predictwindHubPassword ?? this.predictwindHubPassword,
+    ydwgUrl: ydwgUrl ?? this.ydwgUrl,
+    ydwgUsername: ydwgUsername ?? this.ydwgUsername,
+    ydwgPassword: ydwgPassword ?? this.ydwgPassword,
   );
   UserSettingsRow copyWithCompanion(UserSettingsTableCompanion data) {
     return UserSettingsRow(
@@ -16560,6 +16661,13 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       predictwindHubPassword: data.predictwindHubPassword.present
           ? data.predictwindHubPassword.value
           : this.predictwindHubPassword,
+      ydwgUrl: data.ydwgUrl.present ? data.ydwgUrl.value : this.ydwgUrl,
+      ydwgUsername: data.ydwgUsername.present
+          ? data.ydwgUsername.value
+          : this.ydwgUsername,
+      ydwgPassword: data.ydwgPassword.present
+          ? data.ydwgPassword.value
+          : this.ydwgPassword,
     );
   }
 
@@ -16585,13 +16693,16 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio, ')
           ..write('predictwindHubLocalUrl: $predictwindHubLocalUrl, ')
           ..write('predictwindHubUsername: $predictwindHubUsername, ')
-          ..write('predictwindHubPassword: $predictwindHubPassword')
+          ..write('predictwindHubPassword: $predictwindHubPassword, ')
+          ..write('ydwgUrl: $ydwgUrl, ')
+          ..write('ydwgUsername: $ydwgUsername, ')
+          ..write('ydwgPassword: $ydwgPassword')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     activeBoatSupabaseId,
     showHiddenItems,
@@ -16612,7 +16723,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     predictwindHubLocalUrl,
     predictwindHubUsername,
     predictwindHubPassword,
-  );
+    ydwgUrl,
+    ydwgUsername,
+    ydwgPassword,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -16636,7 +16750,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           other.defaultAnchorScopeRatio == this.defaultAnchorScopeRatio &&
           other.predictwindHubLocalUrl == this.predictwindHubLocalUrl &&
           other.predictwindHubUsername == this.predictwindHubUsername &&
-          other.predictwindHubPassword == this.predictwindHubPassword);
+          other.predictwindHubPassword == this.predictwindHubPassword &&
+          other.ydwgUrl == this.ydwgUrl &&
+          other.ydwgUsername == this.ydwgUsername &&
+          other.ydwgPassword == this.ydwgPassword);
 }
 
 class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
@@ -16660,6 +16777,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
   final Value<String> predictwindHubLocalUrl;
   final Value<String> predictwindHubUsername;
   final Value<String> predictwindHubPassword;
+  final Value<String> ydwgUrl;
+  final Value<String> ydwgUsername;
+  final Value<String> ydwgPassword;
   const UserSettingsTableCompanion({
     this.id = const Value.absent(),
     this.activeBoatSupabaseId = const Value.absent(),
@@ -16681,6 +16801,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.predictwindHubLocalUrl = const Value.absent(),
     this.predictwindHubUsername = const Value.absent(),
     this.predictwindHubPassword = const Value.absent(),
+    this.ydwgUrl = const Value.absent(),
+    this.ydwgUsername = const Value.absent(),
+    this.ydwgPassword = const Value.absent(),
   });
   UserSettingsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -16703,6 +16826,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.predictwindHubLocalUrl = const Value.absent(),
     this.predictwindHubUsername = const Value.absent(),
     this.predictwindHubPassword = const Value.absent(),
+    this.ydwgUrl = const Value.absent(),
+    this.ydwgUsername = const Value.absent(),
+    this.ydwgPassword = const Value.absent(),
   });
   static Insertable<UserSettingsRow> custom({
     Expression<int>? id,
@@ -16725,6 +16851,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Expression<String>? predictwindHubLocalUrl,
     Expression<String>? predictwindHubUsername,
     Expression<String>? predictwindHubPassword,
+    Expression<String>? ydwgUrl,
+    Expression<String>? ydwgUsername,
+    Expression<String>? ydwgPassword,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -16752,6 +16881,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
         'predictwind_hub_username': predictwindHubUsername,
       if (predictwindHubPassword != null)
         'predictwind_hub_password': predictwindHubPassword,
+      if (ydwgUrl != null) 'ydwg_url': ydwgUrl,
+      if (ydwgUsername != null) 'ydwg_username': ydwgUsername,
+      if (ydwgPassword != null) 'ydwg_password': ydwgPassword,
     });
   }
 
@@ -16776,6 +16908,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Value<String>? predictwindHubLocalUrl,
     Value<String>? predictwindHubUsername,
     Value<String>? predictwindHubPassword,
+    Value<String>? ydwgUrl,
+    Value<String>? ydwgUsername,
+    Value<String>? ydwgPassword,
   }) {
     return UserSettingsTableCompanion(
       id: id ?? this.id,
@@ -16802,6 +16937,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
           predictwindHubUsername ?? this.predictwindHubUsername,
       predictwindHubPassword:
           predictwindHubPassword ?? this.predictwindHubPassword,
+      ydwgUrl: ydwgUrl ?? this.ydwgUrl,
+      ydwgUsername: ydwgUsername ?? this.ydwgUsername,
+      ydwgPassword: ydwgPassword ?? this.ydwgPassword,
     );
   }
 
@@ -16878,6 +17016,15 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
         predictwindHubPassword.value,
       );
     }
+    if (ydwgUrl.present) {
+      map['ydwg_url'] = Variable<String>(ydwgUrl.value);
+    }
+    if (ydwgUsername.present) {
+      map['ydwg_username'] = Variable<String>(ydwgUsername.value);
+    }
+    if (ydwgPassword.present) {
+      map['ydwg_password'] = Variable<String>(ydwgPassword.value);
+    }
     return map;
   }
 
@@ -16903,7 +17050,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
           ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio, ')
           ..write('predictwindHubLocalUrl: $predictwindHubLocalUrl, ')
           ..write('predictwindHubUsername: $predictwindHubUsername, ')
-          ..write('predictwindHubPassword: $predictwindHubPassword')
+          ..write('predictwindHubPassword: $predictwindHubPassword, ')
+          ..write('ydwgUrl: $ydwgUrl, ')
+          ..write('ydwgUsername: $ydwgUsername, ')
+          ..write('ydwgPassword: $ydwgPassword')
           ..write(')'))
         .toString();
   }
@@ -28169,6 +28319,9 @@ typedef $$UserSettingsTableTableCreateCompanionBuilder =
       Value<String> predictwindHubLocalUrl,
       Value<String> predictwindHubUsername,
       Value<String> predictwindHubPassword,
+      Value<String> ydwgUrl,
+      Value<String> ydwgUsername,
+      Value<String> ydwgPassword,
     });
 typedef $$UserSettingsTableTableUpdateCompanionBuilder =
     UserSettingsTableCompanion Function({
@@ -28192,6 +28345,9 @@ typedef $$UserSettingsTableTableUpdateCompanionBuilder =
       Value<String> predictwindHubLocalUrl,
       Value<String> predictwindHubUsername,
       Value<String> predictwindHubPassword,
+      Value<String> ydwgUrl,
+      Value<String> ydwgUsername,
+      Value<String> ydwgPassword,
     });
 
 class $$UserSettingsTableTableFilterComposer
@@ -28300,6 +28456,21 @@ class $$UserSettingsTableTableFilterComposer
 
   ColumnFilters<String> get predictwindHubPassword => $composableBuilder(
     column: $table.predictwindHubPassword,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ydwgUrl => $composableBuilder(
+    column: $table.ydwgUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ydwgUsername => $composableBuilder(
+    column: $table.ydwgUsername,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ydwgPassword => $composableBuilder(
+    column: $table.ydwgPassword,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -28412,6 +28583,21 @@ class $$UserSettingsTableTableOrderingComposer
     column: $table.predictwindHubPassword,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get ydwgUrl => $composableBuilder(
+    column: $table.ydwgUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ydwgUsername => $composableBuilder(
+    column: $table.ydwgUsername,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ydwgPassword => $composableBuilder(
+    column: $table.ydwgPassword,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$UserSettingsTableTableAnnotationComposer
@@ -28510,6 +28696,19 @@ class $$UserSettingsTableTableAnnotationComposer
     column: $table.predictwindHubPassword,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get ydwgUrl =>
+      $composableBuilder(column: $table.ydwgUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get ydwgUsername => $composableBuilder(
+    column: $table.ydwgUsername,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ydwgPassword => $composableBuilder(
+    column: $table.ydwgPassword,
+    builder: (column) => column,
+  );
 }
 
 class $$UserSettingsTableTableTableManager
@@ -28572,6 +28771,9 @@ class $$UserSettingsTableTableTableManager
                 Value<String> predictwindHubLocalUrl = const Value.absent(),
                 Value<String> predictwindHubUsername = const Value.absent(),
                 Value<String> predictwindHubPassword = const Value.absent(),
+                Value<String> ydwgUrl = const Value.absent(),
+                Value<String> ydwgUsername = const Value.absent(),
+                Value<String> ydwgPassword = const Value.absent(),
               }) => UserSettingsTableCompanion(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -28593,6 +28795,9 @@ class $$UserSettingsTableTableTableManager
                 predictwindHubLocalUrl: predictwindHubLocalUrl,
                 predictwindHubUsername: predictwindHubUsername,
                 predictwindHubPassword: predictwindHubPassword,
+                ydwgUrl: ydwgUrl,
+                ydwgUsername: ydwgUsername,
+                ydwgPassword: ydwgPassword,
               ),
           createCompanionCallback:
               ({
@@ -28616,6 +28821,9 @@ class $$UserSettingsTableTableTableManager
                 Value<String> predictwindHubLocalUrl = const Value.absent(),
                 Value<String> predictwindHubUsername = const Value.absent(),
                 Value<String> predictwindHubPassword = const Value.absent(),
+                Value<String> ydwgUrl = const Value.absent(),
+                Value<String> ydwgUsername = const Value.absent(),
+                Value<String> ydwgPassword = const Value.absent(),
               }) => UserSettingsTableCompanion.insert(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -28637,6 +28845,9 @@ class $$UserSettingsTableTableTableManager
                 predictwindHubLocalUrl: predictwindHubLocalUrl,
                 predictwindHubUsername: predictwindHubUsername,
                 predictwindHubPassword: predictwindHubPassword,
+                ydwgUrl: ydwgUrl,
+                ydwgUsername: ydwgUsername,
+                ydwgPassword: ydwgPassword,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

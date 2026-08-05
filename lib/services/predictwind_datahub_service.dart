@@ -197,6 +197,13 @@ class PredictWindDatahubService {
   /// Optional bare IP for a Yacht Devices YDWG-02 on the boat LAN
   /// (`YDWGIP` in dart-defines / .env), e.g. `192.168.10.30`.
   static const _ydwgIp = String.fromEnvironment('YDWGIP');
+  /// Optional full base URL for the YDWG (`YDWG_URL`), e.g.
+  /// `http://192.168.10.30`. Wins over [\_ydwgIp] when set.
+  static const _ydwgUrlEnv = String.fromEnvironment('YDWG_URL');
+  static const _ydwgUsernameEnv =
+      String.fromEnvironment('YDWG_USERNAME');
+  static const _ydwgPasswordEnv =
+      String.fromEnvironment('YDWG_PASSWORD');
   static const _hubUsername =
       String.fromEnvironment('PREDICTWIND_HUB_USERNAME');
   static const _hubPassword =
@@ -215,8 +222,12 @@ class PredictWindDatahubService {
   /// Boat-LAN DataHub default when no dart-define is set (this boat's IoT VLAN).
   static const _fallbackDataHubLocalUrl = 'http://192.168.10.31';
 
-  /// Boat-LAN YDWG-02 default when `YDWGIP` is unset.
+  /// Boat-LAN YDWG-02 default when `YDWGIP` / `YDWG_URL` are unset.
   static const _fallbackYdwgIp = '192.168.10.30';
+
+  /// Factory web-UI credentials for YDWG-02 (admin / admin).
+  static const defaultYdwgUsername = 'admin';
+  static const defaultYdwgPassword = 'admin';
 
   /// Normalize a bare IP or host into an `http://…` base URL.
   static String _asHttpBase(String raw) {
@@ -234,13 +245,23 @@ class PredictWindDatahubService {
     return _fallbackDataHubLocalUrl;
   }
 
-  /// Yacht Devices YDWG-02 on the boat network — from `YDWGIP`, else
-  /// [\_fallbackYdwgIp]. Speaks raw NMEA (not LuCI); listed for Discover
-  /// reachability / manual pick, not Hub login.
+  /// Yacht Devices YDWG-02 on the boat network — from `YDWG_URL` or
+  /// `YDWGIP`, else [\_fallbackYdwgIp]. Web UI at `/home.html` (login
+  /// `POST /login?login=&password=` → session cookie). NMEA data ports
+  /// are separate; this URL is for config + login probe.
   static String get defaultYdwgUrl {
+    if (_ydwgUrlEnv.isNotEmpty) return _asHttpBase(_ydwgUrlEnv);
     if (_ydwgIp.isNotEmpty) return _asHttpBase(_ydwgIp);
     return _asHttpBase(_fallbackYdwgIp);
   }
+
+  /// YDWG web login — dart-define when set, else factory `admin`.
+  static String get defaultYdwgUsernameResolved =>
+      _ydwgUsernameEnv.isNotEmpty ? _ydwgUsernameEnv : defaultYdwgUsername;
+
+  /// YDWG web password — dart-define when set, else factory `admin`.
+  static String get defaultYdwgPasswordResolved =>
+      _ydwgPasswordEnv.isNotEmpty ? _ydwgPasswordEnv : defaultYdwgPassword;
 
   /// Internet DataHub tunnel — dart-define HTTP first, else vendor default.
   static String get defaultDataHubRemoteUrlResolved {
@@ -698,6 +719,73 @@ class PredictWindDatahubService {
       return res.statusCode > 0;
     } catch (_) {
       return false;
+    } finally {
+      if (client == null) c.close();
+    }
+  }
+
+  /// YDWG-02 web UI login (live-verified):
+  /// `POST /login?1=1&login=…&password=…` → `204` + `Set-Cookie: session=…`
+  /// on success; `500` body "Failed to authenticate" on bad credentials.
+  /// [baseUrl] is the device root (`http://192.168.10.30`), not `/home.html`.
+  Future<GatewayProbeResult> probeYdwgLogin({
+    required String baseUrl,
+    required String username,
+    required String password,
+    http.Client? client,
+  }) async {
+    final base = _asHttpBase(baseUrl);
+    if (base.isEmpty) {
+      return const GatewayProbeResult(
+        ok: false,
+        detail: 'Enter a YDWG address first.',
+      );
+    }
+    if (username.trim().isEmpty || password.isEmpty) {
+      return const GatewayProbeResult(
+        ok: false,
+        detail: 'Enter YDWG username and password.',
+      );
+    }
+    final c = client ?? http.Client();
+    try {
+      final uri = Uri.parse(base).replace(
+        path: '/login',
+        queryParameters: {
+          '1': '1',
+          'login': username.trim().toLowerCase(),
+          'password': password,
+        },
+      );
+      final res = await c.post(uri).timeout(_timeoutFor(base));
+      if (res.statusCode == 204 || res.statusCode == 200) {
+        final setCookie = res.headers['set-cookie'] ?? '';
+        if (setCookie.toLowerCase().contains('session=') ||
+            res.statusCode == 204) {
+          return GatewayProbeResult(
+            ok: true,
+            detail: 'Signed in to YDWG at $base.',
+          );
+        }
+      }
+      if (res.statusCode == 500 ||
+          res.body.toLowerCase().contains('failed to authenticate') ||
+          res.body.toLowerCase().contains('invalid')) {
+        return const GatewayProbeResult(
+          ok: false,
+          detail: "Couldn't sign in to YDWG — check username and password.",
+        );
+      }
+      return GatewayProbeResult(
+        ok: false,
+        detail:
+            "YDWG answered but login didn't succeed (HTTP ${res.statusCode}).",
+      );
+    } catch (e) {
+      return GatewayProbeResult(
+        ok: false,
+        detail: friendlyConnectionError(e),
+      );
     } finally {
       if (client == null) c.close();
     }

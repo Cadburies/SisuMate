@@ -461,6 +461,11 @@ class UserSettingsTable extends Table {
   TextColumn get predictwindHubPassword =>
       text().withDefault(const Constant(''))();
 
+  /// #263 — YDWG-02 (or equivalent) web/NMEA gateway settings.
+  TextColumn get ydwgUrl => text().withDefault(const Constant(''))();
+  TextColumn get ydwgUsername => text().withDefault(const Constant(''))();
+  TextColumn get ydwgPassword => text().withDefault(const Constant(''))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -637,7 +642,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

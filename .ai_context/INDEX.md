@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last (grok):** gateway defaults — DataHub internet + boat LAN + YDWG-02 chips (`YDWGIP`/`DATAHUBIP`).
+- **Last (grok):** #263 YDWG setup fields + web login Test/Save (`YDWG_*` dart-defines, schema 15).
 - **Next open bugs:** #258/#259 boats.polar.
-- **Still open anchor:** #256 epic; #263 full YDWG NMEA parse still deferred (defaults/reachability only).
+- **Still open anchor:** #256 epic; #263 NMEA stream from YDWG still deferred (config+login done).
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

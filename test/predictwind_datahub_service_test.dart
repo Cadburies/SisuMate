@@ -675,5 +675,56 @@ void main() {
         isFalse,
       );
     });
+
+    test('probeYdwgLogin succeeds on 204 + session cookie', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/login');
+        expect(request.url.queryParameters['login'], 'admin');
+        expect(request.url.queryParameters['password'], 'admin');
+        return http.Response(
+          '',
+          204,
+          headers: {'set-cookie': 'session=deadbeef; path=/'},
+        );
+      });
+      const service = PredictWindDatahubService();
+
+      final result = await service.probeYdwgLogin(
+        baseUrl: 'http://192.168.10.30',
+        username: 'admin',
+        password: 'admin',
+        client: client,
+      );
+
+      expect(result.ok, isTrue);
+      expect(result.detail, contains('YDWG'));
+    });
+
+    test('probeYdwgLogin reports auth failure on 500', () async {
+      final client = MockClient((request) async {
+        return http.Response('Failed to authenticate', 500);
+      });
+      const service = PredictWindDatahubService();
+
+      final result = await service.probeYdwgLogin(
+        baseUrl: 'http://192.168.10.30',
+        username: 'admin',
+        password: 'wrong',
+        client: client,
+      );
+
+      expect(result.ok, isFalse);
+      expect(result.detail!.toLowerCase(), contains('sign in'));
+    });
+
+    test('default YDWG credentials fall back to factory admin', () {
+      expect(PredictWindDatahubService.defaultYdwgUsername, 'admin');
+      expect(PredictWindDatahubService.defaultYdwgPassword, 'admin');
+      expect(
+        PredictWindDatahubService.defaultYdwgUsernameResolved,
+        isNotEmpty,
+      );
+    });
   });
 }

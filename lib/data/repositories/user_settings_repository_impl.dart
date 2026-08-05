@@ -30,7 +30,10 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
     ..defaultAnchorScopeRatio = r.defaultAnchorScopeRatio
     ..predictwindHubLocalUrl = r.predictwindHubLocalUrl
     ..predictwindHubUsername = r.predictwindHubUsername
-    ..predictwindHubPassword = r.predictwindHubPassword;
+    ..predictwindHubPassword = r.predictwindHubPassword
+    ..ydwgUrl = r.ydwgUrl
+    ..ydwgUsername = r.ydwgUsername
+    ..ydwgPassword = r.ydwgPassword;
 
   UserSettingsTableCompanion _companion(UserSettings s) =>
       UserSettingsTableCompanion(
@@ -54,6 +57,9 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
         predictwindHubLocalUrl: Value(s.predictwindHubLocalUrl),
         predictwindHubUsername: Value(s.predictwindHubUsername),
         predictwindHubPassword: Value(s.predictwindHubPassword),
+        ydwgUrl: Value(s.ydwgUrl),
+        ydwgUsername: Value(s.ydwgUsername),
+        ydwgPassword: Value(s.ydwgPassword),
       );
 
   @override

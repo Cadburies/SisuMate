@@ -36,6 +36,14 @@ class UserSettings {
   String predictwindHubUsername = '';
   String predictwindHubPassword = '';
 
+  /// #263 — Yacht Devices YDWG-02 (or equivalent) web/NMEA gateway on the
+  /// boat LAN. Separate from the PredictWind DataHub path. Empty → use
+  /// dart-define / built-in defaults (`YDWGIP`, `YDWG_USERNAME`,
+  /// `YDWG_PASSWORD`). Local-only, never synced.
+  String ydwgUrl = '';
+  String ydwgUsername = '';
+  String ydwgPassword = '';
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -60,7 +68,10 @@ class UserSettings {
           defaultAnchorScopeRatio == other.defaultAnchorScopeRatio &&
           predictwindHubLocalUrl == other.predictwindHubLocalUrl &&
           predictwindHubUsername == other.predictwindHubUsername &&
-          predictwindHubPassword == other.predictwindHubPassword;
+          predictwindHubPassword == other.predictwindHubPassword &&
+          ydwgUrl == other.ydwgUrl &&
+          ydwgUsername == other.ydwgUsername &&
+          ydwgPassword == other.ydwgPassword;
 
   @override
   int get hashCode => Object.hashAll([
@@ -84,6 +95,9 @@ class UserSettings {
         predictwindHubLocalUrl,
         predictwindHubUsername,
         predictwindHubPassword,
+        ydwgUrl,
+        ydwgUsername,
+        ydwgPassword,
       ]);
 
   @override
@@ -98,5 +112,6 @@ class UserSettings {
       'boatName: $boatName, freeEditsUsed: $freeEditsUsed, '
       'defaultAnchorScopeRatio: $defaultAnchorScopeRatio, '
       'predictwindHubLocalUrl: $predictwindHubLocalUrl, '
-      'predictwindHubUsername: $predictwindHubUsername)';
+      'predictwindHubUsername: $predictwindHubUsername, '
+      'ydwgUrl: $ydwgUrl, ydwgUsername: $ydwgUsername)';
 }

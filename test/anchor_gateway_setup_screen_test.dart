@@ -10,18 +10,8 @@ import 'package:sisu_mate/models/models.dart';
 import 'package:sisu_mate/services/predictwind_datahub_service.dart';
 import 'package:sisu_mate/ui/anchor/anchor_gateway_setup_screen.dart';
 
-/// #263 — Anchor Alarm gateway setup/onboarding screen: username/password,
-/// "Discover" against [PredictWindDatahubService.knownLocalAddresses],
-/// manual IP:port "Test", and "Save" persisting to [UserSettings]. In-memory
-/// Drift DB (overriding `appDatabaseProvider`), and `httpClient` (mirroring
-/// `AnchorAlarmScreen`'s seam) fakes the network — nothing touches real
-/// on-disk state or a real host.
-///
-/// The screen's content is taller than the default test viewport, and its
-/// `ListView` (like any Sliver-backed list) doesn't build children outside
-/// the viewport + cache extent — so `find` can't see them, and `tap`/
-/// `enterText` fail on lower cards, until scrolled there via
-/// [scrollUntilVisible].
+/// #263 — Anchor Alarm gateway setup: DataHub + YDWG-02 fields, Discover,
+/// Test, Save to [UserSettings]. In-memory Drift + MockClient.
 void main() {
   late AppDatabase db;
   late ProviderContainer container;
@@ -45,9 +35,8 @@ void main() {
     WidgetTester tester, {
     http.Client? httpClient,
   }) async {
-    // Tall surface so Discover + manual + Save fit without fighting
-    // ListView cache-extent / hit-test misses on the lower buttons.
-    await tester.binding.setSurfaceSize(const Size(400, 1200));
+    // Tall surface: DataHub + YDWG cards + Save below the fold.
+    await tester.binding.setSurfaceSize(const Size(400, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -60,12 +49,6 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  // The screen has several Scrollables (the ListView, plus one inside each
-  // single-line TextField for horizontal overflow) — `scrollUntilVisible`'s
-  // default `find.byType(Scrollable)` isn't unique, so it's pinned to the
-  // first one in the tree, which is the outer ListView's own (an ancestor
-  // of every nested TextField, so it's always visited first in the
-  // top-down element traversal `find.byType` walks).
   Future<void> reveal(WidgetTester tester, Finder finder) async {
     await tester.scrollUntilVisible(
       finder,
@@ -77,27 +60,40 @@ void main() {
   }
 
   testWidgets(
-      'starts with DataHub remote default and no discovery results',
+      'starts with DataHub remote + YDWG example defaults',
       (tester) async {
     await pumpScreen(tester);
 
     expect(find.text('Gateway Setup'), findsOneWidget);
     expect(find.text('Found:'), findsNothing);
     expect(find.text('Default for DataHub'), findsOneWidget);
-    // Quick-pick chips for internet + boat-LAN defaults.
     expect(find.widgetWithText(ActionChip, 'DataHub internet'), findsOneWidget);
     expect(find.widgetWithText(ActionChip, 'DataHub local'), findsOneWidget);
-    expect(find.widgetWithText(ActionChip, 'YDWG-02'), findsOneWidget);
+    expect(find.text('YDWG-02 (NMEA gateway)'), findsOneWidget);
+
     final addressField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, addressField);
     expect(
       tester.widget<TextField>(addressField).controller!.text,
       PredictWindDatahubService.defaultDataHubRemoteUrlResolved,
     );
+
+    final ydwgField = find.widgetWithText(TextField, 'YDWG address');
+    await reveal(tester, ydwgField);
+    expect(
+      tester.widget<TextField>(ydwgField).controller!.text,
+      PredictWindDatahubService.defaultYdwgUrl,
+    );
+    expect(
+      tester
+          .widget<TextField>(find.widgetWithText(TextField, 'YDWG username'))
+          .controller!
+          .text,
+      PredictWindDatahubService.defaultYdwgUsernameResolved,
+    );
   });
 
-  testWidgets('quick-pick chips fill local DataHub and YDWG defaults',
-      (tester) async {
+  testWidgets('DataHub local chip fills Hub address only', (tester) async {
     await pumpScreen(tester);
 
     final localChip = find.widgetWithText(ActionChip, 'DataHub local');
@@ -110,51 +106,55 @@ void main() {
       tester.widget<TextField>(addressField).controller!.text,
       PredictWindDatahubService.defaultDataHubLocalUrl,
     );
+    // YDWG field unchanged (own section).
     expect(
-      find.text('Default for DataHub on boat WiFi / intranet'),
-      findsWidgets,
-    );
-
-    final ydwgChip = find.widgetWithText(ActionChip, 'YDWG-02');
-    await reveal(tester, ydwgChip);
-    await tester.tap(ydwgChip);
-    await tester.pumpAndSettle();
-    expect(
-      tester.widget<TextField>(addressField).controller!.text,
+      tester
+          .widget<TextField>(find.widgetWithText(TextField, 'YDWG address'))
+          .controller!
+          .text,
       PredictWindDatahubService.defaultYdwgUrl,
-    );
-    expect(
-      find.textContaining('YDWG-02'),
-      findsWidgets,
     );
   });
 
-  testWidgets('Save rejects YDWG as Hub address', (tester) async {
+  testWidgets('Save persists DataHub and YDWG credentials separately',
+      (tester) async {
     await pumpScreen(tester);
 
     await tester.enterText(
-        find.widgetWithText(TextField, 'Username'), 'boatuser');
+        find.widgetWithText(TextField, 'DataHub username'), 'boatuser');
     await tester.enterText(
-        find.widgetWithText(TextField, 'Password'), 'boatpass');
-    final ydwgChip = find.widgetWithText(ActionChip, 'YDWG-02');
-    await reveal(tester, ydwgChip);
-    await tester.tap(ydwgChip);
-    await tester.pumpAndSettle();
+        find.widgetWithText(TextField, 'DataHub password'), 'boatpass');
+    final ipField = find.widgetWithText(TextField, 'Hub address');
+    await reveal(tester, ipField);
+    await tester.enterText(ipField, 'http://remote.rdsensing.com:36121');
+
+    final ydwgUrl = find.widgetWithText(TextField, 'YDWG address');
+    await reveal(tester, ydwgUrl);
+    await tester.enterText(ydwgUrl, 'http://192.168.10.30');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'YDWG username'), 'admin');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'YDWG password'), 'admin');
 
     final saveButton = find.widgetWithText(ElevatedButton, 'Save');
     await reveal(tester, saveButton);
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('raw NMEA'), findsOneWidget);
     final repo = container.read(userSettingsRepositoryProvider);
     final saved = await repo.getSettings();
-    expect(saved?.predictwindHubLocalUrl ?? '', isNot(contains('192.168.10.30')));
+    expect(saved, isNotNull);
+    expect(saved!.predictwindHubUsername, 'boatuser');
+    expect(saved.predictwindHubPassword, 'boatpass');
+    expect(saved.predictwindHubLocalUrl, 'http://remote.rdsensing.com:36121');
+    expect(saved.ydwgUrl, 'http://192.168.10.30');
+    expect(saved.ydwgUsername, 'admin');
+    expect(saved.ydwgPassword, 'admin');
+    expect(find.textContaining('YDWG-02'), findsWidgets);
   });
 
   testWidgets('Discover finds a working remote tunnel and selects it',
       (tester) async {
-    // Only the vendor HTTP remote answers — simulates beach-bar internet.
     final client = MockClient((request) async {
       if (request.url.host == 'remote.rdsensing.com' &&
           request.url.port == 36121) {
@@ -164,9 +164,11 @@ void main() {
     });
     await pumpScreen(tester, httpClient: client);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Username'), 'u');
-    await tester.enterText(find.widgetWithText(TextField, 'Password'), 'p');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Discover'));
+    await tester.enterText(
+        find.widgetWithText(TextField, 'DataHub username'), 'u');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'DataHub password'), 'p');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Discover DataHub'));
     await tester.pumpAndSettle();
 
     expect(find.text('Found:'), findsOneWidget);
@@ -175,7 +177,6 @@ void main() {
           RadioListTile<String>, 'http://remote.rdsensing.com:36121'),
       findsOneWidget,
     );
-    // Subtitle on the radio + summary card both mention internet.
     expect(find.textContaining('Internet'), findsWidgets);
   });
 
@@ -186,9 +187,11 @@ void main() {
     });
     await pumpScreen(tester, httpClient: client);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Username'), 'u');
-    await tester.enterText(find.widgetWithText(TextField, 'Password'), 'p');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Discover'));
+    await tester.enterText(
+        find.widgetWithText(TextField, 'DataHub username'), 'u');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'DataHub password'), 'p');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Discover DataHub'));
     await tester.pumpAndSettle();
 
     expect(find.text('Found:'), findsNothing);
@@ -197,13 +200,14 @@ void main() {
     expect(message, findsOneWidget);
   });
 
-  testWidgets('manual Test succeeds and reports the address as connected',
-      (tester) async {
+  testWidgets('DataHub Test succeeds and reports connected', (tester) async {
     final client = MockClient((request) async => loginOk());
     await pumpScreen(tester, httpClient: client);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Username'), 'u');
-    await tester.enterText(find.widgetWithText(TextField, 'Password'), 'p');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'DataHub username'), 'u');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'DataHub password'), 'p');
     final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
     await tester.enterText(ipField, '10.10.10.5');
@@ -212,18 +216,20 @@ void main() {
     await tester.tap(testButton);
     await tester.pumpAndSettle();
 
-    final message = find.textContaining('Connected at');
+    final message = find.textContaining('Connected to DataHub');
     await reveal(tester, message);
     expect(message, findsOneWidget);
   });
 
-  testWidgets('manual Test failure shows a clear error, not a crash',
+  testWidgets('DataHub Test failure shows a clear error, not a crash',
       (tester) async {
     final client = MockClient((request) async => http.Response('', 403));
     await pumpScreen(tester, httpClient: client);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Username'), 'u');
-    await tester.enterText(find.widgetWithText(TextField, 'Password'), 'wrong');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'DataHub username'), 'u');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'DataHub password'), 'wrong');
     final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
     await tester.enterText(ipField, '10.10.10.5');
@@ -237,40 +243,42 @@ void main() {
     expect(message, findsOneWidget);
   });
 
-  testWidgets(
-      'Save persists a typed remote URL even without a prior Test',
+  testWidgets('YDWG Test login uses web /login and reports success',
       (tester) async {
-    await pumpScreen(tester);
+    final client = MockClient((request) async {
+      if (request.method == 'POST' && request.url.path == '/login') {
+        return http.Response(
+          '',
+          204,
+          headers: {'set-cookie': 'session=abc; path=/'},
+        );
+      }
+      throw Exception('unexpected ${request.method} ${request.url}');
+    });
+    await pumpScreen(tester, httpClient: client);
 
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Username'), 'boatuser');
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Password'), 'boatpass');
-    final ipField = find.widgetWithText(TextField, 'Hub address');
-    await reveal(tester, ipField);
-    await tester.enterText(ipField, 'http://remote.rdsensing.com:36121');
-
-    final saveButton = find.widgetWithText(ElevatedButton, 'Save');
-    await reveal(tester, saveButton);
-    await tester.tap(saveButton);
+    final testYdwg =
+        find.widgetWithText(OutlinedButton, 'Test YDWG login');
+    await reveal(tester, testYdwg);
+    await tester.tap(testYdwg);
     await tester.pumpAndSettle();
 
-    final repo = container.read(userSettingsRepositoryProvider);
-    final saved = await repo.getSettings();
-    expect(saved, isNotNull);
-    expect(saved!.predictwindHubUsername, 'boatuser');
-    expect(saved.predictwindHubPassword, 'boatpass');
-    expect(saved.predictwindHubLocalUrl, 'http://remote.rdsensing.com:36121');
-    expect(find.textContaining('internet remote access'), findsOneWidget);
+    final message = find.textContaining('Signed in to YDWG');
+    await reveal(tester, message);
+    expect(message, findsOneWidget);
+    expect(find.textContaining('tap Save to keep'), findsOneWidget);
   });
 
-  testWidgets('loads previously saved settings into the fields',
+  testWidgets('loads previously saved DataHub + YDWG settings',
       (tester) async {
     final repo = container.read(userSettingsRepositoryProvider);
     final settings = UserSettings()
       ..predictwindHubUsername = 'existing'
       ..predictwindHubPassword = 'secret'
-      ..predictwindHubLocalUrl = 'http://remote.rdsensing.com:36121';
+      ..predictwindHubLocalUrl = 'http://remote.rdsensing.com:36121'
+      ..ydwgUrl = 'http://192.168.10.99'
+      ..ydwgUsername = 'ydwguser'
+      ..ydwgPassword = 'ydwgpass';
     await repo.updateSettings(settings);
 
     await pumpScreen(tester);
@@ -278,10 +286,21 @@ void main() {
     String textOf(Finder finder) =>
         tester.widget<TextField>(finder).controller!.text;
 
-    expect(textOf(find.widgetWithText(TextField, 'Username')), 'existing');
+    expect(
+      textOf(find.widgetWithText(TextField, 'DataHub username')),
+      'existing',
+    );
 
     final ipField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, ipField);
     expect(textOf(ipField), 'http://remote.rdsensing.com:36121');
+
+    final ydwgField = find.widgetWithText(TextField, 'YDWG address');
+    await reveal(tester, ydwgField);
+    expect(textOf(ydwgField), 'http://192.168.10.99');
+    expect(
+      textOf(find.widgetWithText(TextField, 'YDWG username')),
+      'ydwguser',
+    );
   });
 }
