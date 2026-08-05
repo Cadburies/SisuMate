@@ -27,6 +27,10 @@ class MapTileProviderConfig {
   });
 }
 
+/// #264 — SharedPreferences key for the user's basemap choice. Weather and
+/// Anchor Alarm both read/write this so satellite/OSM/nautical stay in sync.
+const kMapTileProviderIdPrefKey = 'map_tile_provider_id';
+
 const mapTileBaseProviders = <MapTileProviderConfig>[
   MapTileProviderConfig(
     id: 'osm',

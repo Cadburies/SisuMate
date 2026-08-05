@@ -117,7 +117,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     final lat = prefs.getDouble('weather_lat');
     final lon = prefs.getDouble('weather_lon');
     final savedName = prefs.getString('weather_place_name');
-    final savedProviderId = prefs.getString('map_tile_provider_id');
+    final savedProviderId = prefs.getString(kMapTileProviderIdPrefKey);
     final favs = await _service.loadNamedLocations();
     final cacheFolder = await _tileCacheService.cacheFolderOverride();
     if (mounted) {
@@ -398,7 +398,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   Future<void> _setProvider(String id) async {
     setState(() => _providerId = id);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('map_tile_provider_id', id);
+    await prefs.setString(kMapTileProviderIdPrefKey, id);
   }
 
   Future<void> _setSeamarksOverlay(bool value) async {

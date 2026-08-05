@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:io' show Platform;
 import 'dart:math' as math;
 
@@ -5,13 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/anchor_alarm_service.dart';
 import '../../services/boat_polar_service.dart' show bearingDeg;
-import '../../services/weather_routing_service.dart' show destinationPoint;
+import '../../services/map_tile_cache_service.dart';
 import '../../services/map_tile_providers.dart';
+import '../../services/weather_routing_service.dart' show destinationPoint;
+import '../weather/caching_tile_provider.dart';
 
 /// #268 — under `flutter test`, TileLayer ImageStreams deadlock dispose.
 bool get _underFlutterTest =>
@@ -75,13 +79,35 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   late double _dangerInnerRadiusMeters;
   late double _dangerOuterRadiusMeters;
   bool _dragging = false;
+  /// #264 — same SharedPreferences key as Weather so basemap choice is shared.
   String _tileProviderId = 'esri_world_imagery';
+  /// Per-screen instance is fine: [MapTileCacheService] is disk-keyed under
+  /// a shared folder (no in-memory tile map that must be singleton). Weather
+  /// keeps its own instance the same way — both point at the same on-disk tree.
+  final _tileCacheService = MapTileCacheService();
 
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
     _syncFromWatch();
+    unawaited(_restoreBasemapPreference());
+  }
+
+  Future<void> _restoreBasemapPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(kMapTileProviderIdPrefKey);
+    if (saved == null || !mounted) return;
+    // Only accept known basemap ids (ignore overlay-only ids like seamarks).
+    final known = mapTileBaseProviders.any((p) => p.id == saved);
+    if (!known) return;
+    setState(() => _tileProviderId = saved);
+  }
+
+  Future<void> _setBasemap(String id) async {
+    setState(() => _tileProviderId = id);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(kMapTileProviderIdPrefKey, id);
   }
 
   @override
@@ -168,14 +194,17 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                 ),
               ),
               children: [
-                // #268 — omit TileLayer under flutter_test. Even a MemoryImage
-                // tile provider leaves ImageStreams that deadlock dispose/
-                // unmount for minutes; circle/polygon/handles still exercise
-                // the camera math the product cares about.
+                // #268 — omit TileLayer under flutter_test (ImageStream dispose
+                // deadlock). #264 — production uses the same CachingTileProvider
+                // + disk cache folder as Weather so tiles share across modules.
                 if (!_underFlutterTest)
                   TileLayer(
                     urlTemplate: tileConfig.urlTemplate,
                     userAgentPackageName: 'com.sisumate.app',
+                    tileProvider: CachingTileProvider(
+                      providerId: _tileProviderId,
+                      cacheService: _tileCacheService,
+                    ),
                   ),
                 CircleLayer(circles: [
                   CircleMarker(
@@ -296,7 +325,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
               right: 8,
               child: _BasemapSwitcher(
                 current: _tileProviderId,
-                onChanged: (id) => setState(() => _tileProviderId = id),
+                onChanged: _setBasemap,
               ),
             ),
           ],

@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sisu_mate/core/di.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/models/models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sisu_mate/services/map_tile_providers.dart';
 import 'package:sisu_mate/ui/anchor/anchor_chart_map.dart';
 
 /// #256 follow-up — the satellite/chart view's draggable geofence circle
@@ -20,6 +22,7 @@ void main() {
   late ProviderContainer container;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     db = AppDatabase.forTesting(NativeDatabase.memory());
     container = ProviderContainer(overrides: [
       appDatabaseProvider.overrideWithValue(db),
@@ -149,6 +152,26 @@ void main() {
     expect(find.byIcon(Icons.warning_amber), findsNothing);
     expect(find.byIcon(Icons.remove_circle_outline), findsOneWidget);
     expect(find.byIcon(Icons.unfold_more), findsOneWidget);
+    await unmount(tester);
+  });
+
+  testWidgets(
+      '#264 — basemap preference is shared with Weather via SharedPreferences',
+      (tester) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(kMapTileProviderIdPrefKey, 'osm');
+
+    final watch = await dropAnchor();
+    await pumpMap(tester, watch);
+    // Allow _restoreBasemapPreference's async prefs read to land.
+    await settleMap(tester);
+
+    // The basemap switcher is a PopupMenuButton; open it and look for the
+    // pre-selected OSM id via the switcher's initialValue (Material state).
+    final switcher = find.byType(PopupMenuButton<String>);
+    expect(switcher, findsOneWidget);
+    final menu = tester.widget<PopupMenuButton<String>>(switcher);
+    expect(menu.initialValue, 'osm');
     await unmount(tester);
   });
 
