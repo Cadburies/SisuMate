@@ -79,14 +79,16 @@ void main() {
       ..anchorLat = 10
       ..anchorLon = 10);
 
+    // #273 — the app UI always writes outer == geofence radius; the column
+    // remains for isInDangerZone and is still round-tripped by the repo.
     await repo.updateWatch(dropped
       ..scopeRatio = 7.0
       ..radiusMeters = 80
       ..dangerZoneEnabled = true
       ..dangerZoneCenterDeg = 200
       ..dangerZoneWidthDeg = 45
-      ..dangerZoneInnerRadiusMeters = 80
-      ..dangerZoneOuterRadiusMeters = 120);
+      ..dangerZoneInnerRadiusMeters = 60
+      ..dangerZoneOuterRadiusMeters = 80);
 
     final active = await repo.watchActive().first;
     expect(active!.scopeRatio, 7.0);
@@ -94,8 +96,8 @@ void main() {
     expect(active.dangerZoneEnabled, isTrue);
     expect(active.dangerZoneCenterDeg, 200);
     expect(active.dangerZoneWidthDeg, 45);
-    expect(active.dangerZoneInnerRadiusMeters, 80);
-    expect(active.dangerZoneOuterRadiusMeters, 120);
+    expect(active.dangerZoneInnerRadiusMeters, 60);
+    expect(active.dangerZoneOuterRadiusMeters, 80);
   });
 
   test('weighAnchor stops watching without deleting history', () async {

@@ -379,14 +379,14 @@ void main() {
       expect(find.text('Center bearing'), findsOneWidget);
       expect(find.text('Width'), findsOneWidget);
       expect(find.text('Inner radius'), findsOneWidget);
-      expect(find.text('Outer radius'), findsOneWidget);
-      final active =
-          await readActive(tester);
+      // #273 — outer radius is the geofence (no separate editor).
+      expect(find.text('Outer radius'), findsNothing);
+      expect(find.textContaining('Outer edge = alarm radius'), findsOneWidget);
+      final active = await readActive(tester);
       expect(active!.dangerZoneEnabled, isTrue);
-      // #262 — inner radius defaults to the geofence (alarm) perimeter the
-      // moment the zone is enabled, not 0/the anchor. Drop Anchor's radius
-      // defaulted to 30m (no depth in this mock, no UserSettings row).
-      expect(active.dangerZoneInnerRadiusMeters, 30.0);
+      // #273 — outer pinned to geofence (30m default); inner just inside it.
+      expect(active.dangerZoneOuterRadiusMeters, 30.0);
+      expect(active.dangerZoneInnerRadiusMeters, lessThan(30.0));
       await unmount(tester);
     }, skip: true); // post-drop Drift timer hang
 

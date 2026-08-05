@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -176,7 +177,8 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
             centerDeg: anchorWatch.dangerZoneCenterDeg,
             widthDeg: anchorWatch.dangerZoneWidthDeg,
             innerRadiusMeters: anchorWatch.dangerZoneInnerRadiusMeters,
-            outerRadiusMeters: anchorWatch.dangerZoneOuterRadiusMeters,
+            // #273 — outer edge is the geofence perimeter.
+            outerRadiusMeters: anchorWatch.radiusMeters,
           );
     }
     final active = outside || inDanger;
@@ -664,7 +666,6 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
   late double _centerDeg;
   late double _widthDeg;
   late double _innerRadiusMeters;
-  late double _outerRadiusMeters;
 
   @override
   void initState() {
@@ -682,32 +683,31 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
     _centerDeg = widget.activeWatch.dangerZoneCenterDeg;
     _widthDeg = widget.activeWatch.dangerZoneWidthDeg;
     _innerRadiusMeters = widget.activeWatch.dangerZoneInnerRadiusMeters;
-    _outerRadiusMeters = widget.activeWatch.dangerZoneOuterRadiusMeters;
   }
 
   Future<void> _persist({bool? enabled}) async {
-    // #262 — a hazard (rocks, a lee shore) is typically beyond the safe
-    // swinging circle, not at the anchor itself, so the ring's inner edge
-    // defaults to the geofence perimeter each time the zone is (re-)enabled
-    // rather than carrying over a stale/arbitrary previous value.
+    // #262 — a hazard is typically beyond the safe swinging circle, so the
+    // ring's inner edge defaults toward the geofence when (re-)enabled.
+    // #273 — outer radius is always the geofence (not independently set);
+    // when enabling, seed inner just inside the geofence so the ring has
+    // thickness.
+    final geofence = widget.activeWatch.radiusMeters;
     if (enabled == true) {
-      _innerRadiusMeters = widget.activeWatch.radiusMeters;
-      if (_outerRadiusMeters <= _innerRadiusMeters) {
-        _outerRadiusMeters = _innerRadiusMeters + 20;
-      }
+      _innerRadiusMeters = (geofence - 10).clamp(5.0, geofence - 5);
     }
     final updated = widget.activeWatch
       ..dangerZoneEnabled = enabled ?? widget.activeWatch.dangerZoneEnabled
       ..dangerZoneCenterDeg = _centerDeg
       ..dangerZoneWidthDeg = _widthDeg
       ..dangerZoneInnerRadiusMeters = _innerRadiusMeters
-      ..dangerZoneOuterRadiusMeters = _outerRadiusMeters;
+      ..dangerZoneOuterRadiusMeters = geofence;
     await ref.read(anchorWatchRepositoryProvider).updateWatch(updated);
   }
 
   @override
   Widget build(BuildContext context) {
     final enabled = widget.activeWatch.dangerZoneEnabled;
+    final geofence = widget.activeWatch.radiusMeters;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -718,8 +718,9 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Danger zone'),
               subtitle: const Text(
-                'Alarm if the boat swings into this ring beyond the safe '
-                "circle — e.g. rocks or a lee shore past the anchor perimeter.",
+                'Alarm if the boat swings into this ring on the geofence '
+                'perimeter — e.g. rocks or a lee shore past the safe circle. '
+                'Outer edge follows the alarm radius.',
               ),
               value: enabled,
               onChanged: (v) => _persist(enabled: v),
@@ -744,16 +745,17 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
               _RadiusEditor(
                 label: 'Inner radius',
                 value: _innerRadiusMeters,
-                sliderMax: _maxSliderRadiusMeters,
+                // #273 — cannot exceed the geofence (outer edge).
+                sliderMax: math.max(10, geofence - 5),
                 onChanged: (v) => setState(() => _innerRadiusMeters = v),
                 onCommit: _persist,
               ),
-              _RadiusEditor(
-                label: 'Outer radius',
-                value: _outerRadiusMeters,
-                sliderMax: _maxSliderRadiusMeters,
-                onChanged: (v) => setState(() => _outerRadiusMeters = v),
-                onCommit: _persist,
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Outer edge = alarm radius (${geofence.toStringAsFixed(0)} m)',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
             ],
           ],

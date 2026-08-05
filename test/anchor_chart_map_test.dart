@@ -142,11 +142,11 @@ void main() {
     await pumpMap(tester, watch);
 
     expect(find.byType(PolygonLayer), findsOneWidget);
-    // Handle identity by icon — PopupMenuButton (basemap switcher) also
-    // contributes a GestureDetector, so a raw type-count of 5 is wrong.
+    // #273 — outer-radius handle removed (outer == geofence). Remaining:
+    // anchor, geofence, danger-inner, danger-edge (+ basemap is not an Icon).
     expect(find.byIcon(Icons.anchor), findsOneWidget);
     expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
-    expect(find.byIcon(Icons.warning_amber), findsOneWidget);
+    expect(find.byIcon(Icons.warning_amber), findsNothing);
     expect(find.byIcon(Icons.remove_circle_outline), findsOneWidget);
     expect(find.byIcon(Icons.unfold_more), findsOneWidget);
     await unmount(tester);

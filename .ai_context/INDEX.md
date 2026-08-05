@@ -5,10 +5,10 @@
 
 ## NEXT
 
-- **Last (grok):** **#268** — non-finite semantics rect on anchor chart drag handles: skip handles when `latLngToScreenOffset` is non-finite + `ExcludeSemantics`; omit `TileLayer` under `FLUTTER_TEST`; screen tests use `showChartMap: false` + Drift zero-timer flush on unmount. Anchor widget tests green (drop path covered; multi-step post-drop UI tests skipped for Drift timer hang).
-- **Next bugs:** #273 (danger-zone outer/inner handles) → #269 (TitleTile overflow) → #258/#259 (boats.polar).
-- **Open:** #256 Anchor Alarm parent; #263 YDWG-02 half deferred; #258/#259 polar schema.
-- **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken (use `test18_a/b` AVDs).
+- **Last (grok):** **#268** (non-finite handle semantics) + **#273** (danger-zone outer radius pinned to geofence; outer handle removed; inner tip owns bearing+inner radius; outer editor removed). Suite green.
+- **Next bugs:** #269 (TitleTile overflow) → #258/#259 (boats.polar).
+- **Open:** #256 parent; #263 YDWG-02 deferred; #258/#259 polar schema.
+- **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.
 

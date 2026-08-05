@@ -23,26 +23,23 @@ bool get _underFlutterTest =>
 /// edit via the sliders in [AnchorAlarmScreen]'s other cards, which stay
 /// as the precise-numeric-entry alternative).
 ///
-/// Up to five drag handles, each a plain [Positioned] + [GestureDetector]
-/// pair (flutter_map has no built-in draggable-marker widget) repositioned
-/// via [MapCamera.latLngToScreenOffset]/[screenOffsetToLatLng] — the
-/// package's own documented seam for exactly this ("convert a latLng to a
-/// position we could use with a widget outside of FlutterMap layer
-/// space") — converted back from a drag via [RenderBox.globalToLocal] on
-/// each frame (#261: recomputing the drag's reference position from the
-/// handle's own already-moved point compounds into a runaway feedback
-/// loop; using the pointer's true global position every frame avoids it):
+/// Drag handles are plain [Positioned] + [GestureDetector] pairs
+/// (flutter_map has no built-in draggable-marker widget) repositioned via
+/// [MapCamera.latLngToScreenOffset]/[screenOffsetToLatLng] — the package's
+/// own documented seam for exactly this ("convert a latLng to a position we
+/// could use with a widget outside of FlutterMap layer space") — converted
+/// back from a drag via [RenderBox.globalToLocal] on each frame (#261:
+/// recomputing the drag's reference position from the handle's own
+/// already-moved point compounds into a runaway feedback loop; using the
+/// pointer's true global position every frame avoids it):
 /// - the anchor itself (moves the anchor position — same effect as the
 ///   "Edit position" dialog),
 /// - the geofence circle's edge (due east of the anchor — drag changes
-///   only the radius),
-/// - the danger zone (#262: a ring segment starting at the geofence
-///   perimeter, not a pie slice from the anchor — a hazard like rocks is
-///   typically beyond the safe swinging circle) — its outer-radius tip
-///   (drag changes bearing *and* outer radius, like moving a clock hand),
-///   its inner-radius tip (drag changes only the inner radius), and its
-///   edge (drag changes only the angular width, center bearing held
-///   fixed).
+///   only the radius; #273 also pins the danger-zone outer edge to this),
+/// - when the danger zone is on (#262 ring segment on the geofence, not a
+///   pie from the anchor): its **inner** tip (bearing + inner radius) and
+///   its arc-width edge on the geofence perimeter. Outer radius is not
+///   independently draggable (#273).
 ///
 /// While any handle is actively being dragged, the map's own one-finger
 /// pan gesture is disabled (`InteractiveFlag.drag` off) so it can't steal
@@ -106,7 +103,12 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     _dangerCenterDeg = widget.activeWatch.dangerZoneCenterDeg;
     _dangerWidthDeg = widget.activeWatch.dangerZoneWidthDeg;
     _dangerInnerRadiusMeters = widget.activeWatch.dangerZoneInnerRadiusMeters;
-    _dangerOuterRadiusMeters = widget.activeWatch.dangerZoneOuterRadiusMeters;
+    // #273 — outer radius is pinned to the geofence (not independently set).
+    _dangerOuterRadiusMeters = _radiusMeters;
+    if (_dangerInnerRadiusMeters >= _dangerOuterRadiusMeters) {
+      _dangerInnerRadiusMeters =
+          (_dangerOuterRadiusMeters - 5).clamp(_handleMinMeters, _handleMaxMeters);
+    }
   }
 
   LatLngBounds get _viewBounds {
@@ -122,6 +124,8 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   }
 
   Future<void> _persist() async {
+    // #273 — always store outer == geofence radius so the column stays
+    // consistent without a schema drop (still used by isInDangerZone).
     final updated = widget.activeWatch
       ..anchorLat = _anchorLat
       ..anchorLon = _anchorLon
@@ -129,7 +133,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
       ..dangerZoneCenterDeg = _dangerCenterDeg
       ..dangerZoneWidthDeg = _dangerWidthDeg
       ..dangerZoneInnerRadiusMeters = _dangerInnerRadiusMeters
-      ..dangerZoneOuterRadiusMeters = _dangerOuterRadiusMeters;
+      ..dangerZoneOuterRadiusMeters = _radiusMeters;
     await ref.read(anchorWatchRepositoryProvider).updateWatch(updated);
   }
 
@@ -236,17 +240,23 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                               lon2: newPoint.longitude,
                             )
                             .clamp(_handleMinMeters, _handleMaxMeters);
+                        // #273 — outer ring edge tracks the geofence.
+                        _dangerOuterRadiusMeters = _radiusMeters;
+                        if (_dangerInnerRadiusMeters >= _radiusMeters) {
+                          _dangerInnerRadiusMeters =
+                              (_radiusMeters - 5).clamp(_handleMinMeters, _handleMaxMeters);
+                        }
                       }),
                     ),
                     if (widget.activeWatch.dangerZoneEnabled) ...[
-                      // Outer-radius tip: drag changes the sector's bearing
-                      // *and* outer radius, like moving a clock hand. Clamped
-                      // to stay past the inner radius so the ring can't invert.
+                      // #273 — outer radius is the geofence (no separate outer
+                      // handle). Inner tip sets bearing *and* inner radius
+                      // (clock-hand control the outer tip used to own).
                       _handle(
                         camera: camera,
-                        point: _dangerOuterHandlePoint(),
-                        icon: Icons.warning_amber,
-                        color: Colors.red,
+                        point: _dangerInnerHandlePoint(),
+                        icon: Icons.remove_circle_outline,
+                        color: Colors.orange,
                         onDragUpdate: (newPoint) => setState(() {
                           _dangerCenterDeg = bearingDeg(
                               _anchorLat, _anchorLon, newPoint.latitude, newPoint.longitude);
@@ -256,31 +266,13 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                             lat2: newPoint.latitude,
                             lon2: newPoint.longitude,
                           );
-                          _dangerOuterRadiusMeters = dragged.clamp(
-                              _dangerInnerRadiusMeters + 5, _handleMaxMeters);
-                        }),
-                      ),
-                      // Inner-radius tip: drag changes only the ring's inner
-                      // edge (bearing ignored), clamped below the outer
-                      // radius so the ring can't invert.
-                      _handle(
-                        camera: camera,
-                        point: _dangerInnerHandlePoint(),
-                        icon: Icons.remove_circle_outline,
-                        color: Colors.orange,
-                        onDragUpdate: (newPoint) => setState(() {
-                          final dragged = _alarmService.distanceMeters(
-                            lat1: _anchorLat,
-                            lon1: _anchorLon,
-                            lat2: newPoint.latitude,
-                            lon2: newPoint.longitude,
-                          );
+                          // Outer is the geofence; keep a 5m ring thickness.
                           _dangerInnerRadiusMeters = dragged.clamp(
-                              _handleMinMeters, _dangerOuterRadiusMeters - 5);
+                              _handleMinMeters, _radiusMeters - 5);
                         }),
                       ),
-                      // Width edge: drag changes only the angular width,
-                      // center bearing held fixed.
+                      // Width edge sits on the geofence perimeter; drag
+                      // changes only angular width, center bearing fixed.
                       _handle(
                         camera: camera,
                         point: _dangerEdgeHandlePoint(),
@@ -323,16 +315,6 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     return LatLng(p.lat, p.lon);
   }
 
-  LatLng _dangerOuterHandlePoint() {
-    final p = destinationPoint(
-      lat: _anchorLat,
-      lon: _anchorLon,
-      bearingDeg: _dangerCenterDeg,
-      distanceNm: _dangerOuterRadiusMeters / 1852,
-    );
-    return LatLng(p.lat, p.lon);
-  }
-
   LatLng _dangerInnerHandlePoint() {
     final p = destinationPoint(
       lat: _anchorLat,
@@ -344,11 +326,12 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   }
 
   LatLng _dangerEdgeHandlePoint() {
+    // #273 — outer arc is the geofence perimeter.
     final p = destinationPoint(
       lat: _anchorLat,
       lon: _anchorLon,
       bearingDeg: _dangerCenterDeg + _dangerWidthDeg / 2,
-      distanceNm: _dangerOuterRadiusMeters / 1852,
+      distanceNm: _radiusMeters / 1852,
     );
     return LatLng(p.lat, p.lon);
   }
@@ -356,8 +339,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   /// #262 — an annular ring segment (pie slice with a hole), not a pie
   /// slice from the anchor: walks the inner arc left-to-right at
   /// [_dangerInnerRadiusMeters], then the outer arc right-to-left at
-  /// [_dangerOuterRadiusMeters], closing the ring (Polygon auto-closes the
-  /// last point back to the first).
+  /// the geofence ([_radiusMeters] / #273), closing the ring.
   List<LatLng> _sectorPoints() {
     final points = <LatLng>[];
     final start = _dangerCenterDeg - _dangerWidthDeg / 2;
@@ -378,7 +360,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
         lat: _anchorLat,
         lon: _anchorLon,
         bearingDeg: bearing,
-        distanceNm: _dangerOuterRadiusMeters / 1852,
+        distanceNm: _radiusMeters / 1852,
       );
       points.add(LatLng(p.lat, p.lon));
     }
