@@ -24,8 +24,8 @@
 # com.sailingsisu.sisumate/app_flutter/sisu_mate.sqlite exists on device),
 # `adb`, this repo's `dart`, `gh` authenticated for this repo.
 #
-# iOS not yet supported — the pull step is Android `run-as`-specific;
-# porting needs an idb/simctl file-copy equivalent.
+# iOS: see scripts/triage_error_logs_ios.sh (#267) — separate script, idb-based
+# pull instead of `adb run-as`, plus a bonus native-crash-log pull.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
