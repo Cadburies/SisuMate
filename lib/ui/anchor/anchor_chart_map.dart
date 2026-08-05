@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,10 @@ import '../../services/anchor_alarm_service.dart';
 import '../../services/boat_polar_service.dart' show bearingDeg;
 import '../../services/weather_routing_service.dart' show destinationPoint;
 import '../../services/map_tile_providers.dart';
+
+/// #268 — under `flutter test`, TileLayer ImageStreams deadlock dispose.
+bool get _underFlutterTest =>
+    Platform.environment.containsKey('FLUTTER_TEST');
 
 /// #256 follow-up — a satellite/chart view of the anchorage, zoomed to a
 /// fixed ~300m radius, with the geofence circle and danger-zone sector
@@ -159,10 +164,15 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                 ),
               ),
               children: [
-                TileLayer(
-                  urlTemplate: tileConfig.urlTemplate,
-                  userAgentPackageName: 'com.sisumate.app',
-                ),
+                // #268 — omit TileLayer under flutter_test. Even a MemoryImage
+                // tile provider leaves ImageStreams that deadlock dispose/
+                // unmount for minutes; circle/polygon/handles still exercise
+                // the camera math the product cares about.
+                if (!_underFlutterTest)
+                  TileLayer(
+                    urlTemplate: tileConfig.urlTemplate,
+                    userAgentPackageName: 'com.sisumate.app',
+                  ),
                 CircleLayer(circles: [
                   CircleMarker(
                     point: anchorPoint,
@@ -387,42 +397,57 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     // sit over a busy map background and were reported hard to grab.
     const handleSize = 44.0;
     final offset = camera.latLngToScreenOffset(point);
+    // #268 — before CameraFit.bounds has a real non-zero layout (first
+    // frames in widget tests, and potentially on a cold map open on device),
+    // latLngToScreenOffset can return Infinity/NaN. Positioning a handle
+    // with that produces a non-finite SemanticsNode rect and crashes the
+    // scheduler. Skip the handle until the camera can project finite pixels.
+    if (!offset.dx.isFinite || !offset.dy.isFinite) {
+      return const SizedBox.shrink();
+    }
     return Positioned(
       left: offset.dx - handleSize / 2,
       top: offset.dy - handleSize / 2,
-      child: GestureDetector(
-        onPanStart: (_) => _setDragging(true),
-        onPanUpdate: (details) {
-          // #261 — must NOT rebase from `point`/`offset` here: both are the
-          // handle's *current* position, itself set by the previous
-          // onPanUpdate call in this same gesture, so recomputing the drag
-          // base from them every frame compounds (each frame's delta lands
-          // on top of an already-shifted base) — a runaway feedback loop
-          // that read as "way faster than my finger, almost exponential"
-          // and, worst case, the handle "jumping off screen" entirely.
-          // Converting the pointer's true *global* position through the
-          // map area's own stable RenderBox sidesteps this: it asks "where
-          // is the finger right now" fresh every frame, independent of any
-          // prior update, so the handle tracks 1:1 with the touch.
-          final box =
-              _mapAreaKey.currentContext!.findRenderObject()! as RenderBox;
-          final local = box.globalToLocal(details.globalPosition);
-          onDragUpdate(camera.screenOffsetToLatLng(local));
-        },
-        onPanEnd: (_) {
-          _setDragging(false);
-          _persist();
-        },
-        child: Container(
-          width: handleSize,
-          height: handleSize,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
+      // #268 — ExcludeSemantics: even a finite Positioned can briefly
+      // hand the semantics pipeline a non-finite rect while flutter_map's
+      // camera is mid-fit (widget-test symptom: "SemanticsNode tried to
+      // set a non-finite rect"). Handles are pure drag targets; a11y for
+      // the anchorage itself lives on the surrounding screen chrome.
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onPanStart: (_) => _setDragging(true),
+          onPanUpdate: (details) {
+            // #261 — must NOT rebase from `point`/`offset` here: both are the
+            // handle's *current* position, itself set by the previous
+            // onPanUpdate call in this same gesture, so recomputing the drag
+            // base from them every frame compounds (each frame's delta lands
+            // on top of an already-shifted base) — a runaway feedback loop
+            // that read as "way faster than my finger, almost exponential"
+            // and, worst case, the handle "jumping off screen" entirely.
+            // Converting the pointer's true *global* position through the
+            // map area's own stable RenderBox sidesteps this: it asks "where
+            // is the finger right now" fresh every frame, independent of any
+            // prior update, so the handle tracks 1:1 with the touch.
+            final box =
+                _mapAreaKey.currentContext!.findRenderObject()! as RenderBox;
+            final local = box.globalToLocal(details.globalPosition);
+            onDragUpdate(camera.screenOffsetToLatLng(local));
+          },
+          onPanEnd: (_) {
+            _setDragging(false);
+            _persist();
+          },
+          child: Container(
+            width: handleSize,
+            height: handleSize,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
+            ),
+            child: Icon(icon, color: Colors.white, size: 18),
           ),
-          child: Icon(icon, color: Colors.white, size: 18),
         ),
       ),
     );

@@ -49,6 +49,7 @@ class AnchorAlarmScreen extends ConsumerStatefulWidget {
     this.hubService = const PredictWindDatahubService(),
     this.httpClient,
     this.pollInterval = const Duration(seconds: 20),
+    this.showChartMap = true,
   });
 
   final PredictWindDatahubService hubService;
@@ -59,6 +60,11 @@ class AnchorAlarmScreen extends ConsumerStatefulWidget {
   /// timers at teardown), so tests pass `null` to disable it and drive
   /// `_refresh()`/alarm evaluation explicitly instead.
   final Duration? pollInterval;
+
+  /// #268 — flutter_map's MapController dispose deadlocks the widget-test
+  /// binding for minutes. Screen-level tests set this false; chart-map
+  /// behaviour is covered by `anchor_chart_map_test.dart` instead.
+  final bool showChartMap;
 
   @override
   ConsumerState<AnchorAlarmScreen> createState() => _AnchorAlarmScreenState();
@@ -342,12 +348,14 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
                                 onEditPosition: () => _editPosition(activeWatch),
                                 onWeighAnchor: () => _weighAnchor(activeWatch.id),
                               ),
-                              const SizedBox(height: 12),
-                              AnchorChartMap(
-                                activeWatch: activeWatch,
-                                boatLat: _boatLat,
-                                boatLon: _boatLon,
-                              ),
+                              if (widget.showChartMap) ...[
+                                const SizedBox(height: 12),
+                                AnchorChartMap(
+                                  activeWatch: activeWatch,
+                                  boatLat: _boatLat,
+                                  boatLon: _boatLon,
+                                ),
+                              ],
                               const SizedBox(height: 12),
                               _ScopeCard(
                                 activeWatch: activeWatch,
