@@ -34,16 +34,19 @@ class AnchorGatewaySetupScreen extends ConsumerStatefulWidget {
 
 enum _Status { idle, discovering, testing, saving }
 
+/// Vendor internet tunnel — preferred default for DataHub when not on boat WiFi.
+const _kDefaultDataHubRemoteUrl = 'http://remote.rdsensing.com:36121';
+
 class _AnchorGatewaySetupScreenState
     extends ConsumerState<AnchorGatewaySetupScreen> {
   final _usernameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  final _manualCtrl = TextEditingController();
+  final _manualCtrl = TextEditingController(text: _kDefaultDataHubRemoteUrl);
 
   _Status _status = _Status.idle;
   List<String> _discovered = [];
   bool _discoveryRan = false;
-  String? _selectedAddress;
+  String? _selectedAddress = _kDefaultDataHubRemoteUrl;
   String? _message;
   bool _messageIsError = false;
 
@@ -66,6 +69,7 @@ class _AnchorGatewaySetupScreenState
       _manualCtrl.text = settings.predictwindHubLocalUrl;
       _selectedAddress = settings.predictwindHubLocalUrl;
     }
+    // else leave the DataHub remote default already in the controllers
   }
 
   Future<void> _discover() async {
@@ -355,10 +359,10 @@ class _AnchorGatewaySetupScreenState
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            'Local example: http://192.168.10.31\n'
-                            'Remote example: http://remote.rdsensing.com:36121\n'
-                            '(Prefer http for remote — https often uses a '
-                            'self-signed certificate the phone rejects.)',
+                            'Local on boat WiFi: http://192.168.10.31 (or '
+                            'your Hub’s LAN IP).\n'
+                            'Prefer http for remote — https often uses a '
+                            'self-signed certificate the phone rejects.',
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -368,8 +372,8 @@ class _AnchorGatewaySetupScreenState
                                   controller: _manualCtrl,
                                   decoration: const InputDecoration(
                                     labelText: 'Hub address',
-                                    hintText:
-                                        'http://remote.rdsensing.com:36121',
+                                    hintText: _kDefaultDataHubRemoteUrl,
+                                    helperText: 'Default for DataHub',
                                   ),
                                   enabled: !busy,
                                   autocorrect: false,

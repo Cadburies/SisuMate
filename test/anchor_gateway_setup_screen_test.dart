@@ -76,12 +76,20 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('starts with empty fields and no discovery results',
+  testWidgets(
+      'starts with DataHub remote default and no discovery results',
       (tester) async {
     await pumpScreen(tester);
 
     expect(find.text('Gateway Setup'), findsOneWidget);
     expect(find.text('Found:'), findsNothing);
+    expect(find.text('Default for DataHub'), findsOneWidget);
+    final addressField = find.widgetWithText(TextField, 'Hub address');
+    await reveal(tester, addressField);
+    expect(
+      tester.widget<TextField>(addressField).controller!.text,
+      'http://remote.rdsensing.com:36121',
+    );
   });
 
   testWidgets('Discover finds a working remote tunnel and selects it',
