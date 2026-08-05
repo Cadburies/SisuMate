@@ -205,7 +205,8 @@ void main() {
       expect(request.headers['Cookie'], 'sysauth=abc123');
       return http.Response(
         '{"lat":12.005442,"lon":-61.731507,"tws":6.837343,'
-        '"twd":115.384747,"unixtime":1785872083,"sog":0.116631}',
+        '"twd":115.384747,"unixtime":1785872083,"sog":0.116631,'
+        '"cog":87.5,"aws":4.2,"awa":-32.1,"dpt":5.5}',
         200,
       );
     });
@@ -222,6 +223,12 @@ void main() {
     expect(data.longitude, -61.731507);
     expect(data.windSpeedKt, 6.837343);
     expect(data.windDirectionDeg, 115.384747);
+    // #266 — SOG/COG/AWS/AWA already present on the live Hub JSON.
+    expect(data.sogKt, 0.116631);
+    expect(data.cogDeg, 87.5);
+    expect(data.apparentWindSpeedKt, 4.2);
+    expect(data.apparentWindDirectionDeg, -32.1);
+    expect(data.depthMeters, 5.5);
     expect(data.observedAt, DateTime.fromMillisecondsSinceEpoch(1785872083000, isUtc: true));
   });
 

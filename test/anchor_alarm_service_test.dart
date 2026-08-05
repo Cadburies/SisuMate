@@ -197,4 +197,42 @@ void main() {
       );
     });
   });
+
+  group('#266 — info-tab geometry helpers', () {
+    test('distanceFromPerimeterMeters is positive inside, negative past', () {
+      expect(
+        service.distanceFromPerimeterMeters(
+          distanceFromAnchorMeters: 20,
+          radiusMeters: 50,
+        ),
+        30,
+      );
+      expect(
+        service.distanceFromPerimeterMeters(
+          distanceFromAnchorMeters: 50,
+          radiusMeters: 50,
+        ),
+        0,
+      );
+      expect(
+        service.distanceFromPerimeterMeters(
+          distanceFromAnchorMeters: 70,
+          radiusMeters: 50,
+        ),
+        -20,
+      );
+    });
+
+    test('bearingToAnchorDeg is the reverse of boat bearing from anchor', () {
+      // Boat due north of anchor → bearing from boat to anchor is ~180°T.
+      final boat = offset(northMeters: 100);
+      final bearing = service.bearingToAnchorDeg(
+        boatLat: boat.lat,
+        boatLon: boat.lon,
+        anchorLat: anchorLat,
+        anchorLon: anchorLon,
+      );
+      expect(bearing, closeTo(180, 2));
+    });
+  });
 }

@@ -5,10 +5,11 @@
 
 ## NEXT
 
-- **Last (grok):** #264 shared map tile cache + basemap pref (Weather ↔ Anchor). Next: #265 long-press drag, #266 info tab.
-- **Next:** #265 → #266; then #258/#259 polar if free.
-- **Open:** #256 parent; #263 YDWG-02 deferred.
+- **Last (grok):** #264 tile cache/basemap share · #265 long-press map drag · #266 Anchor Info tab (SOG/COG/AWS + distances).
+- **Next open bugs:** #258/#259 boats.polar.
+- **Still open anchor:** #256 parent epic (core shipped); #263 YDWG-02 half deferred.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
+
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.
 

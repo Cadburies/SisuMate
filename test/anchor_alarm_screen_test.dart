@@ -153,10 +153,27 @@ void main() {
     await pumpScreen(tester);
 
     expect(find.text('Anchor Alarm'), findsOneWidget);
+    expect(find.text('Watch'), findsOneWidget);
+    expect(find.text('Info'), findsOneWidget);
     expect(find.text('PredictWind Hub not configured'), findsOneWidget);
     expect(find.text('Position unavailable'), findsOneWidget);
     expect(find.text('PredictWind Hub not connected.'), findsOneWidget);
     expect(find.text('Wind data unavailable'), findsOneWidget);
+    await unmount(tester);
+  });
+
+  testWidgets('#266 — Info tab shows instrument rows', (tester) async {
+    await pumpScreen(tester,
+        httpClient: hubClient(), hubService: connectedHubService);
+
+    await tester.tap(find.text('Info'));
+    await settleUi(tester);
+
+    expect(find.text('SOG'), findsOneWidget);
+    expect(find.text('COG'), findsOneWidget);
+    expect(find.text('Apparent wind'), findsOneWidget);
+    expect(find.text('Boat GPS'), findsOneWidget);
+    expect(find.text('No anchor set'), findsOneWidget);
     await unmount(tester);
   });
 

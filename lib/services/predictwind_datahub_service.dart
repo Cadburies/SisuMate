@@ -121,6 +121,14 @@ class PredictWindBoatData {
   /// Water depth in meters (`dpt` — below transducer + offset). Used by the
   /// Anchor Alarm to suggest a scope-based geofence radius.
   final double? depthMeters;
+  /// #266 — speed over ground (kn) from Hub `sog`.
+  final double? sogKt;
+  /// #266 — course over ground (°) from Hub `cog`.
+  final double? cogDeg;
+  /// #266 — apparent wind speed (kn) from Hub `aws`.
+  final double? apparentWindSpeedKt;
+  /// #266 — apparent wind angle/direction (°) from Hub `awa`.
+  final double? apparentWindDirectionDeg;
   /// #263 — true when this reading came from the boat's local WiFi rather
   /// than the internet/remote-access tunnel.
   final bool viaLocalNetwork;
@@ -131,6 +139,10 @@ class PredictWindBoatData {
     this.windSpeedKt,
     this.windDirectionDeg,
     this.depthMeters,
+    this.sogKt,
+    this.cogDeg,
+    this.apparentWindSpeedKt,
+    this.apparentWindDirectionDeg,
     this.viaLocalNetwork = false,
     required this.observedAt,
   });
@@ -314,6 +326,10 @@ class PredictWindDatahubService {
             windSpeedKt: _asDouble(json['tws']),
             windDirectionDeg: _asDouble(json['twd']),
             depthMeters: _asDouble(json['dpt']),
+            sogKt: _asDouble(json['sog']),
+            cogDeg: _asDouble(json['cog']),
+            apparentWindSpeedKt: _asDouble(json['aws']),
+            apparentWindDirectionDeg: _asDouble(json['awa']),
             viaLocalNetwork: candidate.isLocal,
             observedAt: unixtime is num
                 ? DateTime.fromMillisecondsSinceEpoch(

@@ -74,6 +74,25 @@ class AnchorAlarmService {
   }) =>
       depthMeters * scopeRatio;
 
+  /// #266 — meters of margin remaining before the geofence perimeter
+  /// (`radius − distanceFromAnchor`). Positive = still inside; zero = on
+  /// the line; negative = meters past the circle (dragging).
+  double distanceFromPerimeterMeters({
+    required double distanceFromAnchorMeters,
+    required double radiusMeters,
+  }) =>
+      radiusMeters - distanceFromAnchorMeters;
+
+  /// #266 — true bearing (°) from the boat to the anchor (inverse of the
+  /// usual "bearing from anchor to boat" used for the danger-zone sector).
+  double bearingToAnchorDeg({
+    required double boatLat,
+    required double boatLon,
+    required double anchorLat,
+    required double anchorLon,
+  }) =>
+      bearingDeg(boatLat, boatLon, anchorLat, anchorLon);
+
   /// Signed difference `a - b` normalized to (-180, 180]. Public — also
   /// used by the chart map's drag-handle math (#256 follow-up) to turn a
   /// dragged bearing into a sector width/center.

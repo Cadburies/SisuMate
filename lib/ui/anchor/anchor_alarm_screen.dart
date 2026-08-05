@@ -15,6 +15,7 @@ import '../../models/models.dart';
 import '../../services/anchor_alarm_service.dart';
 import '../../services/predictwind_datahub_service.dart';
 import 'anchor_chart_map.dart';
+import 'anchor_info_panel.dart';
 
 final activeAnchorWatchProvider = StreamProvider<AnchorWatch?>((ref) {
   return ref.watch(anchorWatchRepositoryProvider).watchActive();
@@ -71,7 +72,8 @@ class AnchorAlarmScreen extends ConsumerStatefulWidget {
   ConsumerState<AnchorAlarmScreen> createState() => _AnchorAlarmScreenState();
 }
 
-class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
+class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
+    with SingleTickerProviderStateMixin {
   static const _defaultRadiusMeters = 30.0;
   static const _alarmService = AnchorAlarmService();
 
@@ -91,10 +93,13 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
 
   Timer? _pollTimer;
   Timer? _alarmTimer;
+  // #266 — Watch (edit/alarm) vs Info (read-only instruments).
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     unawaited(_refresh());
     final interval = widget.pollInterval;
     if (interval != null) {
@@ -104,6 +109,7 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _pollTimer?.cancel();
     _alarmTimer?.cancel();
     super.dispose();
@@ -335,67 +341,93 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
                 title: 'Anchor Alarm',
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
               ),
+              // #266 — Watch (controls) | Info (instruments). Matches Chef/
+              // Cocktails tab pattern under the title bar (theme.md §5).
+              TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(icon: Icon(Icons.anchor), text: 'Watch'),
+                  Tab(icon: Icon(Icons.info_outline), text: 'Info'),
+                ],
+              ),
               Expanded(
                 child: !_initialLoadDone
                     ? const Center(child: CircularProgressIndicator())
-                    : RefreshIndicator(
-                        onRefresh: _refresh,
-                        child: ListView(
-                          padding: const EdgeInsets.all(12),
-                          children: [
-                            if (_alarmActive) ...[
-                              _AlarmBanner(
-                                outsideCircle: _isOutsideCircle,
-                                inDangerZone: _isInDangerZone,
-                              ),
-                              const SizedBox(height: 12),
-                            ] else if (activeWatch != null && !canDrop) ...[
-                              _NoFixWarningBanner(hubState: _hubStatus?.state),
-                              const SizedBox(height: 12),
-                            ],
-                            if (activeWatch == null)
-                              _DropAnchorCard(canDrop: canDrop, onDrop: _dropAnchor)
-                            else ...[
-                              _AnchorStatusCard(
-                                activeWatch: activeWatch,
-                                boatLat: _boatLat,
-                                boatLon: _boatLon,
-                                onEditPosition: () => _editPosition(activeWatch),
-                                onWeighAnchor: () => _weighAnchor(activeWatch.id),
-                              ),
-                              if (widget.showChartMap) ...[
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          RefreshIndicator(
+                            onRefresh: _refresh,
+                            child: ListView(
+                              padding: const EdgeInsets.all(12),
+                              children: [
+                                if (_alarmActive) ...[
+                                  _AlarmBanner(
+                                    outsideCircle: _isOutsideCircle,
+                                    inDangerZone: _isInDangerZone,
+                                  ),
+                                  const SizedBox(height: 12),
+                                ] else if (activeWatch != null &&
+                                    !canDrop) ...[
+                                  _NoFixWarningBanner(
+                                      hubState: _hubStatus?.state),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (activeWatch == null)
+                                  _DropAnchorCard(
+                                      canDrop: canDrop, onDrop: _dropAnchor)
+                                else ...[
+                                  _AnchorStatusCard(
+                                    activeWatch: activeWatch,
+                                    boatLat: _boatLat,
+                                    boatLon: _boatLon,
+                                    onEditPosition: () =>
+                                        _editPosition(activeWatch),
+                                    onWeighAnchor: () =>
+                                        _weighAnchor(activeWatch.id),
+                                  ),
+                                  if (widget.showChartMap) ...[
+                                    const SizedBox(height: 12),
+                                    AnchorChartMap(
+                                      activeWatch: activeWatch,
+                                      boatLat: _boatLat,
+                                      boatLon: _boatLon,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 12),
+                                  _ScopeCard(
+                                    activeWatch: activeWatch,
+                                    depthMeters: _boatData?.depthMeters,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _DangerZoneCard(activeWatch: activeWatch),
+                                ],
                                 const SizedBox(height: 12),
-                                AnchorChartMap(
-                                  activeWatch: activeWatch,
-                                  boatLat: _boatLat,
-                                  boatLon: _boatLon,
+                                _HubStatusCard(
+                                  status: _hubStatus,
+                                  isRefreshing: _isRefreshing,
+                                  onRefresh: _refresh,
+                                  onConfigure: () async {
+                                    await context
+                                        .push(AppRoutes.anchorGatewaySetup);
+                                    if (mounted) unawaited(_refresh());
+                                  },
                                 ),
+                                const SizedBox(height: 12),
+                                _PositionCard(boatData: _boatData),
+                                const SizedBox(height: 12),
+                                _WindCard(boatData: _boatData),
                               ],
-                              const SizedBox(height: 12),
-                              _ScopeCard(
-                                activeWatch: activeWatch,
-                                depthMeters: _boatData?.depthMeters,
-                              ),
-                              const SizedBox(height: 12),
-                              _DangerZoneCard(activeWatch: activeWatch),
-                            ],
-                            const SizedBox(height: 12),
-                            _HubStatusCard(
-                              status: _hubStatus,
-                              isRefreshing: _isRefreshing,
-                              onRefresh: _refresh,
-                              onConfigure: () async {
-                                await context
-                                    .push(AppRoutes.anchorGatewaySetup);
-                                if (mounted) unawaited(_refresh());
-                              },
                             ),
-                            const SizedBox(height: 12),
-                            _PositionCard(boatData: _boatData),
-                            const SizedBox(height: 12),
-                            _WindCard(boatData: _boatData),
-                          ],
-                        ),
+                          ),
+                          RefreshIndicator(
+                            onRefresh: _refresh,
+                            child: AnchorInfoPanel(
+                              activeWatch: activeWatch,
+                              boatData: _boatData,
+                            ),
+                          ),
+                        ],
                       ),
               ),
             ],
