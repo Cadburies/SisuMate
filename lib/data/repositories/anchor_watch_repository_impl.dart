@@ -18,7 +18,8 @@ class AnchorWatchRepositoryImpl implements AnchorWatchRepository {
     ..dangerZoneEnabled = r.dangerZoneEnabled
     ..dangerZoneCenterDeg = r.dangerZoneCenterDeg
     ..dangerZoneWidthDeg = r.dangerZoneWidthDeg
-    ..dangerZoneRadiusMeters = r.dangerZoneRadiusMeters
+    ..dangerZoneInnerRadiusMeters = r.dangerZoneInnerRadiusMeters
+    ..dangerZoneOuterRadiusMeters = r.dangerZoneOuterRadiusMeters
     ..isActive = r.isActive
     ..droppedAt = r.droppedAt
     ..lastModified = r.lastModified;
@@ -31,7 +32,8 @@ class AnchorWatchRepositoryImpl implements AnchorWatchRepository {
         dangerZoneEnabled: Value(w.dangerZoneEnabled),
         dangerZoneCenterDeg: Value(w.dangerZoneCenterDeg),
         dangerZoneWidthDeg: Value(w.dangerZoneWidthDeg),
-        dangerZoneRadiusMeters: Value(w.dangerZoneRadiusMeters),
+        dangerZoneInnerRadiusMeters: Value(w.dangerZoneInnerRadiusMeters),
+        dangerZoneOuterRadiusMeters: Value(w.dangerZoneOuterRadiusMeters),
         isActive: Value(w.isActive),
         droppedAt: Value(w.droppedAt),
         lastModified: Value(w.lastModified),

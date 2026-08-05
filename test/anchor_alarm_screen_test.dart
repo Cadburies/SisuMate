@@ -330,9 +330,15 @@ void main() {
 
       expect(find.text('Center bearing'), findsOneWidget);
       expect(find.text('Width'), findsOneWidget);
+      expect(find.text('Inner radius'), findsOneWidget);
+      expect(find.text('Outer radius'), findsOneWidget);
       final active =
           await container.read(anchorWatchRepositoryProvider).watchActive().first;
       expect(active!.dangerZoneEnabled, isTrue);
+      // #262 — inner radius defaults to the geofence (alarm) perimeter the
+      // moment the zone is enabled, not 0/the anchor. Drop Anchor's radius
+      // defaulted to 30m (no depth in this mock, no UserSettings row).
+      expect(active.dangerZoneInnerRadiusMeters, 30.0);
     });
 
     testWidgets('adjusting the danger-zone width slider persists on release',
@@ -345,7 +351,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Sliders now: [0]=scope ratio, [1]=radius, [2]=center bearing,
-      // [3]=width, [4]=danger-zone radius.
+      // [3]=width, [4]=danger-zone inner radius, [5]=danger-zone outer radius.
       final widthSlider = tester.widget<Slider>(find.byType(Slider).at(3));
       widthSlider.onChanged!(90);
       await tester.pump();

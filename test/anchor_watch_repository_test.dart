@@ -85,7 +85,8 @@ void main() {
       ..dangerZoneEnabled = true
       ..dangerZoneCenterDeg = 200
       ..dangerZoneWidthDeg = 45
-      ..dangerZoneRadiusMeters = 120);
+      ..dangerZoneInnerRadiusMeters = 80
+      ..dangerZoneOuterRadiusMeters = 120);
 
     final active = await repo.watchActive().first;
     expect(active!.scopeRatio, 7.0);
@@ -93,7 +94,8 @@ void main() {
     expect(active.dangerZoneEnabled, isTrue);
     expect(active.dangerZoneCenterDeg, 200);
     expect(active.dangerZoneWidthDeg, 45);
-    expect(active.dangerZoneRadiusMeters, 120);
+    expect(active.dangerZoneInnerRadiusMeters, 80);
+    expect(active.dangerZoneOuterRadiusMeters, 120);
   });
 
   test('weighAnchor stops watching without deleting history', () async {

@@ -144,7 +144,8 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
             anchorLon: anchorWatch.anchorLon,
             centerDeg: anchorWatch.dangerZoneCenterDeg,
             widthDeg: anchorWatch.dangerZoneWidthDeg,
-            radiusMeters: anchorWatch.dangerZoneRadiusMeters,
+            innerRadiusMeters: anchorWatch.dangerZoneInnerRadiusMeters,
+            outerRadiusMeters: anchorWatch.dangerZoneOuterRadiusMeters,
           );
     }
     final active = outside || inDanger;
@@ -624,32 +625,45 @@ class _DangerZoneCard extends ConsumerStatefulWidget {
 class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
   late double _centerDeg;
   late double _widthDeg;
-  late double _radiusMeters;
+  late double _innerRadiusMeters;
+  late double _outerRadiusMeters;
 
   @override
   void initState() {
     super.initState();
-    _centerDeg = widget.activeWatch.dangerZoneCenterDeg;
-    _widthDeg = widget.activeWatch.dangerZoneWidthDeg;
-    _radiusMeters = widget.activeWatch.dangerZoneRadiusMeters;
+    _syncFromWatch();
   }
 
   @override
   void didUpdateWidget(covariant _DangerZoneCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.activeWatch.id != widget.activeWatch.id) {
-      _centerDeg = widget.activeWatch.dangerZoneCenterDeg;
-      _widthDeg = widget.activeWatch.dangerZoneWidthDeg;
-      _radiusMeters = widget.activeWatch.dangerZoneRadiusMeters;
-    }
+    if (oldWidget.activeWatch.id != widget.activeWatch.id) _syncFromWatch();
+  }
+
+  void _syncFromWatch() {
+    _centerDeg = widget.activeWatch.dangerZoneCenterDeg;
+    _widthDeg = widget.activeWatch.dangerZoneWidthDeg;
+    _innerRadiusMeters = widget.activeWatch.dangerZoneInnerRadiusMeters;
+    _outerRadiusMeters = widget.activeWatch.dangerZoneOuterRadiusMeters;
   }
 
   Future<void> _persist({bool? enabled}) async {
+    // #262 — a hazard (rocks, a lee shore) is typically beyond the safe
+    // swinging circle, not at the anchor itself, so the ring's inner edge
+    // defaults to the geofence perimeter each time the zone is (re-)enabled
+    // rather than carrying over a stale/arbitrary previous value.
+    if (enabled == true) {
+      _innerRadiusMeters = widget.activeWatch.radiusMeters;
+      if (_outerRadiusMeters <= _innerRadiusMeters) {
+        _outerRadiusMeters = _innerRadiusMeters + 20;
+      }
+    }
     final updated = widget.activeWatch
       ..dangerZoneEnabled = enabled ?? widget.activeWatch.dangerZoneEnabled
       ..dangerZoneCenterDeg = _centerDeg
       ..dangerZoneWidthDeg = _widthDeg
-      ..dangerZoneRadiusMeters = _radiusMeters;
+      ..dangerZoneInnerRadiusMeters = _innerRadiusMeters
+      ..dangerZoneOuterRadiusMeters = _outerRadiusMeters;
     await ref.read(anchorWatchRepositoryProvider).updateWatch(updated);
   }
 
@@ -666,7 +680,8 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Danger zone'),
               subtitle: const Text(
-                "Alarm if the boat swings into this sector, even inside the safe circle.",
+                'Alarm if the boat swings into this ring beyond the safe '
+                "circle — e.g. rocks or a lee shore past the anchor perimeter.",
               ),
               value: enabled,
               onChanged: (v) => _persist(enabled: v),
@@ -689,10 +704,17 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
                 onChanged: (v) => setState(() => _widthDeg = v),
               ),
               _RadiusEditor(
-                label: 'Radius',
-                value: _radiusMeters,
+                label: 'Inner radius',
+                value: _innerRadiusMeters,
                 sliderMax: _maxSliderRadiusMeters,
-                onChanged: (v) => setState(() => _radiusMeters = v),
+                onChanged: (v) => setState(() => _innerRadiusMeters = v),
+                onCommit: _persist,
+              ),
+              _RadiusEditor(
+                label: 'Outer radius',
+                value: _outerRadiusMeters,
+                sliderMax: _maxSliderRadiusMeters,
+                onChanged: (v) => setState(() => _outerRadiusMeters = v),
                 onCommit: _persist,
               ),
             ],

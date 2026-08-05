@@ -88,13 +88,14 @@ void main() {
             ..dangerZoneEnabled = true
             ..dangerZoneCenterDeg = 90
             ..dangerZoneWidthDeg = 60
-            ..dangerZoneRadiusMeters = 40,
+            ..dangerZoneInnerRadiusMeters = 30
+            ..dangerZoneOuterRadiusMeters = 40,
         );
     await pumpMap(tester, watch);
 
     expect(find.byType(PolygonLayer), findsOneWidget);
-    // Anchor + geofence + danger-center + danger-edge handles.
-    expect(find.byType(GestureDetector), findsNWidgets(4));
+    // Anchor + geofence + danger-outer + danger-inner + danger-edge handles.
+    expect(find.byType(GestureDetector), findsNWidgets(5));
   });
 
   testWidgets('dragging the geofence handle outward increases the radius',
@@ -113,7 +114,55 @@ void main() {
 
     final active =
         await container.read(anchorWatchRepositoryProvider).watchActive().first;
+    // #261 — a plain `greaterThan(30)` would also pass under the runaway
+    // bug this was written to catch (any wildly-inflated value is still
+    // "greater than 30"), so it must bound the *magnitude* too: at the
+    // ~300m view fitted into this test's viewport, a 40px drag should
+    // land within a couple hundred meters, not thousands.
     expect(active!.radiusMeters, greaterThan(30));
+    expect(active.radiusMeters, lessThan(230));
+  });
+
+  testWidgets(
+      '#261 — the radius change is roughly proportionate to the drag '
+      'distance (not runaway/exponential)', (tester) async {
+    final watch = await dropAnchor();
+    await pumpMap(tester, watch);
+
+    final handle = find.byType(GestureDetector).at(1);
+    final gesture = await tester.startGesture(tester.getCenter(handle));
+    await gesture.moveBy(const Offset(20, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    final afterSmallDrag = (await container
+            .read(anchorWatchRepositoryProvider)
+            .watchActive()
+            .first)!
+        .radiusMeters;
+    final smallDelta = afterSmallDrag - 30;
+
+    // A second, independent gesture (fresh onPanStart, so no carried-over
+    // drag state) dragging twice as far should move roughly twice as much
+    // — under the old bug, a second drag from an already-inflated position
+    // would compound further rather than scale linearly with the new
+    // gesture's own distance.
+    final handle2 = find.byType(GestureDetector).at(1);
+    final gesture2 = await tester.startGesture(tester.getCenter(handle2));
+    await gesture2.moveBy(const Offset(40, 0));
+    await tester.pump();
+    await gesture2.up();
+    await tester.pumpAndSettle();
+    final afterDoubleDrag = (await container
+            .read(anchorWatchRepositoryProvider)
+            .watchActive()
+            .first)!
+        .radiusMeters;
+
+    // afterDoubleDrag is an absolute position (not a further delta from
+    // afterSmallDrag), so it should land close to 30 + 2*smallDelta, not
+    // wildly beyond it.
+    expect(afterDoubleDrag, lessThan(30 + smallDelta * 2 + 100));
   });
 
   testWidgets('dragging the anchor handle moves the anchor position',

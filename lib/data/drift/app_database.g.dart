@@ -19898,12 +19898,24 @@ class $AnchorWatchesTable extends AnchorWatches
         requiredDuringInsert: false,
         defaultValue: const Constant(60.0),
       );
-  static const VerificationMeta _dangerZoneRadiusMetersMeta =
-      const VerificationMeta('dangerZoneRadiusMeters');
+  static const VerificationMeta _dangerZoneInnerRadiusMetersMeta =
+      const VerificationMeta('dangerZoneInnerRadiusMeters');
   @override
-  late final GeneratedColumn<double> dangerZoneRadiusMeters =
+  late final GeneratedColumn<double> dangerZoneInnerRadiusMeters =
       GeneratedColumn<double>(
-        'danger_zone_radius_meters',
+        'danger_zone_inner_radius_meters',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(30.0),
+      );
+  static const VerificationMeta _dangerZoneOuterRadiusMetersMeta =
+      const VerificationMeta('dangerZoneOuterRadiusMeters');
+  @override
+  late final GeneratedColumn<double> dangerZoneOuterRadiusMeters =
+      GeneratedColumn<double>(
+        'danger_zone_outer_radius_meters',
         aliasedName,
         false,
         type: DriftSqlType.double,
@@ -19959,7 +19971,8 @@ class $AnchorWatchesTable extends AnchorWatches
     dangerZoneEnabled,
     dangerZoneCenterDeg,
     dangerZoneWidthDeg,
-    dangerZoneRadiusMeters,
+    dangerZoneInnerRadiusMeters,
+    dangerZoneOuterRadiusMeters,
     isActive,
     droppedAt,
     lastModified,
@@ -20033,12 +20046,21 @@ class $AnchorWatchesTable extends AnchorWatches
         ),
       );
     }
-    if (data.containsKey('danger_zone_radius_meters')) {
+    if (data.containsKey('danger_zone_inner_radius_meters')) {
       context.handle(
-        _dangerZoneRadiusMetersMeta,
-        dangerZoneRadiusMeters.isAcceptableOrUnknown(
-          data['danger_zone_radius_meters']!,
-          _dangerZoneRadiusMetersMeta,
+        _dangerZoneInnerRadiusMetersMeta,
+        dangerZoneInnerRadiusMeters.isAcceptableOrUnknown(
+          data['danger_zone_inner_radius_meters']!,
+          _dangerZoneInnerRadiusMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_outer_radius_meters')) {
+      context.handle(
+        _dangerZoneOuterRadiusMetersMeta,
+        dangerZoneOuterRadiusMeters.isAcceptableOrUnknown(
+          data['danger_zone_outer_radius_meters']!,
+          _dangerZoneOuterRadiusMetersMeta,
         ),
       );
     }
@@ -20104,9 +20126,13 @@ class $AnchorWatchesTable extends AnchorWatches
         DriftSqlType.double,
         data['${effectivePrefix}danger_zone_width_deg'],
       )!,
-      dangerZoneRadiusMeters: attachedDatabase.typeMapping.read(
+      dangerZoneInnerRadiusMeters: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
-        data['${effectivePrefix}danger_zone_radius_meters'],
+        data['${effectivePrefix}danger_zone_inner_radius_meters'],
+      )!,
+      dangerZoneOuterRadiusMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}danger_zone_outer_radius_meters'],
       )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -20138,7 +20164,8 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
   final bool dangerZoneEnabled;
   final double dangerZoneCenterDeg;
   final double dangerZoneWidthDeg;
-  final double dangerZoneRadiusMeters;
+  final double dangerZoneInnerRadiusMeters;
+  final double dangerZoneOuterRadiusMeters;
   final bool isActive;
   final DateTime droppedAt;
   final DateTime lastModified;
@@ -20151,7 +20178,8 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
     required this.dangerZoneEnabled,
     required this.dangerZoneCenterDeg,
     required this.dangerZoneWidthDeg,
-    required this.dangerZoneRadiusMeters,
+    required this.dangerZoneInnerRadiusMeters,
+    required this.dangerZoneOuterRadiusMeters,
     required this.isActive,
     required this.droppedAt,
     required this.lastModified,
@@ -20167,7 +20195,12 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
     map['danger_zone_enabled'] = Variable<bool>(dangerZoneEnabled);
     map['danger_zone_center_deg'] = Variable<double>(dangerZoneCenterDeg);
     map['danger_zone_width_deg'] = Variable<double>(dangerZoneWidthDeg);
-    map['danger_zone_radius_meters'] = Variable<double>(dangerZoneRadiusMeters);
+    map['danger_zone_inner_radius_meters'] = Variable<double>(
+      dangerZoneInnerRadiusMeters,
+    );
+    map['danger_zone_outer_radius_meters'] = Variable<double>(
+      dangerZoneOuterRadiusMeters,
+    );
     map['is_active'] = Variable<bool>(isActive);
     map['dropped_at'] = Variable<DateTime>(droppedAt);
     map['last_modified'] = Variable<DateTime>(lastModified);
@@ -20184,7 +20217,8 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
       dangerZoneEnabled: Value(dangerZoneEnabled),
       dangerZoneCenterDeg: Value(dangerZoneCenterDeg),
       dangerZoneWidthDeg: Value(dangerZoneWidthDeg),
-      dangerZoneRadiusMeters: Value(dangerZoneRadiusMeters),
+      dangerZoneInnerRadiusMeters: Value(dangerZoneInnerRadiusMeters),
+      dangerZoneOuterRadiusMeters: Value(dangerZoneOuterRadiusMeters),
       isActive: Value(isActive),
       droppedAt: Value(droppedAt),
       lastModified: Value(lastModified),
@@ -20209,8 +20243,11 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
       dangerZoneWidthDeg: serializer.fromJson<double>(
         json['dangerZoneWidthDeg'],
       ),
-      dangerZoneRadiusMeters: serializer.fromJson<double>(
-        json['dangerZoneRadiusMeters'],
+      dangerZoneInnerRadiusMeters: serializer.fromJson<double>(
+        json['dangerZoneInnerRadiusMeters'],
+      ),
+      dangerZoneOuterRadiusMeters: serializer.fromJson<double>(
+        json['dangerZoneOuterRadiusMeters'],
       ),
       isActive: serializer.fromJson<bool>(json['isActive']),
       droppedAt: serializer.fromJson<DateTime>(json['droppedAt']),
@@ -20229,8 +20266,11 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
       'dangerZoneEnabled': serializer.toJson<bool>(dangerZoneEnabled),
       'dangerZoneCenterDeg': serializer.toJson<double>(dangerZoneCenterDeg),
       'dangerZoneWidthDeg': serializer.toJson<double>(dangerZoneWidthDeg),
-      'dangerZoneRadiusMeters': serializer.toJson<double>(
-        dangerZoneRadiusMeters,
+      'dangerZoneInnerRadiusMeters': serializer.toJson<double>(
+        dangerZoneInnerRadiusMeters,
+      ),
+      'dangerZoneOuterRadiusMeters': serializer.toJson<double>(
+        dangerZoneOuterRadiusMeters,
       ),
       'isActive': serializer.toJson<bool>(isActive),
       'droppedAt': serializer.toJson<DateTime>(droppedAt),
@@ -20247,7 +20287,8 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
     bool? dangerZoneEnabled,
     double? dangerZoneCenterDeg,
     double? dangerZoneWidthDeg,
-    double? dangerZoneRadiusMeters,
+    double? dangerZoneInnerRadiusMeters,
+    double? dangerZoneOuterRadiusMeters,
     bool? isActive,
     DateTime? droppedAt,
     DateTime? lastModified,
@@ -20260,8 +20301,10 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
     dangerZoneEnabled: dangerZoneEnabled ?? this.dangerZoneEnabled,
     dangerZoneCenterDeg: dangerZoneCenterDeg ?? this.dangerZoneCenterDeg,
     dangerZoneWidthDeg: dangerZoneWidthDeg ?? this.dangerZoneWidthDeg,
-    dangerZoneRadiusMeters:
-        dangerZoneRadiusMeters ?? this.dangerZoneRadiusMeters,
+    dangerZoneInnerRadiusMeters:
+        dangerZoneInnerRadiusMeters ?? this.dangerZoneInnerRadiusMeters,
+    dangerZoneOuterRadiusMeters:
+        dangerZoneOuterRadiusMeters ?? this.dangerZoneOuterRadiusMeters,
     isActive: isActive ?? this.isActive,
     droppedAt: droppedAt ?? this.droppedAt,
     lastModified: lastModified ?? this.lastModified,
@@ -20286,9 +20329,12 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
       dangerZoneWidthDeg: data.dangerZoneWidthDeg.present
           ? data.dangerZoneWidthDeg.value
           : this.dangerZoneWidthDeg,
-      dangerZoneRadiusMeters: data.dangerZoneRadiusMeters.present
-          ? data.dangerZoneRadiusMeters.value
-          : this.dangerZoneRadiusMeters,
+      dangerZoneInnerRadiusMeters: data.dangerZoneInnerRadiusMeters.present
+          ? data.dangerZoneInnerRadiusMeters.value
+          : this.dangerZoneInnerRadiusMeters,
+      dangerZoneOuterRadiusMeters: data.dangerZoneOuterRadiusMeters.present
+          ? data.dangerZoneOuterRadiusMeters.value
+          : this.dangerZoneOuterRadiusMeters,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       droppedAt: data.droppedAt.present ? data.droppedAt.value : this.droppedAt,
       lastModified: data.lastModified.present
@@ -20308,7 +20354,8 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
           ..write('dangerZoneEnabled: $dangerZoneEnabled, ')
           ..write('dangerZoneCenterDeg: $dangerZoneCenterDeg, ')
           ..write('dangerZoneWidthDeg: $dangerZoneWidthDeg, ')
-          ..write('dangerZoneRadiusMeters: $dangerZoneRadiusMeters, ')
+          ..write('dangerZoneInnerRadiusMeters: $dangerZoneInnerRadiusMeters, ')
+          ..write('dangerZoneOuterRadiusMeters: $dangerZoneOuterRadiusMeters, ')
           ..write('isActive: $isActive, ')
           ..write('droppedAt: $droppedAt, ')
           ..write('lastModified: $lastModified')
@@ -20326,7 +20373,8 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
     dangerZoneEnabled,
     dangerZoneCenterDeg,
     dangerZoneWidthDeg,
-    dangerZoneRadiusMeters,
+    dangerZoneInnerRadiusMeters,
+    dangerZoneOuterRadiusMeters,
     isActive,
     droppedAt,
     lastModified,
@@ -20343,7 +20391,10 @@ class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
           other.dangerZoneEnabled == this.dangerZoneEnabled &&
           other.dangerZoneCenterDeg == this.dangerZoneCenterDeg &&
           other.dangerZoneWidthDeg == this.dangerZoneWidthDeg &&
-          other.dangerZoneRadiusMeters == this.dangerZoneRadiusMeters &&
+          other.dangerZoneInnerRadiusMeters ==
+              this.dangerZoneInnerRadiusMeters &&
+          other.dangerZoneOuterRadiusMeters ==
+              this.dangerZoneOuterRadiusMeters &&
           other.isActive == this.isActive &&
           other.droppedAt == this.droppedAt &&
           other.lastModified == this.lastModified);
@@ -20358,7 +20409,8 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
   final Value<bool> dangerZoneEnabled;
   final Value<double> dangerZoneCenterDeg;
   final Value<double> dangerZoneWidthDeg;
-  final Value<double> dangerZoneRadiusMeters;
+  final Value<double> dangerZoneInnerRadiusMeters;
+  final Value<double> dangerZoneOuterRadiusMeters;
   final Value<bool> isActive;
   final Value<DateTime> droppedAt;
   final Value<DateTime> lastModified;
@@ -20371,7 +20423,8 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
     this.dangerZoneEnabled = const Value.absent(),
     this.dangerZoneCenterDeg = const Value.absent(),
     this.dangerZoneWidthDeg = const Value.absent(),
-    this.dangerZoneRadiusMeters = const Value.absent(),
+    this.dangerZoneInnerRadiusMeters = const Value.absent(),
+    this.dangerZoneOuterRadiusMeters = const Value.absent(),
     this.isActive = const Value.absent(),
     this.droppedAt = const Value.absent(),
     this.lastModified = const Value.absent(),
@@ -20385,7 +20438,8 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
     this.dangerZoneEnabled = const Value.absent(),
     this.dangerZoneCenterDeg = const Value.absent(),
     this.dangerZoneWidthDeg = const Value.absent(),
-    this.dangerZoneRadiusMeters = const Value.absent(),
+    this.dangerZoneInnerRadiusMeters = const Value.absent(),
+    this.dangerZoneOuterRadiusMeters = const Value.absent(),
     this.isActive = const Value.absent(),
     this.droppedAt = const Value.absent(),
     this.lastModified = const Value.absent(),
@@ -20399,7 +20453,8 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
     Expression<bool>? dangerZoneEnabled,
     Expression<double>? dangerZoneCenterDeg,
     Expression<double>? dangerZoneWidthDeg,
-    Expression<double>? dangerZoneRadiusMeters,
+    Expression<double>? dangerZoneInnerRadiusMeters,
+    Expression<double>? dangerZoneOuterRadiusMeters,
     Expression<bool>? isActive,
     Expression<DateTime>? droppedAt,
     Expression<DateTime>? lastModified,
@@ -20415,8 +20470,10 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
         'danger_zone_center_deg': dangerZoneCenterDeg,
       if (dangerZoneWidthDeg != null)
         'danger_zone_width_deg': dangerZoneWidthDeg,
-      if (dangerZoneRadiusMeters != null)
-        'danger_zone_radius_meters': dangerZoneRadiusMeters,
+      if (dangerZoneInnerRadiusMeters != null)
+        'danger_zone_inner_radius_meters': dangerZoneInnerRadiusMeters,
+      if (dangerZoneOuterRadiusMeters != null)
+        'danger_zone_outer_radius_meters': dangerZoneOuterRadiusMeters,
       if (isActive != null) 'is_active': isActive,
       if (droppedAt != null) 'dropped_at': droppedAt,
       if (lastModified != null) 'last_modified': lastModified,
@@ -20432,7 +20489,8 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
     Value<bool>? dangerZoneEnabled,
     Value<double>? dangerZoneCenterDeg,
     Value<double>? dangerZoneWidthDeg,
-    Value<double>? dangerZoneRadiusMeters,
+    Value<double>? dangerZoneInnerRadiusMeters,
+    Value<double>? dangerZoneOuterRadiusMeters,
     Value<bool>? isActive,
     Value<DateTime>? droppedAt,
     Value<DateTime>? lastModified,
@@ -20446,8 +20504,10 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
       dangerZoneEnabled: dangerZoneEnabled ?? this.dangerZoneEnabled,
       dangerZoneCenterDeg: dangerZoneCenterDeg ?? this.dangerZoneCenterDeg,
       dangerZoneWidthDeg: dangerZoneWidthDeg ?? this.dangerZoneWidthDeg,
-      dangerZoneRadiusMeters:
-          dangerZoneRadiusMeters ?? this.dangerZoneRadiusMeters,
+      dangerZoneInnerRadiusMeters:
+          dangerZoneInnerRadiusMeters ?? this.dangerZoneInnerRadiusMeters,
+      dangerZoneOuterRadiusMeters:
+          dangerZoneOuterRadiusMeters ?? this.dangerZoneOuterRadiusMeters,
       isActive: isActive ?? this.isActive,
       droppedAt: droppedAt ?? this.droppedAt,
       lastModified: lastModified ?? this.lastModified,
@@ -20483,9 +20543,14 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
     if (dangerZoneWidthDeg.present) {
       map['danger_zone_width_deg'] = Variable<double>(dangerZoneWidthDeg.value);
     }
-    if (dangerZoneRadiusMeters.present) {
-      map['danger_zone_radius_meters'] = Variable<double>(
-        dangerZoneRadiusMeters.value,
+    if (dangerZoneInnerRadiusMeters.present) {
+      map['danger_zone_inner_radius_meters'] = Variable<double>(
+        dangerZoneInnerRadiusMeters.value,
+      );
+    }
+    if (dangerZoneOuterRadiusMeters.present) {
+      map['danger_zone_outer_radius_meters'] = Variable<double>(
+        dangerZoneOuterRadiusMeters.value,
       );
     }
     if (isActive.present) {
@@ -20511,7 +20576,8 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
           ..write('dangerZoneEnabled: $dangerZoneEnabled, ')
           ..write('dangerZoneCenterDeg: $dangerZoneCenterDeg, ')
           ..write('dangerZoneWidthDeg: $dangerZoneWidthDeg, ')
-          ..write('dangerZoneRadiusMeters: $dangerZoneRadiusMeters, ')
+          ..write('dangerZoneInnerRadiusMeters: $dangerZoneInnerRadiusMeters, ')
+          ..write('dangerZoneOuterRadiusMeters: $dangerZoneOuterRadiusMeters, ')
           ..write('isActive: $isActive, ')
           ..write('droppedAt: $droppedAt, ')
           ..write('lastModified: $lastModified')
@@ -29827,7 +29893,8 @@ typedef $$AnchorWatchesTableCreateCompanionBuilder =
       Value<bool> dangerZoneEnabled,
       Value<double> dangerZoneCenterDeg,
       Value<double> dangerZoneWidthDeg,
-      Value<double> dangerZoneRadiusMeters,
+      Value<double> dangerZoneInnerRadiusMeters,
+      Value<double> dangerZoneOuterRadiusMeters,
       Value<bool> isActive,
       Value<DateTime> droppedAt,
       Value<DateTime> lastModified,
@@ -29842,7 +29909,8 @@ typedef $$AnchorWatchesTableUpdateCompanionBuilder =
       Value<bool> dangerZoneEnabled,
       Value<double> dangerZoneCenterDeg,
       Value<double> dangerZoneWidthDeg,
-      Value<double> dangerZoneRadiusMeters,
+      Value<double> dangerZoneInnerRadiusMeters,
+      Value<double> dangerZoneOuterRadiusMeters,
       Value<bool> isActive,
       Value<DateTime> droppedAt,
       Value<DateTime> lastModified,
@@ -29897,8 +29965,13 @@ class $$AnchorWatchesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get dangerZoneRadiusMeters => $composableBuilder(
-    column: $table.dangerZoneRadiusMeters,
+  ColumnFilters<double> get dangerZoneInnerRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneInnerRadiusMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dangerZoneOuterRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneOuterRadiusMeters,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -29967,8 +30040,13 @@ class $$AnchorWatchesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get dangerZoneRadiusMeters => $composableBuilder(
-    column: $table.dangerZoneRadiusMeters,
+  ColumnOrderings<double> get dangerZoneInnerRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneInnerRadiusMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dangerZoneOuterRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneOuterRadiusMeters,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -30031,8 +30109,13 @@ class $$AnchorWatchesTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get dangerZoneRadiusMeters => $composableBuilder(
-    column: $table.dangerZoneRadiusMeters,
+  GeneratedColumn<double> get dangerZoneInnerRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneInnerRadiusMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get dangerZoneOuterRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneOuterRadiusMeters,
     builder: (column) => column,
   );
 
@@ -30087,7 +30170,10 @@ class $$AnchorWatchesTableTableManager
                 Value<bool> dangerZoneEnabled = const Value.absent(),
                 Value<double> dangerZoneCenterDeg = const Value.absent(),
                 Value<double> dangerZoneWidthDeg = const Value.absent(),
-                Value<double> dangerZoneRadiusMeters = const Value.absent(),
+                Value<double> dangerZoneInnerRadiusMeters =
+                    const Value.absent(),
+                Value<double> dangerZoneOuterRadiusMeters =
+                    const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> droppedAt = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
@@ -30100,7 +30186,8 @@ class $$AnchorWatchesTableTableManager
                 dangerZoneEnabled: dangerZoneEnabled,
                 dangerZoneCenterDeg: dangerZoneCenterDeg,
                 dangerZoneWidthDeg: dangerZoneWidthDeg,
-                dangerZoneRadiusMeters: dangerZoneRadiusMeters,
+                dangerZoneInnerRadiusMeters: dangerZoneInnerRadiusMeters,
+                dangerZoneOuterRadiusMeters: dangerZoneOuterRadiusMeters,
                 isActive: isActive,
                 droppedAt: droppedAt,
                 lastModified: lastModified,
@@ -30115,7 +30202,10 @@ class $$AnchorWatchesTableTableManager
                 Value<bool> dangerZoneEnabled = const Value.absent(),
                 Value<double> dangerZoneCenterDeg = const Value.absent(),
                 Value<double> dangerZoneWidthDeg = const Value.absent(),
-                Value<double> dangerZoneRadiusMeters = const Value.absent(),
+                Value<double> dangerZoneInnerRadiusMeters =
+                    const Value.absent(),
+                Value<double> dangerZoneOuterRadiusMeters =
+                    const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> droppedAt = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
@@ -30128,7 +30218,8 @@ class $$AnchorWatchesTableTableManager
                 dangerZoneEnabled: dangerZoneEnabled,
                 dangerZoneCenterDeg: dangerZoneCenterDeg,
                 dangerZoneWidthDeg: dangerZoneWidthDeg,
-                dangerZoneRadiusMeters: dangerZoneRadiusMeters,
+                dangerZoneInnerRadiusMeters: dangerZoneInnerRadiusMeters,
+                dangerZoneOuterRadiusMeters: dangerZoneOuterRadiusMeters,
                 isActive: isActive,
                 droppedAt: droppedAt,
                 lastModified: lastModified,

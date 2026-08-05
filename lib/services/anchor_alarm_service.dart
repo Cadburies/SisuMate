@@ -36,9 +36,14 @@ class AnchorAlarmService {
         radiusMeters;
   }
 
-  /// True once the boat has swung into the danger-zone sector — within
-  /// [radiusMeters] of the anchor AND within [widthDeg]/2 of [centerDeg]
-  /// (the sector's center bearing, measured from the anchor, degrees true).
+  /// True once the boat has swung into the danger-zone sector — a *ring*
+  /// segment (#262: a hazard is typically beyond the safe swinging circle,
+  /// not at the anchor itself), between [innerRadiusMeters] and
+  /// [outerRadiusMeters] of the anchor AND within [widthDeg]/2 of
+  /// [centerDeg] (the sector's center bearing, measured from the anchor,
+  /// degrees true). A boat still inside [innerRadiusMeters] — even on the
+  /// danger bearing — is not in the zone; it's still safely within the
+  /// swinging circle.
   bool isInDangerZone({
     required double boatLat,
     required double boatLon,
@@ -46,7 +51,8 @@ class AnchorAlarmService {
     required double anchorLon,
     required double centerDeg,
     required double widthDeg,
-    required double radiusMeters,
+    required double innerRadiusMeters,
+    required double outerRadiusMeters,
   }) {
     final dist = distanceMeters(
       lat1: anchorLat,
@@ -54,7 +60,7 @@ class AnchorAlarmService {
       lat2: boatLat,
       lon2: boatLon,
     );
-    if (dist > radiusMeters) return false;
+    if (dist < innerRadiusMeters || dist > outerRadiusMeters) return false;
     final boatBearing = bearingDeg(anchorLat, anchorLon, boatLat, boatLon);
     return angleDiff(boatBearing, centerDeg).abs() <= widthDeg / 2;
   }

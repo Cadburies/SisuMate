@@ -18,18 +18,26 @@ import '../../services/map_tile_providers.dart';
 /// edit via the sliders in [AnchorAlarmScreen]'s other cards, which stay
 /// as the precise-numeric-entry alternative).
 ///
-/// Three drag handles, each a plain [Positioned] + [GestureDetector] pair
-/// (flutter_map has no built-in draggable-marker widget) repositioned via
-/// [MapCamera.latLngToScreenOffset]/[screenOffsetToLatLng] — the package's
-/// own documented seam for exactly this ("convert a latLng to a position
-/// we could use with a widget outside of FlutterMap layer space"):
+/// Up to five drag handles, each a plain [Positioned] + [GestureDetector]
+/// pair (flutter_map has no built-in draggable-marker widget) repositioned
+/// via [MapCamera.latLngToScreenOffset]/[screenOffsetToLatLng] — the
+/// package's own documented seam for exactly this ("convert a latLng to a
+/// position we could use with a widget outside of FlutterMap layer
+/// space") — converted back from a drag via [RenderBox.globalToLocal] on
+/// each frame (#261: recomputing the drag's reference position from the
+/// handle's own already-moved point compounds into a runaway feedback
+/// loop; using the pointer's true global position every frame avoids it):
 /// - the anchor itself (moves the anchor position — same effect as the
 ///   "Edit position" dialog),
 /// - the geofence circle's edge (due east of the anchor — drag changes
 ///   only the radius),
-/// - the danger-zone sector's centerline tip (drag changes the sector's
-///   bearing *and* radius, like moving a clock hand) and its edge (drag
-///   changes only the sector's angular width, center bearing held fixed).
+/// - the danger zone (#262: a ring segment starting at the geofence
+///   perimeter, not a pie slice from the anchor — a hazard like rocks is
+///   typically beyond the safe swinging circle) — its outer-radius tip
+///   (drag changes bearing *and* outer radius, like moving a clock hand),
+///   its inner-radius tip (drag changes only the inner radius), and its
+///   edge (drag changes only the angular width, center bearing held
+///   fixed).
 ///
 /// While any handle is actively being dragged, the map's own one-finger
 /// pan gesture is disabled (`InteractiveFlag.drag` off) so it can't steal
@@ -56,12 +64,14 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   static const _handleMaxMeters = 280.0; // stays inside the 300m view
 
   late final MapController _mapController;
+  final _mapAreaKey = GlobalKey();
   late double _anchorLat;
   late double _anchorLon;
   late double _radiusMeters;
   late double _dangerCenterDeg;
   late double _dangerWidthDeg;
-  late double _dangerRadiusMeters;
+  late double _dangerInnerRadiusMeters;
+  late double _dangerOuterRadiusMeters;
   bool _dragging = false;
   String _tileProviderId = 'esri_world_imagery';
 
@@ -90,7 +100,8 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     _radiusMeters = widget.activeWatch.radiusMeters;
     _dangerCenterDeg = widget.activeWatch.dangerZoneCenterDeg;
     _dangerWidthDeg = widget.activeWatch.dangerZoneWidthDeg;
-    _dangerRadiusMeters = widget.activeWatch.dangerZoneRadiusMeters;
+    _dangerInnerRadiusMeters = widget.activeWatch.dangerZoneInnerRadiusMeters;
+    _dangerOuterRadiusMeters = widget.activeWatch.dangerZoneOuterRadiusMeters;
   }
 
   LatLngBounds get _viewBounds {
@@ -112,7 +123,8 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
       ..radiusMeters = _radiusMeters
       ..dangerZoneCenterDeg = _dangerCenterDeg
       ..dangerZoneWidthDeg = _dangerWidthDeg
-      ..dangerZoneRadiusMeters = _dangerRadiusMeters;
+      ..dangerZoneInnerRadiusMeters = _dangerInnerRadiusMeters
+      ..dangerZoneOuterRadiusMeters = _dangerOuterRadiusMeters;
     await ref.read(anchorWatchRepositoryProvider).updateWatch(updated);
   }
 
@@ -131,6 +143,7 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
       child: SizedBox(
         height: 360,
         child: Stack(
+          key: _mapAreaKey,
           children: [
             FlutterMap(
               mapController: _mapController,
@@ -216,24 +229,48 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                       }),
                     ),
                     if (widget.activeWatch.dangerZoneEnabled) ...[
+                      // Outer-radius tip: drag changes the sector's bearing
+                      // *and* outer radius, like moving a clock hand. Clamped
+                      // to stay past the inner radius so the ring can't invert.
                       _handle(
                         camera: camera,
-                        point: _dangerCenterHandlePoint(),
+                        point: _dangerOuterHandlePoint(),
                         icon: Icons.warning_amber,
                         color: Colors.red,
                         onDragUpdate: (newPoint) => setState(() {
                           _dangerCenterDeg = bearingDeg(
                               _anchorLat, _anchorLon, newPoint.latitude, newPoint.longitude);
-                          _dangerRadiusMeters = _alarmService
-                              .distanceMeters(
-                                lat1: _anchorLat,
-                                lon1: _anchorLon,
-                                lat2: newPoint.latitude,
-                                lon2: newPoint.longitude,
-                              )
-                              .clamp(_handleMinMeters, _handleMaxMeters);
+                          final dragged = _alarmService.distanceMeters(
+                            lat1: _anchorLat,
+                            lon1: _anchorLon,
+                            lat2: newPoint.latitude,
+                            lon2: newPoint.longitude,
+                          );
+                          _dangerOuterRadiusMeters = dragged.clamp(
+                              _dangerInnerRadiusMeters + 5, _handleMaxMeters);
                         }),
                       ),
+                      // Inner-radius tip: drag changes only the ring's inner
+                      // edge (bearing ignored), clamped below the outer
+                      // radius so the ring can't invert.
+                      _handle(
+                        camera: camera,
+                        point: _dangerInnerHandlePoint(),
+                        icon: Icons.remove_circle_outline,
+                        color: Colors.orange,
+                        onDragUpdate: (newPoint) => setState(() {
+                          final dragged = _alarmService.distanceMeters(
+                            lat1: _anchorLat,
+                            lon1: _anchorLon,
+                            lat2: newPoint.latitude,
+                            lon2: newPoint.longitude,
+                          );
+                          _dangerInnerRadiusMeters = dragged.clamp(
+                              _handleMinMeters, _dangerOuterRadiusMeters - 5);
+                        }),
+                      ),
+                      // Width edge: drag changes only the angular width,
+                      // center bearing held fixed.
                       _handle(
                         camera: camera,
                         point: _dangerEdgeHandlePoint(),
@@ -276,12 +313,22 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     return LatLng(p.lat, p.lon);
   }
 
-  LatLng _dangerCenterHandlePoint() {
+  LatLng _dangerOuterHandlePoint() {
     final p = destinationPoint(
       lat: _anchorLat,
       lon: _anchorLon,
       bearingDeg: _dangerCenterDeg,
-      distanceNm: _dangerRadiusMeters / 1852,
+      distanceNm: _dangerOuterRadiusMeters / 1852,
+    );
+    return LatLng(p.lat, p.lon);
+  }
+
+  LatLng _dangerInnerHandlePoint() {
+    final p = destinationPoint(
+      lat: _anchorLat,
+      lon: _anchorLon,
+      bearingDeg: _dangerCenterDeg,
+      distanceNm: _dangerInnerRadiusMeters / 1852,
     );
     return LatLng(p.lat, p.lon);
   }
@@ -291,16 +338,18 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
       lat: _anchorLat,
       lon: _anchorLon,
       bearingDeg: _dangerCenterDeg + _dangerWidthDeg / 2,
-      distanceNm: _dangerRadiusMeters / 1852,
+      distanceNm: _dangerOuterRadiusMeters / 1852,
     );
     return LatLng(p.lat, p.lon);
   }
 
-  /// A pie-slice polygon approximating the danger-zone sector: the anchor,
-  /// then points every 5° from the left edge to the right edge at
-  /// [_dangerRadiusMeters], back to the anchor.
+  /// #262 — an annular ring segment (pie slice with a hole), not a pie
+  /// slice from the anchor: walks the inner arc left-to-right at
+  /// [_dangerInnerRadiusMeters], then the outer arc right-to-left at
+  /// [_dangerOuterRadiusMeters], closing the ring (Polygon auto-closes the
+  /// last point back to the first).
   List<LatLng> _sectorPoints() {
-    final points = <LatLng>[LatLng(_anchorLat, _anchorLon)];
+    final points = <LatLng>[];
     final start = _dangerCenterDeg - _dangerWidthDeg / 2;
     final steps = math.max(2, (_dangerWidthDeg / 5).ceil());
     for (var i = 0; i <= steps; i++) {
@@ -309,7 +358,17 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
         lat: _anchorLat,
         lon: _anchorLon,
         bearingDeg: bearing,
-        distanceNm: _dangerRadiusMeters / 1852,
+        distanceNm: _dangerInnerRadiusMeters / 1852,
+      );
+      points.add(LatLng(p.lat, p.lon));
+    }
+    for (var i = steps; i >= 0; i--) {
+      final bearing = start + _dangerWidthDeg * i / steps;
+      final p = destinationPoint(
+        lat: _anchorLat,
+        lon: _anchorLon,
+        bearingDeg: bearing,
+        distanceNm: _dangerOuterRadiusMeters / 1852,
       );
       points.add(LatLng(p.lat, p.lon));
     }
@@ -323,7 +382,10 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     required Color color,
     required ValueChanged<LatLng> onDragUpdate,
   }) {
-    const handleSize = 32.0;
+    // #261 — the touch target is deliberately larger than typical (44px,
+    // Apple/Android's own minimum recommended tap-target size) since these
+    // sit over a busy map background and were reported hard to grab.
+    const handleSize = 44.0;
     final offset = camera.latLngToScreenOffset(point);
     return Positioned(
       left: offset.dx - handleSize / 2,
@@ -331,8 +393,20 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
       child: GestureDetector(
         onPanStart: (_) => _setDragging(true),
         onPanUpdate: (details) {
-          final local = camera.latLngToScreenOffset(point) +
-              (details.localPosition - Offset(handleSize / 2, handleSize / 2));
+          // #261 — must NOT rebase from `point`/`offset` here: both are the
+          // handle's *current* position, itself set by the previous
+          // onPanUpdate call in this same gesture, so recomputing the drag
+          // base from them every frame compounds (each frame's delta lands
+          // on top of an already-shifted base) — a runaway feedback loop
+          // that read as "way faster than my finger, almost exponential"
+          // and, worst case, the handle "jumping off screen" entirely.
+          // Converting the pointer's true *global* position through the
+          // map area's own stable RenderBox sidesteps this: it asks "where
+          // is the finger right now" fresh every frame, independent of any
+          // prior update, so the handle tracks 1:1 with the touch.
+          final box =
+              _mapAreaKey.currentContext!.findRenderObject()! as RenderBox;
+          final local = box.globalToLocal(details.globalPosition);
           onDragUpdate(camera.screenOffsetToLatLng(local));
         },
         onPanEnd: (_) {

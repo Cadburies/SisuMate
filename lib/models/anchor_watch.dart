@@ -29,7 +29,14 @@ class AnchorWatch {
   /// Full angular width of the danger-zone sector, degrees.
   double dangerZoneWidthDeg = 60.0;
 
-  double dangerZoneRadiusMeters = 50.0;
+  /// #262 — the danger zone is a *ring* segment, not a pie slice from the
+  /// anchor: a hazard (rocks, a lee shore) is typically beyond the safe
+  /// swinging circle, not at the anchor itself. [dangerZoneInnerRadiusMeters]
+  /// defaults to the geofence [radiusMeters] (the alarm perimeter) the
+  /// moment the danger zone is first enabled, then both radii are
+  /// independently adjustable.
+  double dangerZoneInnerRadiusMeters = 30.0;
+  double dangerZoneOuterRadiusMeters = 50.0;
 
   bool isActive = true;
   DateTime droppedAt = DateTime.now().toUtc();
@@ -48,7 +55,8 @@ class AnchorWatch {
           dangerZoneEnabled == other.dangerZoneEnabled &&
           dangerZoneCenterDeg == other.dangerZoneCenterDeg &&
           dangerZoneWidthDeg == other.dangerZoneWidthDeg &&
-          dangerZoneRadiusMeters == other.dangerZoneRadiusMeters &&
+          dangerZoneInnerRadiusMeters == other.dangerZoneInnerRadiusMeters &&
+          dangerZoneOuterRadiusMeters == other.dangerZoneOuterRadiusMeters &&
           isActive == other.isActive &&
           droppedAt == other.droppedAt &&
           lastModified == other.lastModified;
@@ -63,7 +71,8 @@ class AnchorWatch {
         dangerZoneEnabled,
         dangerZoneCenterDeg,
         dangerZoneWidthDeg,
-        dangerZoneRadiusMeters,
+        dangerZoneInnerRadiusMeters,
+        dangerZoneOuterRadiusMeters,
         isActive,
         droppedAt,
         lastModified,
@@ -75,7 +84,8 @@ class AnchorWatch {
       'radiusMeters: $radiusMeters, dangerZoneEnabled: $dangerZoneEnabled, '
       'dangerZoneCenterDeg: $dangerZoneCenterDeg, '
       'dangerZoneWidthDeg: $dangerZoneWidthDeg, '
-      'dangerZoneRadiusMeters: $dangerZoneRadiusMeters, '
+      'dangerZoneInnerRadiusMeters: $dangerZoneInnerRadiusMeters, '
+      'dangerZoneOuterRadiusMeters: $dangerZoneOuterRadiusMeters, '
       'isActive: $isActive, droppedAt: $droppedAt, '
       'lastModified: $lastModified)';
 }

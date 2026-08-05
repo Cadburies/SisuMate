@@ -67,7 +67,9 @@ void main() {
   });
 
   group('isInDangerZone', () {
-    test('a boat inside the radius AND inside the sector is in the danger zone', () {
+    test(
+        'a boat inside the outer radius, outside the inner radius, AND '
+        'inside the sector is in the danger zone', () {
       final boat = offset(northMeters: 50); // bearing ≈ 0° (north)
       final inZone = service.isInDangerZone(
         boatLat: boat.lat,
@@ -76,12 +78,15 @@ void main() {
         anchorLon: anchorLon,
         centerDeg: 0,
         widthDeg: 60,
-        radiusMeters: 100,
+        innerRadiusMeters: 0,
+        outerRadiusMeters: 100,
       );
       expect(inZone, isTrue);
     });
 
-    test('a boat inside the radius but outside the sector angle is not in the danger zone', () {
+    test(
+        'a boat inside the outer radius but outside the sector angle is '
+        'not in the danger zone', () {
       final boat = offset(eastMeters: 50); // bearing ≈ 90° (east)
       final inZone = service.isInDangerZone(
         boatLat: boat.lat,
@@ -90,12 +95,15 @@ void main() {
         anchorLon: anchorLon,
         centerDeg: 0,
         widthDeg: 60, // covers -30..30
-        radiusMeters: 100,
+        innerRadiusMeters: 0,
+        outerRadiusMeters: 100,
       );
       expect(inZone, isFalse);
     });
 
-    test('a boat within the sector angle but beyond the radius is not in the danger zone', () {
+    test(
+        'a boat within the sector angle but beyond the outer radius is '
+        'not in the danger zone', () {
       final boat = offset(northMeters: 150); // bearing ≈ 0°, but far
       final inZone = service.isInDangerZone(
         boatLat: boat.lat,
@@ -104,7 +112,8 @@ void main() {
         anchorLon: anchorLon,
         centerDeg: 0,
         widthDeg: 60,
-        radiusMeters: 100,
+        innerRadiusMeters: 0,
+        outerRadiusMeters: 100,
       );
       expect(inZone, isFalse);
     });
@@ -120,9 +129,63 @@ void main() {
         anchorLon: anchorLon,
         centerDeg: 350,
         widthDeg: 40,
-        radiusMeters: 200,
+        innerRadiusMeters: 0,
+        outerRadiusMeters: 200,
       );
       expect(inZone, isTrue);
+    });
+
+    group('#262 — ring segment (inner radius)', () {
+      test(
+          'a boat within the sector angle but still inside the inner '
+          'radius is NOT in the danger zone (still safely within the '
+          'swinging circle)', () {
+        final boat = offset(northMeters: 20); // bearing ≈ 0°, close in
+        final inZone = service.isInDangerZone(
+          boatLat: boat.lat,
+          boatLon: boat.lon,
+          anchorLat: anchorLat,
+          anchorLon: anchorLon,
+          centerDeg: 0,
+          widthDeg: 60,
+          innerRadiusMeters: 30,
+          outerRadiusMeters: 100,
+        );
+        expect(inZone, isFalse);
+      });
+
+      test(
+          'a boat between the inner and outer radius, within the sector '
+          'angle, is in the danger zone', () {
+        final boat = offset(northMeters: 50);
+        final inZone = service.isInDangerZone(
+          boatLat: boat.lat,
+          boatLon: boat.lon,
+          anchorLat: anchorLat,
+          anchorLon: anchorLon,
+          centerDeg: 0,
+          widthDeg: 60,
+          innerRadiusMeters: 30,
+          outerRadiusMeters: 100,
+        );
+        expect(inZone, isTrue);
+      });
+
+      test('a boat exactly at the inner radius counts as in the zone (inclusive)',
+          () {
+        final boat = offset(northMeters: 30);
+        final inZone = service.isInDangerZone(
+          boatLat: boat.lat,
+          boatLon: boat.lon,
+          anchorLat: anchorLat,
+          anchorLon: anchorLon,
+          centerDeg: 0,
+          widthDeg: 60,
+          innerRadiusMeters: 30,
+          outerRadiusMeters: 100,
+        );
+        expect(inZone, isTrue);
+      });
     });
   });
 

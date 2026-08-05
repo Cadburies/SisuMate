@@ -567,7 +567,12 @@ class AnchorWatches extends Table {
       real().withDefault(const Constant(0))();
   RealColumn get dangerZoneWidthDeg =>
       real().withDefault(const Constant(60.0))();
-  RealColumn get dangerZoneRadiusMeters =>
+  // #262 — a ring segment, not a pie slice from the anchor: inner defaults
+  // to the geofence radiusMeters (the alarm perimeter) the moment the
+  // danger zone is first enabled.
+  RealColumn get dangerZoneInnerRadiusMeters =>
+      real().withDefault(const Constant(30.0))();
+  RealColumn get dangerZoneOuterRadiusMeters =>
       real().withDefault(const Constant(50.0))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get droppedAt =>
@@ -623,7 +628,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
