@@ -47,8 +47,9 @@ import 'error_log_service.dart';
 /// subnets, or the phone joins the IoT network directly — this service has
 /// no way to fix that itself; it can only time out on "local" and fall
 /// back to remote when the two subnets aren't bridged. A Yacht Devices
-/// YDWG-02 on the same IoT VLAN was set up alongside the Hub at
-/// `192.168.10.30` — not yet integrated (see [knownLocalAddresses]'s doc).
+/// YDWG-02 on the same IoT VLAN sits at `192.168.10.30` (`YDWGIP` /
+/// [defaultYdwgUrl]) — raw NMEA gateway, not LuCI; Discover only pings
+/// reachability. Full NMEA parse is still deferred (#263).
 ///
 /// #257/#260 — the HTTPS remote endpoint (`PREDICTWIND_HUB_URL`) serves a
 /// self-signed certificate, which `curl -k` masked during dev testing but
@@ -190,6 +191,12 @@ class PredictWindDatahubService {
       String.fromEnvironment('PREDICTWIND_HUB_HTTP_URL');
   static const _hubLocalUrl =
       String.fromEnvironment('PREDICTWIND_HUB_LOCAL_URL');
+  /// Optional bare IP for the PredictWind DataHub on the boat LAN
+  /// (`DATAHUBIP` in dart-defines / .env), e.g. `192.168.10.31`.
+  static const _dataHubIp = String.fromEnvironment('DATAHUBIP');
+  /// Optional bare IP for a Yacht Devices YDWG-02 on the boat LAN
+  /// (`YDWGIP` in dart-defines / .env), e.g. `192.168.10.30`.
+  static const _ydwgIp = String.fromEnvironment('YDWGIP');
   static const _hubUsername =
       String.fromEnvironment('PREDICTWIND_HUB_USERNAME');
   static const _hubPassword =
@@ -201,6 +208,45 @@ class PredictWindDatahubService {
   static const _loginPath = 'cgi-bin/luci';
   static const _statusPath = 'cgi-bin/luci/admin/services/nmead/nmead_status';
   static final _sysauthCookie = RegExp(r'sysauth=([0-9a-fA-F]+)');
+
+  /// Prefer http — HTTPS on the vendor tunnel is often self-signed (#257/#260).
+  static const defaultDataHubRemoteUrl = 'http://remote.rdsensing.com:36121';
+
+  /// Boat-LAN DataHub default when no dart-define is set (this boat's IoT VLAN).
+  static const _fallbackDataHubLocalUrl = 'http://192.168.10.31';
+
+  /// Boat-LAN YDWG-02 default when `YDWGIP` is unset.
+  static const _fallbackYdwgIp = '192.168.10.30';
+
+  /// Normalize a bare IP or host into an `http://…` base URL.
+  static String _asHttpBase(String raw) {
+    final t = raw.trim();
+    if (t.isEmpty) return t;
+    if (t.startsWith('http://') || t.startsWith('https://')) return t;
+    return 'http://$t';
+  }
+
+  /// DataHub on the boat network — from `PREDICTWIND_HUB_LOCAL_URL` or
+  /// `DATAHUBIP`, else [\_fallbackDataHubLocalUrl].
+  static String get defaultDataHubLocalUrl {
+    if (_hubLocalUrl.isNotEmpty) return _asHttpBase(_hubLocalUrl);
+    if (_dataHubIp.isNotEmpty) return _asHttpBase(_dataHubIp);
+    return _fallbackDataHubLocalUrl;
+  }
+
+  /// Yacht Devices YDWG-02 on the boat network — from `YDWGIP`, else
+  /// [\_fallbackYdwgIp]. Speaks raw NMEA (not LuCI); listed for Discover
+  /// reachability / manual pick, not Hub login.
+  static String get defaultYdwgUrl {
+    if (_ydwgIp.isNotEmpty) return _asHttpBase(_ydwgIp);
+    return _asHttpBase(_fallbackYdwgIp);
+  }
+
+  /// Internet DataHub tunnel — dart-define HTTP first, else vendor default.
+  static String get defaultDataHubRemoteUrlResolved {
+    if (_hubHttpUrl.isNotEmpty) return _asHttpBase(_hubHttpUrl);
+    return defaultDataHubRemoteUrl;
+  }
 
   String? get _remoteBaseUrl =>
       _baseUrlOverride ??
@@ -364,16 +410,18 @@ class PredictWindDatahubService {
     return _sysauthCookie.firstMatch(setCookie)?.group(1);
   }
 
-  /// #263 — known default **local-WiFi** addresses for PredictWind Datahub-
-  /// family devices. Includes PredictWind's documented default
-  /// (`10.10.10.1`) plus the compile-time [PREDICTWIND_HUB_LOCAL_URL] when
-  /// set (this boat: `http://192.168.10.31`). A bare Yacht Devices YDWG-02
-  /// still wouldn't answer LuCI login (raw-NMEA — deferred in #263).
+  /// #263 — **local-WiFi LuCI** DataHub addresses tried by Discover login.
+  /// Order: this boat's default → PredictWind stock default. YDWG-02 is
+  /// *not* here (no LuCI); see [defaultYdwgUrl] / reachability probe.
   static List<String> get knownLocalAddresses {
-    final list = <String>['http://10.10.10.1'];
-    if (_hubLocalUrl.isNotEmpty && !list.contains(_hubLocalUrl)) {
-      list.insert(0, _hubLocalUrl);
+    final list = <String>[];
+    void add(String url) {
+      final u = _asHttpBase(url);
+      if (u.isNotEmpty && !list.contains(u)) list.add(u);
     }
+
+    add(defaultDataHubLocalUrl);
+    add('http://10.10.10.1');
     return list;
   }
 
@@ -381,22 +429,48 @@ class PredictWindDatahubService {
   /// by Discover when you're not on the boat WiFi (beach bar, marina cafe).
   /// HTTP first: the HTTPS endpoint uses a self-signed cert that dart:io
   /// rejects (#257/#260). Compile-time dart-defines are preferred when set;
-  /// the vendor hostnames are always included as a fallback so Discover
-  /// still works without rebuilds after a tunnel port change is typed in.
+  /// the vendor hostnames are always included as a fallback.
   static List<String> get knownRemoteAddresses {
     final list = <String>[];
     void add(String? url) {
       if (url == null || url.isEmpty) return;
-      if (!list.contains(url)) list.add(url);
+      final u = _asHttpBase(url);
+      if (!list.contains(u)) list.add(u);
     }
 
-    add(_hubHttpUrl.isNotEmpty ? _hubHttpUrl : null);
+    add(defaultDataHubRemoteUrlResolved);
     add(_hubUrl.isNotEmpty ? _hubUrl : null);
-    // Vendor defaults (same host family as dart-defines).
-    add('http://remote.rdsensing.com:36121');
+    add(defaultDataHubRemoteUrl);
     add('https://remote.rdsensing.com:36122');
     return list;
   }
+
+  /// Suggested boat-LAN endpoints shown in gateway setup (quick-pick chips).
+  /// Includes DataHub local + YDWG-02 even when Discover hasn't run.
+  static List<GatewayDefaultSuggestion> get boatLanDefaults => [
+        GatewayDefaultSuggestion(
+          url: defaultDataHubLocalUrl,
+          label: 'DataHub local',
+          tip: 'Default for DataHub on boat WiFi / intranet',
+          kind: GatewayDefaultKind.dataHubLocal,
+        ),
+        GatewayDefaultSuggestion(
+          url: defaultYdwgUrl,
+          label: 'YDWG-02',
+          tip: 'Default for YDWG-02 (NMEA gateway, no Hub login)',
+          kind: GatewayDefaultKind.ydwg,
+        ),
+      ];
+
+  /// Internet DataHub default for the address field / chips.
+  static List<GatewayDefaultSuggestion> get internetDefaults => [
+        GatewayDefaultSuggestion(
+          url: defaultDataHubRemoteUrlResolved,
+          label: 'DataHub internet',
+          tip: 'Default for DataHub',
+          kind: GatewayDefaultKind.dataHubRemote,
+        ),
+      ];
 
   /// True when [baseUrl]'s host looks like a private LAN address (only
   /// reachable on the boat's own network). Used to pick timeouts and to
@@ -505,9 +579,9 @@ class PredictWindDatahubService {
   }
 
   /// #263 follow-up — Discover for the gateway setup screen: probes known
-  /// **local** addresses and (by default) PredictWind's **remote** tunnel
-  /// URLs with [username]/[password], concurrently. Returns every address
-  /// that accepted the login, plus a short human summary of what was tried.
+  /// **local** DataHub addresses and (by default) PredictWind **remote**
+  /// tunnel URLs with [username]/[password] (LuCI login). Also pings the
+  /// YDWG-02 host for reachability (no login — raw NMEA device).
   Future<GatewayDiscoveryResult> discoverGateways({
     required String username,
     required String password,
@@ -546,14 +620,22 @@ class PredictWindDatahubService {
         for (var i = 0; i < unique.length; i++)
           if (results[i].ok) unique[i],
       ];
+
+      // YDWG-02: no LuCI — reachability only; never mixed into Hub login hits
+      // (saving it as predictwindHubLocalUrl would break the Hub path).
+      final ydwgUp =
+          await probeHostReachable(defaultYdwgUrl, client: c);
+
       final localHits =
           working.where(isPrivateLanUrl).toList(growable: false);
       final remoteHits =
           working.where((a) => !isPrivateLanUrl(a)).toList(growable: false);
+      final ydwgNote = ydwgUp
+          ? ' YDWG-02 host reachable at $defaultYdwgUrl (NMEA — not Hub login).'
+          : '';
 
       String summary;
       if (working.isEmpty) {
-        // Surface the most useful failure from remote probes if any.
         String? remoteDetail;
         for (var i = 0; i < unique.length; i++) {
           if (!isPrivateLanUrl(unique[i]) && !results[i].ok) {
@@ -561,30 +643,61 @@ class PredictWindDatahubService {
             break;
           }
         }
-        summary = remoteDetail != null
-            ? 'No gateway answered. Remote check: $remoteDetail '
-                'Try again on boat WiFi for the local Hub, or enter the '
-                'address manually and tap Test.'
-            : 'No gateway answered among local and internet addresses. '
-                'On the boat, join the boat WiFi and try again; off the boat, '
-                'confirm the Hub remote-access tunnel is online.';
+        if (ydwgUp) {
+          summary =
+              'No DataHub login answered, but YDWG-02 is reachable at '
+              '$defaultYdwgUrl (raw NMEA — use a DataHub address for Hub Save).';
+        } else if (remoteDetail != null) {
+          summary =
+              'No gateway answered. Remote check: $remoteDetail '
+              'Try again on boat WiFi for the local Hub, or enter the '
+              'address manually and tap Test.';
+        } else {
+          summary =
+              'No gateway answered among local and internet addresses. '
+              'On the boat, join the boat WiFi and try again; off the boat, '
+              'confirm the Hub remote-access tunnel is online.';
+        }
       } else if (localHits.isNotEmpty && remoteHits.isNotEmpty) {
         summary =
             'Found ${working.length}: ${localHits.length} on boat WiFi, '
-            '${remoteHits.length} via internet.';
+            '${remoteHits.length} via internet.$ydwgNote';
       } else if (localHits.isNotEmpty) {
         summary =
-            'Found ${localHits.length} on the boat network (local WiFi).';
+            'Found ${localHits.length} on the boat network (local WiFi).'
+            '$ydwgNote';
       } else {
         summary =
             'Found ${remoteHits.length} via internet (remote access) — '
-            'usable away from the boat.';
+            'usable away from the boat.$ydwgNote';
       }
 
       return GatewayDiscoveryResult(
         workingAddresses: working,
         summary: summary,
+        ydwgReachable: ydwgUp,
       );
+    } finally {
+      if (client == null) c.close();
+    }
+  }
+
+  /// Lightweight "is anything listening?" check for non-LuCI devices
+  /// (YDWG-02). Any HTTP response (including 404) counts as reachable;
+  /// timeouts / connection refused do not.
+  Future<bool> probeHostReachable(
+    String baseUrl, {
+    http.Client? client,
+  }) async {
+    final c = client ?? http.Client();
+    try {
+      final res = await c
+          .get(Uri.parse(baseUrl))
+          .timeout(_timeoutFor(baseUrl));
+      // Any status means the host answered on that port.
+      return res.statusCode > 0;
+    } catch (_) {
+      return false;
     } finally {
       if (client == null) c.close();
     }
@@ -604,9 +717,27 @@ class GatewayProbeResult {
 class GatewayDiscoveryResult {
   final List<String> workingAddresses;
   final String summary;
+  final bool ydwgReachable;
   const GatewayDiscoveryResult({
     required this.workingAddresses,
     required this.summary,
+    this.ydwgReachable = false,
+  });
+}
+
+enum GatewayDefaultKind { dataHubRemote, dataHubLocal, ydwg }
+
+/// Quick-pick default shown on the gateway setup screen.
+class GatewayDefaultSuggestion {
+  final String url;
+  final String label;
+  final String tip;
+  final GatewayDefaultKind kind;
+  const GatewayDefaultSuggestion({
+    required this.url,
+    required this.label,
+    required this.tip,
+    required this.kind,
   });
 }
 

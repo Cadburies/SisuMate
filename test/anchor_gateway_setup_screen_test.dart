@@ -84,12 +84,72 @@ void main() {
     expect(find.text('Gateway Setup'), findsOneWidget);
     expect(find.text('Found:'), findsNothing);
     expect(find.text('Default for DataHub'), findsOneWidget);
+    // Quick-pick chips for internet + boat-LAN defaults.
+    expect(find.widgetWithText(ActionChip, 'DataHub internet'), findsOneWidget);
+    expect(find.widgetWithText(ActionChip, 'DataHub local'), findsOneWidget);
+    expect(find.widgetWithText(ActionChip, 'YDWG-02'), findsOneWidget);
     final addressField = find.widgetWithText(TextField, 'Hub address');
     await reveal(tester, addressField);
     expect(
       tester.widget<TextField>(addressField).controller!.text,
-      'http://remote.rdsensing.com:36121',
+      PredictWindDatahubService.defaultDataHubRemoteUrlResolved,
     );
+  });
+
+  testWidgets('quick-pick chips fill local DataHub and YDWG defaults',
+      (tester) async {
+    await pumpScreen(tester);
+
+    final localChip = find.widgetWithText(ActionChip, 'DataHub local');
+    await reveal(tester, localChip);
+    await tester.tap(localChip);
+    await tester.pumpAndSettle();
+
+    final addressField = find.widgetWithText(TextField, 'Hub address');
+    expect(
+      tester.widget<TextField>(addressField).controller!.text,
+      PredictWindDatahubService.defaultDataHubLocalUrl,
+    );
+    expect(
+      find.text('Default for DataHub on boat WiFi / intranet'),
+      findsWidgets,
+    );
+
+    final ydwgChip = find.widgetWithText(ActionChip, 'YDWG-02');
+    await reveal(tester, ydwgChip);
+    await tester.tap(ydwgChip);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(addressField).controller!.text,
+      PredictWindDatahubService.defaultYdwgUrl,
+    );
+    expect(
+      find.textContaining('YDWG-02'),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('Save rejects YDWG as Hub address', (tester) async {
+    await pumpScreen(tester);
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Username'), 'boatuser');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Password'), 'boatpass');
+    final ydwgChip = find.widgetWithText(ActionChip, 'YDWG-02');
+    await reveal(tester, ydwgChip);
+    await tester.tap(ydwgChip);
+    await tester.pumpAndSettle();
+
+    final saveButton = find.widgetWithText(ElevatedButton, 'Save');
+    await reveal(tester, saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('raw NMEA'), findsOneWidget);
+    final repo = container.read(userSettingsRepositoryProvider);
+    final saved = await repo.getSettings();
+    expect(saved?.predictwindHubLocalUrl ?? '', isNot(contains('192.168.10.30')));
   });
 
   testWidgets('Discover finds a working remote tunnel and selects it',

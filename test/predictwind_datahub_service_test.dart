@@ -553,6 +553,62 @@ void main() {
       );
     });
 
+    test('defaults expose DataHub remote/local and YDWG-02', () {
+      expect(
+        PredictWindDatahubService.defaultDataHubRemoteUrl,
+        'http://remote.rdsensing.com:36121',
+      );
+      expect(
+        PredictWindDatahubService.defaultDataHubLocalUrl,
+        startsWith('http://'),
+      );
+      expect(
+        PredictWindDatahubService.defaultYdwgUrl,
+        startsWith('http://'),
+      );
+      expect(
+        PredictWindDatahubService.knownLocalAddresses.first,
+        PredictWindDatahubService.defaultDataHubLocalUrl,
+      );
+      expect(
+        PredictWindDatahubService.knownLocalAddresses,
+        contains('http://10.10.10.1'),
+      );
+      expect(
+        PredictWindDatahubService.boatLanDefaults.map((s) => s.kind),
+        containsAll([
+          GatewayDefaultKind.dataHubLocal,
+          GatewayDefaultKind.ydwg,
+        ]),
+      );
+      expect(
+        PredictWindDatahubService.internetDefaults.single.kind,
+        GatewayDefaultKind.dataHubRemote,
+      );
+    });
+
+    test('discoverGateways does not put YDWG in Hub login hits', () async {
+      final client = MockClient((request) async {
+        // Anything on the YDWG host answers GET (reachability); LuCI fails.
+        if (request.url.host ==
+            Uri.parse(PredictWindDatahubService.defaultYdwgUrl).host) {
+          return http.Response('ok', 200);
+        }
+        throw Exception('connection refused');
+      });
+      const service = PredictWindDatahubService();
+
+      final result = await service.discoverGateways(
+        username: 'user',
+        password: 'pass',
+        client: client,
+      );
+
+      expect(result.workingAddresses, isEmpty);
+      expect(result.ydwgReachable, isTrue);
+      expect(result.summary, contains('YDWG-02'));
+    });
+
     test(
         'discoverGateways returns working local + remote addresses',
         () async {

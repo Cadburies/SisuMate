@@ -9,11 +9,12 @@ import '../../services/predictwind_datahub_service.dart';
 
 /// #263 — Anchor Alarm's gateway setup/onboarding screen: username/password,
 /// "Discover" (tries known **local** Hub IPs *and* PredictWind **remote**
-/// tunnel URLs with the entered credentials), manual address + "Test", then
+/// tunnel URLs with the entered credentials), quick-pick defaults (DataHub
+/// internet / boat-LAN DataHub / YDWG-02), manual address + "Test", then
 /// "Save" to [UserSettings].
 ///
-/// YDWG-02-style raw-NMEA gateways are out of scope here — that class of
-/// device isn't behind a LuCI login at all (see #263).
+/// YDWG-02 is raw NMEA (no LuCI) — chips + Discover reachability only;
+/// full NMEA parse is still deferred (#263). Do not Save YDWG as the Hub URL.
 class AnchorGatewaySetupScreen extends ConsumerStatefulWidget {
   const AnchorGatewaySetupScreen({
     super.key,
@@ -34,23 +35,31 @@ class AnchorGatewaySetupScreen extends ConsumerStatefulWidget {
 
 enum _Status { idle, discovering, testing, saving }
 
-/// Vendor internet tunnel — preferred default for DataHub when not on boat WiFi.
-const _kDefaultDataHubRemoteUrl = 'http://remote.rdsensing.com:36121';
-
 class _AnchorGatewaySetupScreenState
     extends ConsumerState<AnchorGatewaySetupScreen> {
-  final _usernameCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _manualCtrl = TextEditingController(text: _kDefaultDataHubRemoteUrl);
+  late final TextEditingController _usernameCtrl;
+  late final TextEditingController _passwordCtrl;
+  late final TextEditingController _manualCtrl;
 
   _Status _status = _Status.idle;
   List<String> _discovered = [];
   bool _discoveryRan = false;
-  String? _selectedAddress = _kDefaultDataHubRemoteUrl;
+  bool _ydwgReachable = false;
+  String? _selectedAddress;
   String? _message;
   bool _messageIsError = false;
 
   bool _loadedFromSettings = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final remote = PredictWindDatahubService.defaultDataHubRemoteUrlResolved;
+    _usernameCtrl = TextEditingController();
+    _passwordCtrl = TextEditingController();
+    _manualCtrl = TextEditingController(text: remote);
+    _selectedAddress = remote;
+  }
 
   @override
   void dispose() {
@@ -98,15 +107,55 @@ class _AnchorGatewaySetupScreenState
       _status = _Status.idle;
       _discovered = result.workingAddresses;
       _discoveryRan = true;
+      _ydwgReachable = result.ydwgReachable;
       _message = result.summary;
       _messageIsError = result.workingAddresses.isEmpty;
       if (result.workingAddresses.isNotEmpty) {
-        // Prefer a remote hit when both exist? Prefer first (local first in
-        // list order) — on boat that's better; off boat only remotes succeed.
+        // Prefer first (local first in list order) — on boat that's better;
+        // off boat only remotes succeed. Never auto-select YDWG (not LuCI).
         _selectedAddress = result.workingAddresses.first;
         _manualCtrl.text = result.workingAddresses.first;
       }
     });
+  }
+
+  bool _isYdwgAddress(String address) {
+    final y = PredictWindDatahubService.defaultYdwgUrl;
+    try {
+      return Uri.parse(address).host == Uri.parse(y).host;
+    } catch (_) {
+      return address == y;
+    }
+  }
+
+  void _applyDefaultSuggestion(GatewayDefaultSuggestion s) {
+    setState(() {
+      _selectedAddress = s.url;
+      _manualCtrl.text = s.url;
+      _message = s.tip;
+      _messageIsError = false;
+    });
+  }
+
+  String _helperForCurrentAddress() {
+    final address = _selectedAddress ?? _normalizedManualAddress() ?? '';
+    for (final s in [
+      ...PredictWindDatahubService.internetDefaults,
+      ...PredictWindDatahubService.boatLanDefaults,
+    ]) {
+      if (address == s.url) return s.tip;
+    }
+    if (_isYdwgAddress(address)) {
+      return 'Default for YDWG-02 (NMEA gateway, no Hub login)';
+    }
+    if (address == PredictWindDatahubService.defaultDataHubLocalUrl) {
+      return 'Default for DataHub on boat WiFi / intranet';
+    }
+    if (address == PredictWindDatahubService.defaultDataHubRemoteUrlResolved ||
+        address == PredictWindDatahubService.defaultDataHubRemoteUrl) {
+      return 'Default for DataHub';
+    }
+    return 'DataHub Hub address (local or internet)';
   }
 
   Future<void> _testManual() async {
@@ -120,6 +169,38 @@ class _AnchorGatewaySetupScreenState
       });
       return;
     }
+
+    // YDWG-02: reachability only (no Hub login).
+    if (_isYdwgAddress(address)) {
+      setState(() {
+        _status = _Status.testing;
+        _message = null;
+      });
+      final up = await widget.hubService.probeHostReachable(
+        address,
+        client: widget.httpClient,
+      );
+      if (!mounted) return;
+      setState(() {
+        _status = _Status.idle;
+        _selectedAddress = address;
+        _manualCtrl.text = address;
+        _ydwgReachable = up;
+        if (up) {
+          _message =
+              'YDWG-02 host reachable at $address (raw NMEA — not a Hub '
+              'login). Use a DataHub address for Save.';
+          _messageIsError = false;
+        } else {
+          _message =
+              "Couldn't reach YDWG-02 at $address. Join boat WiFi / IoT "
+              'network and check YDWGIP.';
+          _messageIsError = true;
+        }
+      });
+      return;
+    }
+
     final username = _usernameCtrl.text.trim();
     final password = _passwordCtrl.text;
     if (username.isEmpty || password.isEmpty) {
@@ -193,6 +274,16 @@ class _AnchorGatewaySetupScreenState
         _message =
             'Enter or Discover a gateway address before saving '
             '(e.g. http://remote.rdsensing.com:36121).';
+        _messageIsError = true;
+      });
+      return;
+    }
+    if (_isYdwgAddress(address)) {
+      setState(() {
+        _message =
+            'YDWG-02 is a raw NMEA gateway (no Hub login). Save a DataHub '
+            'address instead — pick "DataHub internet" or "DataHub local", '
+            'or run Discover.';
         _messageIsError = true;
       });
       return;
@@ -287,8 +378,9 @@ class _AnchorGatewaySetupScreenState
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            'Probes known boat-WiFi addresses and PredictWind '
-                            'internet tunnel URLs with the login above. '
+                            'Probes known boat-WiFi DataHub addresses and '
+                            'PredictWind internet tunnel URLs with the login '
+                            'above, and pings the default YDWG-02 host. '
                             'Works at the dock (local) and away from the boat '
                             '(remote) when the Hub tunnel is online.',
                           ),
@@ -342,6 +434,15 @@ class _AnchorGatewaySetupScreenState
                               ),
                             ),
                           ],
+                          if (_discoveryRan && _ydwgReachable) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              'YDWG-02 reachable at '
+                              '${PredictWindDatahubService.defaultYdwgUrl} '
+                              '(NMEA — not Hub login)',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -358,11 +459,31 @@ class _AnchorGatewaySetupScreenState
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Local on boat WiFi: http://192.168.10.31 (or '
-                            'your Hub’s LAN IP).\n'
-                            'Prefer http for remote — https often uses a '
-                            'self-signed certificate the phone rejects.',
+                          Text(
+                            'Quick picks use this boat’s defaults '
+                            '(${PredictWindDatahubService.defaultDataHubLocalUrl} '
+                            'DataHub / '
+                            '${PredictWindDatahubService.defaultYdwgUrl} '
+                            'YDWG-02). Prefer http for remote — https often '
+                            'uses a self-signed certificate the phone rejects.',
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final s in [
+                                ...PredictWindDatahubService.internetDefaults,
+                                ...PredictWindDatahubService.boatLanDefaults,
+                              ])
+                                ActionChip(
+                                  label: Text(s.label),
+                                  tooltip: s.tip,
+                                  onPressed: busy
+                                      ? null
+                                      : () => _applyDefaultSuggestion(s),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -370,10 +491,11 @@ class _AnchorGatewaySetupScreenState
                               Expanded(
                                 child: TextField(
                                   controller: _manualCtrl,
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                     labelText: 'Hub address',
-                                    hintText: _kDefaultDataHubRemoteUrl,
-                                    helperText: 'Default for DataHub',
+                                    hintText: PredictWindDatahubService
+                                        .defaultDataHubRemoteUrlResolved,
+                                    helperText: _helperForCurrentAddress(),
                                   ),
                                   enabled: !busy,
                                   autocorrect: false,

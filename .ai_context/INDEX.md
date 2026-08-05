@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last (grok):** #264 tile cache/basemap share · #265 long-press map drag · #266 Anchor Info tab (SOG/COG/AWS + distances).
+- **Last (grok):** gateway defaults — DataHub internet + boat LAN + YDWG-02 chips (`YDWGIP`/`DATAHUBIP`).
 - **Next open bugs:** #258/#259 boats.polar.
-- **Still open anchor:** #256 parent epic (core shipped); #263 YDWG-02 half deferred.
+- **Still open anchor:** #256 epic; #263 full YDWG NMEA parse still deferred (defaults/reachability only).
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 
