@@ -26,7 +26,8 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
     ..fromName = r.fromName
     ..replyToEmail = r.replyToEmail
     ..boatName = r.boatName
-    ..freeEditsUsed = r.freeEditsUsed;
+    ..freeEditsUsed = r.freeEditsUsed
+    ..defaultAnchorScopeRatio = r.defaultAnchorScopeRatio;
 
   UserSettingsTableCompanion _companion(UserSettings s) =>
       UserSettingsTableCompanion(
@@ -46,6 +47,7 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
         replyToEmail: Value(s.replyToEmail),
         boatName: Value(s.boatName),
         freeEditsUsed: Value(s.freeEditsUsed),
+        defaultAnchorScopeRatio: Value(s.defaultAnchorScopeRatio),
       );
 
   @override

@@ -41,12 +41,16 @@ class PredictWindBoatData {
   final double? longitude;
   final double? windSpeedKt;
   final double? windDirectionDeg;
+  /// Water depth in meters (`dpt` — below transducer + offset). Used by the
+  /// Anchor Alarm to suggest a scope-based geofence radius.
+  final double? depthMeters;
   final DateTime observedAt;
   const PredictWindBoatData({
     this.latitude,
     this.longitude,
     this.windSpeedKt,
     this.windDirectionDeg,
+    this.depthMeters,
     required this.observedAt,
   });
 }
@@ -145,6 +149,7 @@ class PredictWindDatahubService {
         longitude: _asDouble(json['lon']),
         windSpeedKt: _asDouble(json['tws']),
         windDirectionDeg: _asDouble(json['twd']),
+        depthMeters: _asDouble(json['dpt']),
         observedAt: unixtime is num
             ? DateTime.fromMillisecondsSinceEpoch(
                 unixtime.toInt() * 1000,

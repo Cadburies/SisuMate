@@ -252,6 +252,19 @@ class SettingsScreen extends ConsumerWidget {
           _buildSectionHeader(context, 'Units'),
           const _UnitsSettingsSection(),
           const Divider(),
+          _buildSectionHeader(context, 'Anchor Alarm'),
+          Consumer(
+            builder: (context, ref, child) {
+              final settingsAsync = ref.watch(userSettingsProvider);
+              return settingsAsync.when(
+                data: (settings) =>
+                    _AnchorAlarmSettingsSection(settings: settings),
+                loading: () => const ListTile(title: Text('Loading...')),
+                error: (e, _) => ListTile(title: Text('Error: $e')),
+              );
+            },
+          ),
+          const Divider(),
           _buildSectionHeader(context, 'Email & Sharing'),
           Consumer(
             builder: (context, ref, child) {
@@ -638,6 +651,69 @@ class _EmailSettingsFieldsState extends ConsumerState<_EmailSettingsFields> {
           TextField(
             controller: _boatNameController,
             decoration: const InputDecoration(labelText: 'Boat name (used in email subjects)'),
+            onEditingComplete: _save,
+            onTapOutside: (_) => _save(),
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+}
+
+/// #256 — default chain-scope ratio new anchor drops are pre-filled with.
+class _AnchorAlarmSettingsSection extends ConsumerStatefulWidget {
+  final UserSettings? settings;
+  const _AnchorAlarmSettingsSection({required this.settings});
+
+  @override
+  ConsumerState<_AnchorAlarmSettingsSection> createState() =>
+      _AnchorAlarmSettingsSectionState();
+}
+
+class _AnchorAlarmSettingsSectionState
+    extends ConsumerState<_AnchorAlarmSettingsSection> {
+  late final TextEditingController _scopeRatioController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scopeRatioController = TextEditingController(
+      text: (widget.settings?.defaultAnchorScopeRatio ?? 5.0)
+          .toStringAsFixed(1),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scopeRatioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final ratio = double.tryParse(_scopeRatioController.text.trim());
+    if (ratio == null || ratio <= 0) return;
+    final updated = (widget.settings ?? UserSettings())
+      ..defaultAnchorScopeRatio = ratio;
+    await ref.read(userSettingsRepositoryProvider).updateSettings(updated);
+    ref.invalidate(userSettingsProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        children: [
+          TextField(
+            controller: _scopeRatioController,
+            decoration: const InputDecoration(
+              labelText: 'Default chain scope ratio',
+              helperText: 'e.g. 5.0 for 5:1 — chain paid out vs. depth. '
+                  'Suggests the anchor alarm circle; editable per drop.',
+              helperMaxLines: 2,
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onEditingComplete: _save,
             onTapOutside: (_) => _save(),
           ),

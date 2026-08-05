@@ -46,6 +46,8 @@ import '../domain/repositories/inventory_item_repository.dart';
 import '../data/repositories/inventory_item_repository_impl.dart';
 import '../domain/repositories/fuel_log_repository.dart';
 import '../data/repositories/fuel_log_repository_impl.dart';
+import '../domain/repositories/anchor_watch_repository.dart';
+import '../data/repositories/anchor_watch_repository_impl.dart';
 
 final databaseServiceProvider =
     Provider<DatabaseService>((ref) => DatabaseService());
@@ -221,6 +223,10 @@ final fuelLogRepositoryProvider = Provider<FuelLogRepository>((ref) {
 
 final userSettingsRepositoryProvider = Provider<UserSettingsRepository>((ref) {
   return UserSettingsRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+final anchorWatchRepositoryProvider = Provider<AnchorWatchRepository>((ref) {
+  return AnchorWatchRepositoryImpl(ref.watch(appDatabaseProvider));
 });
 
 final boatRepositoryProvider = Provider<BoatRepository>((ref) {

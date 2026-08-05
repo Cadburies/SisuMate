@@ -23,6 +23,9 @@ class UserSettings {
   /// FREE-EDITS: teaser edits/completions the Free tier has used so far.
   int freeEditsUsed = 0;
 
+  /// #256 — default chain-scope ratio new anchor drops are pre-filled with.
+  double defaultAnchorScopeRatio = 5.0;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -43,7 +46,8 @@ class UserSettings {
           fromName == other.fromName &&
           replyToEmail == other.replyToEmail &&
           boatName == other.boatName &&
-          freeEditsUsed == other.freeEditsUsed;
+          freeEditsUsed == other.freeEditsUsed &&
+          defaultAnchorScopeRatio == other.defaultAnchorScopeRatio;
 
   @override
   int get hashCode => Object.hashAll([
@@ -63,6 +67,7 @@ class UserSettings {
         replyToEmail,
         boatName,
         freeEditsUsed,
+        defaultAnchorScopeRatio,
       ]);
 
   @override
@@ -74,5 +79,6 @@ class UserSettings {
       'unitPrefsJson: $unitPrefsJson, isSynced: $isSynced, '
       'lastModified: $lastModified, recentEmails: $recentEmails, '
       'fromName: $fromName, replyToEmail: $replyToEmail, '
-      'boatName: $boatName, freeEditsUsed: $freeEditsUsed)';
+      'boatName: $boatName, freeEditsUsed: $freeEditsUsed, '
+      'defaultAnchorScopeRatio: $defaultAnchorScopeRatio)';
 }

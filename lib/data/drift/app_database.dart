@@ -447,6 +447,11 @@ class UserSettingsTable extends Table {
   /// been used. Local-only — Free never syncs. See `FreeEditGate`.
   IntColumn get freeEditsUsed => integer().withDefault(const Constant(0))();
 
+  /// #256 — default chain-scope ratio (chain paid out : depth) new anchor
+  /// drops are pre-filled with, e.g. `5.0` for 5:1. Editable per-drop.
+  RealColumn get defaultAnchorScopeRatio =>
+      real().withDefault(const Constant(5.0))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -547,6 +552,30 @@ class ErrorLogs extends Table {
   TextColumn get debugBreadcrumbs => text().nullable()();
 }
 
+/// #256 — anchor watch/drag alarm. Local-only; never synced (meaningful
+/// only to the device actively watching the anchor — see [AnchorWatch]).
+@DataClassName('AnchorWatchRow')
+class AnchorWatches extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  RealColumn get anchorLat => real().withDefault(const Constant(0))();
+  RealColumn get anchorLon => real().withDefault(const Constant(0))();
+  RealColumn get scopeRatio => real().withDefault(const Constant(5.0))();
+  RealColumn get radiusMeters => real().withDefault(const Constant(30.0))();
+  BoolColumn get dangerZoneEnabled =>
+      boolean().withDefault(const Constant(false))();
+  RealColumn get dangerZoneCenterDeg =>
+      real().withDefault(const Constant(0))();
+  RealColumn get dangerZoneWidthDeg =>
+      real().withDefault(const Constant(60.0))();
+  RealColumn get dangerZoneRadiusMeters =>
+      real().withDefault(const Constant(50.0))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get droppedAt =>
+      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get lastModified =>
+      dateTime().withDefault(currentDateAndTime)();
+}
+
 /// The app's Drift database — the sole local store. Every table the app
 /// persists is registered in the `@DriftDatabase(tables: [...])` list below.
 @DriftDatabase(tables: [
@@ -573,6 +602,7 @@ class ErrorLogs extends Table {
   SyncOutboxItems,
   ConflictLogs,
   ErrorLogs,
+  AnchorWatches,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
@@ -593,7 +623,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

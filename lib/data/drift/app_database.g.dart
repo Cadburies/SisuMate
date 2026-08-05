@@ -15911,6 +15911,18 @@ class $UserSettingsTableTable extends UserSettingsTable
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _defaultAnchorScopeRatioMeta =
+      const VerificationMeta('defaultAnchorScopeRatio');
+  @override
+  late final GeneratedColumn<double> defaultAnchorScopeRatio =
+      GeneratedColumn<double>(
+        'default_anchor_scope_ratio',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(5.0),
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -15929,6 +15941,7 @@ class $UserSettingsTableTable extends UserSettingsTable
     replyToEmail,
     boatName,
     freeEditsUsed,
+    defaultAnchorScopeRatio,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -16065,6 +16078,15 @@ class $UserSettingsTableTable extends UserSettingsTable
         ),
       );
     }
+    if (data.containsKey('default_anchor_scope_ratio')) {
+      context.handle(
+        _defaultAnchorScopeRatioMeta,
+        defaultAnchorScopeRatio.isAcceptableOrUnknown(
+          data['default_anchor_scope_ratio']!,
+          _defaultAnchorScopeRatioMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -16138,6 +16160,10 @@ class $UserSettingsTableTable extends UserSettingsTable
         DriftSqlType.int,
         data['${effectivePrefix}free_edits_used'],
       )!,
+      defaultAnchorScopeRatio: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}default_anchor_scope_ratio'],
+      )!,
     );
   }
 
@@ -16169,6 +16195,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
   /// FREE-EDITS: how many of the free-tier's teaser edits/completions have
   /// been used. Local-only — Free never syncs. See `FreeEditGate`.
   final int freeEditsUsed;
+
+  /// #256 — default chain-scope ratio (chain paid out : depth) new anchor
+  /// drops are pre-filled with, e.g. `5.0` for 5:1. Editable per-drop.
+  final double defaultAnchorScopeRatio;
   const UserSettingsRow({
     required this.id,
     this.activeBoatSupabaseId,
@@ -16186,6 +16216,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     this.replyToEmail,
     this.boatName,
     required this.freeEditsUsed,
+    required this.defaultAnchorScopeRatio,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -16220,6 +16251,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       map['boat_name'] = Variable<String>(boatName);
     }
     map['free_edits_used'] = Variable<int>(freeEditsUsed);
+    map['default_anchor_scope_ratio'] = Variable<double>(
+      defaultAnchorScopeRatio,
+    );
     return map;
   }
 
@@ -16255,6 +16289,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           ? const Value.absent()
           : Value(boatName),
       freeEditsUsed: Value(freeEditsUsed),
+      defaultAnchorScopeRatio: Value(defaultAnchorScopeRatio),
     );
   }
 
@@ -16282,6 +16317,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       replyToEmail: serializer.fromJson<String?>(json['replyToEmail']),
       boatName: serializer.fromJson<String?>(json['boatName']),
       freeEditsUsed: serializer.fromJson<int>(json['freeEditsUsed']),
+      defaultAnchorScopeRatio: serializer.fromJson<double>(
+        json['defaultAnchorScopeRatio'],
+      ),
     );
   }
   @override
@@ -16304,6 +16342,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       'replyToEmail': serializer.toJson<String?>(replyToEmail),
       'boatName': serializer.toJson<String?>(boatName),
       'freeEditsUsed': serializer.toJson<int>(freeEditsUsed),
+      'defaultAnchorScopeRatio': serializer.toJson<double>(
+        defaultAnchorScopeRatio,
+      ),
     };
   }
 
@@ -16324,6 +16365,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     Value<String?> replyToEmail = const Value.absent(),
     Value<String?> boatName = const Value.absent(),
     int? freeEditsUsed,
+    double? defaultAnchorScopeRatio,
   }) => UserSettingsRow(
     id: id ?? this.id,
     activeBoatSupabaseId: activeBoatSupabaseId.present
@@ -16345,6 +16387,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     replyToEmail: replyToEmail.present ? replyToEmail.value : this.replyToEmail,
     boatName: boatName.present ? boatName.value : this.boatName,
     freeEditsUsed: freeEditsUsed ?? this.freeEditsUsed,
+    defaultAnchorScopeRatio:
+        defaultAnchorScopeRatio ?? this.defaultAnchorScopeRatio,
   );
   UserSettingsRow copyWithCompanion(UserSettingsTableCompanion data) {
     return UserSettingsRow(
@@ -16384,6 +16428,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       freeEditsUsed: data.freeEditsUsed.present
           ? data.freeEditsUsed.value
           : this.freeEditsUsed,
+      defaultAnchorScopeRatio: data.defaultAnchorScopeRatio.present
+          ? data.defaultAnchorScopeRatio.value
+          : this.defaultAnchorScopeRatio,
     );
   }
 
@@ -16405,7 +16452,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           ..write('fromName: $fromName, ')
           ..write('replyToEmail: $replyToEmail, ')
           ..write('boatName: $boatName, ')
-          ..write('freeEditsUsed: $freeEditsUsed')
+          ..write('freeEditsUsed: $freeEditsUsed, ')
+          ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio')
           ..write(')'))
         .toString();
   }
@@ -16428,6 +16476,7 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     replyToEmail,
     boatName,
     freeEditsUsed,
+    defaultAnchorScopeRatio,
   );
   @override
   bool operator ==(Object other) =>
@@ -16448,7 +16497,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           other.fromName == this.fromName &&
           other.replyToEmail == this.replyToEmail &&
           other.boatName == this.boatName &&
-          other.freeEditsUsed == this.freeEditsUsed);
+          other.freeEditsUsed == this.freeEditsUsed &&
+          other.defaultAnchorScopeRatio == this.defaultAnchorScopeRatio);
 }
 
 class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
@@ -16468,6 +16518,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
   final Value<String?> replyToEmail;
   final Value<String?> boatName;
   final Value<int> freeEditsUsed;
+  final Value<double> defaultAnchorScopeRatio;
   const UserSettingsTableCompanion({
     this.id = const Value.absent(),
     this.activeBoatSupabaseId = const Value.absent(),
@@ -16485,6 +16536,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.replyToEmail = const Value.absent(),
     this.boatName = const Value.absent(),
     this.freeEditsUsed = const Value.absent(),
+    this.defaultAnchorScopeRatio = const Value.absent(),
   });
   UserSettingsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -16503,6 +16555,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.replyToEmail = const Value.absent(),
     this.boatName = const Value.absent(),
     this.freeEditsUsed = const Value.absent(),
+    this.defaultAnchorScopeRatio = const Value.absent(),
   });
   static Insertable<UserSettingsRow> custom({
     Expression<int>? id,
@@ -16521,6 +16574,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Expression<String>? replyToEmail,
     Expression<String>? boatName,
     Expression<int>? freeEditsUsed,
+    Expression<double>? defaultAnchorScopeRatio,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -16540,6 +16594,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       if (replyToEmail != null) 'reply_to_email': replyToEmail,
       if (boatName != null) 'boat_name': boatName,
       if (freeEditsUsed != null) 'free_edits_used': freeEditsUsed,
+      if (defaultAnchorScopeRatio != null)
+        'default_anchor_scope_ratio': defaultAnchorScopeRatio,
     });
   }
 
@@ -16560,6 +16616,7 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Value<String?>? replyToEmail,
     Value<String?>? boatName,
     Value<int>? freeEditsUsed,
+    Value<double>? defaultAnchorScopeRatio,
   }) {
     return UserSettingsTableCompanion(
       id: id ?? this.id,
@@ -16578,6 +16635,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       replyToEmail: replyToEmail ?? this.replyToEmail,
       boatName: boatName ?? this.boatName,
       freeEditsUsed: freeEditsUsed ?? this.freeEditsUsed,
+      defaultAnchorScopeRatio:
+          defaultAnchorScopeRatio ?? this.defaultAnchorScopeRatio,
     );
   }
 
@@ -16634,6 +16693,11 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     if (freeEditsUsed.present) {
       map['free_edits_used'] = Variable<int>(freeEditsUsed.value);
     }
+    if (defaultAnchorScopeRatio.present) {
+      map['default_anchor_scope_ratio'] = Variable<double>(
+        defaultAnchorScopeRatio.value,
+      );
+    }
     return map;
   }
 
@@ -16655,7 +16719,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
           ..write('fromName: $fromName, ')
           ..write('replyToEmail: $replyToEmail, ')
           ..write('boatName: $boatName, ')
-          ..write('freeEditsUsed: $freeEditsUsed')
+          ..write('freeEditsUsed: $freeEditsUsed, ')
+          ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio')
           ..write(')'))
         .toString();
   }
@@ -19727,6 +19792,734 @@ class ErrorLogsCompanion extends UpdateCompanion<ErrorLogRow> {
   }
 }
 
+class $AnchorWatchesTable extends AnchorWatches
+    with TableInfo<$AnchorWatchesTable, AnchorWatchRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnchorWatchesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _anchorLatMeta = const VerificationMeta(
+    'anchorLat',
+  );
+  @override
+  late final GeneratedColumn<double> anchorLat = GeneratedColumn<double>(
+    'anchor_lat',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _anchorLonMeta = const VerificationMeta(
+    'anchorLon',
+  );
+  @override
+  late final GeneratedColumn<double> anchorLon = GeneratedColumn<double>(
+    'anchor_lon',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _scopeRatioMeta = const VerificationMeta(
+    'scopeRatio',
+  );
+  @override
+  late final GeneratedColumn<double> scopeRatio = GeneratedColumn<double>(
+    'scope_ratio',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(5.0),
+  );
+  static const VerificationMeta _radiusMetersMeta = const VerificationMeta(
+    'radiusMeters',
+  );
+  @override
+  late final GeneratedColumn<double> radiusMeters = GeneratedColumn<double>(
+    'radius_meters',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(30.0),
+  );
+  static const VerificationMeta _dangerZoneEnabledMeta = const VerificationMeta(
+    'dangerZoneEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> dangerZoneEnabled = GeneratedColumn<bool>(
+    'danger_zone_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("danger_zone_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _dangerZoneCenterDegMeta =
+      const VerificationMeta('dangerZoneCenterDeg');
+  @override
+  late final GeneratedColumn<double> dangerZoneCenterDeg =
+      GeneratedColumn<double>(
+        'danger_zone_center_deg',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _dangerZoneWidthDegMeta =
+      const VerificationMeta('dangerZoneWidthDeg');
+  @override
+  late final GeneratedColumn<double> dangerZoneWidthDeg =
+      GeneratedColumn<double>(
+        'danger_zone_width_deg',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(60.0),
+      );
+  static const VerificationMeta _dangerZoneRadiusMetersMeta =
+      const VerificationMeta('dangerZoneRadiusMeters');
+  @override
+  late final GeneratedColumn<double> dangerZoneRadiusMeters =
+      GeneratedColumn<double>(
+        'danger_zone_radius_meters',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(50.0),
+      );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _droppedAtMeta = const VerificationMeta(
+    'droppedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> droppedAt = GeneratedColumn<DateTime>(
+    'dropped_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
+    'lastModified',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
+    'last_modified',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    anchorLat,
+    anchorLon,
+    scopeRatio,
+    radiusMeters,
+    dangerZoneEnabled,
+    dangerZoneCenterDeg,
+    dangerZoneWidthDeg,
+    dangerZoneRadiusMeters,
+    isActive,
+    droppedAt,
+    lastModified,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'anchor_watches';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AnchorWatchRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('anchor_lat')) {
+      context.handle(
+        _anchorLatMeta,
+        anchorLat.isAcceptableOrUnknown(data['anchor_lat']!, _anchorLatMeta),
+      );
+    }
+    if (data.containsKey('anchor_lon')) {
+      context.handle(
+        _anchorLonMeta,
+        anchorLon.isAcceptableOrUnknown(data['anchor_lon']!, _anchorLonMeta),
+      );
+    }
+    if (data.containsKey('scope_ratio')) {
+      context.handle(
+        _scopeRatioMeta,
+        scopeRatio.isAcceptableOrUnknown(data['scope_ratio']!, _scopeRatioMeta),
+      );
+    }
+    if (data.containsKey('radius_meters')) {
+      context.handle(
+        _radiusMetersMeta,
+        radiusMeters.isAcceptableOrUnknown(
+          data['radius_meters']!,
+          _radiusMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_enabled')) {
+      context.handle(
+        _dangerZoneEnabledMeta,
+        dangerZoneEnabled.isAcceptableOrUnknown(
+          data['danger_zone_enabled']!,
+          _dangerZoneEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_center_deg')) {
+      context.handle(
+        _dangerZoneCenterDegMeta,
+        dangerZoneCenterDeg.isAcceptableOrUnknown(
+          data['danger_zone_center_deg']!,
+          _dangerZoneCenterDegMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_width_deg')) {
+      context.handle(
+        _dangerZoneWidthDegMeta,
+        dangerZoneWidthDeg.isAcceptableOrUnknown(
+          data['danger_zone_width_deg']!,
+          _dangerZoneWidthDegMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_radius_meters')) {
+      context.handle(
+        _dangerZoneRadiusMetersMeta,
+        dangerZoneRadiusMeters.isAcceptableOrUnknown(
+          data['danger_zone_radius_meters']!,
+          _dangerZoneRadiusMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('dropped_at')) {
+      context.handle(
+        _droppedAtMeta,
+        droppedAt.isAcceptableOrUnknown(data['dropped_at']!, _droppedAtMeta),
+      );
+    }
+    if (data.containsKey('last_modified')) {
+      context.handle(
+        _lastModifiedMeta,
+        lastModified.isAcceptableOrUnknown(
+          data['last_modified']!,
+          _lastModifiedMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AnchorWatchRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AnchorWatchRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      anchorLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}anchor_lat'],
+      )!,
+      anchorLon: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}anchor_lon'],
+      )!,
+      scopeRatio: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}scope_ratio'],
+      )!,
+      radiusMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}radius_meters'],
+      )!,
+      dangerZoneEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}danger_zone_enabled'],
+      )!,
+      dangerZoneCenterDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}danger_zone_center_deg'],
+      )!,
+      dangerZoneWidthDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}danger_zone_width_deg'],
+      )!,
+      dangerZoneRadiusMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}danger_zone_radius_meters'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      droppedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}dropped_at'],
+      )!,
+      lastModified: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_modified'],
+      )!,
+    );
+  }
+
+  @override
+  $AnchorWatchesTable createAlias(String alias) {
+    return $AnchorWatchesTable(attachedDatabase, alias);
+  }
+}
+
+class AnchorWatchRow extends DataClass implements Insertable<AnchorWatchRow> {
+  final int id;
+  final double anchorLat;
+  final double anchorLon;
+  final double scopeRatio;
+  final double radiusMeters;
+  final bool dangerZoneEnabled;
+  final double dangerZoneCenterDeg;
+  final double dangerZoneWidthDeg;
+  final double dangerZoneRadiusMeters;
+  final bool isActive;
+  final DateTime droppedAt;
+  final DateTime lastModified;
+  const AnchorWatchRow({
+    required this.id,
+    required this.anchorLat,
+    required this.anchorLon,
+    required this.scopeRatio,
+    required this.radiusMeters,
+    required this.dangerZoneEnabled,
+    required this.dangerZoneCenterDeg,
+    required this.dangerZoneWidthDeg,
+    required this.dangerZoneRadiusMeters,
+    required this.isActive,
+    required this.droppedAt,
+    required this.lastModified,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['anchor_lat'] = Variable<double>(anchorLat);
+    map['anchor_lon'] = Variable<double>(anchorLon);
+    map['scope_ratio'] = Variable<double>(scopeRatio);
+    map['radius_meters'] = Variable<double>(radiusMeters);
+    map['danger_zone_enabled'] = Variable<bool>(dangerZoneEnabled);
+    map['danger_zone_center_deg'] = Variable<double>(dangerZoneCenterDeg);
+    map['danger_zone_width_deg'] = Variable<double>(dangerZoneWidthDeg);
+    map['danger_zone_radius_meters'] = Variable<double>(dangerZoneRadiusMeters);
+    map['is_active'] = Variable<bool>(isActive);
+    map['dropped_at'] = Variable<DateTime>(droppedAt);
+    map['last_modified'] = Variable<DateTime>(lastModified);
+    return map;
+  }
+
+  AnchorWatchesCompanion toCompanion(bool nullToAbsent) {
+    return AnchorWatchesCompanion(
+      id: Value(id),
+      anchorLat: Value(anchorLat),
+      anchorLon: Value(anchorLon),
+      scopeRatio: Value(scopeRatio),
+      radiusMeters: Value(radiusMeters),
+      dangerZoneEnabled: Value(dangerZoneEnabled),
+      dangerZoneCenterDeg: Value(dangerZoneCenterDeg),
+      dangerZoneWidthDeg: Value(dangerZoneWidthDeg),
+      dangerZoneRadiusMeters: Value(dangerZoneRadiusMeters),
+      isActive: Value(isActive),
+      droppedAt: Value(droppedAt),
+      lastModified: Value(lastModified),
+    );
+  }
+
+  factory AnchorWatchRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AnchorWatchRow(
+      id: serializer.fromJson<int>(json['id']),
+      anchorLat: serializer.fromJson<double>(json['anchorLat']),
+      anchorLon: serializer.fromJson<double>(json['anchorLon']),
+      scopeRatio: serializer.fromJson<double>(json['scopeRatio']),
+      radiusMeters: serializer.fromJson<double>(json['radiusMeters']),
+      dangerZoneEnabled: serializer.fromJson<bool>(json['dangerZoneEnabled']),
+      dangerZoneCenterDeg: serializer.fromJson<double>(
+        json['dangerZoneCenterDeg'],
+      ),
+      dangerZoneWidthDeg: serializer.fromJson<double>(
+        json['dangerZoneWidthDeg'],
+      ),
+      dangerZoneRadiusMeters: serializer.fromJson<double>(
+        json['dangerZoneRadiusMeters'],
+      ),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      droppedAt: serializer.fromJson<DateTime>(json['droppedAt']),
+      lastModified: serializer.fromJson<DateTime>(json['lastModified']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'anchorLat': serializer.toJson<double>(anchorLat),
+      'anchorLon': serializer.toJson<double>(anchorLon),
+      'scopeRatio': serializer.toJson<double>(scopeRatio),
+      'radiusMeters': serializer.toJson<double>(radiusMeters),
+      'dangerZoneEnabled': serializer.toJson<bool>(dangerZoneEnabled),
+      'dangerZoneCenterDeg': serializer.toJson<double>(dangerZoneCenterDeg),
+      'dangerZoneWidthDeg': serializer.toJson<double>(dangerZoneWidthDeg),
+      'dangerZoneRadiusMeters': serializer.toJson<double>(
+        dangerZoneRadiusMeters,
+      ),
+      'isActive': serializer.toJson<bool>(isActive),
+      'droppedAt': serializer.toJson<DateTime>(droppedAt),
+      'lastModified': serializer.toJson<DateTime>(lastModified),
+    };
+  }
+
+  AnchorWatchRow copyWith({
+    int? id,
+    double? anchorLat,
+    double? anchorLon,
+    double? scopeRatio,
+    double? radiusMeters,
+    bool? dangerZoneEnabled,
+    double? dangerZoneCenterDeg,
+    double? dangerZoneWidthDeg,
+    double? dangerZoneRadiusMeters,
+    bool? isActive,
+    DateTime? droppedAt,
+    DateTime? lastModified,
+  }) => AnchorWatchRow(
+    id: id ?? this.id,
+    anchorLat: anchorLat ?? this.anchorLat,
+    anchorLon: anchorLon ?? this.anchorLon,
+    scopeRatio: scopeRatio ?? this.scopeRatio,
+    radiusMeters: radiusMeters ?? this.radiusMeters,
+    dangerZoneEnabled: dangerZoneEnabled ?? this.dangerZoneEnabled,
+    dangerZoneCenterDeg: dangerZoneCenterDeg ?? this.dangerZoneCenterDeg,
+    dangerZoneWidthDeg: dangerZoneWidthDeg ?? this.dangerZoneWidthDeg,
+    dangerZoneRadiusMeters:
+        dangerZoneRadiusMeters ?? this.dangerZoneRadiusMeters,
+    isActive: isActive ?? this.isActive,
+    droppedAt: droppedAt ?? this.droppedAt,
+    lastModified: lastModified ?? this.lastModified,
+  );
+  AnchorWatchRow copyWithCompanion(AnchorWatchesCompanion data) {
+    return AnchorWatchRow(
+      id: data.id.present ? data.id.value : this.id,
+      anchorLat: data.anchorLat.present ? data.anchorLat.value : this.anchorLat,
+      anchorLon: data.anchorLon.present ? data.anchorLon.value : this.anchorLon,
+      scopeRatio: data.scopeRatio.present
+          ? data.scopeRatio.value
+          : this.scopeRatio,
+      radiusMeters: data.radiusMeters.present
+          ? data.radiusMeters.value
+          : this.radiusMeters,
+      dangerZoneEnabled: data.dangerZoneEnabled.present
+          ? data.dangerZoneEnabled.value
+          : this.dangerZoneEnabled,
+      dangerZoneCenterDeg: data.dangerZoneCenterDeg.present
+          ? data.dangerZoneCenterDeg.value
+          : this.dangerZoneCenterDeg,
+      dangerZoneWidthDeg: data.dangerZoneWidthDeg.present
+          ? data.dangerZoneWidthDeg.value
+          : this.dangerZoneWidthDeg,
+      dangerZoneRadiusMeters: data.dangerZoneRadiusMeters.present
+          ? data.dangerZoneRadiusMeters.value
+          : this.dangerZoneRadiusMeters,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      droppedAt: data.droppedAt.present ? data.droppedAt.value : this.droppedAt,
+      lastModified: data.lastModified.present
+          ? data.lastModified.value
+          : this.lastModified,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnchorWatchRow(')
+          ..write('id: $id, ')
+          ..write('anchorLat: $anchorLat, ')
+          ..write('anchorLon: $anchorLon, ')
+          ..write('scopeRatio: $scopeRatio, ')
+          ..write('radiusMeters: $radiusMeters, ')
+          ..write('dangerZoneEnabled: $dangerZoneEnabled, ')
+          ..write('dangerZoneCenterDeg: $dangerZoneCenterDeg, ')
+          ..write('dangerZoneWidthDeg: $dangerZoneWidthDeg, ')
+          ..write('dangerZoneRadiusMeters: $dangerZoneRadiusMeters, ')
+          ..write('isActive: $isActive, ')
+          ..write('droppedAt: $droppedAt, ')
+          ..write('lastModified: $lastModified')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    anchorLat,
+    anchorLon,
+    scopeRatio,
+    radiusMeters,
+    dangerZoneEnabled,
+    dangerZoneCenterDeg,
+    dangerZoneWidthDeg,
+    dangerZoneRadiusMeters,
+    isActive,
+    droppedAt,
+    lastModified,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AnchorWatchRow &&
+          other.id == this.id &&
+          other.anchorLat == this.anchorLat &&
+          other.anchorLon == this.anchorLon &&
+          other.scopeRatio == this.scopeRatio &&
+          other.radiusMeters == this.radiusMeters &&
+          other.dangerZoneEnabled == this.dangerZoneEnabled &&
+          other.dangerZoneCenterDeg == this.dangerZoneCenterDeg &&
+          other.dangerZoneWidthDeg == this.dangerZoneWidthDeg &&
+          other.dangerZoneRadiusMeters == this.dangerZoneRadiusMeters &&
+          other.isActive == this.isActive &&
+          other.droppedAt == this.droppedAt &&
+          other.lastModified == this.lastModified);
+}
+
+class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
+  final Value<int> id;
+  final Value<double> anchorLat;
+  final Value<double> anchorLon;
+  final Value<double> scopeRatio;
+  final Value<double> radiusMeters;
+  final Value<bool> dangerZoneEnabled;
+  final Value<double> dangerZoneCenterDeg;
+  final Value<double> dangerZoneWidthDeg;
+  final Value<double> dangerZoneRadiusMeters;
+  final Value<bool> isActive;
+  final Value<DateTime> droppedAt;
+  final Value<DateTime> lastModified;
+  const AnchorWatchesCompanion({
+    this.id = const Value.absent(),
+    this.anchorLat = const Value.absent(),
+    this.anchorLon = const Value.absent(),
+    this.scopeRatio = const Value.absent(),
+    this.radiusMeters = const Value.absent(),
+    this.dangerZoneEnabled = const Value.absent(),
+    this.dangerZoneCenterDeg = const Value.absent(),
+    this.dangerZoneWidthDeg = const Value.absent(),
+    this.dangerZoneRadiusMeters = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.droppedAt = const Value.absent(),
+    this.lastModified = const Value.absent(),
+  });
+  AnchorWatchesCompanion.insert({
+    this.id = const Value.absent(),
+    this.anchorLat = const Value.absent(),
+    this.anchorLon = const Value.absent(),
+    this.scopeRatio = const Value.absent(),
+    this.radiusMeters = const Value.absent(),
+    this.dangerZoneEnabled = const Value.absent(),
+    this.dangerZoneCenterDeg = const Value.absent(),
+    this.dangerZoneWidthDeg = const Value.absent(),
+    this.dangerZoneRadiusMeters = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.droppedAt = const Value.absent(),
+    this.lastModified = const Value.absent(),
+  });
+  static Insertable<AnchorWatchRow> custom({
+    Expression<int>? id,
+    Expression<double>? anchorLat,
+    Expression<double>? anchorLon,
+    Expression<double>? scopeRatio,
+    Expression<double>? radiusMeters,
+    Expression<bool>? dangerZoneEnabled,
+    Expression<double>? dangerZoneCenterDeg,
+    Expression<double>? dangerZoneWidthDeg,
+    Expression<double>? dangerZoneRadiusMeters,
+    Expression<bool>? isActive,
+    Expression<DateTime>? droppedAt,
+    Expression<DateTime>? lastModified,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (anchorLat != null) 'anchor_lat': anchorLat,
+      if (anchorLon != null) 'anchor_lon': anchorLon,
+      if (scopeRatio != null) 'scope_ratio': scopeRatio,
+      if (radiusMeters != null) 'radius_meters': radiusMeters,
+      if (dangerZoneEnabled != null) 'danger_zone_enabled': dangerZoneEnabled,
+      if (dangerZoneCenterDeg != null)
+        'danger_zone_center_deg': dangerZoneCenterDeg,
+      if (dangerZoneWidthDeg != null)
+        'danger_zone_width_deg': dangerZoneWidthDeg,
+      if (dangerZoneRadiusMeters != null)
+        'danger_zone_radius_meters': dangerZoneRadiusMeters,
+      if (isActive != null) 'is_active': isActive,
+      if (droppedAt != null) 'dropped_at': droppedAt,
+      if (lastModified != null) 'last_modified': lastModified,
+    });
+  }
+
+  AnchorWatchesCompanion copyWith({
+    Value<int>? id,
+    Value<double>? anchorLat,
+    Value<double>? anchorLon,
+    Value<double>? scopeRatio,
+    Value<double>? radiusMeters,
+    Value<bool>? dangerZoneEnabled,
+    Value<double>? dangerZoneCenterDeg,
+    Value<double>? dangerZoneWidthDeg,
+    Value<double>? dangerZoneRadiusMeters,
+    Value<bool>? isActive,
+    Value<DateTime>? droppedAt,
+    Value<DateTime>? lastModified,
+  }) {
+    return AnchorWatchesCompanion(
+      id: id ?? this.id,
+      anchorLat: anchorLat ?? this.anchorLat,
+      anchorLon: anchorLon ?? this.anchorLon,
+      scopeRatio: scopeRatio ?? this.scopeRatio,
+      radiusMeters: radiusMeters ?? this.radiusMeters,
+      dangerZoneEnabled: dangerZoneEnabled ?? this.dangerZoneEnabled,
+      dangerZoneCenterDeg: dangerZoneCenterDeg ?? this.dangerZoneCenterDeg,
+      dangerZoneWidthDeg: dangerZoneWidthDeg ?? this.dangerZoneWidthDeg,
+      dangerZoneRadiusMeters:
+          dangerZoneRadiusMeters ?? this.dangerZoneRadiusMeters,
+      isActive: isActive ?? this.isActive,
+      droppedAt: droppedAt ?? this.droppedAt,
+      lastModified: lastModified ?? this.lastModified,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (anchorLat.present) {
+      map['anchor_lat'] = Variable<double>(anchorLat.value);
+    }
+    if (anchorLon.present) {
+      map['anchor_lon'] = Variable<double>(anchorLon.value);
+    }
+    if (scopeRatio.present) {
+      map['scope_ratio'] = Variable<double>(scopeRatio.value);
+    }
+    if (radiusMeters.present) {
+      map['radius_meters'] = Variable<double>(radiusMeters.value);
+    }
+    if (dangerZoneEnabled.present) {
+      map['danger_zone_enabled'] = Variable<bool>(dangerZoneEnabled.value);
+    }
+    if (dangerZoneCenterDeg.present) {
+      map['danger_zone_center_deg'] = Variable<double>(
+        dangerZoneCenterDeg.value,
+      );
+    }
+    if (dangerZoneWidthDeg.present) {
+      map['danger_zone_width_deg'] = Variable<double>(dangerZoneWidthDeg.value);
+    }
+    if (dangerZoneRadiusMeters.present) {
+      map['danger_zone_radius_meters'] = Variable<double>(
+        dangerZoneRadiusMeters.value,
+      );
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (droppedAt.present) {
+      map['dropped_at'] = Variable<DateTime>(droppedAt.value);
+    }
+    if (lastModified.present) {
+      map['last_modified'] = Variable<DateTime>(lastModified.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnchorWatchesCompanion(')
+          ..write('id: $id, ')
+          ..write('anchorLat: $anchorLat, ')
+          ..write('anchorLon: $anchorLon, ')
+          ..write('scopeRatio: $scopeRatio, ')
+          ..write('radiusMeters: $radiusMeters, ')
+          ..write('dangerZoneEnabled: $dangerZoneEnabled, ')
+          ..write('dangerZoneCenterDeg: $dangerZoneCenterDeg, ')
+          ..write('dangerZoneWidthDeg: $dangerZoneWidthDeg, ')
+          ..write('dangerZoneRadiusMeters: $dangerZoneRadiusMeters, ')
+          ..write('isActive: $isActive, ')
+          ..write('droppedAt: $droppedAt, ')
+          ..write('lastModified: $lastModified')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -19766,6 +20559,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $ConflictLogsTable conflictLogs = $ConflictLogsTable(this);
   late final $ErrorLogsTable errorLogs = $ErrorLogsTable(this);
+  late final $AnchorWatchesTable anchorWatches = $AnchorWatchesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -19794,6 +20588,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     syncOutboxItems,
     conflictLogs,
     errorLogs,
+    anchorWatches,
   ];
 }
 
@@ -27121,6 +27916,7 @@ typedef $$UserSettingsTableTableCreateCompanionBuilder =
       Value<String?> replyToEmail,
       Value<String?> boatName,
       Value<int> freeEditsUsed,
+      Value<double> defaultAnchorScopeRatio,
     });
 typedef $$UserSettingsTableTableUpdateCompanionBuilder =
     UserSettingsTableCompanion Function({
@@ -27140,6 +27936,7 @@ typedef $$UserSettingsTableTableUpdateCompanionBuilder =
       Value<String?> replyToEmail,
       Value<String?> boatName,
       Value<int> freeEditsUsed,
+      Value<double> defaultAnchorScopeRatio,
     });
 
 class $$UserSettingsTableTableFilterComposer
@@ -27228,6 +28025,11 @@ class $$UserSettingsTableTableFilterComposer
 
   ColumnFilters<int> get freeEditsUsed => $composableBuilder(
     column: $table.freeEditsUsed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get defaultAnchorScopeRatio => $composableBuilder(
+    column: $table.defaultAnchorScopeRatio,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -27320,6 +28122,11 @@ class $$UserSettingsTableTableOrderingComposer
     column: $table.freeEditsUsed,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<double> get defaultAnchorScopeRatio => $composableBuilder(
+    column: $table.defaultAnchorScopeRatio,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$UserSettingsTableTableAnnotationComposer
@@ -27398,6 +28205,11 @@ class $$UserSettingsTableTableAnnotationComposer
     column: $table.freeEditsUsed,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get defaultAnchorScopeRatio => $composableBuilder(
+    column: $table.defaultAnchorScopeRatio,
+    builder: (column) => column,
+  );
 }
 
 class $$UserSettingsTableTableTableManager
@@ -27456,6 +28268,7 @@ class $$UserSettingsTableTableTableManager
                 Value<String?> replyToEmail = const Value.absent(),
                 Value<String?> boatName = const Value.absent(),
                 Value<int> freeEditsUsed = const Value.absent(),
+                Value<double> defaultAnchorScopeRatio = const Value.absent(),
               }) => UserSettingsTableCompanion(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -27473,6 +28286,7 @@ class $$UserSettingsTableTableTableManager
                 replyToEmail: replyToEmail,
                 boatName: boatName,
                 freeEditsUsed: freeEditsUsed,
+                defaultAnchorScopeRatio: defaultAnchorScopeRatio,
               ),
           createCompanionCallback:
               ({
@@ -27492,6 +28306,7 @@ class $$UserSettingsTableTableTableManager
                 Value<String?> replyToEmail = const Value.absent(),
                 Value<String?> boatName = const Value.absent(),
                 Value<int> freeEditsUsed = const Value.absent(),
+                Value<double> defaultAnchorScopeRatio = const Value.absent(),
               }) => UserSettingsTableCompanion.insert(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -27509,6 +28324,7 @@ class $$UserSettingsTableTableTableManager
                 replyToEmail: replyToEmail,
                 boatName: boatName,
                 freeEditsUsed: freeEditsUsed,
+                defaultAnchorScopeRatio: defaultAnchorScopeRatio,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -29001,6 +29817,347 @@ typedef $$ErrorLogsTableProcessedTableManager =
       ErrorLogRow,
       PrefetchHooks Function()
     >;
+typedef $$AnchorWatchesTableCreateCompanionBuilder =
+    AnchorWatchesCompanion Function({
+      Value<int> id,
+      Value<double> anchorLat,
+      Value<double> anchorLon,
+      Value<double> scopeRatio,
+      Value<double> radiusMeters,
+      Value<bool> dangerZoneEnabled,
+      Value<double> dangerZoneCenterDeg,
+      Value<double> dangerZoneWidthDeg,
+      Value<double> dangerZoneRadiusMeters,
+      Value<bool> isActive,
+      Value<DateTime> droppedAt,
+      Value<DateTime> lastModified,
+    });
+typedef $$AnchorWatchesTableUpdateCompanionBuilder =
+    AnchorWatchesCompanion Function({
+      Value<int> id,
+      Value<double> anchorLat,
+      Value<double> anchorLon,
+      Value<double> scopeRatio,
+      Value<double> radiusMeters,
+      Value<bool> dangerZoneEnabled,
+      Value<double> dangerZoneCenterDeg,
+      Value<double> dangerZoneWidthDeg,
+      Value<double> dangerZoneRadiusMeters,
+      Value<bool> isActive,
+      Value<DateTime> droppedAt,
+      Value<DateTime> lastModified,
+    });
+
+class $$AnchorWatchesTableFilterComposer
+    extends Composer<_$AppDatabase, $AnchorWatchesTable> {
+  $$AnchorWatchesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get anchorLat => $composableBuilder(
+    column: $table.anchorLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get anchorLon => $composableBuilder(
+    column: $table.anchorLon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get scopeRatio => $composableBuilder(
+    column: $table.scopeRatio,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dangerZoneEnabled => $composableBuilder(
+    column: $table.dangerZoneEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dangerZoneCenterDeg => $composableBuilder(
+    column: $table.dangerZoneCenterDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dangerZoneWidthDeg => $composableBuilder(
+    column: $table.dangerZoneWidthDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dangerZoneRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneRadiusMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get droppedAt => $composableBuilder(
+    column: $table.droppedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AnchorWatchesTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnchorWatchesTable> {
+  $$AnchorWatchesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get anchorLat => $composableBuilder(
+    column: $table.anchorLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get anchorLon => $composableBuilder(
+    column: $table.anchorLon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get scopeRatio => $composableBuilder(
+    column: $table.scopeRatio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dangerZoneEnabled => $composableBuilder(
+    column: $table.dangerZoneEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dangerZoneCenterDeg => $composableBuilder(
+    column: $table.dangerZoneCenterDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dangerZoneWidthDeg => $composableBuilder(
+    column: $table.dangerZoneWidthDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dangerZoneRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneRadiusMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get droppedAt => $composableBuilder(
+    column: $table.droppedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AnchorWatchesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnchorWatchesTable> {
+  $$AnchorWatchesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get anchorLat =>
+      $composableBuilder(column: $table.anchorLat, builder: (column) => column);
+
+  GeneratedColumn<double> get anchorLon =>
+      $composableBuilder(column: $table.anchorLon, builder: (column) => column);
+
+  GeneratedColumn<double> get scopeRatio => $composableBuilder(
+    column: $table.scopeRatio,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get dangerZoneEnabled => $composableBuilder(
+    column: $table.dangerZoneEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get dangerZoneCenterDeg => $composableBuilder(
+    column: $table.dangerZoneCenterDeg,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get dangerZoneWidthDeg => $composableBuilder(
+    column: $table.dangerZoneWidthDeg,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get dangerZoneRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneRadiusMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get droppedAt =>
+      $composableBuilder(column: $table.droppedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => column,
+  );
+}
+
+class $$AnchorWatchesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnchorWatchesTable,
+          AnchorWatchRow,
+          $$AnchorWatchesTableFilterComposer,
+          $$AnchorWatchesTableOrderingComposer,
+          $$AnchorWatchesTableAnnotationComposer,
+          $$AnchorWatchesTableCreateCompanionBuilder,
+          $$AnchorWatchesTableUpdateCompanionBuilder,
+          (
+            AnchorWatchRow,
+            BaseReferences<_$AppDatabase, $AnchorWatchesTable, AnchorWatchRow>,
+          ),
+          AnchorWatchRow,
+          PrefetchHooks Function()
+        > {
+  $$AnchorWatchesTableTableManager(_$AppDatabase db, $AnchorWatchesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AnchorWatchesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AnchorWatchesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AnchorWatchesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<double> anchorLat = const Value.absent(),
+                Value<double> anchorLon = const Value.absent(),
+                Value<double> scopeRatio = const Value.absent(),
+                Value<double> radiusMeters = const Value.absent(),
+                Value<bool> dangerZoneEnabled = const Value.absent(),
+                Value<double> dangerZoneCenterDeg = const Value.absent(),
+                Value<double> dangerZoneWidthDeg = const Value.absent(),
+                Value<double> dangerZoneRadiusMeters = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> droppedAt = const Value.absent(),
+                Value<DateTime> lastModified = const Value.absent(),
+              }) => AnchorWatchesCompanion(
+                id: id,
+                anchorLat: anchorLat,
+                anchorLon: anchorLon,
+                scopeRatio: scopeRatio,
+                radiusMeters: radiusMeters,
+                dangerZoneEnabled: dangerZoneEnabled,
+                dangerZoneCenterDeg: dangerZoneCenterDeg,
+                dangerZoneWidthDeg: dangerZoneWidthDeg,
+                dangerZoneRadiusMeters: dangerZoneRadiusMeters,
+                isActive: isActive,
+                droppedAt: droppedAt,
+                lastModified: lastModified,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<double> anchorLat = const Value.absent(),
+                Value<double> anchorLon = const Value.absent(),
+                Value<double> scopeRatio = const Value.absent(),
+                Value<double> radiusMeters = const Value.absent(),
+                Value<bool> dangerZoneEnabled = const Value.absent(),
+                Value<double> dangerZoneCenterDeg = const Value.absent(),
+                Value<double> dangerZoneWidthDeg = const Value.absent(),
+                Value<double> dangerZoneRadiusMeters = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> droppedAt = const Value.absent(),
+                Value<DateTime> lastModified = const Value.absent(),
+              }) => AnchorWatchesCompanion.insert(
+                id: id,
+                anchorLat: anchorLat,
+                anchorLon: anchorLon,
+                scopeRatio: scopeRatio,
+                radiusMeters: radiusMeters,
+                dangerZoneEnabled: dangerZoneEnabled,
+                dangerZoneCenterDeg: dangerZoneCenterDeg,
+                dangerZoneWidthDeg: dangerZoneWidthDeg,
+                dangerZoneRadiusMeters: dangerZoneRadiusMeters,
+                isActive: isActive,
+                droppedAt: droppedAt,
+                lastModified: lastModified,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AnchorWatchesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnchorWatchesTable,
+      AnchorWatchRow,
+      $$AnchorWatchesTableFilterComposer,
+      $$AnchorWatchesTableOrderingComposer,
+      $$AnchorWatchesTableAnnotationComposer,
+      $$AnchorWatchesTableCreateCompanionBuilder,
+      $$AnchorWatchesTableUpdateCompanionBuilder,
+      (
+        AnchorWatchRow,
+        BaseReferences<_$AppDatabase, $AnchorWatchesTable, AnchorWatchRow>,
+      ),
+      AnchorWatchRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -29051,4 +30208,6 @@ class $AppDatabaseManager {
       $$ConflictLogsTableTableManager(_db, _db.conflictLogs);
   $$ErrorLogsTableTableManager get errorLogs =>
       $$ErrorLogsTableTableManager(_db, _db.errorLogs);
+  $$AnchorWatchesTableTableManager get anchorWatches =>
+      $$AnchorWatchesTableTableManager(_db, _db.anchorWatches);
 }
