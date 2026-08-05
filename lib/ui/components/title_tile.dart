@@ -110,9 +110,40 @@ class _TitleTileState extends ConsumerState<TitleTile> {
     final secondLine = secondLineParts.join(' • ');
     final canPop = Navigator.of(context).canPop();
 
+    // #269 — trailing actions are often several full 48×48 IconButtons; on a
+    // narrow phone (constraints reported 320×50 for this Row) that overflowed
+    // by ~16px. Compact density + min 40×40 keeps the hit target usable while
+    // the Expanded title column still absorbs remaining width with ellipsis.
+    // Trailing is also Flexible so a long actionsBuilder cannot force the Row
+    // past its max width (scrolls horizontally if it must).
+    Widget compactIconButton({
+      required IconData icon,
+      required VoidCallback onPressed,
+      required String tooltip,
+    }) {
+      return IconButton(
+        icon: Icon(icon, color: textColor),
+        onPressed: onPressed,
+        tooltip: tooltip,
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+      );
+    }
+
+    final trailing = <Widget>[
+      ...?widget.actionsBuilder?.call(textColor),
+      if (widget.onMenuPressed != null)
+        compactIconButton(
+          icon: Icons.menu,
+          onPressed: widget.onMenuPressed!,
+          tooltip: 'Menu',
+        ),
+    ];
+
     return Container(
-      width: double.infinity, // Full width
-      height: 62, // Reduced height to prevent overflow
+      width: double.infinity,
+      height: 62,
       color: backgroundColor,
       padding: EdgeInsets.only(
         left: canPop ? 0 : 16,
@@ -122,8 +153,8 @@ class _TitleTileState extends ConsumerState<TitleTile> {
       child: Row(
         children: [
           if (canPop)
-            IconButton(
-              icon: Icon(Icons.arrow_back, color: textColor),
+            compactIconButton(
+              icon: Icons.arrow_back,
               onPressed: () => Navigator.of(context).maybePop(),
               tooltip: 'Back',
             ),
@@ -132,37 +163,38 @@ class _TitleTileState extends ConsumerState<TitleTile> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // First line: Context-aware title in bold
                 Text(
                   widget.title,
                   style: TextStyle(
                     color: textColor,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16, // Reduced font size
+                    fontSize: 16,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 1), // Reduced spacing
-                // Second line: the mandatory status line.
+                const SizedBox(height: 1),
                 // Full opacity — alpha < 1 failed WCAG 4.5:1 on dark theme (TEST10).
                 Text(
                   secondLine,
                   style: TextStyle(
                     color: textColor,
-                    fontSize: 11, // Reduced font size
+                    fontSize: 11,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          // Trailing icons, right to left: drawer (menu), import/export, share.
-          ...?widget.actionsBuilder?.call(textColor),
-          if (widget.onMenuPressed != null)
-            IconButton(
-              icon: Icon(Icons.menu, color: textColor),
-              onPressed: widget.onMenuPressed,
-              tooltip: 'Menu',
+          if (trailing.isNotEmpty)
+            Flexible(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: trailing,
+                ),
+              ),
             ),
         ],
       ),

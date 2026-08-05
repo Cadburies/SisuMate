@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last (grok):** **#268** (non-finite handle semantics) + **#273** (danger-zone outer radius pinned to geofence; outer handle removed; inner tip owns bearing+inner radius; outer editor removed). Suite green.
-- **Next bugs:** #269 (TitleTile overflow) → #258/#259 (boats.polar).
-- **Open:** #256 parent; #263 YDWG-02 deferred; #258/#259 polar schema.
+- **Last (grok):** **#268** / **#273** / **#269** (TitleTile Row overflow: compact icons + Flexible trailing scroll; goldens updated). Suite green.
+- **Next bugs:** #258/#259 (boats.polar Supabase schema).
+- **Open:** #256 parent; #263 YDWG-02 deferred.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.
