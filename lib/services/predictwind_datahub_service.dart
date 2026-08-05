@@ -305,6 +305,71 @@ class PredictWindDatahubService {
     return _sysauthCookie.firstMatch(setCookie)?.group(1);
   }
 
+  /// #263 — known default local-WiFi addresses for PredictWind Datahub-
+  /// family devices, tried by [discoverLocalGateways]. Currently just
+  /// PredictWind's own documented default (`10.10.10.1` — see the class
+  /// doc's #263 note on why it's still unverified for *this* device);
+  /// structured as a list so more can be added as they're confirmed. A
+  /// bare Yacht Devices YDWG-02 or similar wouldn't be found by this
+  /// method even with its address added here — that class of device
+  /// speaks an unauthenticated raw-NMEA protocol this service doesn't
+  /// parse yet (tracked separately in #263, deferred until hardware is
+  /// available to verify against).
+  static const knownLocalAddresses = ['http://10.10.10.1'];
+
+  /// Logs in at [baseUrl] directly with [username]/[password] — bypasses
+  /// the WiFi-gating/candidate-ordering [checkConnection] normally applies,
+  /// since this is for explicitly testing *one* address (the gateway setup
+  /// screen's "Discover" and manual "Connect" actions), not evaluating the
+  /// app's normal runtime failover.
+  Future<bool> testConnection({
+    required String baseUrl,
+    required String username,
+    required String password,
+    http.Client? client,
+  }) async {
+    final c = client ?? http.Client();
+    try {
+      final probe = PredictWindDatahubService(
+        usernameOverride: username,
+        passwordOverride: password,
+      );
+      final sysauth = await probe._login(c, baseUrl, _localTimeout);
+      return sysauth != null;
+    } catch (_) {
+      return false;
+    } finally {
+      if (client == null) c.close();
+    }
+  }
+
+  /// Tries every [knownLocalAddresses] entry concurrently with
+  /// [username]/[password] and returns the ones that actually worked — for
+  /// the gateway setup screen's "Discover" step.
+  Future<List<String>> discoverLocalGateways({
+    required String username,
+    required String password,
+    http.Client? client,
+  }) async {
+    final c = client ?? http.Client();
+    try {
+      final results = await Future.wait(knownLocalAddresses.map(
+        (address) => testConnection(
+          baseUrl: address,
+          username: username,
+          password: password,
+          client: c,
+        ),
+      ));
+      return [
+        for (var i = 0; i < knownLocalAddresses.length; i++)
+          if (results[i]) knownLocalAddresses[i],
+      ];
+    } finally {
+      if (client == null) c.close();
+    }
+  }
+
   double? _asDouble(dynamic v) => v is num ? v.toDouble() : null;
 }
 

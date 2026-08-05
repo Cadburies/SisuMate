@@ -18,6 +18,7 @@ import '../ui/maintenance/maintenance_hours_screen.dart';
 import '../ui/logbook/logbook_screen.dart';
 import '../ui/fuel/fuel_screen.dart';
 import '../ui/anchor/anchor_alarm_screen.dart';
+import '../ui/anchor/anchor_gateway_setup_screen.dart';
 import '../ui/inventory/inventory_screen.dart';
 import '../ui/crew/crew_screen.dart';
 import '../ui/documents/documents_screen.dart';
@@ -99,6 +100,7 @@ abstract final class AppRoutes {
   static const gribViewer = '/weather/grib';
   static const gribRequest = '/weather/grib/request';
   static const anchorAlarm = '/anchor-alarm';
+  static const anchorGatewaySetup = '/anchor-alarm/gateway-setup';
   static const games = '/games';
   static const gamePlay = '/games/play/:gameId';
   static const gameLobby = '/games/lobby/:gameId';
@@ -626,6 +628,13 @@ GoRouter createAppRouter() {
         path: AppRoutes.anchorAlarm,
         name: 'anchorAlarm',
         builder: (context, state) => const AnchorAlarmScreen(),
+        routes: [
+          GoRoute(
+            path: 'gateway-setup',
+            name: 'anchorGatewaySetup',
+            builder: (context, state) => const AnchorGatewaySetupScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.settings,

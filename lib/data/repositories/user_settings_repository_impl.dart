@@ -27,7 +27,10 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
     ..replyToEmail = r.replyToEmail
     ..boatName = r.boatName
     ..freeEditsUsed = r.freeEditsUsed
-    ..defaultAnchorScopeRatio = r.defaultAnchorScopeRatio;
+    ..defaultAnchorScopeRatio = r.defaultAnchorScopeRatio
+    ..predictwindHubLocalUrl = r.predictwindHubLocalUrl
+    ..predictwindHubUsername = r.predictwindHubUsername
+    ..predictwindHubPassword = r.predictwindHubPassword;
 
   UserSettingsTableCompanion _companion(UserSettings s) =>
       UserSettingsTableCompanion(
@@ -48,6 +51,9 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
         boatName: Value(s.boatName),
         freeEditsUsed: Value(s.freeEditsUsed),
         defaultAnchorScopeRatio: Value(s.defaultAnchorScopeRatio),
+        predictwindHubLocalUrl: Value(s.predictwindHubLocalUrl),
+        predictwindHubUsername: Value(s.predictwindHubUsername),
+        predictwindHubPassword: Value(s.predictwindHubPassword),
       );
 
   @override

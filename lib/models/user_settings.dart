@@ -26,6 +26,16 @@ class UserSettings {
   /// #256 — default chain-scope ratio new anchor drops are pre-filled with.
   double defaultAnchorScopeRatio = 5.0;
 
+  /// #263 — set via the Anchor Alarm's gateway setup/onboarding screen
+  /// (auto-discovered or manually entered), stored so the user doesn't
+  /// re-enter it every session. Empty means "use the dart-defines default,
+  /// if any" — these override that when non-empty. Local-only (this whole
+  /// table never syncs) since a Hub login is boat-specific, not something
+  /// to carry to another device.
+  String predictwindHubLocalUrl = '';
+  String predictwindHubUsername = '';
+  String predictwindHubPassword = '';
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -47,7 +57,10 @@ class UserSettings {
           replyToEmail == other.replyToEmail &&
           boatName == other.boatName &&
           freeEditsUsed == other.freeEditsUsed &&
-          defaultAnchorScopeRatio == other.defaultAnchorScopeRatio;
+          defaultAnchorScopeRatio == other.defaultAnchorScopeRatio &&
+          predictwindHubLocalUrl == other.predictwindHubLocalUrl &&
+          predictwindHubUsername == other.predictwindHubUsername &&
+          predictwindHubPassword == other.predictwindHubPassword;
 
   @override
   int get hashCode => Object.hashAll([
@@ -68,6 +81,9 @@ class UserSettings {
         boatName,
         freeEditsUsed,
         defaultAnchorScopeRatio,
+        predictwindHubLocalUrl,
+        predictwindHubUsername,
+        predictwindHubPassword,
       ]);
 
   @override
@@ -80,5 +96,7 @@ class UserSettings {
       'lastModified: $lastModified, recentEmails: $recentEmails, '
       'fromName: $fromName, replyToEmail: $replyToEmail, '
       'boatName: $boatName, freeEditsUsed: $freeEditsUsed, '
-      'defaultAnchorScopeRatio: $defaultAnchorScopeRatio)';
+      'defaultAnchorScopeRatio: $defaultAnchorScopeRatio, '
+      'predictwindHubLocalUrl: $predictwindHubLocalUrl, '
+      'predictwindHubUsername: $predictwindHubUsername)';
 }

@@ -408,4 +408,95 @@ void main() {
       expect(data!.viaLocalNetwork, isTrue);
     });
   });
+
+  group('#263 — gateway setup screen: testConnection/discoverLocalGateways',
+      () {
+    http.Response loginOk() => http.Response('', 302,
+        headers: {'set-cookie': 'sysauth=abc123; path=/cgi-bin/luci/'});
+
+    test('testConnection succeeds against a reachable address with a good '
+        'login', () async {
+      final client = MockClient((request) async {
+        expect(request.url.toString(),
+            'http://some-hub.test/cgi-bin/luci');
+        expect(request.body, 'luci_username=user&luci_password=pass');
+        return loginOk();
+      });
+      const service = PredictWindDatahubService();
+
+      final ok = await service.testConnection(
+        baseUrl: 'http://some-hub.test',
+        username: 'user',
+        password: 'pass',
+        client: client,
+      );
+
+      expect(ok, isTrue);
+    });
+
+    test('testConnection fails on a rejected login', () async {
+      final client = MockClient((request) async => http.Response('', 403));
+      const service = PredictWindDatahubService();
+
+      final ok = await service.testConnection(
+        baseUrl: 'http://some-hub.test',
+        username: 'user',
+        password: 'wrong',
+        client: client,
+      );
+
+      expect(ok, isFalse);
+    });
+
+    test('testConnection fails (not throws) on a connection error', () async {
+      final client = MockClient((request) async {
+        throw Exception('connection refused');
+      });
+      const service = PredictWindDatahubService();
+
+      final ok = await service.testConnection(
+        baseUrl: 'http://unreachable.test',
+        username: 'user',
+        password: 'pass',
+        client: client,
+      );
+
+      expect(ok, isFalse);
+    });
+
+    test(
+        'discoverLocalGateways returns the known address when it accepts '
+        'the login', () async {
+      final client = MockClient((request) async {
+        expect(request.url.toString(),
+            'http://10.10.10.1/cgi-bin/luci');
+        return loginOk();
+      });
+      const service = PredictWindDatahubService();
+
+      final found = await service.discoverLocalGateways(
+        username: 'user',
+        password: 'pass',
+        client: client,
+      );
+
+      expect(found, PredictWindDatahubService.knownLocalAddresses);
+    });
+
+    test('discoverLocalGateways returns empty when nothing answers',
+        () async {
+      final client = MockClient((request) async {
+        throw Exception('connection refused');
+      });
+      const service = PredictWindDatahubService();
+
+      final found = await service.discoverLocalGateways(
+        username: 'user',
+        password: 'pass',
+        client: client,
+      );
+
+      expect(found, isEmpty);
+    });
+  });
 }

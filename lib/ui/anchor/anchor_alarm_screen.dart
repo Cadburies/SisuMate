@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
+import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/anchor_alarm_service.dart';
@@ -105,12 +107,35 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
   double? get _boatLat => _boatData?.hasFix ?? false ? _boatData!.latitude : null;
   double? get _boatLon => _boatData?.hasFix ?? false ? _boatData!.longitude : null;
 
+  /// #263 — [widget.hubService] stays the dart-defines-backed default (and
+  /// the test-injection point); when the gateway setup screen has saved a
+  /// local address/credentials to [UserSettings], build a one-off service
+  /// instance layered on top of it for this refresh instead. Username/
+  /// password are shared across local+remote (same physical Hub login), so
+  /// a saved credential overrides even when only the address was set.
+  Future<PredictWindDatahubService> _effectiveHubService() async {
+    final settings = await ref.read(userSettingsProvider.future);
+    if (settings == null || settings.predictwindHubLocalUrl.isEmpty) {
+      return widget.hubService;
+    }
+    return PredictWindDatahubService(
+      localBaseUrlOverride: settings.predictwindHubLocalUrl,
+      usernameOverride: settings.predictwindHubUsername.isNotEmpty
+          ? settings.predictwindHubUsername
+          : null,
+      passwordOverride: settings.predictwindHubPassword.isNotEmpty
+          ? settings.predictwindHubPassword
+          : null,
+    );
+  }
+
   Future<void> _refresh() async {
     setState(() => _isRefreshing = true);
+    final hubService = await _effectiveHubService();
     final hubStatus =
-        await widget.hubService.checkConnection(client: widget.httpClient);
+        await hubService.checkConnection(client: widget.httpClient);
     final boatData =
-        await widget.hubService.fetchBoatData(client: widget.httpClient);
+        await hubService.fetchBoatData(client: widget.httpClient);
     if (!mounted) return;
     setState(() {
       _hubStatus = hubStatus;
@@ -336,6 +361,11 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
                               status: _hubStatus,
                               isRefreshing: _isRefreshing,
                               onRefresh: _refresh,
+                              onConfigure: () async {
+                                await context
+                                    .push(AppRoutes.anchorGatewaySetup);
+                                if (mounted) unawaited(_refresh());
+                              },
                             ),
                             const SizedBox(height: 12),
                             _PositionCard(boatData: _boatData),
@@ -854,10 +884,12 @@ class _HubStatusCard extends StatelessWidget {
   final PredictWindHubStatus? status;
   final bool isRefreshing;
   final Future<void> Function() onRefresh;
+  final VoidCallback onConfigure;
   const _HubStatusCard({
     required this.status,
     required this.isRefreshing,
     required this.onRefresh,
+    required this.onConfigure,
   });
 
   @override
@@ -912,8 +944,16 @@ class _HubStatusCard extends StatelessWidget {
         leading: Icon(icon, color: color),
         title: Text(title),
         subtitle: detail.isEmpty ? null : Text(detail),
-        trailing: isRefreshing
-            ? const Padding(
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.settings_ethernet),
+              tooltip: 'Gateway setup',
+              onPressed: onConfigure,
+            ),
+            if (isRefreshing)
+              const Padding(
                 padding: EdgeInsets.all(12),
                 child: SizedBox(
                   width: 20,
@@ -921,11 +961,14 @@ class _HubStatusCard extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               )
-            : IconButton(
+            else
+              IconButton(
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Refresh',
                 onPressed: onRefresh,
               ),
+          ],
+        ),
       ),
     );
   }

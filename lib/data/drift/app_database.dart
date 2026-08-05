@@ -452,6 +452,15 @@ class UserSettingsTable extends Table {
   RealColumn get defaultAnchorScopeRatio =>
       real().withDefault(const Constant(5.0))();
 
+  /// #263 — set via the Anchor Alarm's gateway setup screen (auto-discover
+  /// or manual IP:port); overrides the dart-defines default when non-empty.
+  TextColumn get predictwindHubLocalUrl =>
+      text().withDefault(const Constant(''))();
+  TextColumn get predictwindHubUsername =>
+      text().withDefault(const Constant(''))();
+  TextColumn get predictwindHubPassword =>
+      text().withDefault(const Constant(''))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -628,7 +637,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

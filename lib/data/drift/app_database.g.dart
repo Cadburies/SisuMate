@@ -15923,6 +15923,42 @@ class $UserSettingsTableTable extends UserSettingsTable
         requiredDuringInsert: false,
         defaultValue: const Constant(5.0),
       );
+  static const VerificationMeta _predictwindHubLocalUrlMeta =
+      const VerificationMeta('predictwindHubLocalUrl');
+  @override
+  late final GeneratedColumn<String> predictwindHubLocalUrl =
+      GeneratedColumn<String>(
+        'predictwind_hub_local_url',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _predictwindHubUsernameMeta =
+      const VerificationMeta('predictwindHubUsername');
+  @override
+  late final GeneratedColumn<String> predictwindHubUsername =
+      GeneratedColumn<String>(
+        'predictwind_hub_username',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _predictwindHubPasswordMeta =
+      const VerificationMeta('predictwindHubPassword');
+  @override
+  late final GeneratedColumn<String> predictwindHubPassword =
+      GeneratedColumn<String>(
+        'predictwind_hub_password',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -15942,6 +15978,9 @@ class $UserSettingsTableTable extends UserSettingsTable
     boatName,
     freeEditsUsed,
     defaultAnchorScopeRatio,
+    predictwindHubLocalUrl,
+    predictwindHubUsername,
+    predictwindHubPassword,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -16087,6 +16126,33 @@ class $UserSettingsTableTable extends UserSettingsTable
         ),
       );
     }
+    if (data.containsKey('predictwind_hub_local_url')) {
+      context.handle(
+        _predictwindHubLocalUrlMeta,
+        predictwindHubLocalUrl.isAcceptableOrUnknown(
+          data['predictwind_hub_local_url']!,
+          _predictwindHubLocalUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('predictwind_hub_username')) {
+      context.handle(
+        _predictwindHubUsernameMeta,
+        predictwindHubUsername.isAcceptableOrUnknown(
+          data['predictwind_hub_username']!,
+          _predictwindHubUsernameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('predictwind_hub_password')) {
+      context.handle(
+        _predictwindHubPasswordMeta,
+        predictwindHubPassword.isAcceptableOrUnknown(
+          data['predictwind_hub_password']!,
+          _predictwindHubPasswordMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -16164,6 +16230,18 @@ class $UserSettingsTableTable extends UserSettingsTable
         DriftSqlType.double,
         data['${effectivePrefix}default_anchor_scope_ratio'],
       )!,
+      predictwindHubLocalUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}predictwind_hub_local_url'],
+      )!,
+      predictwindHubUsername: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}predictwind_hub_username'],
+      )!,
+      predictwindHubPassword: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}predictwind_hub_password'],
+      )!,
     );
   }
 
@@ -16199,6 +16277,12 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
   /// #256 — default chain-scope ratio (chain paid out : depth) new anchor
   /// drops are pre-filled with, e.g. `5.0` for 5:1. Editable per-drop.
   final double defaultAnchorScopeRatio;
+
+  /// #263 — set via the Anchor Alarm's gateway setup screen (auto-discover
+  /// or manual IP:port); overrides the dart-defines default when non-empty.
+  final String predictwindHubLocalUrl;
+  final String predictwindHubUsername;
+  final String predictwindHubPassword;
   const UserSettingsRow({
     required this.id,
     this.activeBoatSupabaseId,
@@ -16217,6 +16301,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     this.boatName,
     required this.freeEditsUsed,
     required this.defaultAnchorScopeRatio,
+    required this.predictwindHubLocalUrl,
+    required this.predictwindHubUsername,
+    required this.predictwindHubPassword,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -16254,6 +16341,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     map['default_anchor_scope_ratio'] = Variable<double>(
       defaultAnchorScopeRatio,
     );
+    map['predictwind_hub_local_url'] = Variable<String>(predictwindHubLocalUrl);
+    map['predictwind_hub_username'] = Variable<String>(predictwindHubUsername);
+    map['predictwind_hub_password'] = Variable<String>(predictwindHubPassword);
     return map;
   }
 
@@ -16290,6 +16380,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           : Value(boatName),
       freeEditsUsed: Value(freeEditsUsed),
       defaultAnchorScopeRatio: Value(defaultAnchorScopeRatio),
+      predictwindHubLocalUrl: Value(predictwindHubLocalUrl),
+      predictwindHubUsername: Value(predictwindHubUsername),
+      predictwindHubPassword: Value(predictwindHubPassword),
     );
   }
 
@@ -16320,6 +16413,15 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       defaultAnchorScopeRatio: serializer.fromJson<double>(
         json['defaultAnchorScopeRatio'],
       ),
+      predictwindHubLocalUrl: serializer.fromJson<String>(
+        json['predictwindHubLocalUrl'],
+      ),
+      predictwindHubUsername: serializer.fromJson<String>(
+        json['predictwindHubUsername'],
+      ),
+      predictwindHubPassword: serializer.fromJson<String>(
+        json['predictwindHubPassword'],
+      ),
     );
   }
   @override
@@ -16345,6 +16447,15 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       'defaultAnchorScopeRatio': serializer.toJson<double>(
         defaultAnchorScopeRatio,
       ),
+      'predictwindHubLocalUrl': serializer.toJson<String>(
+        predictwindHubLocalUrl,
+      ),
+      'predictwindHubUsername': serializer.toJson<String>(
+        predictwindHubUsername,
+      ),
+      'predictwindHubPassword': serializer.toJson<String>(
+        predictwindHubPassword,
+      ),
     };
   }
 
@@ -16366,6 +16477,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     Value<String?> boatName = const Value.absent(),
     int? freeEditsUsed,
     double? defaultAnchorScopeRatio,
+    String? predictwindHubLocalUrl,
+    String? predictwindHubUsername,
+    String? predictwindHubPassword,
   }) => UserSettingsRow(
     id: id ?? this.id,
     activeBoatSupabaseId: activeBoatSupabaseId.present
@@ -16389,6 +16503,12 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     freeEditsUsed: freeEditsUsed ?? this.freeEditsUsed,
     defaultAnchorScopeRatio:
         defaultAnchorScopeRatio ?? this.defaultAnchorScopeRatio,
+    predictwindHubLocalUrl:
+        predictwindHubLocalUrl ?? this.predictwindHubLocalUrl,
+    predictwindHubUsername:
+        predictwindHubUsername ?? this.predictwindHubUsername,
+    predictwindHubPassword:
+        predictwindHubPassword ?? this.predictwindHubPassword,
   );
   UserSettingsRow copyWithCompanion(UserSettingsTableCompanion data) {
     return UserSettingsRow(
@@ -16431,6 +16551,15 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       defaultAnchorScopeRatio: data.defaultAnchorScopeRatio.present
           ? data.defaultAnchorScopeRatio.value
           : this.defaultAnchorScopeRatio,
+      predictwindHubLocalUrl: data.predictwindHubLocalUrl.present
+          ? data.predictwindHubLocalUrl.value
+          : this.predictwindHubLocalUrl,
+      predictwindHubUsername: data.predictwindHubUsername.present
+          ? data.predictwindHubUsername.value
+          : this.predictwindHubUsername,
+      predictwindHubPassword: data.predictwindHubPassword.present
+          ? data.predictwindHubPassword.value
+          : this.predictwindHubPassword,
     );
   }
 
@@ -16453,7 +16582,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           ..write('replyToEmail: $replyToEmail, ')
           ..write('boatName: $boatName, ')
           ..write('freeEditsUsed: $freeEditsUsed, ')
-          ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio')
+          ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio, ')
+          ..write('predictwindHubLocalUrl: $predictwindHubLocalUrl, ')
+          ..write('predictwindHubUsername: $predictwindHubUsername, ')
+          ..write('predictwindHubPassword: $predictwindHubPassword')
           ..write(')'))
         .toString();
   }
@@ -16477,6 +16609,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     boatName,
     freeEditsUsed,
     defaultAnchorScopeRatio,
+    predictwindHubLocalUrl,
+    predictwindHubUsername,
+    predictwindHubPassword,
   );
   @override
   bool operator ==(Object other) =>
@@ -16498,7 +16633,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           other.replyToEmail == this.replyToEmail &&
           other.boatName == this.boatName &&
           other.freeEditsUsed == this.freeEditsUsed &&
-          other.defaultAnchorScopeRatio == this.defaultAnchorScopeRatio);
+          other.defaultAnchorScopeRatio == this.defaultAnchorScopeRatio &&
+          other.predictwindHubLocalUrl == this.predictwindHubLocalUrl &&
+          other.predictwindHubUsername == this.predictwindHubUsername &&
+          other.predictwindHubPassword == this.predictwindHubPassword);
 }
 
 class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
@@ -16519,6 +16657,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
   final Value<String?> boatName;
   final Value<int> freeEditsUsed;
   final Value<double> defaultAnchorScopeRatio;
+  final Value<String> predictwindHubLocalUrl;
+  final Value<String> predictwindHubUsername;
+  final Value<String> predictwindHubPassword;
   const UserSettingsTableCompanion({
     this.id = const Value.absent(),
     this.activeBoatSupabaseId = const Value.absent(),
@@ -16537,6 +16678,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.boatName = const Value.absent(),
     this.freeEditsUsed = const Value.absent(),
     this.defaultAnchorScopeRatio = const Value.absent(),
+    this.predictwindHubLocalUrl = const Value.absent(),
+    this.predictwindHubUsername = const Value.absent(),
+    this.predictwindHubPassword = const Value.absent(),
   });
   UserSettingsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -16556,6 +16700,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.boatName = const Value.absent(),
     this.freeEditsUsed = const Value.absent(),
     this.defaultAnchorScopeRatio = const Value.absent(),
+    this.predictwindHubLocalUrl = const Value.absent(),
+    this.predictwindHubUsername = const Value.absent(),
+    this.predictwindHubPassword = const Value.absent(),
   });
   static Insertable<UserSettingsRow> custom({
     Expression<int>? id,
@@ -16575,6 +16722,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Expression<String>? boatName,
     Expression<int>? freeEditsUsed,
     Expression<double>? defaultAnchorScopeRatio,
+    Expression<String>? predictwindHubLocalUrl,
+    Expression<String>? predictwindHubUsername,
+    Expression<String>? predictwindHubPassword,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -16596,6 +16746,12 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       if (freeEditsUsed != null) 'free_edits_used': freeEditsUsed,
       if (defaultAnchorScopeRatio != null)
         'default_anchor_scope_ratio': defaultAnchorScopeRatio,
+      if (predictwindHubLocalUrl != null)
+        'predictwind_hub_local_url': predictwindHubLocalUrl,
+      if (predictwindHubUsername != null)
+        'predictwind_hub_username': predictwindHubUsername,
+      if (predictwindHubPassword != null)
+        'predictwind_hub_password': predictwindHubPassword,
     });
   }
 
@@ -16617,6 +16773,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Value<String?>? boatName,
     Value<int>? freeEditsUsed,
     Value<double>? defaultAnchorScopeRatio,
+    Value<String>? predictwindHubLocalUrl,
+    Value<String>? predictwindHubUsername,
+    Value<String>? predictwindHubPassword,
   }) {
     return UserSettingsTableCompanion(
       id: id ?? this.id,
@@ -16637,6 +16796,12 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       freeEditsUsed: freeEditsUsed ?? this.freeEditsUsed,
       defaultAnchorScopeRatio:
           defaultAnchorScopeRatio ?? this.defaultAnchorScopeRatio,
+      predictwindHubLocalUrl:
+          predictwindHubLocalUrl ?? this.predictwindHubLocalUrl,
+      predictwindHubUsername:
+          predictwindHubUsername ?? this.predictwindHubUsername,
+      predictwindHubPassword:
+          predictwindHubPassword ?? this.predictwindHubPassword,
     );
   }
 
@@ -16698,6 +16863,21 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
         defaultAnchorScopeRatio.value,
       );
     }
+    if (predictwindHubLocalUrl.present) {
+      map['predictwind_hub_local_url'] = Variable<String>(
+        predictwindHubLocalUrl.value,
+      );
+    }
+    if (predictwindHubUsername.present) {
+      map['predictwind_hub_username'] = Variable<String>(
+        predictwindHubUsername.value,
+      );
+    }
+    if (predictwindHubPassword.present) {
+      map['predictwind_hub_password'] = Variable<String>(
+        predictwindHubPassword.value,
+      );
+    }
     return map;
   }
 
@@ -16720,7 +16900,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
           ..write('replyToEmail: $replyToEmail, ')
           ..write('boatName: $boatName, ')
           ..write('freeEditsUsed: $freeEditsUsed, ')
-          ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio')
+          ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio, ')
+          ..write('predictwindHubLocalUrl: $predictwindHubLocalUrl, ')
+          ..write('predictwindHubUsername: $predictwindHubUsername, ')
+          ..write('predictwindHubPassword: $predictwindHubPassword')
           ..write(')'))
         .toString();
   }
@@ -27983,6 +28166,9 @@ typedef $$UserSettingsTableTableCreateCompanionBuilder =
       Value<String?> boatName,
       Value<int> freeEditsUsed,
       Value<double> defaultAnchorScopeRatio,
+      Value<String> predictwindHubLocalUrl,
+      Value<String> predictwindHubUsername,
+      Value<String> predictwindHubPassword,
     });
 typedef $$UserSettingsTableTableUpdateCompanionBuilder =
     UserSettingsTableCompanion Function({
@@ -28003,6 +28189,9 @@ typedef $$UserSettingsTableTableUpdateCompanionBuilder =
       Value<String?> boatName,
       Value<int> freeEditsUsed,
       Value<double> defaultAnchorScopeRatio,
+      Value<String> predictwindHubLocalUrl,
+      Value<String> predictwindHubUsername,
+      Value<String> predictwindHubPassword,
     });
 
 class $$UserSettingsTableTableFilterComposer
@@ -28096,6 +28285,21 @@ class $$UserSettingsTableTableFilterComposer
 
   ColumnFilters<double> get defaultAnchorScopeRatio => $composableBuilder(
     column: $table.defaultAnchorScopeRatio,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get predictwindHubLocalUrl => $composableBuilder(
+    column: $table.predictwindHubLocalUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get predictwindHubUsername => $composableBuilder(
+    column: $table.predictwindHubUsername,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get predictwindHubPassword => $composableBuilder(
+    column: $table.predictwindHubPassword,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -28193,6 +28397,21 @@ class $$UserSettingsTableTableOrderingComposer
     column: $table.defaultAnchorScopeRatio,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get predictwindHubLocalUrl => $composableBuilder(
+    column: $table.predictwindHubLocalUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get predictwindHubUsername => $composableBuilder(
+    column: $table.predictwindHubUsername,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get predictwindHubPassword => $composableBuilder(
+    column: $table.predictwindHubPassword,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$UserSettingsTableTableAnnotationComposer
@@ -28276,6 +28495,21 @@ class $$UserSettingsTableTableAnnotationComposer
     column: $table.defaultAnchorScopeRatio,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get predictwindHubLocalUrl => $composableBuilder(
+    column: $table.predictwindHubLocalUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get predictwindHubUsername => $composableBuilder(
+    column: $table.predictwindHubUsername,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get predictwindHubPassword => $composableBuilder(
+    column: $table.predictwindHubPassword,
+    builder: (column) => column,
+  );
 }
 
 class $$UserSettingsTableTableTableManager
@@ -28335,6 +28569,9 @@ class $$UserSettingsTableTableTableManager
                 Value<String?> boatName = const Value.absent(),
                 Value<int> freeEditsUsed = const Value.absent(),
                 Value<double> defaultAnchorScopeRatio = const Value.absent(),
+                Value<String> predictwindHubLocalUrl = const Value.absent(),
+                Value<String> predictwindHubUsername = const Value.absent(),
+                Value<String> predictwindHubPassword = const Value.absent(),
               }) => UserSettingsTableCompanion(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -28353,6 +28590,9 @@ class $$UserSettingsTableTableTableManager
                 boatName: boatName,
                 freeEditsUsed: freeEditsUsed,
                 defaultAnchorScopeRatio: defaultAnchorScopeRatio,
+                predictwindHubLocalUrl: predictwindHubLocalUrl,
+                predictwindHubUsername: predictwindHubUsername,
+                predictwindHubPassword: predictwindHubPassword,
               ),
           createCompanionCallback:
               ({
@@ -28373,6 +28613,9 @@ class $$UserSettingsTableTableTableManager
                 Value<String?> boatName = const Value.absent(),
                 Value<int> freeEditsUsed = const Value.absent(),
                 Value<double> defaultAnchorScopeRatio = const Value.absent(),
+                Value<String> predictwindHubLocalUrl = const Value.absent(),
+                Value<String> predictwindHubUsername = const Value.absent(),
+                Value<String> predictwindHubPassword = const Value.absent(),
               }) => UserSettingsTableCompanion.insert(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -28391,6 +28634,9 @@ class $$UserSettingsTableTableTableManager
                 boatName: boatName,
                 freeEditsUsed: freeEditsUsed,
                 defaultAnchorScopeRatio: defaultAnchorScopeRatio,
+                predictwindHubLocalUrl: predictwindHubLocalUrl,
+                predictwindHubUsername: predictwindHubUsername,
+                predictwindHubPassword: predictwindHubPassword,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
