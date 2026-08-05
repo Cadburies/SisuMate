@@ -22,6 +22,19 @@ import 'error_log_service.dart';
 /// yet surfaced by [PredictWindBoatData]. No unauthenticated path was found
 /// (`/signalk*` on the same tunneled ports both 404) — a session is
 /// required for every fetch.
+///
+/// #257/#260 — the HTTPS endpoint (`PREDICTWIND_HUB_URL`) serves a
+/// self-signed certificate, which `curl -k` masked during dev testing but
+/// which `dart:io`'s real certificate validation correctly rejects on a
+/// real device (`HandshakeException: CERTIFICATE_VERIFY_FAILED: self
+/// signed certificate`) — every real-device connection attempt failed.
+/// [_baseUrl] therefore prefers the plain-HTTP endpoint
+/// (`PREDICTWIND_HUB_HTTP_URL`), which the vendor provisions as a
+/// documented alternative access path, not a workaround. This trades
+/// transport encryption for a connection that actually works; the more
+/// correct fix (pinning the HTTPS cert's actual fingerprint instead of
+/// rejecting or blindly trusting it) is a reasonable follow-up if this
+/// grows beyond a single-boat prototype.
 enum PredictWindHubConnectionState {
   notConfigured,
   missingCredentials,
@@ -53,6 +66,20 @@ class PredictWindBoatData {
     this.depthMeters,
     required this.observedAt,
   });
+
+  /// #256 follow-up — true once [observedAt] is older than [maxAge]. The
+  /// Hub can stay reachable and keep answering with its *last-known*
+  /// reading even after the boat's NMEA instruments are switched off (the
+  /// Hub itself may stay powered independently) — a frozen `unixtime` is
+  /// how that's told apart from a genuinely live feed. Anchor-alarm
+  /// evaluation and position display must treat a stale reading the same
+  /// as "no fix", not as a trustworthy current position.
+  bool isStale({Duration maxAge = const Duration(seconds: 60)}) =>
+      DateTime.now().toUtc().difference(observedAt) > maxAge;
+
+  /// True when there's a fresh, usable position fix — the single check
+  /// both the position display and alarm evaluation should gate on.
+  bool get hasFix => latitude != null && longitude != null && !isStale();
 }
 
 class PredictWindDatahubService {
@@ -86,9 +113,9 @@ class PredictWindDatahubService {
 
   String? get _baseUrl =>
       _baseUrlOverride ??
-      (_hubUrl.isNotEmpty
-          ? _hubUrl
-          : (_hubHttpUrl.isNotEmpty ? _hubHttpUrl : null));
+      (_hubHttpUrl.isNotEmpty
+          ? _hubHttpUrl
+          : (_hubUrl.isNotEmpty ? _hubUrl : null));
 
   String get _username => _usernameOverride ?? _hubUsername;
   String get _password => _passwordOverride ?? _hubPassword;
@@ -144,9 +171,15 @@ class PredictWindDatahubService {
 
       final json = jsonDecode(res.body) as Map<String, dynamic>;
       final unixtime = json['unixtime'];
+      // GPS fix-quality (NMEA GGA convention: 0 = no fix). Absent/
+      // unparseable is treated as "unknown", not "no fix" — only an
+      // explicit 0 zeroes out the position, so a Hub that doesn't report
+      // this field at all still gets a usable fix.
+      final quality = json['quality'];
+      final hasFix = quality is! num || quality > 0;
       return PredictWindBoatData(
-        latitude: _asDouble(json['lat']),
-        longitude: _asDouble(json['lon']),
+        latitude: hasFix ? _asDouble(json['lat']) : null,
+        longitude: hasFix ? _asDouble(json['lon']) : null,
         windSpeedKt: _asDouble(json['tws']),
         windDirectionDeg: _asDouble(json['twd']),
         depthMeters: _asDouble(json['dpt']),

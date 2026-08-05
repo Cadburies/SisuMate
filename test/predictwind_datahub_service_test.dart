@@ -183,4 +183,86 @@ void main() {
 
     expect(data, isNull);
   });
+
+  group('GPS fix quality (#256 follow-up)', () {
+    test('quality 0 (no fix) nulls out lat/lon instead of trusting them',
+        () async {
+      final client = MockClient((request) async {
+        if (request.method == 'POST') {
+          return http.Response('', 302,
+              headers: {'set-cookie': 'sysauth=abc123; path=/cgi-bin/luci/'});
+        }
+        return http.Response(
+          '{"lat":12.0,"lon":-61.7,"quality":0,'
+          '"unixtime":${DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000}}',
+          200,
+        );
+      });
+      const service = PredictWindDatahubService(
+        baseUrlOverride: 'https://fake-hub.test',
+        usernameOverride: 'user',
+        passwordOverride: 'pass',
+      );
+
+      final data = await service.fetchBoatData(client: client);
+
+      expect(data, isNotNull);
+      expect(data!.latitude, isNull);
+      expect(data.longitude, isNull);
+      expect(data.hasFix, isFalse);
+    });
+
+    test('a missing quality field is treated as unknown, not no-fix',
+        () async {
+      final client = MockClient((request) async {
+        if (request.method == 'POST') {
+          return http.Response('', 302,
+              headers: {'set-cookie': 'sysauth=abc123; path=/cgi-bin/luci/'});
+        }
+        return http.Response(
+          '{"lat":12.0,"lon":-61.7,'
+          '"unixtime":${DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000}}',
+          200,
+        );
+      });
+      const service = PredictWindDatahubService(
+        baseUrlOverride: 'https://fake-hub.test',
+        usernameOverride: 'user',
+        passwordOverride: 'pass',
+      );
+
+      final data = await service.fetchBoatData(client: client);
+
+      expect(data!.latitude, 12.0);
+      expect(data.hasFix, isTrue);
+    });
+  });
+
+  group('PredictWindBoatData.isStale/hasFix (#256 follow-up)', () {
+    test('a fresh reading is not stale', () {
+      final data = PredictWindBoatData(
+        latitude: 12.0,
+        longitude: -61.7,
+        observedAt: DateTime.now().toUtc(),
+      );
+      expect(data.isStale(), isFalse);
+      expect(data.hasFix, isTrue);
+    });
+
+    test('a reading older than maxAge is stale, and loses its fix', () {
+      final data = PredictWindBoatData(
+        latitude: 12.0,
+        longitude: -61.7,
+        observedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 5)),
+      );
+      expect(data.isStale(), isTrue);
+      expect(data.hasFix, isFalse);
+    });
+
+    test('a null position never has a fix even if fresh', () {
+      final data = PredictWindBoatData(observedAt: DateTime.now().toUtc());
+      expect(data.isStale(), isFalse);
+      expect(data.hasFix, isFalse);
+    });
+  });
 }

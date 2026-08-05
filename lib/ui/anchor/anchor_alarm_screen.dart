@@ -10,7 +10,6 @@ import '../components/common_drawer.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/anchor_alarm_service.dart';
-import '../../services/location_service.dart';
 import '../../services/predictwind_datahub_service.dart';
 
 final activeAnchorWatchProvider = StreamProvider<AnchorWatch?>((ref) {
@@ -19,9 +18,17 @@ final activeAnchorWatchProvider = StreamProvider<AnchorWatch?>((ref) {
 
 /// #256 — Anchor Alarm: set/edit the anchor position, a chain-scope
 /// geofence circle (default ratio from Settings, always adjustable), and
-/// an optional wind-swing danger-zone sector. Sources GPS/wind from a
-/// connected PredictWind Hub when available, falling back to phone GPS for
-/// position only (no phone-native wind source exists).
+/// an optional wind-swing danger-zone sector.
+///
+/// GPS/wind come **only** from the PredictWind Hub — deliberately no phone
+/// GPS fallback (a phone can be carried off the boat, or just be less
+/// accurate than the boat's own instrument; either masks a real drag or
+/// invents a false one). When the Hub has no usable fix — not connected,
+/// connected but no fix yet, or a stale/frozen reading (the Hub can stay
+/// powered and keep answering after the boat's NMEA instruments are
+/// switched off) — the screen shows a calm warning instead of a phone
+/// position, and the drag/danger-zone alarm simply doesn't evaluate
+/// (losing the Hub must never itself read as "the boat dragged").
 ///
 /// The alarm (system sound + haptic, repeating every 2s while triggered)
 /// only fires while this screen is open and the app is in the foreground —
@@ -30,13 +37,11 @@ final activeAnchorWatchProvider = StreamProvider<AnchorWatch?>((ref) {
 class AnchorAlarmScreen extends ConsumerStatefulWidget {
   const AnchorAlarmScreen({
     super.key,
-    this.locationService = const LocationService(),
     this.hubService = const PredictWindDatahubService(),
     this.httpClient,
     this.pollInterval = const Duration(seconds: 20),
   });
 
-  final LocationService locationService;
   final PredictWindDatahubService hubService;
   final http.Client? httpClient;
 
@@ -54,10 +59,15 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
   static const _defaultRadiusMeters = 30.0;
   static const _alarmService = AnchorAlarmService();
 
-  bool _loading = true;
+  // True only until the very first fetch completes — after that, refreshes
+  // (periodic or manual) update data quietly in place. Swapping the whole
+  // body out for a spinner on every refresh (the old behavior) tore down
+  // in-progress Slider drags and made editing the anchor position
+  // effectively impossible — see #256 follow-up.
+  bool _initialLoadDone = false;
+  bool _isRefreshing = false;
   PredictWindHubStatus? _hubStatus;
   PredictWindBoatData? _boatData;
-  LocationResult? _phoneLocation;
 
   bool _alarmActive = false;
   bool _isOutsideCircle = false;
@@ -83,25 +93,23 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
     super.dispose();
   }
 
-  double? get _boatLat => _boatData?.latitude ?? _phoneLocation?.position?.latitude;
-  double? get _boatLon => _boatData?.longitude ?? _phoneLocation?.position?.longitude;
+  // Hub-only — deliberately no phone GPS fallback (see class doc). Null
+  // whenever the Hub has no fresh, usable fix, regardless of the reason.
+  double? get _boatLat => _boatData?.hasFix ?? false ? _boatData!.latitude : null;
+  double? get _boatLon => _boatData?.hasFix ?? false ? _boatData!.longitude : null;
 
   Future<void> _refresh() async {
-    setState(() => _loading = true);
+    setState(() => _isRefreshing = true);
     final hubStatus =
         await widget.hubService.checkConnection(client: widget.httpClient);
     final boatData =
         await widget.hubService.fetchBoatData(client: widget.httpClient);
-    LocationResult? phoneLocation;
-    if (boatData?.latitude == null) {
-      phoneLocation = await widget.locationService.getCurrentPosition();
-    }
     if (!mounted) return;
     setState(() {
       _hubStatus = hubStatus;
       _boatData = boatData;
-      _phoneLocation = phoneLocation;
-      _loading = false;
+      _initialLoadDone = true;
+      _isRefreshing = false;
     });
     _recomputeAlarm();
   }
@@ -208,14 +216,12 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
             TextButton.icon(
               icon: const Icon(Icons.my_location),
               label: const Text('Use current GPS position'),
-              onPressed: () {
-                final lat = _boatLat;
-                final lon = _boatLon;
-                if (lat != null && lon != null) {
-                  latCtrl.text = lat.toStringAsFixed(6);
-                  lonCtrl.text = lon.toStringAsFixed(6);
-                }
-              },
+              onPressed: _boatLat != null && _boatLon != null
+                  ? () {
+                      latCtrl.text = _boatLat!.toStringAsFixed(6);
+                      lonCtrl.text = _boatLon!.toStringAsFixed(6);
+                    }
+                  : null,
             ),
             TextField(
               controller: latCtrl,
@@ -276,7 +282,7 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
               ),
               Expanded(
-                child: _loading
+                child: !_initialLoadDone
                     ? const Center(child: CircularProgressIndicator())
                     : RefreshIndicator(
                         onRefresh: _refresh,
@@ -288,6 +294,9 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
                                 outsideCircle: _isOutsideCircle,
                                 inDangerZone: _isInDangerZone,
                               ),
+                              const SizedBox(height: 12),
+                            ] else if (activeWatch != null && !canDrop) ...[
+                              _NoFixWarningBanner(hubState: _hubStatus?.state),
                               const SizedBox(height: 12),
                             ],
                             if (activeWatch == null)
@@ -309,12 +318,13 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen> {
                               _DangerZoneCard(activeWatch: activeWatch),
                             ],
                             const SizedBox(height: 12),
-                            _HubStatusCard(status: _hubStatus, onRefresh: _refresh),
-                            const SizedBox(height: 12),
-                            _PositionCard(
-                              boatData: _boatData,
-                              phoneLocation: _phoneLocation,
+                            _HubStatusCard(
+                              status: _hubStatus,
+                              isRefreshing: _isRefreshing,
+                              onRefresh: _refresh,
                             ),
+                            const SizedBox(height: 12),
+                            _PositionCard(boatData: _boatData),
                             const SizedBox(height: 12),
                             _WindCard(boatData: _boatData),
                           ],
@@ -719,8 +729,13 @@ class _DangerZoneCardState extends ConsumerState<_DangerZoneCard> {
 
 class _HubStatusCard extends StatelessWidget {
   final PredictWindHubStatus? status;
+  final bool isRefreshing;
   final Future<void> Function() onRefresh;
-  const _HubStatusCard({required this.status, required this.onRefresh});
+  const _HubStatusCard({
+    required this.status,
+    required this.isRefreshing,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -772,59 +787,122 @@ class _HubStatusCard extends StatelessWidget {
         leading: Icon(icon, color: color),
         title: Text(title),
         subtitle: detail.isEmpty ? null : Text(detail),
-        trailing: IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: 'Refresh',
-          onPressed: onRefresh,
-        ),
+        trailing: isRefreshing
+            ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            : IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh',
+                onPressed: onRefresh,
+              ),
       ),
     );
   }
 }
 
+/// #256 follow-up — GPS position, Hub-only (no phone GPS; see the screen's
+/// class doc for why). Distinguishes "no data at all" from "the Hub has a
+/// reading but it's stale/no-fix" ([PredictWindBoatData.hasFix]), since the
+/// latter matters for anchor watch trust even though `boatData` is non-null.
 class _PositionCard extends StatelessWidget {
   final PredictWindBoatData? boatData;
-  final LocationResult? phoneLocation;
-  const _PositionCard({required this.boatData, required this.phoneLocation});
+  const _PositionCard({required this.boatData});
 
   @override
   Widget build(BuildContext context) {
-    final lat = boatData?.latitude ?? phoneLocation?.position?.latitude;
-    final lon = boatData?.longitude ?? phoneLocation?.position?.longitude;
-    final source = boatData?.latitude != null
-        ? 'PredictWind Hub'
-        : (phoneLocation?.isSuccess ?? false)
-            ? 'Phone GPS'
-            : null;
+    final data = boatData;
+    final hasFix = data?.hasFix ?? false;
+    final theme = Theme.of(context);
+
+    String title;
+    String subtitle;
+    if (hasFix) {
+      title = '${data!.latitude!.toStringAsFixed(5)}, '
+          '${data.longitude!.toStringAsFixed(5)}';
+      subtitle = 'Source: PredictWind Hub';
+    } else if (data == null) {
+      title = 'Position unavailable';
+      subtitle = 'PredictWind Hub not connected.';
+    } else if (data.isStale()) {
+      title = 'Position unavailable';
+      subtitle = 'Last Hub reading is stale — instruments may be off.';
+    } else {
+      title = 'Position unavailable';
+      subtitle = 'Connected to the Hub, waiting for a GPS fix.';
+    }
 
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.gps_fixed),
-        title: Text(
-          lat != null && lon != null
-              ? '${lat.toStringAsFixed(5)}, ${lon.toStringAsFixed(5)}'
-              : 'Position unavailable',
+        leading: Icon(
+          hasFix ? Icons.gps_fixed : Icons.gps_off,
+          color: hasFix ? null : theme.colorScheme.outline,
         ),
-        subtitle: Text(
-          source != null
-              ? 'Source: $source'
-              : _phoneFailureReason(phoneLocation),
-        ),
+        title: Text(title),
+        subtitle: Text(subtitle),
       ),
     );
   }
+}
 
-  String _phoneFailureReason(LocationResult? r) {
-    switch (r?.failureReason) {
-      case null:
-        return 'Checking…';
-      case LocationFailureReason.serviceDisabled:
-        return 'Location services are turned off.';
-      case LocationFailureReason.permissionDenied:
-        return 'Location permission denied.';
-      case LocationFailureReason.error:
-        return 'Could not get a GPS fix.';
-    }
+/// #256 follow-up — a calm, non-looping warning for "no trustworthy Hub
+/// position," shown where the loud [_AlarmBanner] would go (the two are
+/// mutually exclusive: the alarm needs a position to evaluate against).
+/// Deliberately not an [_AlarmBanner]-style red/sound/haptic escalation —
+/// losing Hub comms must read as "can't verify," not "the boat is
+/// dragging," or it becomes exactly the false alarm this was built to
+/// avoid.
+class _NoFixWarningBanner extends StatelessWidget {
+  final PredictWindHubConnectionState? hubState;
+  const _NoFixWarningBanner({required this.hubState});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final reason = switch (hubState) {
+      null => 'Checking the PredictWind Hub…',
+      PredictWindHubConnectionState.connected =>
+        'Connected to the Hub, but no live GPS fix — instruments may be '
+            'off, or the last reading is stale.',
+      _ => "Lost connection to the PredictWind Hub — can't verify the "
+          'anchor position.',
+    };
+
+    return Card(
+      color: theme.colorScheme.tertiaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.gps_off, color: theme.colorScheme.onTertiaryContainer, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Anchor position unknown',
+                    style: TextStyle(
+                      color: theme.colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    reason,
+                    style: TextStyle(color: theme.colorScheme.onTertiaryContainer),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
