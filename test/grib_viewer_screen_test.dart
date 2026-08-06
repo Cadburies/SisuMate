@@ -24,6 +24,15 @@ class _FakeGribImportService extends GribImportService {
 }
 
 void main() {
+  test('isGribFilePath accepts marine GRIB suffixes only', () {
+    expect(isGribFilePath('/tmp/a.grb'), isTrue);
+    expect(isGribFilePath('/tmp/a.GRB2'), isTrue);
+    expect(isGribFilePath('/tmp/a.grib'), isTrue);
+    expect(isGribFilePath('/tmp/a.grib2'), isTrue);
+    expect(isGribFilePath('/tmp/a.jpg'), isFalse);
+    expect(isGribFilePath('/tmp/a'), isFalse);
+  });
+
   testWidgets('with no prior import, says so instead of showing a blank '
       'screen', (tester) async {
     await tester.pumpWidget(MaterialApp(

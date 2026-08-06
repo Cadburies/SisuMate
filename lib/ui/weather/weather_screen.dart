@@ -188,15 +188,27 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
           }
           return;
         case LocationFailureReason.error:
-          // Denied permission is common/expected; still worth a
-          // warning-level signal since it also covers real GPS/timeout
-          // failures.
-          unawaited(ErrorLogService().logWarning(
-              'location lookup failed: ${result.error}',
-              context: 'weather_screen: _locate'));
+          // #283 — timeouts / no-fix indoors are expected control flow
+          // (SnackBar is enough). Only log unexpected location failures so
+          // triage does not file one GitHub issue per slow GPS.
+          final err = result.error;
+          final msg = err?.toString() ?? '';
+          final expectedTimeout = msg.contains('TimeoutException') ||
+              msg.contains('time limit') ||
+              msg.contains('TIMEOUT');
+          if (!expectedTimeout) {
+            unawaited(ErrorLogService().logWarning(
+              'location lookup failed: $err',
+              context: 'weather_screen: _locate',
+            ));
+          }
           if (!silent) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Could not get location: ${result.error}'),
+              content: Text(
+                expectedTimeout
+                    ? 'GPS timed out — try outdoors or enter coordinates'
+                    : 'Could not get location: $err',
+              ),
             ));
           }
           return;

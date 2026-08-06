@@ -2,12 +2,22 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../services/grib_import_service.dart';
 import '../../services/grib_parser_service.dart';
+
+/// #282 — marine GRIB suffixes (no leading dots — FilePicker requirement).
+const kGribFileExtensions = ['grb', 'grb2', 'grib', 'grib2'];
+
+/// True when [path] ends with a known GRIB extension (case-insensitive).
+bool isGribFilePath(String path) {
+  final lower = path.toLowerCase();
+  return kGribFileExtensions.any((ext) => lower.endsWith('.$ext'));
+}
 
 /// #244: import a GRIB2 file from device storage and view it. Fully
 /// offline once imported — [GribImportService] copies the picked file into
@@ -61,12 +71,38 @@ class _GribViewerScreenState extends State<GribViewerScreen> {
   }
 
   Future<void> _importFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['grb', 'grb2', 'grib', 'grib2'],
-    );
+    FilePickerResult? result;
+    try {
+      try {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: List<String>.from(kGribFileExtensions),
+        );
+      } on PlatformException {
+        // Android: unsupported custom filter → open any file, filter below.
+        result = await FilePicker.platform.pickFiles(type: FileType.any);
+      }
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Could not open the file picker: ${e.message ?? e.code}';
+      });
+      return;
+    } catch (_) {
+      // User cancelled or platform returned null — not an error log event.
+      return;
+    }
+
     final path = result?.files.single.path;
     if (path == null) return;
+    if (!isGribFilePath(path)) {
+      if (!mounted) return;
+      setState(() {
+        _error =
+            'Pick a GRIB file (.grb, .grb2, .grib, or .grib2).';
+      });
+      return;
+    }
 
     setState(() {
       _loading = true;

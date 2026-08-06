@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (grok):** #281 Polar screen tabs — Diagram / Boat / Sea state.
+- **Last (grok):** closed #282–#285 triage batch (GRIB picker, GPS timeout, hub DNS log noise).
 - **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 

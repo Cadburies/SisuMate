@@ -95,6 +95,20 @@ String friendlyConnectionError(Object e) {
   return "Check the boat's network connection.";
 }
 
+/// #284/#285 — true for offline / DNS / refused / timeout noise that the
+/// UI already surfaces; should not feed ErrorLog triage.
+bool _isExpectedHubNetworkFailure(String detail) {
+  final s = detail.toLowerCase();
+  return s.contains('socketexception') ||
+      s.contains('failed host lookup') ||
+      s.contains('no address associated') ||
+      s.contains('connection refused') ||
+      s.contains('network is unreachable') ||
+      s.contains('no route to host') ||
+      s.contains('timeoutexception') ||
+      s.contains('clientexception');
+}
+
 enum PredictWindHubConnectionState {
   notConfigured,
   missingCredentials,
@@ -388,7 +402,12 @@ class PredictWindDatahubService {
           lastDetail = friendlyConnectionError(e);
         }
       }
-      if (lastState == PredictWindHubConnectionState.unreachable) {
+      // #284/#285 — offline / DNS / refused are expected when the boat
+      // network or remote tunnel is down; UI already shows unreachable.
+      // Only log surprising failures so triage stays quiet.
+      if (lastState == PredictWindHubConnectionState.unreachable &&
+          lastRawDetail != null &&
+          !_isExpectedHubNetworkFailure(lastRawDetail)) {
         unawaited(ErrorLogService().logWarning(
           'PredictWind Hub unreachable: $lastRawDetail',
           context: 'predictwind_datahub_service: checkConnection',
@@ -460,10 +479,13 @@ class PredictWindDatahubService {
                 : DateTime.now(),
           );
         } catch (e) {
-          unawaited(ErrorLogService().logWarning(
-            'PredictWind Hub fetchBoatData failed (${candidate.isLocal ? 'local' : 'remote'}): $e',
-            context: 'predictwind_datahub_service: fetchBoatData',
-          ));
+          // #284 — skip expected offline/DNS noise; still try next candidate.
+          if (!_isExpectedHubNetworkFailure(e.toString())) {
+            unawaited(ErrorLogService().logWarning(
+              'PredictWind Hub fetchBoatData failed (${candidate.isLocal ? 'local' : 'remote'}): $e',
+              context: 'predictwind_datahub_service: fetchBoatData',
+            ));
+          }
         }
       }
       return null;
