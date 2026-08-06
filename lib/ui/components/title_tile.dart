@@ -110,36 +110,46 @@ class _TitleTileState extends ConsumerState<TitleTile> {
     final secondLine = secondLineParts.join(' • ');
     final canPop = Navigator.of(context).canPop();
 
-    // #269 — trailing actions are often several full 48×48 IconButtons; on a
-    // narrow phone (constraints reported 320×50 for this Row) that overflowed
-    // by ~16px. Compact density + min 40×40 keeps the hit target usable while
-    // the Expanded title column still absorbs remaining width with ellipsis.
-    // Trailing is also Flexible so a long actionsBuilder cannot force the Row
-    // past its max width (scrolls horizontally if it must).
+    // #269 / #279 — compact 40×40 icons avoid the old 48×48 overflow on
+    // ~320-wide phones. Trailing must NOT be Flexible (that shared flex with
+    // the title Expanded and crushed the title / moved the menu off far-right).
+    // Layout: [back?] [Expanded title…] [actions… menu] — menu always last
+    // so it stays flush right; actions pack immediately to its left.
     Widget compactIconButton({
       required IconData icon,
       required VoidCallback onPressed,
       required String tooltip,
+      Key? key,
     }) {
       return IconButton(
+        key: key,
         icon: Icon(icon, color: textColor),
         onPressed: onPressed,
         tooltip: tooltip,
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        style: IconButton.styleFrom(
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
       );
     }
 
-    final trailing = <Widget>[
-      ...?widget.actionsBuilder?.call(textColor),
-      if (widget.onMenuPressed != null)
-        compactIconButton(
-          icon: Icons.menu,
-          onPressed: widget.onMenuPressed!,
-          tooltip: 'Menu',
+    final actionExtras = widget.actionsBuilder?.call(textColor) ?? const <Widget>[];
+    final showMenu = widget.onMenuPressed != null;
+
+    // Force compact density on caller-supplied IconButtons too.
+    final compactActionTheme = Theme.of(context).copyWith(
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: textColor,
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          minimumSize: const Size(40, 40),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-    ];
+      ),
+    );
 
     return Container(
       width: double.infinity,
@@ -147,6 +157,7 @@ class _TitleTileState extends ConsumerState<TitleTile> {
       color: backgroundColor,
       padding: EdgeInsets.only(
         left: canPop ? 0 : 16,
+        right: showMenu || actionExtras.isNotEmpty ? 4 : 16,
         top: 6,
         bottom: 6,
       ),
@@ -154,6 +165,7 @@ class _TitleTileState extends ConsumerState<TitleTile> {
         children: [
           if (canPop)
             compactIconButton(
+              key: const ValueKey('title_tile_back'),
               icon: Icons.arrow_back,
               onPressed: () => Navigator.of(context).maybePop(),
               tooltip: 'Back',
@@ -171,6 +183,7 @@ class _TitleTileState extends ConsumerState<TitleTile> {
                     fontSize: 16,
                   ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 const SizedBox(height: 1),
                 // Full opacity — alpha < 1 failed WCAG 4.5:1 on dark theme (TEST10).
@@ -181,19 +194,26 @@ class _TitleTileState extends ConsumerState<TitleTile> {
                     fontSize: 11,
                   ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ],
             ),
           ),
-          if (trailing.isNotEmpty)
-            Flexible(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                reverse: true,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: trailing,
-                ),
+          if (actionExtras.isNotEmpty || showMenu)
+            Theme(
+              data: compactActionTheme,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...actionExtras,
+                  if (showMenu)
+                    compactIconButton(
+                      key: const ValueKey('title_tile_menu'),
+                      icon: Icons.menu,
+                      onPressed: widget.onMenuPressed!,
+                      tooltip: 'Menu',
+                    ),
+                ],
               ),
             ),
         ],
