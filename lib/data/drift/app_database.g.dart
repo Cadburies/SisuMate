@@ -21476,6 +21476,18 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _supabaseIdMeta = const VerificationMeta(
+    'supabaseId',
+  );
+  @override
+  late final GeneratedColumn<String> supabaseId = GeneratedColumn<String>(
+    'supabase_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _boatSupabaseIdMeta = const VerificationMeta(
     'boatSupabaseId',
   );
@@ -21505,10 +21517,42 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
   late final GeneratedColumn<double> sogKt = GeneratedColumn<double>(
     'sog_kt',
     aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stwKtMeta = const VerificationMeta('stwKt');
+  @override
+  late final GeneratedColumn<double> stwKt = GeneratedColumn<double>(
+    'stw_kt',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _boatSpeedKtMeta = const VerificationMeta(
+    'boatSpeedKt',
+  );
+  @override
+  late final GeneratedColumn<double> boatSpeedKt = GeneratedColumn<double>(
+    'boat_speed_kt',
+    aliasedName,
     false,
     type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _speedSourceMeta = const VerificationMeta(
+    'speedSource',
+  );
+  @override
+  late final GeneratedColumn<String> speedSource = GeneratedColumn<String>(
+    'speed_source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('sog'),
   );
   static const VerificationMeta _cogDegMeta = const VerificationMeta('cogDeg');
   @override
@@ -21626,12 +21670,43 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
+    'lastModified',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
+    'last_modified',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    supabaseId,
     boatSupabaseId,
     observedAt,
     sogKt,
+    stwKt,
+    boatSpeedKt,
+    speedSource,
     cogDeg,
     twsKt,
     twdDeg,
@@ -21643,6 +21718,8 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
     engineStbdRpm,
     sourceLabel,
     usedInPolarBuild,
+    isSynced,
+    lastModified,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -21658,6 +21735,12 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('supabase_id')) {
+      context.handle(
+        _supabaseIdMeta,
+        supabaseId.isAcceptableOrUnknown(data['supabase_id']!, _supabaseIdMeta),
+      );
     }
     if (data.containsKey('boat_supabase_id')) {
       context.handle(
@@ -21678,6 +21761,30 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
       context.handle(
         _sogKtMeta,
         sogKt.isAcceptableOrUnknown(data['sog_kt']!, _sogKtMeta),
+      );
+    }
+    if (data.containsKey('stw_kt')) {
+      context.handle(
+        _stwKtMeta,
+        stwKt.isAcceptableOrUnknown(data['stw_kt']!, _stwKtMeta),
+      );
+    }
+    if (data.containsKey('boat_speed_kt')) {
+      context.handle(
+        _boatSpeedKtMeta,
+        boatSpeedKt.isAcceptableOrUnknown(
+          data['boat_speed_kt']!,
+          _boatSpeedKtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('speed_source')) {
+      context.handle(
+        _speedSourceMeta,
+        speedSource.isAcceptableOrUnknown(
+          data['speed_source']!,
+          _speedSourceMeta,
+        ),
       );
     }
     if (data.containsKey('cog_deg')) {
@@ -21761,6 +21868,21 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
         ),
       );
     }
+    if (data.containsKey('is_synced')) {
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
+    }
+    if (data.containsKey('last_modified')) {
+      context.handle(
+        _lastModifiedMeta,
+        lastModified.isAcceptableOrUnknown(
+          data['last_modified']!,
+          _lastModifiedMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -21774,6 +21896,10 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      supabaseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supabase_id'],
+      )!,
       boatSupabaseId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}boat_supabase_id'],
@@ -21785,6 +21911,18 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
       sogKt: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}sog_kt'],
+      ),
+      stwKt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}stw_kt'],
+      ),
+      boatSpeedKt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}boat_speed_kt'],
+      )!,
+      speedSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}speed_source'],
       )!,
       cogDeg: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -21830,6 +21968,14 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
         DriftSqlType.bool,
         data['${effectivePrefix}used_in_polar_build'],
       )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+      lastModified: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_modified'],
+      )!,
     );
   }
 
@@ -21842,9 +21988,15 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
 class SailingPolarSampleRow extends DataClass
     implements Insertable<SailingPolarSampleRow> {
   final int id;
+  final String supabaseId;
   final String boatSupabaseId;
   final DateTime observedAt;
-  final double sogKt;
+  final double? sogKt;
+  final double? stwKt;
+
+  /// Preferred polar speed (STW if available else SOG).
+  final double boatSpeedKt;
+  final String speedSource;
   final double? cogDeg;
   final double twsKt;
   final double? twdDeg;
@@ -21856,11 +22008,17 @@ class SailingPolarSampleRow extends DataClass
   final double? engineStbdRpm;
   final String sourceLabel;
   final bool usedInPolarBuild;
+  final bool isSynced;
+  final DateTime lastModified;
   const SailingPolarSampleRow({
     required this.id,
+    required this.supabaseId,
     required this.boatSupabaseId,
     required this.observedAt,
-    required this.sogKt,
+    this.sogKt,
+    this.stwKt,
+    required this.boatSpeedKt,
+    required this.speedSource,
     this.cogDeg,
     required this.twsKt,
     this.twdDeg,
@@ -21872,14 +22030,24 @@ class SailingPolarSampleRow extends DataClass
     this.engineStbdRpm,
     required this.sourceLabel,
     required this.usedInPolarBuild,
+    required this.isSynced,
+    required this.lastModified,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['supabase_id'] = Variable<String>(supabaseId);
     map['boat_supabase_id'] = Variable<String>(boatSupabaseId);
     map['observed_at'] = Variable<DateTime>(observedAt);
-    map['sog_kt'] = Variable<double>(sogKt);
+    if (!nullToAbsent || sogKt != null) {
+      map['sog_kt'] = Variable<double>(sogKt);
+    }
+    if (!nullToAbsent || stwKt != null) {
+      map['stw_kt'] = Variable<double>(stwKt);
+    }
+    map['boat_speed_kt'] = Variable<double>(boatSpeedKt);
+    map['speed_source'] = Variable<String>(speedSource);
     if (!nullToAbsent || cogDeg != null) {
       map['cog_deg'] = Variable<double>(cogDeg);
     }
@@ -21905,15 +22073,25 @@ class SailingPolarSampleRow extends DataClass
     }
     map['source_label'] = Variable<String>(sourceLabel);
     map['used_in_polar_build'] = Variable<bool>(usedInPolarBuild);
+    map['is_synced'] = Variable<bool>(isSynced);
+    map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
   }
 
   SailingPolarSamplesCompanion toCompanion(bool nullToAbsent) {
     return SailingPolarSamplesCompanion(
       id: Value(id),
+      supabaseId: Value(supabaseId),
       boatSupabaseId: Value(boatSupabaseId),
       observedAt: Value(observedAt),
-      sogKt: Value(sogKt),
+      sogKt: sogKt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sogKt),
+      stwKt: stwKt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stwKt),
+      boatSpeedKt: Value(boatSpeedKt),
+      speedSource: Value(speedSource),
       cogDeg: cogDeg == null && nullToAbsent
           ? const Value.absent()
           : Value(cogDeg),
@@ -21939,6 +22117,8 @@ class SailingPolarSampleRow extends DataClass
           : Value(engineStbdRpm),
       sourceLabel: Value(sourceLabel),
       usedInPolarBuild: Value(usedInPolarBuild),
+      isSynced: Value(isSynced),
+      lastModified: Value(lastModified),
     );
   }
 
@@ -21949,9 +22129,13 @@ class SailingPolarSampleRow extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SailingPolarSampleRow(
       id: serializer.fromJson<int>(json['id']),
+      supabaseId: serializer.fromJson<String>(json['supabaseId']),
       boatSupabaseId: serializer.fromJson<String>(json['boatSupabaseId']),
       observedAt: serializer.fromJson<DateTime>(json['observedAt']),
-      sogKt: serializer.fromJson<double>(json['sogKt']),
+      sogKt: serializer.fromJson<double?>(json['sogKt']),
+      stwKt: serializer.fromJson<double?>(json['stwKt']),
+      boatSpeedKt: serializer.fromJson<double>(json['boatSpeedKt']),
+      speedSource: serializer.fromJson<String>(json['speedSource']),
       cogDeg: serializer.fromJson<double?>(json['cogDeg']),
       twsKt: serializer.fromJson<double>(json['twsKt']),
       twdDeg: serializer.fromJson<double?>(json['twdDeg']),
@@ -21963,6 +22147,8 @@ class SailingPolarSampleRow extends DataClass
       engineStbdRpm: serializer.fromJson<double?>(json['engineStbdRpm']),
       sourceLabel: serializer.fromJson<String>(json['sourceLabel']),
       usedInPolarBuild: serializer.fromJson<bool>(json['usedInPolarBuild']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+      lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
   }
   @override
@@ -21970,9 +22156,13 @@ class SailingPolarSampleRow extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'supabaseId': serializer.toJson<String>(supabaseId),
       'boatSupabaseId': serializer.toJson<String>(boatSupabaseId),
       'observedAt': serializer.toJson<DateTime>(observedAt),
-      'sogKt': serializer.toJson<double>(sogKt),
+      'sogKt': serializer.toJson<double?>(sogKt),
+      'stwKt': serializer.toJson<double?>(stwKt),
+      'boatSpeedKt': serializer.toJson<double>(boatSpeedKt),
+      'speedSource': serializer.toJson<String>(speedSource),
       'cogDeg': serializer.toJson<double?>(cogDeg),
       'twsKt': serializer.toJson<double>(twsKt),
       'twdDeg': serializer.toJson<double?>(twdDeg),
@@ -21984,14 +22174,20 @@ class SailingPolarSampleRow extends DataClass
       'engineStbdRpm': serializer.toJson<double?>(engineStbdRpm),
       'sourceLabel': serializer.toJson<String>(sourceLabel),
       'usedInPolarBuild': serializer.toJson<bool>(usedInPolarBuild),
+      'isSynced': serializer.toJson<bool>(isSynced),
+      'lastModified': serializer.toJson<DateTime>(lastModified),
     };
   }
 
   SailingPolarSampleRow copyWith({
     int? id,
+    String? supabaseId,
     String? boatSupabaseId,
     DateTime? observedAt,
-    double? sogKt,
+    Value<double?> sogKt = const Value.absent(),
+    Value<double?> stwKt = const Value.absent(),
+    double? boatSpeedKt,
+    String? speedSource,
     Value<double?> cogDeg = const Value.absent(),
     double? twsKt,
     Value<double?> twdDeg = const Value.absent(),
@@ -22003,11 +22199,17 @@ class SailingPolarSampleRow extends DataClass
     Value<double?> engineStbdRpm = const Value.absent(),
     String? sourceLabel,
     bool? usedInPolarBuild,
+    bool? isSynced,
+    DateTime? lastModified,
   }) => SailingPolarSampleRow(
     id: id ?? this.id,
+    supabaseId: supabaseId ?? this.supabaseId,
     boatSupabaseId: boatSupabaseId ?? this.boatSupabaseId,
     observedAt: observedAt ?? this.observedAt,
-    sogKt: sogKt ?? this.sogKt,
+    sogKt: sogKt.present ? sogKt.value : this.sogKt,
+    stwKt: stwKt.present ? stwKt.value : this.stwKt,
+    boatSpeedKt: boatSpeedKt ?? this.boatSpeedKt,
+    speedSource: speedSource ?? this.speedSource,
     cogDeg: cogDeg.present ? cogDeg.value : this.cogDeg,
     twsKt: twsKt ?? this.twsKt,
     twdDeg: twdDeg.present ? twdDeg.value : this.twdDeg,
@@ -22023,10 +22225,15 @@ class SailingPolarSampleRow extends DataClass
         : this.engineStbdRpm,
     sourceLabel: sourceLabel ?? this.sourceLabel,
     usedInPolarBuild: usedInPolarBuild ?? this.usedInPolarBuild,
+    isSynced: isSynced ?? this.isSynced,
+    lastModified: lastModified ?? this.lastModified,
   );
   SailingPolarSampleRow copyWithCompanion(SailingPolarSamplesCompanion data) {
     return SailingPolarSampleRow(
       id: data.id.present ? data.id.value : this.id,
+      supabaseId: data.supabaseId.present
+          ? data.supabaseId.value
+          : this.supabaseId,
       boatSupabaseId: data.boatSupabaseId.present
           ? data.boatSupabaseId.value
           : this.boatSupabaseId,
@@ -22034,6 +22241,13 @@ class SailingPolarSampleRow extends DataClass
           ? data.observedAt.value
           : this.observedAt,
       sogKt: data.sogKt.present ? data.sogKt.value : this.sogKt,
+      stwKt: data.stwKt.present ? data.stwKt.value : this.stwKt,
+      boatSpeedKt: data.boatSpeedKt.present
+          ? data.boatSpeedKt.value
+          : this.boatSpeedKt,
+      speedSource: data.speedSource.present
+          ? data.speedSource.value
+          : this.speedSource,
       cogDeg: data.cogDeg.present ? data.cogDeg.value : this.cogDeg,
       twsKt: data.twsKt.present ? data.twsKt.value : this.twsKt,
       twdDeg: data.twdDeg.present ? data.twdDeg.value : this.twdDeg,
@@ -22055,6 +22269,10 @@ class SailingPolarSampleRow extends DataClass
       usedInPolarBuild: data.usedInPolarBuild.present
           ? data.usedInPolarBuild.value
           : this.usedInPolarBuild,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+      lastModified: data.lastModified.present
+          ? data.lastModified.value
+          : this.lastModified,
     );
   }
 
@@ -22062,9 +22280,13 @@ class SailingPolarSampleRow extends DataClass
   String toString() {
     return (StringBuffer('SailingPolarSampleRow(')
           ..write('id: $id, ')
+          ..write('supabaseId: $supabaseId, ')
           ..write('boatSupabaseId: $boatSupabaseId, ')
           ..write('observedAt: $observedAt, ')
           ..write('sogKt: $sogKt, ')
+          ..write('stwKt: $stwKt, ')
+          ..write('boatSpeedKt: $boatSpeedKt, ')
+          ..write('speedSource: $speedSource, ')
           ..write('cogDeg: $cogDeg, ')
           ..write('twsKt: $twsKt, ')
           ..write('twdDeg: $twdDeg, ')
@@ -22075,17 +22297,23 @@ class SailingPolarSampleRow extends DataClass
           ..write('enginePortRpm: $enginePortRpm, ')
           ..write('engineStbdRpm: $engineStbdRpm, ')
           ..write('sourceLabel: $sourceLabel, ')
-          ..write('usedInPolarBuild: $usedInPolarBuild')
+          ..write('usedInPolarBuild: $usedInPolarBuild, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
+    supabaseId,
     boatSupabaseId,
     observedAt,
     sogKt,
+    stwKt,
+    boatSpeedKt,
+    speedSource,
     cogDeg,
     twsKt,
     twdDeg,
@@ -22097,15 +22325,21 @@ class SailingPolarSampleRow extends DataClass
     engineStbdRpm,
     sourceLabel,
     usedInPolarBuild,
-  );
+    isSynced,
+    lastModified,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SailingPolarSampleRow &&
           other.id == this.id &&
+          other.supabaseId == this.supabaseId &&
           other.boatSupabaseId == this.boatSupabaseId &&
           other.observedAt == this.observedAt &&
           other.sogKt == this.sogKt &&
+          other.stwKt == this.stwKt &&
+          other.boatSpeedKt == this.boatSpeedKt &&
+          other.speedSource == this.speedSource &&
           other.cogDeg == this.cogDeg &&
           other.twsKt == this.twsKt &&
           other.twdDeg == this.twdDeg &&
@@ -22116,15 +22350,21 @@ class SailingPolarSampleRow extends DataClass
           other.enginePortRpm == this.enginePortRpm &&
           other.engineStbdRpm == this.engineStbdRpm &&
           other.sourceLabel == this.sourceLabel &&
-          other.usedInPolarBuild == this.usedInPolarBuild);
+          other.usedInPolarBuild == this.usedInPolarBuild &&
+          other.isSynced == this.isSynced &&
+          other.lastModified == this.lastModified);
 }
 
 class SailingPolarSamplesCompanion
     extends UpdateCompanion<SailingPolarSampleRow> {
   final Value<int> id;
+  final Value<String> supabaseId;
   final Value<String> boatSupabaseId;
   final Value<DateTime> observedAt;
-  final Value<double> sogKt;
+  final Value<double?> sogKt;
+  final Value<double?> stwKt;
+  final Value<double> boatSpeedKt;
+  final Value<String> speedSource;
   final Value<double?> cogDeg;
   final Value<double> twsKt;
   final Value<double?> twdDeg;
@@ -22136,11 +22376,17 @@ class SailingPolarSamplesCompanion
   final Value<double?> engineStbdRpm;
   final Value<String> sourceLabel;
   final Value<bool> usedInPolarBuild;
+  final Value<bool> isSynced;
+  final Value<DateTime> lastModified;
   const SailingPolarSamplesCompanion({
     this.id = const Value.absent(),
+    this.supabaseId = const Value.absent(),
     this.boatSupabaseId = const Value.absent(),
     this.observedAt = const Value.absent(),
     this.sogKt = const Value.absent(),
+    this.stwKt = const Value.absent(),
+    this.boatSpeedKt = const Value.absent(),
+    this.speedSource = const Value.absent(),
     this.cogDeg = const Value.absent(),
     this.twsKt = const Value.absent(),
     this.twdDeg = const Value.absent(),
@@ -22152,12 +22398,18 @@ class SailingPolarSamplesCompanion
     this.engineStbdRpm = const Value.absent(),
     this.sourceLabel = const Value.absent(),
     this.usedInPolarBuild = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.lastModified = const Value.absent(),
   });
   SailingPolarSamplesCompanion.insert({
     this.id = const Value.absent(),
+    this.supabaseId = const Value.absent(),
     this.boatSupabaseId = const Value.absent(),
     this.observedAt = const Value.absent(),
     this.sogKt = const Value.absent(),
+    this.stwKt = const Value.absent(),
+    this.boatSpeedKt = const Value.absent(),
+    this.speedSource = const Value.absent(),
     this.cogDeg = const Value.absent(),
     this.twsKt = const Value.absent(),
     this.twdDeg = const Value.absent(),
@@ -22169,12 +22421,18 @@ class SailingPolarSamplesCompanion
     this.engineStbdRpm = const Value.absent(),
     this.sourceLabel = const Value.absent(),
     this.usedInPolarBuild = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.lastModified = const Value.absent(),
   });
   static Insertable<SailingPolarSampleRow> custom({
     Expression<int>? id,
+    Expression<String>? supabaseId,
     Expression<String>? boatSupabaseId,
     Expression<DateTime>? observedAt,
     Expression<double>? sogKt,
+    Expression<double>? stwKt,
+    Expression<double>? boatSpeedKt,
+    Expression<String>? speedSource,
     Expression<double>? cogDeg,
     Expression<double>? twsKt,
     Expression<double>? twdDeg,
@@ -22186,12 +22444,18 @@ class SailingPolarSamplesCompanion
     Expression<double>? engineStbdRpm,
     Expression<String>? sourceLabel,
     Expression<bool>? usedInPolarBuild,
+    Expression<bool>? isSynced,
+    Expression<DateTime>? lastModified,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (supabaseId != null) 'supabase_id': supabaseId,
       if (boatSupabaseId != null) 'boat_supabase_id': boatSupabaseId,
       if (observedAt != null) 'observed_at': observedAt,
       if (sogKt != null) 'sog_kt': sogKt,
+      if (stwKt != null) 'stw_kt': stwKt,
+      if (boatSpeedKt != null) 'boat_speed_kt': boatSpeedKt,
+      if (speedSource != null) 'speed_source': speedSource,
       if (cogDeg != null) 'cog_deg': cogDeg,
       if (twsKt != null) 'tws_kt': twsKt,
       if (twdDeg != null) 'twd_deg': twdDeg,
@@ -22203,14 +22467,20 @@ class SailingPolarSamplesCompanion
       if (engineStbdRpm != null) 'engine_stbd_rpm': engineStbdRpm,
       if (sourceLabel != null) 'source_label': sourceLabel,
       if (usedInPolarBuild != null) 'used_in_polar_build': usedInPolarBuild,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (lastModified != null) 'last_modified': lastModified,
     });
   }
 
   SailingPolarSamplesCompanion copyWith({
     Value<int>? id,
+    Value<String>? supabaseId,
     Value<String>? boatSupabaseId,
     Value<DateTime>? observedAt,
-    Value<double>? sogKt,
+    Value<double?>? sogKt,
+    Value<double?>? stwKt,
+    Value<double>? boatSpeedKt,
+    Value<String>? speedSource,
     Value<double?>? cogDeg,
     Value<double>? twsKt,
     Value<double?>? twdDeg,
@@ -22222,12 +22492,18 @@ class SailingPolarSamplesCompanion
     Value<double?>? engineStbdRpm,
     Value<String>? sourceLabel,
     Value<bool>? usedInPolarBuild,
+    Value<bool>? isSynced,
+    Value<DateTime>? lastModified,
   }) {
     return SailingPolarSamplesCompanion(
       id: id ?? this.id,
+      supabaseId: supabaseId ?? this.supabaseId,
       boatSupabaseId: boatSupabaseId ?? this.boatSupabaseId,
       observedAt: observedAt ?? this.observedAt,
       sogKt: sogKt ?? this.sogKt,
+      stwKt: stwKt ?? this.stwKt,
+      boatSpeedKt: boatSpeedKt ?? this.boatSpeedKt,
+      speedSource: speedSource ?? this.speedSource,
       cogDeg: cogDeg ?? this.cogDeg,
       twsKt: twsKt ?? this.twsKt,
       twdDeg: twdDeg ?? this.twdDeg,
@@ -22239,6 +22515,8 @@ class SailingPolarSamplesCompanion
       engineStbdRpm: engineStbdRpm ?? this.engineStbdRpm,
       sourceLabel: sourceLabel ?? this.sourceLabel,
       usedInPolarBuild: usedInPolarBuild ?? this.usedInPolarBuild,
+      isSynced: isSynced ?? this.isSynced,
+      lastModified: lastModified ?? this.lastModified,
     );
   }
 
@@ -22248,6 +22526,9 @@ class SailingPolarSamplesCompanion
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
+    if (supabaseId.present) {
+      map['supabase_id'] = Variable<String>(supabaseId.value);
+    }
     if (boatSupabaseId.present) {
       map['boat_supabase_id'] = Variable<String>(boatSupabaseId.value);
     }
@@ -22256,6 +22537,15 @@ class SailingPolarSamplesCompanion
     }
     if (sogKt.present) {
       map['sog_kt'] = Variable<double>(sogKt.value);
+    }
+    if (stwKt.present) {
+      map['stw_kt'] = Variable<double>(stwKt.value);
+    }
+    if (boatSpeedKt.present) {
+      map['boat_speed_kt'] = Variable<double>(boatSpeedKt.value);
+    }
+    if (speedSource.present) {
+      map['speed_source'] = Variable<String>(speedSource.value);
     }
     if (cogDeg.present) {
       map['cog_deg'] = Variable<double>(cogDeg.value);
@@ -22290,6 +22580,12 @@ class SailingPolarSamplesCompanion
     if (usedInPolarBuild.present) {
       map['used_in_polar_build'] = Variable<bool>(usedInPolarBuild.value);
     }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (lastModified.present) {
+      map['last_modified'] = Variable<DateTime>(lastModified.value);
+    }
     return map;
   }
 
@@ -22297,9 +22593,13 @@ class SailingPolarSamplesCompanion
   String toString() {
     return (StringBuffer('SailingPolarSamplesCompanion(')
           ..write('id: $id, ')
+          ..write('supabaseId: $supabaseId, ')
           ..write('boatSupabaseId: $boatSupabaseId, ')
           ..write('observedAt: $observedAt, ')
           ..write('sogKt: $sogKt, ')
+          ..write('stwKt: $stwKt, ')
+          ..write('boatSpeedKt: $boatSpeedKt, ')
+          ..write('speedSource: $speedSource, ')
           ..write('cogDeg: $cogDeg, ')
           ..write('twsKt: $twsKt, ')
           ..write('twdDeg: $twdDeg, ')
@@ -22310,7 +22610,9 @@ class SailingPolarSamplesCompanion
           ..write('enginePortRpm: $enginePortRpm, ')
           ..write('engineStbdRpm: $engineStbdRpm, ')
           ..write('sourceLabel: $sourceLabel, ')
-          ..write('usedInPolarBuild: $usedInPolarBuild')
+          ..write('usedInPolarBuild: $usedInPolarBuild, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
   }
@@ -32302,9 +32604,13 @@ typedef $$AnchorWatchesTableProcessedTableManager =
 typedef $$SailingPolarSamplesTableCreateCompanionBuilder =
     SailingPolarSamplesCompanion Function({
       Value<int> id,
+      Value<String> supabaseId,
       Value<String> boatSupabaseId,
       Value<DateTime> observedAt,
-      Value<double> sogKt,
+      Value<double?> sogKt,
+      Value<double?> stwKt,
+      Value<double> boatSpeedKt,
+      Value<String> speedSource,
       Value<double?> cogDeg,
       Value<double> twsKt,
       Value<double?> twdDeg,
@@ -32316,13 +32622,19 @@ typedef $$SailingPolarSamplesTableCreateCompanionBuilder =
       Value<double?> engineStbdRpm,
       Value<String> sourceLabel,
       Value<bool> usedInPolarBuild,
+      Value<bool> isSynced,
+      Value<DateTime> lastModified,
     });
 typedef $$SailingPolarSamplesTableUpdateCompanionBuilder =
     SailingPolarSamplesCompanion Function({
       Value<int> id,
+      Value<String> supabaseId,
       Value<String> boatSupabaseId,
       Value<DateTime> observedAt,
-      Value<double> sogKt,
+      Value<double?> sogKt,
+      Value<double?> stwKt,
+      Value<double> boatSpeedKt,
+      Value<String> speedSource,
       Value<double?> cogDeg,
       Value<double> twsKt,
       Value<double?> twdDeg,
@@ -32334,6 +32646,8 @@ typedef $$SailingPolarSamplesTableUpdateCompanionBuilder =
       Value<double?> engineStbdRpm,
       Value<String> sourceLabel,
       Value<bool> usedInPolarBuild,
+      Value<bool> isSynced,
+      Value<DateTime> lastModified,
     });
 
 class $$SailingPolarSamplesTableFilterComposer
@@ -32350,6 +32664,11 @@ class $$SailingPolarSamplesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get supabaseId => $composableBuilder(
+    column: $table.supabaseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get boatSupabaseId => $composableBuilder(
     column: $table.boatSupabaseId,
     builder: (column) => ColumnFilters(column),
@@ -32362,6 +32681,21 @@ class $$SailingPolarSamplesTableFilterComposer
 
   ColumnFilters<double> get sogKt => $composableBuilder(
     column: $table.sogKt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get stwKt => $composableBuilder(
+    column: $table.stwKt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get boatSpeedKt => $composableBuilder(
+    column: $table.boatSpeedKt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get speedSource => $composableBuilder(
+    column: $table.speedSource,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -32419,6 +32753,16 @@ class $$SailingPolarSamplesTableFilterComposer
     column: $table.usedInPolarBuild,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$SailingPolarSamplesTableOrderingComposer
@@ -32435,6 +32779,11 @@ class $$SailingPolarSamplesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get supabaseId => $composableBuilder(
+    column: $table.supabaseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get boatSupabaseId => $composableBuilder(
     column: $table.boatSupabaseId,
     builder: (column) => ColumnOrderings(column),
@@ -32447,6 +32796,21 @@ class $$SailingPolarSamplesTableOrderingComposer
 
   ColumnOrderings<double> get sogKt => $composableBuilder(
     column: $table.sogKt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get stwKt => $composableBuilder(
+    column: $table.stwKt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get boatSpeedKt => $composableBuilder(
+    column: $table.boatSpeedKt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get speedSource => $composableBuilder(
+    column: $table.speedSource,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -32504,6 +32868,16 @@ class $$SailingPolarSamplesTableOrderingComposer
     column: $table.usedInPolarBuild,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SailingPolarSamplesTableAnnotationComposer
@@ -32518,6 +32892,11 @@ class $$SailingPolarSamplesTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<String> get supabaseId => $composableBuilder(
+    column: $table.supabaseId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get boatSupabaseId => $composableBuilder(
     column: $table.boatSupabaseId,
     builder: (column) => column,
@@ -32530,6 +32909,19 @@ class $$SailingPolarSamplesTableAnnotationComposer
 
   GeneratedColumn<double> get sogKt =>
       $composableBuilder(column: $table.sogKt, builder: (column) => column);
+
+  GeneratedColumn<double> get stwKt =>
+      $composableBuilder(column: $table.stwKt, builder: (column) => column);
+
+  GeneratedColumn<double> get boatSpeedKt => $composableBuilder(
+    column: $table.boatSpeedKt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get speedSource => $composableBuilder(
+    column: $table.speedSource,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<double> get cogDeg =>
       $composableBuilder(column: $table.cogDeg, builder: (column) => column);
@@ -32571,6 +32963,14 @@ class $$SailingPolarSamplesTableAnnotationComposer
 
   GeneratedColumn<bool> get usedInPolarBuild => $composableBuilder(
     column: $table.usedInPolarBuild,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
     builder: (column) => column,
   );
 }
@@ -32619,9 +33019,13 @@ class $$SailingPolarSamplesTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String> supabaseId = const Value.absent(),
                 Value<String> boatSupabaseId = const Value.absent(),
                 Value<DateTime> observedAt = const Value.absent(),
-                Value<double> sogKt = const Value.absent(),
+                Value<double?> sogKt = const Value.absent(),
+                Value<double?> stwKt = const Value.absent(),
+                Value<double> boatSpeedKt = const Value.absent(),
+                Value<String> speedSource = const Value.absent(),
                 Value<double?> cogDeg = const Value.absent(),
                 Value<double> twsKt = const Value.absent(),
                 Value<double?> twdDeg = const Value.absent(),
@@ -32633,11 +33037,17 @@ class $$SailingPolarSamplesTableTableManager
                 Value<double?> engineStbdRpm = const Value.absent(),
                 Value<String> sourceLabel = const Value.absent(),
                 Value<bool> usedInPolarBuild = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<DateTime> lastModified = const Value.absent(),
               }) => SailingPolarSamplesCompanion(
                 id: id,
+                supabaseId: supabaseId,
                 boatSupabaseId: boatSupabaseId,
                 observedAt: observedAt,
                 sogKt: sogKt,
+                stwKt: stwKt,
+                boatSpeedKt: boatSpeedKt,
+                speedSource: speedSource,
                 cogDeg: cogDeg,
                 twsKt: twsKt,
                 twdDeg: twdDeg,
@@ -32649,13 +33059,19 @@ class $$SailingPolarSamplesTableTableManager
                 engineStbdRpm: engineStbdRpm,
                 sourceLabel: sourceLabel,
                 usedInPolarBuild: usedInPolarBuild,
+                isSynced: isSynced,
+                lastModified: lastModified,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String> supabaseId = const Value.absent(),
                 Value<String> boatSupabaseId = const Value.absent(),
                 Value<DateTime> observedAt = const Value.absent(),
-                Value<double> sogKt = const Value.absent(),
+                Value<double?> sogKt = const Value.absent(),
+                Value<double?> stwKt = const Value.absent(),
+                Value<double> boatSpeedKt = const Value.absent(),
+                Value<String> speedSource = const Value.absent(),
                 Value<double?> cogDeg = const Value.absent(),
                 Value<double> twsKt = const Value.absent(),
                 Value<double?> twdDeg = const Value.absent(),
@@ -32667,11 +33083,17 @@ class $$SailingPolarSamplesTableTableManager
                 Value<double?> engineStbdRpm = const Value.absent(),
                 Value<String> sourceLabel = const Value.absent(),
                 Value<bool> usedInPolarBuild = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<DateTime> lastModified = const Value.absent(),
               }) => SailingPolarSamplesCompanion.insert(
                 id: id,
+                supabaseId: supabaseId,
                 boatSupabaseId: boatSupabaseId,
                 observedAt: observedAt,
                 sogKt: sogKt,
+                stwKt: stwKt,
+                boatSpeedKt: boatSpeedKt,
+                speedSource: speedSource,
                 cogDeg: cogDeg,
                 twsKt: twsKt,
                 twdDeg: twdDeg,
@@ -32683,6 +33105,8 @@ class $$SailingPolarSamplesTableTableManager
                 engineStbdRpm: engineStbdRpm,
                 sourceLabel: sourceLabel,
                 usedInPolarBuild: usedInPolarBuild,
+                isSynced: isSynced,
+                lastModified: lastModified,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

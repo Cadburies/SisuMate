@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last (grok):** #274 AI polar learning from under-sail samples (schema 17).
-- **Open backlog:** re-check `gh issue list`.
-- **Apply:** boats.polar SQL from #258 if not yet on Supabase.
+- **Last (grok):** #275 polar follow-ups — background collector, STW, anonymized sync (schema 18).
+- **Apply on Supabase:** boats.polar (#258) + sailing_polar_samples migration (#275).
+- **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

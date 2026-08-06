@@ -51,6 +51,7 @@ import '../data/repositories/anchor_watch_repository_impl.dart';
 import '../data/repositories/sailing_polar_sample_repository.dart';
 import '../services/sailing_polar_collector.dart';
 import '../services/polar_llm_improve_service.dart';
+import '../services/polar_background_collector.dart';
 
 final databaseServiceProvider =
     Provider<DatabaseService>((ref) => DatabaseService());
@@ -239,10 +240,13 @@ final boatRepositoryProvider = Provider<BoatRepository>((ref) {
   );
 });
 
-/// #274 — under-sail polar sample store (local-only).
+/// #274/#275 — under-sail polar samples (+ anonymized sync when Pro).
 final sailingPolarSampleRepositoryProvider =
     Provider<SailingPolarSampleRepository>((ref) {
-  return SailingPolarSampleRepository(ref.watch(appDatabaseProvider));
+  return SailingPolarSampleRepository(
+    ref.watch(appDatabaseProvider),
+    ref.watch(syncServiceProvider),
+  );
 });
 
 final sailingPolarCollectorProvider = Provider<SailingPolarCollector>((ref) {
@@ -254,6 +258,17 @@ final polarLlmImproveServiceProvider = Provider<PolarLlmImproveService>((ref) {
     samples: ref.watch(sailingPolarSampleRepositoryProvider),
     boats: ref.watch(boatRepositoryProvider),
   );
+});
+
+final polarBackgroundCollectorProvider =
+    Provider<PolarBackgroundCollector>((ref) {
+  final c = PolarBackgroundCollector(
+    collector: ref.watch(sailingPolarCollectorProvider),
+    boatRepository: ref.watch(boatRepositoryProvider),
+    settingsRepository: ref.watch(userSettingsRepositoryProvider),
+  );
+  ref.onDispose(c.stop);
+  return c;
 });
 
 final boatEnrollmentServiceProvider = Provider<BoatEnrollmentService>((ref) {

@@ -7,6 +7,8 @@ class NmeaFix {
   double? latitude;
   double? longitude;
   double? sogKt;
+  /// Speed through water (kn) from VHW / VBW.
+  double? stwKt;
   double? cogDeg;
   double? windSpeedKt;
   double? windDirectionDeg;
@@ -54,6 +56,10 @@ class NmeaSentenceParser {
         _parseDpt(parts);
       case 'RPM':
         _parseRpm(parts);
+      case 'VHW':
+        _parseVhw(parts);
+      case 'VBW':
+        _parseVbw(parts);
     }
   }
 
@@ -173,6 +179,23 @@ class NmeaSentenceParser {
     } else if (eng == 2) {
       fix.engineStbdRpm = rpm;
     }
+  }
+
+  void _parseVhw(List<String> p) {
+    // VHW,headingT,T,headingM,M,speedKn,N,speedKmh,K
+    if (p.length < 6) return;
+    final kn = double.tryParse(p[5]);
+    if (kn != null) fix.stwKt = kn;
+  }
+
+  void _parseVbw(List<String> p) {
+    // VBW,waterLong,waterTrans,statusWater,groundLong,...
+    // Prefer longitudinal water speed when status is A.
+    if (p.length < 3) return;
+    final status = p.length > 3 ? p[3].toUpperCase() : 'A';
+    if (status == 'V') return;
+    final kn = double.tryParse(p[1]);
+    if (kn != null) fix.stwKt = kn.abs();
   }
 
   /// NMEA lat/lon: `ddmm.mmm` + hemisphere.

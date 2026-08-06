@@ -52,6 +52,12 @@ void main() {
       expect(p.fix.hasPosition, isFalse);
     });
 
+    test('parses VHW speed through water', () {
+      final p = NmeaSentenceParser();
+      p.feed(r'$VWVHW,,T,,M,5.5,N,,K');
+      expect(p.fix.stwKt, closeTo(5.5, 0.01));
+    });
+
     test('feedLines aggregates multiple sentences', () {
       final p = NmeaSentenceParser();
       p.feedLines(

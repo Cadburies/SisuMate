@@ -13,7 +13,9 @@ SailingPolarSample sample({
       ..observedAt = DateTime.utc(2026, 8, 5)
       ..twaDeg = twa
       ..twsKt = tws
-      ..sogKt = sog;
+      ..sogKt = sog
+      ..boatSpeedKt = sog
+      ..speedSource = 'sog';
 
 void main() {
   group('PolarBucketAggregator', () {

@@ -1,20 +1,35 @@
-/// #274 — one under-sail instrument snapshot used for polar learning.
-/// Local-only (high volume; not crew-synced).
+/// #274/#275 — one under-sail instrument snapshot used for polar learning.
+///
+/// **Anonymized on the wire** ([toSyncJson]): performance metrics only — no
+/// track (lat/lon never stored), no engine RPM, no raw source host labels.
+/// Full detail stays local for debugging; Supabase gets the thin payload.
 class SailingPolarSample {
+  SailingPolarSample();
+
   int id = 0;
+  String supabaseId = '';
   String boatSupabaseId = '';
   DateTime observedAt = DateTime.now().toUtc();
 
-  /// Boat speed over ground (kn) — primary speed for polar targets.
-  double sogKt = 0;
+  /// SOG (kn) when available — always recorded if present for analysis.
+  double? sogKt;
 
-  /// Course over ground (°) — with [twdDeg] yields TWA.
+  /// Speed through water (kn) when NMEA/Hub provides it.
+  double? stwKt;
+
+  /// Preferred boat speed for polar targets: STW if valid, else SOG.
+  double boatSpeedKt = 0;
+
+  /// `stw` or `sog` — which field [boatSpeedKt] came from.
+  String speedSource = 'sog';
+
+  /// Course over ground (°) — local only; not on wire.
   double? cogDeg;
 
   /// True wind speed (kn).
   double twsKt = 0;
 
-  /// True wind direction (°) true north.
+  /// True wind direction (°) — local only; not on wire (TWA is enough).
   double? twdDeg;
 
   /// Absolute true wind angle 0–180° (computed at capture).
@@ -24,7 +39,7 @@ class SailingPolarSample {
   double? awaDeg;
   double? depthMeters;
 
-  /// Engine shaft RPM when present on NMEA. Null = not reported.
+  /// Engine shaft RPM when present on NMEA. Local only; not on wire.
   double? enginePortRpm;
   double? engineStbdRpm;
 
@@ -32,4 +47,75 @@ class SailingPolarSample {
 
   /// True after this sample contributed to a polar improve pass.
   bool usedInPolarBuild = false;
+
+  bool isSynced = false;
+  DateTime lastModified = DateTime.now().toUtc();
+
+  /// Full local persistence (includes fields omitted from sync).
+  Map<String, dynamic> toLocalJson() => {
+        'supabaseId': supabaseId,
+        'boatSupabaseId': boatSupabaseId,
+        'observedAt': observedAt.toIso8601String(),
+        'sogKt': sogKt,
+        'stwKt': stwKt,
+        'boatSpeedKt': boatSpeedKt,
+        'speedSource': speedSource,
+        'cogDeg': cogDeg,
+        'twsKt': twsKt,
+        'twdDeg': twdDeg,
+        'twaDeg': twaDeg,
+        'awsKt': awsKt,
+        'awaDeg': awaDeg,
+        'depthMeters': depthMeters,
+        'enginePortRpm': enginePortRpm,
+        'engineStbdRpm': engineStbdRpm,
+        'sourceLabel': sourceLabel,
+        'usedInPolarBuild': usedInPolarBuild,
+        'isSynced': isSynced,
+        'lastModified': lastModified.toIso8601String(),
+      };
+
+  /// #275 — anonymized wire payload for Supabase (no track, no engines).
+  Map<String, dynamic> toSyncJson() => {
+        'supabaseId': supabaseId,
+        'boatSupabaseId': boatSupabaseId,
+        'observedAt': observedAt.toIso8601String(),
+        'boatSpeedKt': boatSpeedKt,
+        'speedSource': speedSource,
+        'sogKt': sogKt,
+        'stwKt': stwKt,
+        'twaDeg': twaDeg,
+        'twsKt': twsKt,
+        'isSynced': isSynced,
+        'lastModified': lastModified.toIso8601String(),
+      };
+
+  factory SailingPolarSample.fromJson(Map<String, dynamic> j) {
+    double? d(dynamic v) => v is num ? v.toDouble() : null;
+    return SailingPolarSample()
+      ..supabaseId = j['supabaseId'] as String? ?? ''
+      ..boatSupabaseId = j['boatSupabaseId'] as String? ?? ''
+      ..observedAt = DateTime.tryParse(j['observedAt'] as String? ?? '')
+              ?.toUtc() ??
+          DateTime.now().toUtc()
+      ..sogKt = d(j['sogKt'])
+      ..stwKt = d(j['stwKt'])
+      ..boatSpeedKt = d(j['boatSpeedKt']) ?? d(j['sogKt']) ?? 0
+      ..speedSource = j['speedSource'] as String? ?? 'sog'
+      ..cogDeg = d(j['cogDeg'])
+      ..twsKt = d(j['twsKt']) ?? 0
+      ..twdDeg = d(j['twdDeg'])
+      ..twaDeg = d(j['twaDeg']) ?? 0
+      ..awsKt = d(j['awsKt'])
+      ..awaDeg = d(j['awaDeg'])
+      ..depthMeters = d(j['depthMeters'])
+      ..enginePortRpm = d(j['enginePortRpm'])
+      ..engineStbdRpm = d(j['engineStbdRpm'])
+      ..sourceLabel = j['sourceLabel'] as String? ?? ''
+      ..usedInPolarBuild = j['usedInPolarBuild'] as bool? ?? false
+      ..isSynced = j['isSynced'] as bool? ?? false
+      ..lastModified = DateTime.tryParse(j['lastModified'] as String? ?? '')
+              ?.toUtc() ??
+          DateTime.now().toUtc();
+  }
 }

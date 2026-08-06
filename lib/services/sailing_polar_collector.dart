@@ -3,8 +3,8 @@ import '../models/sailing_polar_sample.dart';
 import 'polar_sample_eligibility.dart';
 import 'predictwind_datahub_service.dart';
 
-/// #274 — offline collector: accept instrument readings, store under-sail
-/// samples when eligibility passes (engines not showing revs, valid SOG/wind).
+/// #274/#275 — accept instrument readings; store under-sail samples when
+/// eligibility passes (engines not showing revs; STW preferred over SOG).
 class SailingPolarCollector {
   SailingPolarCollector(this._repo);
   final SailingPolarSampleRepository _repo;
@@ -19,8 +19,8 @@ class SailingPolarCollector {
     final sample = PolarSampleEligibility.tryBuild(
       data: data,
       boatSupabaseId: boatSupabaseId,
-      enginePortRpm: enginePortRpm,
-      engineStbdRpm: engineStbdRpm,
+      enginePortRpm: enginePortRpm ?? data.enginePortRpm,
+      engineStbdRpm: engineStbdRpm ?? data.engineStbdRpm,
     );
     if (sample == null) return false;
 

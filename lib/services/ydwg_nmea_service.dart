@@ -97,6 +97,7 @@ class YdwgNmeaService {
         windDirectionDeg: f.windDirectionDeg,
         depthMeters: f.depthMeters,
         sogKt: f.sogKt,
+        stwKt: f.stwKt,
         cogDeg: f.cogDeg,
         enginePortRpm: f.enginePortRpm,
         engineStbdRpm: f.engineStbdRpm,

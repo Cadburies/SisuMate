@@ -613,14 +613,19 @@ class AnchorWatches extends Table {
       dateTime().withDefault(currentDateAndTime)();
 }
 
-/// #274 — under-sail polar learning samples. Local-only (not synced).
+/// #274/#275 — under-sail polar learning samples. Anonymized sync when Pro.
 @DataClassName('SailingPolarSampleRow')
 class SailingPolarSamples extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get supabaseId => text().withDefault(const Constant(''))();
   TextColumn get boatSupabaseId => text().withDefault(const Constant(''))();
   DateTimeColumn get observedAt =>
       dateTime().withDefault(currentDateAndTime)();
-  RealColumn get sogKt => real().withDefault(const Constant(0))();
+  RealColumn get sogKt => real().nullable()();
+  RealColumn get stwKt => real().nullable()();
+  /// Preferred polar speed (STW if available else SOG).
+  RealColumn get boatSpeedKt => real().withDefault(const Constant(0))();
+  TextColumn get speedSource => text().withDefault(const Constant('sog'))();
   RealColumn get cogDeg => real().nullable()();
   RealColumn get twsKt => real().withDefault(const Constant(0))();
   RealColumn get twdDeg => real().nullable()();
@@ -633,6 +638,9 @@ class SailingPolarSamples extends Table {
   TextColumn get sourceLabel => text().withDefault(const Constant(''))();
   BoolColumn get usedInPolarBuild =>
       boolean().withDefault(const Constant(false))();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get lastModified =>
+      dateTime().withDefault(currentDateAndTime)();
 }
 
 /// The app's Drift database — the sole local store. Every table the app
@@ -683,7 +691,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

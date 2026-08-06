@@ -39,7 +39,10 @@ class PolarBucketAggregator {
       final twa = nearestCentre(polarNormalizeTwa(s.twaDeg), twaCentres);
       final tws = nearestCentre(s.twsKt, twsCentres);
       final key = '${twa.toStringAsFixed(1)}_${tws.toStringAsFixed(1)}';
-      map.putIfAbsent(key, () => []).add(s.sogKt);
+      // #275 — prefer boatSpeedKt (STW when available).
+      final speed = s.boatSpeedKt > 0 ? s.boatSpeedKt : (s.sogKt ?? 0);
+      if (speed <= 0) continue;
+      map.putIfAbsent(key, () => []).add(speed);
       meta[key] = (twa, tws);
     }
 

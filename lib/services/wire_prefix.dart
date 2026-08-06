@@ -25,6 +25,7 @@ class WirePrefix {
     'recipe_ingredients': ['supabaseId', 'recipeSupabaseId'],
     'bar_ingredients': ['supabaseId'],
     'pantry_ingredients': ['supabaseId'],
+    'sailing_polar_samples': ['supabaseId'],
   };
 
   /// Outbound: prefix id-ref fields with [guid]. No-op if the table isn't

@@ -101,10 +101,10 @@ class _BoatPolarDialogState extends ConsumerState<BoatPolarDialog> {
                 'Used for a more realistic ETA once wind data is available '
                 'along a route.\n\n'
                 'While sailing (instruments online, engines not showing revs), '
-                'the app stores offline SOG/TWA/TWS samples. Improve the '
-                'polar from those samples anytime — works offline with '
-                'bucket statistics; uses your boat LLM key when online to '
-                'smooth and fill gaps.',
+                'the app stores samples in the background (no Anchor Alarm '
+                'required). Prefers speed-through-water (STW) over SOG. '
+                'Anonymized metrics sync when Pro/online. Improve offline '
+                'with bucket stats, or with AI when a boat LLM key is set.',
               ),
               const SizedBox(height: 8),
               Text(

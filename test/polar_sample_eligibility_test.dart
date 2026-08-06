@@ -6,12 +6,14 @@ void main() {
   group('PolarSampleEligibility', () {
     PredictWindBoatData data({
       double? sog = 5,
+      double? stw,
       double? tws = 12,
       double? twd = 0,
       double? cog = 45,
     }) =>
         PredictWindBoatData(
           sogKt: sog,
+          stwKt: stw,
           windSpeedKt: tws,
           windDirectionDeg: twd,
           cogDeg: cog,
@@ -50,7 +52,37 @@ void main() {
       );
       expect(s, isNotNull);
       expect(s!.twaDeg, closeTo(45, 0.01));
-      expect(s.sogKt, 5);
+      expect(s.boatSpeedKt, 5);
+      expect(s.speedSource, 'sog');
+    });
+
+    test('prefers STW over SOG when both present', () {
+      final s = PolarSampleEligibility.tryBuild(
+        data: data(sog: 6, stw: 5.5),
+        boatSupabaseId: 'boat-1',
+      );
+      expect(s, isNotNull);
+      expect(s!.boatSpeedKt, 5.5);
+      expect(s.speedSource, 'stw');
+      expect(s.sogKt, 6);
+      expect(s.stwKt, 5.5);
+    });
+
+    test('toSyncJson is anonymized (no engines / track fields)', () {
+      final s = PolarSampleEligibility.tryBuild(
+        data: data(),
+        boatSupabaseId: 'boat-1',
+        enginePortRpm: 0,
+      )!;
+      s.supabaseId = 'sample-1';
+      final wire = s.toSyncJson();
+      expect(wire.containsKey('enginePortRpm'), isFalse);
+      expect(wire.containsKey('cogDeg'), isFalse);
+      expect(wire.containsKey('twdDeg'), isFalse);
+      expect(wire.containsKey('sourceLabel'), isFalse);
+      expect(wire['boatSpeedKt'], isNotNull);
+      expect(wire['twaDeg'], isNotNull);
+      expect(wire['twsKt'], isNotNull);
     });
 
     test('tryBuild rejects motoring (engine revs)', () {

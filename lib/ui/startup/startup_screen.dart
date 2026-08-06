@@ -68,6 +68,8 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
     unawaited(ProfileHeartbeat.stamp());
     // Touch the provider so Pro realtime/outbox starts without blocking UI.
     container.read(syncServiceProvider);
+    // #275 — under-sail polar samples without Anchor Alarm open.
+    container.read(polarBackgroundCollectorProvider).start();
   }
 
   Future<void> _goHome() async {

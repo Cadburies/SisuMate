@@ -1,16 +1,17 @@
 import '../models/sailing_polar_sample.dart';
 import 'predictwind_datahub_service.dart';
 
-/// #274 — pure rules for "is this reading usable under-sail polar data?".
+/// #274/#275 — pure rules for "is this reading usable under-sail polar data?".
 ///
 /// Research (Njord / measured-polar tooling):
+/// - Prefer **STW** (through-water) over SOG when both available — polar is
+///   a water-speed target; current biases SOG.
 /// - Need boat speed + true wind (or enough to derive TWA).
-/// - Prefer high-quality sailing, not motoring: engines not turning
-///   (RPM absent or at/near idle for both shafts).
+/// - Engines not turning (RPM absent or at/near idle for both shafts).
 /// - Absolute TWA 0–180° (port/starboard symmetric for polar tables).
 class PolarSampleEligibility {
-  /// Minimum SOG (kn) to count as "making way under sail".
-  static const minSogKt = 1.5;
+  /// Minimum preferred boat speed (kn) to count as "making way under sail".
+  static const minBoatSpeedKt = 1.5;
 
   /// Minimum true wind (kn) — below this TWA is noisy.
   static const minTwsKt = 3.0;
@@ -29,6 +30,20 @@ class PolarSampleEligibility {
     return d;
   }
 
+  /// Prefer STW when finite and above noise; else SOG.
+  static ({double speed, String source})? preferredBoatSpeed({
+    double? stwKt,
+    double? sogKt,
+  }) {
+    if (stwKt != null && stwKt.isFinite && stwKt >= minBoatSpeedKt) {
+      return (speed: stwKt, source: 'stw');
+    }
+    if (sogKt != null && sogKt.isFinite && sogKt >= minBoatSpeedKt) {
+      return (speed: sogKt, source: 'sog');
+    }
+    return null;
+  }
+
   /// True when NMEA is not reporting useful engine revs (both shafts idle
   /// or missing) — user's "engines not showing revs" under-sail gate.
   static bool enginesNotRunning({
@@ -37,7 +52,6 @@ class PolarSampleEligibility {
   }) {
     final port = enginePortRpm;
     final stbd = engineStbdRpm;
-    // No RPM fields at all → "not showing revs" → allow (user intent).
     if (port == null && stbd == null) return true;
     final portRunning = port != null && port >= engineRunningRpm;
     final stbdRunning = stbd != null && stbd >= engineRunningRpm;
@@ -52,11 +66,12 @@ class PolarSampleEligibility {
     double? engineStbdRpm,
   }) {
     if (boatSupabaseId.isEmpty) return null;
-    final sog = data.sogKt;
+    final preferred = preferredBoatSpeed(stwKt: data.stwKt, sogKt: data.sogKt);
+    if (preferred == null) return null;
+
     final tws = data.windSpeedKt;
     final twd = data.windDirectionDeg;
     final cog = data.cogDeg;
-    if (sog == null || sog < minSogKt) return null;
     if (tws == null || tws < minTwsKt) return null;
     if (twd == null || cog == null) return null;
     if (!enginesNotRunning(
@@ -65,14 +80,18 @@ class PolarSampleEligibility {
     )) {
       return null;
     }
-    // Reject NaN/inf.
-    if (![sog, tws, twd, cog].every((v) => v.isFinite)) return null;
+    if (![preferred.speed, tws, twd, cog].every((v) => v.isFinite)) {
+      return null;
+    }
 
     final twa = absoluteTwaDeg(cog, twd);
     return SailingPolarSample()
       ..boatSupabaseId = boatSupabaseId
       ..observedAt = data.observedAt.toUtc()
-      ..sogKt = sog
+      ..sogKt = data.sogKt
+      ..stwKt = data.stwKt
+      ..boatSpeedKt = preferred.speed
+      ..speedSource = preferred.source
       ..cogDeg = cog
       ..twsKt = tws
       ..twdDeg = twd
@@ -83,26 +102,24 @@ class PolarSampleEligibility {
       ..enginePortRpm = enginePortRpm
       ..engineStbdRpm = engineStbdRpm
       ..sourceLabel = data.sourceLabel ?? ''
-      ..usedInPolarBuild = false;
+      ..usedInPolarBuild = false
+      ..isSynced = false
+      ..lastModified = DateTime.now().toUtc();
   }
 
-  /// Spacing gate against the last stored sample time.
   static bool enoughTimeSince(DateTime? last, DateTime now) {
     if (last == null) return true;
     return now.difference(last) >= minInterval;
   }
 }
 
-/// Normalize TWA for bucketing (0–180).
 double polarNormalizeTwa(double twaDeg) {
   final a = twaDeg.abs() % 360;
   return a > 180 ? 360 - a : a;
 }
 
-/// Standard TWS centres used by many polar tables (ORC-ish).
 const kPolarTwsCentresKt = [4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 20.0, 25.0];
 
-/// TWA centres every 10° from 0 to 180.
 List<double> polarTwaCentresDeg({double step = 10}) {
   final out = <double>[];
   for (var t = 0.0; t <= 180.0 + 1e-9; t += step) {
@@ -124,7 +141,6 @@ double nearestCentre(double value, List<double> centres) {
   return best;
 }
 
-/// Percentile of a sorted-or-unsorted list (0–1). Empty → null.
 double? percentile(List<double> values, double p) {
   if (values.isEmpty) return null;
   final s = [...values]..sort();
@@ -136,4 +152,3 @@ double? percentile(List<double> values, double p) {
   final t = rank - lo;
   return s[lo] * (1 - t) + s[hi] * t;
 }
-

@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../data/drift/app_database.dart';
+import '../data/repositories/sailing_polar_sample_repository.dart';
 import '../models/models.dart';
+import '../models/sailing_polar_sample.dart';
 
 /// Applies remote Supabase JSON into Drift for tables that participate in
 /// realtime inbound sync. Used by [SyncService] (T5).
@@ -31,6 +33,8 @@ class InboundSyncApplier {
     'recipe_ingredients',
     'bar_ingredients',
     'pantry_ingredients',
+    // #275 — anonymized under-sail polar samples
+    'sailing_polar_samples',
   };
 
   bool supports(String table) => syncedTables.contains(table);
@@ -173,6 +177,29 @@ class InboundSyncApplier {
         if (r == null) return null;
         final d = _pantryDomain(r);
         return (json: d.toJson(), isSynced: d.isSynced, lastModified: d.lastModified);
+      case 'sailing_polar_samples':
+        final r = await (db.select(db.sailingPolarSamples)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .getSingleOrNull();
+        if (r == null) return null;
+        final s = SailingPolarSample()
+          ..id = r.id
+          ..supabaseId = r.supabaseId
+          ..boatSupabaseId = r.boatSupabaseId
+          ..observedAt = r.observedAt
+          ..sogKt = r.sogKt
+          ..stwKt = r.stwKt
+          ..boatSpeedKt = r.boatSpeedKt
+          ..speedSource = r.speedSource
+          ..twaDeg = r.twaDeg
+          ..twsKt = r.twsKt
+          ..isSynced = r.isSynced
+          ..lastModified = r.lastModified;
+        return (
+          json: s.toSyncJson(),
+          isSynced: s.isSynced,
+          lastModified: s.lastModified,
+        );
       default:
         return null;
     }
@@ -216,6 +243,10 @@ class InboundSyncApplier {
         await _upsertBar(BarIngredient.fromJson(n)..isSynced = true);
       case 'pantry_ingredients':
         await _upsertPantry(PantryIngredient.fromJson(n)..isSynced = true);
+      case 'sailing_polar_samples':
+        await SailingPolarSampleRepository(db).upsertFromRemote(
+          SailingPolarSample.fromJson(n)..isSynced = true,
+        );
     }
   }
 
@@ -282,6 +313,10 @@ class InboundSyncApplier {
             .go();
       case 'pantry_ingredients':
         await (db.delete(db.pantryIngredients)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .go();
+      case 'sailing_polar_samples':
+        await (db.delete(db.sailingPolarSamples)
               ..where((t) => t.supabaseId.equals(supabaseId)))
             .go();
     }
@@ -428,6 +463,14 @@ class InboundSyncApplier {
                   ..where((t) =>
                       t.isSynced.equals(true) &
                       t.isBundled.equals(false) &
+                      t.lastModified.isBiggerThanValue(factoryEpoch)))
+                .get())
+            .map((r) => r.supabaseId)
+            .toList();
+      case 'sailing_polar_samples':
+        return (await (db.select(db.sailingPolarSamples)
+                  ..where((t) =>
+                      t.isSynced.equals(true) &
                       t.lastModified.isBiggerThanValue(factoryEpoch)))
                 .get())
             .map((r) => r.supabaseId)

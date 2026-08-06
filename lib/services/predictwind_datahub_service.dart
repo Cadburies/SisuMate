@@ -124,6 +124,8 @@ class PredictWindBoatData {
   final double? depthMeters;
   /// #266 — speed over ground (kn) from Hub `sog`.
   final double? sogKt;
+  /// #275 — speed through water (kn) from Hub `stw`/`bsp` or NMEA VHW/VBW.
+  final double? stwKt;
   /// #266 — course over ground (°) from Hub `cog`.
   final double? cogDeg;
   /// #266 — apparent wind speed (kn) from Hub `aws`.
@@ -148,6 +150,7 @@ class PredictWindBoatData {
     this.windDirectionDeg,
     this.depthMeters,
     this.sogKt,
+    this.stwKt,
     this.cogDeg,
     this.apparentWindSpeedKt,
     this.apparentWindDirectionDeg,
@@ -165,6 +168,7 @@ class PredictWindBoatData {
     double? windDirectionDeg,
     double? depthMeters,
     double? sogKt,
+    double? stwKt,
     double? cogDeg,
     double? apparentWindSpeedKt,
     double? apparentWindDirectionDeg,
@@ -181,6 +185,7 @@ class PredictWindBoatData {
         windDirectionDeg: windDirectionDeg ?? this.windDirectionDeg,
         depthMeters: depthMeters ?? this.depthMeters,
         sogKt: sogKt ?? this.sogKt,
+        stwKt: stwKt ?? this.stwKt,
         cogDeg: cogDeg ?? this.cogDeg,
         apparentWindSpeedKt: apparentWindSpeedKt ?? this.apparentWindSpeedKt,
         apparentWindDirectionDeg:
@@ -438,6 +443,9 @@ class PredictWindDatahubService {
             windDirectionDeg: _asDouble(json['twd']),
             depthMeters: _asDouble(json['dpt']),
             sogKt: _asDouble(json['sog']),
+            stwKt: _asDouble(json['stw']) ??
+                _asDouble(json['bsp']) ??
+                _asDouble(json['water_speed']),
             cogDeg: _asDouble(json['cog']),
             apparentWindSpeedKt: _asDouble(json['aws']),
             apparentWindDirectionDeg: _asDouble(json['awa']),

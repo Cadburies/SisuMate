@@ -515,6 +515,13 @@ class SyncService {
           isSynced: const Value(false),
           lastModified: Value(now),
         ));
+      case 'sailing_polar_samples':
+        await (_db.update(_db.sailingPolarSamples)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(SailingPolarSamplesCompanion(
+          isSynced: const Value(false),
+          lastModified: Value(now),
+        ));
     }
   }
 
@@ -583,6 +590,11 @@ class SyncService {
         await (_db.update(_db.pantryIngredients)
               ..where((t) => t.supabaseId.equals(supabaseId)))
             .write(const PantryIngredientsCompanion(isSynced: Value(true)));
+      case 'sailing_polar_samples':
+        await (_db.update(_db.sailingPolarSamples)
+              ..where((t) => t.supabaseId.equals(supabaseId)))
+            .write(
+                const SailingPolarSamplesCompanion(isSynced: Value(true)));
     }
   }
 
