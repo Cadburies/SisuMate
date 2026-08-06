@@ -86,10 +86,13 @@ void main() {
     expect(recenterDefIndex, greaterThanOrEqualTo(0));
 
     final gpsBlock = source.substring(
-        useGpsIndex, source.indexOf('_load();', useGpsIndex) + 10);
+        useGpsIndex, source.indexOf('await _load();', useGpsIndex) + 14);
     expect(gpsBlock.contains('_recenterMap('), isTrue,
         reason: 'a resolved GPS fix must recenter the map, not just move '
             'the marker');
+    expect(gpsBlock.contains('_placeName = null'), isTrue,
+        reason: 'GPS must clear the previous place label so reverse-geocode '
+            'runs for the new pin (stale Phoenix label bug)');
 
     final selectPlaceBlock = source.substring(
         selectPlaceIndex,

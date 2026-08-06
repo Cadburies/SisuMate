@@ -33,12 +33,14 @@ class WeatherScreen extends ConsumerStatefulWidget {
 }
 
 class _WeatherScreenState extends ConsumerState<WeatherScreen> {
-  /// Fallback when GPS is unavailable (Phoenix area - legacy default).
-  static const _fallbackLat = 33.4484;
-  static const _fallbackLon = -112.0740;
+  /// Map seed only (not a forecast location). Used when no GPS/saved pin yet.
+  /// Neutral open-ocean start avoids a misleading inland city label (e.g. the
+  /// old Phoenix default that stuck after "Use GPS" until reverse-geocode ran).
+  static const _mapSeedLat = 0.0;
+  static const _mapSeedLon = 0.0;
 
-  final _latCtrl = TextEditingController(text: '$_fallbackLat');
-  final _lonCtrl = TextEditingController(text: '$_fallbackLon');
+  final _latCtrl = TextEditingController();
+  final _lonCtrl = TextEditingController();
   final _placeCtrl = TextEditingController();
   final _service = WeatherService();
   // #212: MapOptions.initialCenter only applies on first load (flutter_map's
@@ -131,21 +133,35 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     if (lat != null && lon != null) {
       _latCtrl.text = lat.toStringAsFixed(4);
       _lonCtrl.text = lon.toStringAsFixed(4);
+      // Only restore a saved name when it matches the saved pin — never apply
+      // a stale city label to a new GPS/map pin (that was the Phoenix bug).
       if (savedName != null) _placeName = savedName;
     } else {
-      // First launch: try device GPS before fixed inland default (WX1).
+      // First launch: try device GPS (no inland city default).
       await _useDeviceLocation(silent: true);
     }
     final cached = await _service.loadCache();
     final cachedEnsemble = await _service.loadEnsembleCache();
     if (cached != null && mounted) {
+      final curLat = double.tryParse(_latCtrl.text.trim());
+      final curLon = double.tryParse(_lonCtrl.text.trim());
+      final cacheMatchesPin = curLat != null &&
+          curLon != null &&
+          (cached.lat - curLat).abs() < 0.05 &&
+          (cached.lon - curLon).abs() < 0.05;
       setState(() {
-        _bundle = cached;
-        _ensembleBundle = cachedEnsemble;
-        _placeName = cached.placeName ?? _placeName;
+        if (cacheMatchesPin) {
+          _bundle = cached;
+          _ensembleBundle = cachedEnsemble;
+          _placeName = cached.placeName ?? _placeName;
+        }
       });
     }
-    await _load();
+    final hasCoords = double.tryParse(_latCtrl.text.trim()) != null &&
+        double.tryParse(_lonCtrl.text.trim()) != null;
+    if (hasCoords) {
+      await _load();
+    }
   }
 
   /// WX1: request permission and fill lat/lon from the device.
@@ -186,23 +202,33 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
           return;
         case null:
           final pos = result.position!;
+          // New pin ⇒ drop any previous place label so reverse-geocode runs.
+          // (Previously we kept "Phoenix, Maricopa County…" after GPS moved
+          // the coords, and WeatherService skipped reverse geocode.)
           setState(() {
             _latCtrl.text = pos.latitude.toStringAsFixed(4);
             _lonCtrl.text = pos.longitude.toStringAsFixed(4);
+            _placeName = null;
           });
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('weather_place_name');
           _recenterMap(pos.latitude, pos.longitude);
-          if (!silent) await _load();
+          await _load();
       }
     } finally {
       if (mounted) setState(() => _locating = false);
     }
   }
 
+  /// [placeName] only when the user picked a search hit (trust that label).
+  /// GPS / map / Get forecast leave it null so reverse-geocode can run when
+  /// [_placeName] was cleared for a new pin.
   Future<void> _load({String? placeName}) async {
     final lat = double.tryParse(_latCtrl.text.trim());
     final lon = double.tryParse(_lonCtrl.text.trim());
     if (lat == null || lon == null) {
-      setState(() => _error = 'Enter valid latitude and longitude.');
+      setState(() => _error =
+          'Set a location — Use GPS, tap the map, search a place, or enter coordinates.');
       return;
     }
     setState(() {
@@ -214,12 +240,14 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('weather_lat', lat);
       await prefs.setDouble('weather_lon', lon);
-      final nameHint = placeName ?? _placeName;
-      if (nameHint != null && nameHint.isNotEmpty) {
-        await prefs.setString('weather_place_name', nameHint);
+      final effectiveName = placeName ?? _placeName;
+      if (effectiveName != null && effectiveName.isNotEmpty) {
+        await prefs.setString('weather_place_name', effectiveName);
+      } else {
+        await prefs.remove('weather_place_name');
       }
       final results = await Future.wait([
-        _service.fetch(lat: lat, lon: lon, placeName: nameHint),
+        _service.fetch(lat: lat, lon: lon, placeName: effectiveName),
         _service.fetchEnsemble(lat: lat, lon: lon),
         _marineHazardService.fetchActiveAlerts(lat: lat, lon: lon),
       ]);
@@ -231,7 +259,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         _bundle = b;
         _ensembleBundle = ensemble;
         _hazardAlerts = hazards;
-        _placeName = b.placeName ?? nameHint;
+        _placeName = b.placeName ?? effectiveName;
         _loading = false;
       });
     } catch (e) {
@@ -319,6 +347,12 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       _searchHits = hits;
       _searching = false;
     });
+  }
+
+  void _invalidatePlaceNameForCoordEdit() {
+    if (_placeName != null) {
+      setState(() => _placeName = null);
+    }
   }
 
   Future<void> _selectPlace(WeatherPlace p) async {
@@ -587,17 +621,26 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                           mapController: _mapController,
                           options: MapOptions(
                             initialCenter: LatLng(
-                              double.tryParse(_latCtrl.text) ?? 33.45,
-                              double.tryParse(_lonCtrl.text) ?? -112.07,
+                              double.tryParse(_latCtrl.text) ?? _mapSeedLat,
+                              double.tryParse(_lonCtrl.text) ?? _mapSeedLon,
                             ),
-                            initialZoom: 8,
+                            initialZoom: double.tryParse(_latCtrl.text) == null
+                                ? 2
+                                : 8,
                             onMapReady: () => _mapReady = true,
                             onTap: (_, p) {
+                              // New pin from map — drop stale city label.
                               setState(() {
                                 _latCtrl.text = p.latitude.toStringAsFixed(4);
                                 _lonCtrl.text = p.longitude.toStringAsFixed(4);
+                                _placeName = null;
                               });
-                              _load();
+                              unawaited(() async {
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                await prefs.remove('weather_place_name');
+                                await _load();
+                              }());
                             },
                           ),
                           children: [
@@ -624,8 +667,10 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                               markers: [
                                 Marker(
                                   point: LatLng(
-                                    double.tryParse(_latCtrl.text) ?? 33.45,
-                                    double.tryParse(_lonCtrl.text) ?? -112.07,
+                                    double.tryParse(_latCtrl.text) ??
+                                        _mapSeedLat,
+                                    double.tryParse(_lonCtrl.text) ??
+                                        _mapSeedLon,
                                   ),
                                   width: 36,
                                   height: 36,
@@ -813,6 +858,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                       decimal: true,
                       signed: true,
                     ),
+                    onChanged: (_) => _invalidatePlaceNameForCoordEdit(),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -828,6 +874,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                       decimal: true,
                       signed: true,
                     ),
+                    onChanged: (_) => _invalidatePlaceNameForCoordEdit(),
                   ),
                 ),
               ],
