@@ -5,29 +5,32 @@ import '../domain/repositories/boat_repository.dart';
 import '../models/models.dart';
 import 'llm_client_service.dart';
 import 'polar_bucket_aggregator.dart';
+import 'polar_local_improve.dart';
 
 /// Outcome of a polar improve pass.
 class PolarImproveResult {
   final bool ok;
   final String message;
   final List<PolarPoint>? polar;
+  final Map<String, List<PolarPoint>>? polarBySeaState;
   final bool usedLlm;
 
   const PolarImproveResult({
     required this.ok,
     required this.message,
     this.polar,
+    this.polarBySeaState,
     this.usedLlm = false,
   });
 }
 
-/// #274 — heal/improve boat polar from collected under-sail samples.
+/// #274/#276 — heal/improve boat polar from collected under-sail samples.
 ///
-/// 1. **Always offline-capable:** bucket samples → p90 → merge into polar
-///    (max with existing).
-/// 2. **When online + LLM key:** ask the configured model to smooth/fill
-///    gaps; parse JSON array of {twaDeg,twsKt,boatSpeedKt}; re-merge
-///    conservatively (max with measured merge).
+/// 1. **Always offline-capable:** steady samples already filtered at
+///    collection → outlier-clean buckets → p90 → per-sea-state merge →
+///    optional spline smooth. Primary polar prefers calm targets.
+/// 2. **When online + LLM key:** optional refine of the primary polar only;
+///    re-merge conservatively (max with measured).
 class PolarLlmImproveService {
   PolarLlmImproveService({
     required SailingPolarSampleRepository samples,
@@ -44,6 +47,7 @@ class PolarLlmImproveService {
   Future<PolarImproveResult> improve({
     required Boat boat,
     bool tryLlm = true,
+    bool applySpline = true,
   }) async {
     if (boat.supabaseId.isEmpty && boat.id == 0) {
       return const PolarImproveResult(
@@ -62,34 +66,35 @@ class PolarLlmImproveService {
       );
     }
 
-    final buckets = PolarBucketAggregator.bucket(all);
-    final usable =
-        buckets.where((b) => b.sampleCount >= PolarBucketAggregator.minSamplesPerBucket);
-    if (usable.isEmpty) {
+    final local = PolarLocalImprove.improveOffline(
+      existing: boat.polar,
+      samples: all,
+      applySpline: applySpline,
+    );
+
+    if (local.usableBucketCount == 0 && local.primaryPolar.isEmpty) {
       return PolarImproveResult(
         ok: false,
         message:
             'Have ${all.length} samples, but no TWA×TWS bucket has '
-            '${PolarBucketAggregator.minSamplesPerBucket}+ points yet. '
-            'Keep sailing in varied wind angles/speeds.',
+            '${PolarBucketAggregator.minSamplesPerBucket}+ clean points yet. '
+            'Keep sailing in varied wind angles/speeds (and sea states).',
       );
     }
 
-    var merged = PolarBucketAggregator.mergeIntoPolar(
-      existing: boat.polar,
-      buckets: buckets,
-    );
+    var merged = local.primaryPolar;
+    final bySea = Map<String, List<PolarPoint>>.from(local.polarBySeaState);
 
     var usedLlm = false;
     if (tryLlm) {
+      final buckets = PolarLocalImprove.bucketClean(samples: all);
       final llmPolar = await _askLlm(
         boat: boat,
         current: merged,
-        buckets: buckets.toList(),
+        buckets: buckets,
         sampleCount: all.length,
       );
       if (llmPolar != null && llmPolar.isNotEmpty) {
-        // Conservative: measured merge is the floor; LLM may add/fill.
         merged = PolarBucketAggregator.mergeIntoPolar(
           existing: llmPolar,
           buckets: buckets,
@@ -99,20 +104,28 @@ class PolarLlmImproveService {
     }
 
     boat.polar = merged;
+    boat.polarBySeaState = bySea;
     boat.lastModified = DateTime.now().toUtc();
     await _boats.updateBoat(boat);
 
     await _samples.markUsed(all.map((s) => s.id));
 
+    final seaSummary = bySea.entries
+        .map((e) => '${e.key}:${e.value.length}')
+        .join(', ');
+
     return PolarImproveResult(
       ok: true,
       polar: merged,
+      polarBySeaState: bySea,
       usedLlm: usedLlm,
       message: usedLlm
           ? 'Polar updated from ${all.length} samples '
-              '(${usable.length} buckets) + LLM refine → ${merged.length} points.'
+              '(${local.usableBucketCount} buckets, sea states [$seaSummary]) '
+              '+ LLM refine → ${merged.length} primary points.'
           : 'Polar updated from ${all.length} samples '
-              '(${usable.length} buckets, offline) → ${merged.length} points.',
+              '(${local.usableBucketCount} buckets offline, sea states '
+              '[$seaSummary]) → ${merged.length} primary points.',
     );
   }
 

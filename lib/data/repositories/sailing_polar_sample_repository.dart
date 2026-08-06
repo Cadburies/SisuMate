@@ -30,6 +30,9 @@ class SailingPolarSampleRepository {
     ..enginePortRpm = r.enginePortRpm
     ..engineStbdRpm = r.engineStbdRpm
     ..sourceLabel = r.sourceLabel
+    ..seaState = r.seaState
+    ..speedCv = r.speedCv
+    ..twaStdDeg = r.twaStdDeg
     ..usedInPolarBuild = r.usedInPolarBuild
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified;
@@ -53,6 +56,9 @@ class SailingPolarSampleRepository {
         enginePortRpm: Value(s.enginePortRpm),
         engineStbdRpm: Value(s.engineStbdRpm),
         sourceLabel: Value(s.sourceLabel),
+        seaState: Value(s.seaState),
+        speedCv: Value(s.speedCv),
+        twaStdDeg: Value(s.twaStdDeg),
         usedInPolarBuild: Value(s.usedInPolarBuild),
         isSynced: Value(s.isSynced),
         lastModified: Value(s.lastModified),

@@ -166,6 +166,34 @@ class SisuColors {
   static Color getNotAvailableColor({bool isBackground = false}) =>
       isBackground ? notAvailableBackground : notAvailableText;
 
+  // ── Sea-state polar chart (#276) — reuses status tokens ───────────────────
+  // calm = teal (target), moderate = blue-grey, rough = coral/red.
+  static Color seaStateLineColor(String seaStateWire) {
+    switch (seaStateWire) {
+      case 'calm':
+        return completedText;
+      case 'moderate':
+        return incompleteText;
+      case 'rough':
+        return notAvailableText;
+      default:
+        return darkTextSecondary;
+    }
+  }
+
+  static Color seaStateChipBg(String seaStateWire) {
+    switch (seaStateWire) {
+      case 'calm':
+        return completedBackground;
+      case 'moderate':
+        return incompleteBackground;
+      case 'rough':
+        return notAvailableBackground;
+      default:
+        return hiddenBackground;
+    }
+  }
+
   /// Theme-aware item-list state colours (theme.md §6.5). Use for UX4 tiles.
   static ItemListStateColors itemStateColors(
     bool isDark,

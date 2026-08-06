@@ -51,4 +51,27 @@ void main() {
     expect(parsed.single.twsKt, 8);
     expect(parsed.single.boatSpeedKt, 4.0);
   });
+
+  test('Boat.toJson includes polarBySeaState map', () {
+    final boat = Boat()
+      ..supabaseId = 'boat-1'
+      ..name = 'Sisu'
+      ..lastModified = DateTime.utc(2026, 8, 6)
+      ..polarBySeaState = {
+        'calm': [const PolarPoint(twaDeg: 90, twsKt: 12, boatSpeedKt: 7)],
+      };
+    final json = boat.toJson();
+    expect(json['polarBySeaState'], isA<Map>());
+    expect(
+      (json['polarBySeaState'] as Map)['calm'],
+      isA<List>(),
+    );
+    final back = Boat.fromJson({
+      ...json,
+      'isBought': false,
+      'isHidden': false,
+      'isSynced': false,
+    });
+    expect(back.polarBySeaState['calm']!.single.boatSpeedKt, 7);
+  });
 }

@@ -144,22 +144,37 @@ class SettingsScreen extends ConsumerWidget {
                           orElse: () => const SizedBox.shrink(),
                         ),
 
-                        // #236: boat polar performance data (routing foundation).
+                        // #236/#276: boat polar table + diagram.
                         activeBoatAsync.maybeWhen(
                           data: (activeBoat) {
                             if (activeBoat == null) return const SizedBox.shrink();
                             final pointCount = activeBoat.polar.length;
-                            return ListTile(
-                              leading: const Icon(Icons.speed_outlined),
-                              title: const Text('Boat Polar Data'),
-                              subtitle: Text(pointCount == 0
-                                  ? 'Not set — used for more realistic ETAs'
-                                  : '$pointCount point${pointCount == 1 ? '' : 's'} set'),
-                              trailing: const Icon(Icons.edit),
-                              onTap: () => showDialog(
-                                context: context,
-                                builder: (_) => BoatPolarDialog(boat: activeBoat),
-                              ),
+                            return Column(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.speed_outlined),
+                                  title: const Text('Boat Polar Data'),
+                                  subtitle: Text(pointCount == 0
+                                      ? 'Not set — used for more realistic ETAs'
+                                      : '$pointCount point${pointCount == 1 ? '' : 's'} set'),
+                                  trailing: const Icon(Icons.edit),
+                                  onTap: () => showDialog(
+                                    context: context,
+                                    builder: (_) =>
+                                        BoatPolarDialog(boat: activeBoat),
+                                  ),
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.radar_outlined),
+                                  title: const Text('Polar diagram'),
+                                  subtitle: const Text(
+                                    'See curves fill in by sea state (smooth / rough)',
+                                  ),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () =>
+                                      context.push(AppRoutes.polarChart),
+                                ),
+                              ],
                             );
                           },
                           orElse: () => const SizedBox.shrink(),

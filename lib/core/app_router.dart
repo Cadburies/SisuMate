@@ -45,6 +45,7 @@ import '../ui/account/join_boat_screen.dart';
 import '../ui/admin/admin_screen.dart';
 import '../ui/settings/settings_screen.dart';
 import '../ui/settings/sync_status_screen.dart';
+import '../ui/settings/polar_chart_screen.dart';
 import '../ui/conflicts/conflict_resolution_screen.dart';
 import '../ui/boats/boats_screen.dart';
 import '../ui/chef/meal_planner_screen.dart';
@@ -112,6 +113,8 @@ abstract final class AppRoutes {
   static const admin = '/admin';
   static const syncStatus = '/settings/sync';
   static const conflicts = '/settings/conflicts';
+  /// #276 — polar diagram fill-in + sea-state curves.
+  static const polarChart = '/settings/polar';
 
   static const collections = '/collections';
   static const collectionDetail = '/collections/detail';
@@ -650,6 +653,11 @@ GoRouter createAppRouter() {
             path: 'conflicts',
             name: 'conflicts',
             builder: (context, state) => const ConflictResolutionScreen(),
+          ),
+          GoRoute(
+            path: 'polar',
+            name: 'polarChart',
+            builder: (context, state) => const PolarChartScreen(),
           ),
         ],
       ),

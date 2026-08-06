@@ -75,9 +75,12 @@ void main() {
         enginePortRpm: 0,
       )!;
       s.supabaseId = 'sample-1';
+      s.seaState = 'calm';
       final wire = s.toSyncJson();
       expect(wire.containsKey('enginePortRpm'), isFalse);
       expect(wire.containsKey('cogDeg'), isFalse);
+      expect(wire['seaState'], 'calm');
+      expect(wire.containsKey('speedCv'), isFalse);
       expect(wire.containsKey('twdDeg'), isFalse);
       expect(wire.containsKey('sourceLabel'), isFalse);
       expect(wire['boatSpeedKt'], isNotNull);

@@ -168,14 +168,32 @@ class Boat {
   // state (a crew member may have entirely different keys configured than
   // the owner), so it never syncs at all, not even opt-in.
   String? activeLlmProvider;
-  // #236: manually-entered boat polar table — see `PolarPoint`.
+  // #236: manually-entered / learned boat polar table — see `PolarPoint`.
+  // Primary routing target; prefers calm-sea measured polars (#276).
   List<PolarPoint> polar = [];
+  // #276: per-sea-state polar curves (keys: calm | moderate | rough).
+  Map<String, List<PolarPoint>> polarBySeaState = {};
 
   LlmApiKeyEntry? get activeLlmApiKeyEntry => llmApiKeys
       .where((e) => e.provider == activeLlmProvider)
       .firstOrNull;
 
   factory Boat.fromJson(Map<String, dynamic> json) {
+    Map<String, List<PolarPoint>> parseMulti(dynamic raw) {
+      if (raw is! Map) return {};
+      final out = <String, List<PolarPoint>>{};
+      for (final e in raw.entries) {
+        final list = e.value;
+        if (list is! List) continue;
+        out[e.key.toString()] = [
+          for (final item in list)
+            if (item is Map)
+              PolarPoint.fromJson(Map<String, dynamic>.from(item)),
+        ];
+      }
+      return out;
+    }
+
     return Boat()
       ..isBought = json['isBought'] ?? false
       ..isHidden = json['isHidden'] ?? false
@@ -194,7 +212,8 @@ class Boat {
           .toList()
       ..polar = (json['polar'] as List? ?? const [])
           .map((e) => PolarPoint.fromJson(e as Map<String, dynamic>))
-          .toList();
+          .toList()
+      ..polarBySeaState = parseMulti(json['polarBySeaState']);
   }
 
   Map<String, dynamic> toJson() => {
@@ -214,6 +233,10 @@ class Boat {
     'llmApiKeys': llmApiKeys.map((e) => e.toJson()).toList(),
     // activeLlmProvider intentionally absent — see the field's doc comment.
     'polar': polar.map((p) => p.toJson()).toList(),
+    'polarBySeaState': {
+      for (final e in polarBySeaState.entries)
+        e.key: e.value.map((p) => p.toJson()).toList(),
+    },
   };
 
   @override
@@ -236,7 +259,8 @@ class Boat {
           shareCode == other.shareCode &&
           listEquals(llmApiKeys, other.llmApiKeys) &&
           activeLlmProvider == other.activeLlmProvider &&
-          listEquals(polar, other.polar);
+          listEquals(polar, other.polar) &&
+          _mapPolarEquals(polarBySeaState, other.polarBySeaState);
 
   @override
   int get hashCode => Object.hashAll([
@@ -256,6 +280,11 @@ class Boat {
         Object.hashAll(llmApiKeys),
         activeLlmProvider,
         Object.hashAll(polar),
+        Object.hashAll(
+          polarBySeaState.entries.map(
+            (e) => Object.hash(e.key, Object.hashAll(e.value)),
+          ),
+        ),
       ]);
 
   @override
@@ -266,4 +295,16 @@ class Boat {
       'ownerId: $ownerId, shareCode: $shareCode, '
       'llmApiKeys: $llmApiKeys, ' // entries' own toString never leaks a key
       'activeLlmProvider: $activeLlmProvider)';
+}
+
+bool _mapPolarEquals(
+  Map<String, List<PolarPoint>> a,
+  Map<String, List<PolarPoint>> b,
+) {
+  if (a.length != b.length) return false;
+  for (final e in a.entries) {
+    final other = b[e.key];
+    if (other == null || !listEquals(e.value, other)) return false;
+  }
+  return true;
 }

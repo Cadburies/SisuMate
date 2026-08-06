@@ -6,6 +6,7 @@ import '../data/drift/app_database.dart';
 import '../data/repositories/sailing_polar_sample_repository.dart';
 import '../models/models.dart';
 import '../models/sailing_polar_sample.dart';
+import 'polar_local_improve.dart';
 
 /// Applies remote Supabase JSON into Drift for tables that participate in
 /// realtime inbound sync. Used by [SyncService] (T5).
@@ -811,6 +812,8 @@ class InboundSyncApplier {
       // #258/#259: polar is crew-shared boat performance data (wire key
       // `polar` ↔ Drift `polarJson`).
       polarJson: Value(encodePolarTable(b.polar)),
+      // #276: per-sea-state curves (wire key polarBySeaState).
+      polarBySeaStateJson: Value(encodePolarBySeaState(b.polarBySeaState)),
       // activeLlmProvider is never part of the wire payload (per-device
       // preference) — Value.absent() leaves this device's own choice alone.
     );

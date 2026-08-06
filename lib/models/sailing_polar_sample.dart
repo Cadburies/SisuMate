@@ -45,6 +45,13 @@ class SailingPolarSample {
 
   String sourceLabel = '';
 
+  /// #276 — calm | moderate | rough | unknown (instrument-variance proxy).
+  String seaState = 'unknown';
+
+  /// Local-only diagnostics from the rolling window (not on wire).
+  double? speedCv;
+  double? twaStdDeg;
+
   /// True after this sample contributed to a polar improve pass.
   bool usedInPolarBuild = false;
 
@@ -70,12 +77,15 @@ class SailingPolarSample {
         'enginePortRpm': enginePortRpm,
         'engineStbdRpm': engineStbdRpm,
         'sourceLabel': sourceLabel,
+        'seaState': seaState,
+        'speedCv': speedCv,
+        'twaStdDeg': twaStdDeg,
         'usedInPolarBuild': usedInPolarBuild,
         'isSynced': isSynced,
         'lastModified': lastModified.toIso8601String(),
       };
 
-  /// #275 — anonymized wire payload for Supabase (no track, no engines).
+  /// #275/#276 — anonymized wire payload (no track, no engines; seaState ok).
   Map<String, dynamic> toSyncJson() => {
         'supabaseId': supabaseId,
         'boatSupabaseId': boatSupabaseId,
@@ -86,6 +96,7 @@ class SailingPolarSample {
         'stwKt': stwKt,
         'twaDeg': twaDeg,
         'twsKt': twsKt,
+        'seaState': seaState,
         'isSynced': isSynced,
         'lastModified': lastModified.toIso8601String(),
       };
@@ -112,6 +123,9 @@ class SailingPolarSample {
       ..enginePortRpm = d(j['enginePortRpm'])
       ..engineStbdRpm = d(j['engineStbdRpm'])
       ..sourceLabel = j['sourceLabel'] as String? ?? ''
+      ..seaState = j['seaState'] as String? ?? 'unknown'
+      ..speedCv = d(j['speedCv'])
+      ..twaStdDeg = d(j['twaStdDeg'])
       ..usedInPolarBuild = j['usedInPolarBuild'] as bool? ?? false
       ..isSynced = j['isSynced'] as bool? ?? false
       ..lastModified = DateTime.tryParse(j['lastModified'] as String? ?? '')

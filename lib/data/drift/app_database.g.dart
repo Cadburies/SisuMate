@@ -4151,6 +4151,18 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _polarBySeaStateJsonMeta =
+      const VerificationMeta('polarBySeaStateJson');
+  @override
+  late final GeneratedColumn<String> polarBySeaStateJson =
+      GeneratedColumn<String>(
+        'polar_by_sea_state_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('{}'),
+      );
   static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
     'lastModified',
   );
@@ -4180,6 +4192,7 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
     llmApiKeys,
     activeLlmProvider,
     polarJson,
+    polarBySeaStateJson,
     lastModified,
   ];
   @override
@@ -4290,6 +4303,15 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
         polarJson.isAcceptableOrUnknown(data['polar_json']!, _polarJsonMeta),
       );
     }
+    if (data.containsKey('polar_by_sea_state_json')) {
+      context.handle(
+        _polarBySeaStateJsonMeta,
+        polarBySeaStateJson.isAcceptableOrUnknown(
+          data['polar_by_sea_state_json']!,
+          _polarBySeaStateJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('last_modified')) {
       context.handle(
         _lastModifiedMeta,
@@ -4368,6 +4390,10 @@ class $BoatsTable extends Boats with TableInfo<$BoatsTable, BoatRow> {
         DriftSqlType.string,
         data['${effectivePrefix}polar_json'],
       )!,
+      polarBySeaStateJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}polar_by_sea_state_json'],
+      )!,
       lastModified: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_modified'],
@@ -4397,6 +4423,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
   final String llmApiKeys;
   final String? activeLlmProvider;
   final String polarJson;
+  final String polarBySeaStateJson;
   final DateTime lastModified;
   const BoatRow({
     required this.id,
@@ -4414,6 +4441,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     required this.llmApiKeys,
     this.activeLlmProvider,
     required this.polarJson,
+    required this.polarBySeaStateJson,
     required this.lastModified,
   });
   @override
@@ -4448,6 +4476,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       map['active_llm_provider'] = Variable<String>(activeLlmProvider);
     }
     map['polar_json'] = Variable<String>(polarJson);
+    map['polar_by_sea_state_json'] = Variable<String>(polarBySeaStateJson);
     map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
   }
@@ -4483,6 +4512,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
           ? const Value.absent()
           : Value(activeLlmProvider),
       polarJson: Value(polarJson),
+      polarBySeaStateJson: Value(polarBySeaStateJson),
       lastModified: Value(lastModified),
     );
   }
@@ -4512,6 +4542,9 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
         json['activeLlmProvider'],
       ),
       polarJson: serializer.fromJson<String>(json['polarJson']),
+      polarBySeaStateJson: serializer.fromJson<String>(
+        json['polarBySeaStateJson'],
+      ),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
   }
@@ -4534,6 +4567,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
       'llmApiKeys': serializer.toJson<String>(llmApiKeys),
       'activeLlmProvider': serializer.toJson<String?>(activeLlmProvider),
       'polarJson': serializer.toJson<String>(polarJson),
+      'polarBySeaStateJson': serializer.toJson<String>(polarBySeaStateJson),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
   }
@@ -4554,6 +4588,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     String? llmApiKeys,
     Value<String?> activeLlmProvider = const Value.absent(),
     String? polarJson,
+    String? polarBySeaStateJson,
     DateTime? lastModified,
   }) => BoatRow(
     id: id ?? this.id,
@@ -4575,6 +4610,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
         ? activeLlmProvider.value
         : this.activeLlmProvider,
     polarJson: polarJson ?? this.polarJson,
+    polarBySeaStateJson: polarBySeaStateJson ?? this.polarBySeaStateJson,
     lastModified: lastModified ?? this.lastModified,
   );
   BoatRow copyWithCompanion(BoatsCompanion data) {
@@ -4602,6 +4638,9 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
           ? data.activeLlmProvider.value
           : this.activeLlmProvider,
       polarJson: data.polarJson.present ? data.polarJson.value : this.polarJson,
+      polarBySeaStateJson: data.polarBySeaStateJson.present
+          ? data.polarBySeaStateJson.value
+          : this.polarBySeaStateJson,
       lastModified: data.lastModified.present
           ? data.lastModified.value
           : this.lastModified,
@@ -4626,6 +4665,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
           ..write('llmApiKeys: $llmApiKeys, ')
           ..write('activeLlmProvider: $activeLlmProvider, ')
           ..write('polarJson: $polarJson, ')
+          ..write('polarBySeaStateJson: $polarBySeaStateJson, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -4648,6 +4688,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
     llmApiKeys,
     activeLlmProvider,
     polarJson,
+    polarBySeaStateJson,
     lastModified,
   );
   @override
@@ -4669,6 +4710,7 @@ class BoatRow extends DataClass implements Insertable<BoatRow> {
           other.llmApiKeys == this.llmApiKeys &&
           other.activeLlmProvider == this.activeLlmProvider &&
           other.polarJson == this.polarJson &&
+          other.polarBySeaStateJson == this.polarBySeaStateJson &&
           other.lastModified == this.lastModified);
 }
 
@@ -4688,6 +4730,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
   final Value<String> llmApiKeys;
   final Value<String?> activeLlmProvider;
   final Value<String> polarJson;
+  final Value<String> polarBySeaStateJson;
   final Value<DateTime> lastModified;
   const BoatsCompanion({
     this.id = const Value.absent(),
@@ -4705,6 +4748,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     this.llmApiKeys = const Value.absent(),
     this.activeLlmProvider = const Value.absent(),
     this.polarJson = const Value.absent(),
+    this.polarBySeaStateJson = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   BoatsCompanion.insert({
@@ -4723,6 +4767,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     this.llmApiKeys = const Value.absent(),
     this.activeLlmProvider = const Value.absent(),
     this.polarJson = const Value.absent(),
+    this.polarBySeaStateJson = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   static Insertable<BoatRow> custom({
@@ -4741,6 +4786,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     Expression<String>? llmApiKeys,
     Expression<String>? activeLlmProvider,
     Expression<String>? polarJson,
+    Expression<String>? polarBySeaStateJson,
     Expression<DateTime>? lastModified,
   }) {
     return RawValuesInsertable({
@@ -4759,6 +4805,8 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
       if (llmApiKeys != null) 'llm_api_keys': llmApiKeys,
       if (activeLlmProvider != null) 'active_llm_provider': activeLlmProvider,
       if (polarJson != null) 'polar_json': polarJson,
+      if (polarBySeaStateJson != null)
+        'polar_by_sea_state_json': polarBySeaStateJson,
       if (lastModified != null) 'last_modified': lastModified,
     });
   }
@@ -4779,6 +4827,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     Value<String>? llmApiKeys,
     Value<String?>? activeLlmProvider,
     Value<String>? polarJson,
+    Value<String>? polarBySeaStateJson,
     Value<DateTime>? lastModified,
   }) {
     return BoatsCompanion(
@@ -4797,6 +4846,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
       llmApiKeys: llmApiKeys ?? this.llmApiKeys,
       activeLlmProvider: activeLlmProvider ?? this.activeLlmProvider,
       polarJson: polarJson ?? this.polarJson,
+      polarBySeaStateJson: polarBySeaStateJson ?? this.polarBySeaStateJson,
       lastModified: lastModified ?? this.lastModified,
     );
   }
@@ -4849,6 +4899,11 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
     if (polarJson.present) {
       map['polar_json'] = Variable<String>(polarJson.value);
     }
+    if (polarBySeaStateJson.present) {
+      map['polar_by_sea_state_json'] = Variable<String>(
+        polarBySeaStateJson.value,
+      );
+    }
     if (lastModified.present) {
       map['last_modified'] = Variable<DateTime>(lastModified.value);
     }
@@ -4873,6 +4928,7 @@ class BoatsCompanion extends UpdateCompanion<BoatRow> {
           ..write('llmApiKeys: $llmApiKeys, ')
           ..write('activeLlmProvider: $activeLlmProvider, ')
           ..write('polarJson: $polarJson, ')
+          ..write('polarBySeaStateJson: $polarBySeaStateJson, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -21655,6 +21711,40 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _seaStateMeta = const VerificationMeta(
+    'seaState',
+  );
+  @override
+  late final GeneratedColumn<String> seaState = GeneratedColumn<String>(
+    'sea_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('unknown'),
+  );
+  static const VerificationMeta _speedCvMeta = const VerificationMeta(
+    'speedCv',
+  );
+  @override
+  late final GeneratedColumn<double> speedCv = GeneratedColumn<double>(
+    'speed_cv',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _twaStdDegMeta = const VerificationMeta(
+    'twaStdDeg',
+  );
+  @override
+  late final GeneratedColumn<double> twaStdDeg = GeneratedColumn<double>(
+    'twa_std_deg',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _usedInPolarBuildMeta = const VerificationMeta(
     'usedInPolarBuild',
   );
@@ -21717,6 +21807,9 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
     enginePortRpm,
     engineStbdRpm,
     sourceLabel,
+    seaState,
+    speedCv,
+    twaStdDeg,
     usedInPolarBuild,
     isSynced,
     lastModified,
@@ -21859,6 +21952,24 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
         ),
       );
     }
+    if (data.containsKey('sea_state')) {
+      context.handle(
+        _seaStateMeta,
+        seaState.isAcceptableOrUnknown(data['sea_state']!, _seaStateMeta),
+      );
+    }
+    if (data.containsKey('speed_cv')) {
+      context.handle(
+        _speedCvMeta,
+        speedCv.isAcceptableOrUnknown(data['speed_cv']!, _speedCvMeta),
+      );
+    }
+    if (data.containsKey('twa_std_deg')) {
+      context.handle(
+        _twaStdDegMeta,
+        twaStdDeg.isAcceptableOrUnknown(data['twa_std_deg']!, _twaStdDegMeta),
+      );
+    }
     if (data.containsKey('used_in_polar_build')) {
       context.handle(
         _usedInPolarBuildMeta,
@@ -21964,6 +22075,18 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
         DriftSqlType.string,
         data['${effectivePrefix}source_label'],
       )!,
+      seaState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sea_state'],
+      )!,
+      speedCv: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}speed_cv'],
+      ),
+      twaStdDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}twa_std_deg'],
+      ),
       usedInPolarBuild: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}used_in_polar_build'],
@@ -22007,6 +22130,11 @@ class SailingPolarSampleRow extends DataClass
   final double? enginePortRpm;
   final double? engineStbdRpm;
   final String sourceLabel;
+
+  /// #276 — calm | moderate | rough | unknown
+  final String seaState;
+  final double? speedCv;
+  final double? twaStdDeg;
   final bool usedInPolarBuild;
   final bool isSynced;
   final DateTime lastModified;
@@ -22029,6 +22157,9 @@ class SailingPolarSampleRow extends DataClass
     this.enginePortRpm,
     this.engineStbdRpm,
     required this.sourceLabel,
+    required this.seaState,
+    this.speedCv,
+    this.twaStdDeg,
     required this.usedInPolarBuild,
     required this.isSynced,
     required this.lastModified,
@@ -22072,6 +22203,13 @@ class SailingPolarSampleRow extends DataClass
       map['engine_stbd_rpm'] = Variable<double>(engineStbdRpm);
     }
     map['source_label'] = Variable<String>(sourceLabel);
+    map['sea_state'] = Variable<String>(seaState);
+    if (!nullToAbsent || speedCv != null) {
+      map['speed_cv'] = Variable<double>(speedCv);
+    }
+    if (!nullToAbsent || twaStdDeg != null) {
+      map['twa_std_deg'] = Variable<double>(twaStdDeg);
+    }
     map['used_in_polar_build'] = Variable<bool>(usedInPolarBuild);
     map['is_synced'] = Variable<bool>(isSynced);
     map['last_modified'] = Variable<DateTime>(lastModified);
@@ -22116,6 +22254,13 @@ class SailingPolarSampleRow extends DataClass
           ? const Value.absent()
           : Value(engineStbdRpm),
       sourceLabel: Value(sourceLabel),
+      seaState: Value(seaState),
+      speedCv: speedCv == null && nullToAbsent
+          ? const Value.absent()
+          : Value(speedCv),
+      twaStdDeg: twaStdDeg == null && nullToAbsent
+          ? const Value.absent()
+          : Value(twaStdDeg),
       usedInPolarBuild: Value(usedInPolarBuild),
       isSynced: Value(isSynced),
       lastModified: Value(lastModified),
@@ -22146,6 +22291,9 @@ class SailingPolarSampleRow extends DataClass
       enginePortRpm: serializer.fromJson<double?>(json['enginePortRpm']),
       engineStbdRpm: serializer.fromJson<double?>(json['engineStbdRpm']),
       sourceLabel: serializer.fromJson<String>(json['sourceLabel']),
+      seaState: serializer.fromJson<String>(json['seaState']),
+      speedCv: serializer.fromJson<double?>(json['speedCv']),
+      twaStdDeg: serializer.fromJson<double?>(json['twaStdDeg']),
       usedInPolarBuild: serializer.fromJson<bool>(json['usedInPolarBuild']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
@@ -22173,6 +22321,9 @@ class SailingPolarSampleRow extends DataClass
       'enginePortRpm': serializer.toJson<double?>(enginePortRpm),
       'engineStbdRpm': serializer.toJson<double?>(engineStbdRpm),
       'sourceLabel': serializer.toJson<String>(sourceLabel),
+      'seaState': serializer.toJson<String>(seaState),
+      'speedCv': serializer.toJson<double?>(speedCv),
+      'twaStdDeg': serializer.toJson<double?>(twaStdDeg),
       'usedInPolarBuild': serializer.toJson<bool>(usedInPolarBuild),
       'isSynced': serializer.toJson<bool>(isSynced),
       'lastModified': serializer.toJson<DateTime>(lastModified),
@@ -22198,6 +22349,9 @@ class SailingPolarSampleRow extends DataClass
     Value<double?> enginePortRpm = const Value.absent(),
     Value<double?> engineStbdRpm = const Value.absent(),
     String? sourceLabel,
+    String? seaState,
+    Value<double?> speedCv = const Value.absent(),
+    Value<double?> twaStdDeg = const Value.absent(),
     bool? usedInPolarBuild,
     bool? isSynced,
     DateTime? lastModified,
@@ -22224,6 +22378,9 @@ class SailingPolarSampleRow extends DataClass
         ? engineStbdRpm.value
         : this.engineStbdRpm,
     sourceLabel: sourceLabel ?? this.sourceLabel,
+    seaState: seaState ?? this.seaState,
+    speedCv: speedCv.present ? speedCv.value : this.speedCv,
+    twaStdDeg: twaStdDeg.present ? twaStdDeg.value : this.twaStdDeg,
     usedInPolarBuild: usedInPolarBuild ?? this.usedInPolarBuild,
     isSynced: isSynced ?? this.isSynced,
     lastModified: lastModified ?? this.lastModified,
@@ -22266,6 +22423,9 @@ class SailingPolarSampleRow extends DataClass
       sourceLabel: data.sourceLabel.present
           ? data.sourceLabel.value
           : this.sourceLabel,
+      seaState: data.seaState.present ? data.seaState.value : this.seaState,
+      speedCv: data.speedCv.present ? data.speedCv.value : this.speedCv,
+      twaStdDeg: data.twaStdDeg.present ? data.twaStdDeg.value : this.twaStdDeg,
       usedInPolarBuild: data.usedInPolarBuild.present
           ? data.usedInPolarBuild.value
           : this.usedInPolarBuild,
@@ -22297,6 +22457,9 @@ class SailingPolarSampleRow extends DataClass
           ..write('enginePortRpm: $enginePortRpm, ')
           ..write('engineStbdRpm: $engineStbdRpm, ')
           ..write('sourceLabel: $sourceLabel, ')
+          ..write('seaState: $seaState, ')
+          ..write('speedCv: $speedCv, ')
+          ..write('twaStdDeg: $twaStdDeg, ')
           ..write('usedInPolarBuild: $usedInPolarBuild, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
@@ -22324,6 +22487,9 @@ class SailingPolarSampleRow extends DataClass
     enginePortRpm,
     engineStbdRpm,
     sourceLabel,
+    seaState,
+    speedCv,
+    twaStdDeg,
     usedInPolarBuild,
     isSynced,
     lastModified,
@@ -22350,6 +22516,9 @@ class SailingPolarSampleRow extends DataClass
           other.enginePortRpm == this.enginePortRpm &&
           other.engineStbdRpm == this.engineStbdRpm &&
           other.sourceLabel == this.sourceLabel &&
+          other.seaState == this.seaState &&
+          other.speedCv == this.speedCv &&
+          other.twaStdDeg == this.twaStdDeg &&
           other.usedInPolarBuild == this.usedInPolarBuild &&
           other.isSynced == this.isSynced &&
           other.lastModified == this.lastModified);
@@ -22375,6 +22544,9 @@ class SailingPolarSamplesCompanion
   final Value<double?> enginePortRpm;
   final Value<double?> engineStbdRpm;
   final Value<String> sourceLabel;
+  final Value<String> seaState;
+  final Value<double?> speedCv;
+  final Value<double?> twaStdDeg;
   final Value<bool> usedInPolarBuild;
   final Value<bool> isSynced;
   final Value<DateTime> lastModified;
@@ -22397,6 +22569,9 @@ class SailingPolarSamplesCompanion
     this.enginePortRpm = const Value.absent(),
     this.engineStbdRpm = const Value.absent(),
     this.sourceLabel = const Value.absent(),
+    this.seaState = const Value.absent(),
+    this.speedCv = const Value.absent(),
+    this.twaStdDeg = const Value.absent(),
     this.usedInPolarBuild = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
@@ -22420,6 +22595,9 @@ class SailingPolarSamplesCompanion
     this.enginePortRpm = const Value.absent(),
     this.engineStbdRpm = const Value.absent(),
     this.sourceLabel = const Value.absent(),
+    this.seaState = const Value.absent(),
+    this.speedCv = const Value.absent(),
+    this.twaStdDeg = const Value.absent(),
     this.usedInPolarBuild = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
@@ -22443,6 +22621,9 @@ class SailingPolarSamplesCompanion
     Expression<double>? enginePortRpm,
     Expression<double>? engineStbdRpm,
     Expression<String>? sourceLabel,
+    Expression<String>? seaState,
+    Expression<double>? speedCv,
+    Expression<double>? twaStdDeg,
     Expression<bool>? usedInPolarBuild,
     Expression<bool>? isSynced,
     Expression<DateTime>? lastModified,
@@ -22466,6 +22647,9 @@ class SailingPolarSamplesCompanion
       if (enginePortRpm != null) 'engine_port_rpm': enginePortRpm,
       if (engineStbdRpm != null) 'engine_stbd_rpm': engineStbdRpm,
       if (sourceLabel != null) 'source_label': sourceLabel,
+      if (seaState != null) 'sea_state': seaState,
+      if (speedCv != null) 'speed_cv': speedCv,
+      if (twaStdDeg != null) 'twa_std_deg': twaStdDeg,
       if (usedInPolarBuild != null) 'used_in_polar_build': usedInPolarBuild,
       if (isSynced != null) 'is_synced': isSynced,
       if (lastModified != null) 'last_modified': lastModified,
@@ -22491,6 +22675,9 @@ class SailingPolarSamplesCompanion
     Value<double?>? enginePortRpm,
     Value<double?>? engineStbdRpm,
     Value<String>? sourceLabel,
+    Value<String>? seaState,
+    Value<double?>? speedCv,
+    Value<double?>? twaStdDeg,
     Value<bool>? usedInPolarBuild,
     Value<bool>? isSynced,
     Value<DateTime>? lastModified,
@@ -22514,6 +22701,9 @@ class SailingPolarSamplesCompanion
       enginePortRpm: enginePortRpm ?? this.enginePortRpm,
       engineStbdRpm: engineStbdRpm ?? this.engineStbdRpm,
       sourceLabel: sourceLabel ?? this.sourceLabel,
+      seaState: seaState ?? this.seaState,
+      speedCv: speedCv ?? this.speedCv,
+      twaStdDeg: twaStdDeg ?? this.twaStdDeg,
       usedInPolarBuild: usedInPolarBuild ?? this.usedInPolarBuild,
       isSynced: isSynced ?? this.isSynced,
       lastModified: lastModified ?? this.lastModified,
@@ -22577,6 +22767,15 @@ class SailingPolarSamplesCompanion
     if (sourceLabel.present) {
       map['source_label'] = Variable<String>(sourceLabel.value);
     }
+    if (seaState.present) {
+      map['sea_state'] = Variable<String>(seaState.value);
+    }
+    if (speedCv.present) {
+      map['speed_cv'] = Variable<double>(speedCv.value);
+    }
+    if (twaStdDeg.present) {
+      map['twa_std_deg'] = Variable<double>(twaStdDeg.value);
+    }
     if (usedInPolarBuild.present) {
       map['used_in_polar_build'] = Variable<bool>(usedInPolarBuild.value);
     }
@@ -22610,6 +22809,9 @@ class SailingPolarSamplesCompanion
           ..write('enginePortRpm: $enginePortRpm, ')
           ..write('engineStbdRpm: $engineStbdRpm, ')
           ..write('sourceLabel: $sourceLabel, ')
+          ..write('seaState: $seaState, ')
+          ..write('speedCv: $speedCv, ')
+          ..write('twaStdDeg: $twaStdDeg, ')
           ..write('usedInPolarBuild: $usedInPolarBuild, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
@@ -24711,6 +24913,7 @@ typedef $$BoatsTableCreateCompanionBuilder =
       Value<String> llmApiKeys,
       Value<String?> activeLlmProvider,
       Value<String> polarJson,
+      Value<String> polarBySeaStateJson,
       Value<DateTime> lastModified,
     });
 typedef $$BoatsTableUpdateCompanionBuilder =
@@ -24730,6 +24933,7 @@ typedef $$BoatsTableUpdateCompanionBuilder =
       Value<String> llmApiKeys,
       Value<String?> activeLlmProvider,
       Value<String> polarJson,
+      Value<String> polarBySeaStateJson,
       Value<DateTime> lastModified,
     });
 
@@ -24813,6 +25017,11 @@ class $$BoatsTableFilterComposer extends Composer<_$AppDatabase, $BoatsTable> {
 
   ColumnFilters<String> get polarJson => $composableBuilder(
     column: $table.polarJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get polarBySeaStateJson => $composableBuilder(
+    column: $table.polarBySeaStateJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -24906,6 +25115,11 @@ class $$BoatsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get polarBySeaStateJson => $composableBuilder(
+    column: $table.polarBySeaStateJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => ColumnOrderings(column),
@@ -24974,6 +25188,11 @@ class $$BoatsTableAnnotationComposer
   GeneratedColumn<String> get polarJson =>
       $composableBuilder(column: $table.polarJson, builder: (column) => column);
 
+  GeneratedColumn<String> get polarBySeaStateJson => $composableBuilder(
+    column: $table.polarBySeaStateJson,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => column,
@@ -25023,6 +25242,7 @@ class $$BoatsTableTableManager
                 Value<String> llmApiKeys = const Value.absent(),
                 Value<String?> activeLlmProvider = const Value.absent(),
                 Value<String> polarJson = const Value.absent(),
+                Value<String> polarBySeaStateJson = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => BoatsCompanion(
                 id: id,
@@ -25040,6 +25260,7 @@ class $$BoatsTableTableManager
                 llmApiKeys: llmApiKeys,
                 activeLlmProvider: activeLlmProvider,
                 polarJson: polarJson,
+                polarBySeaStateJson: polarBySeaStateJson,
                 lastModified: lastModified,
               ),
           createCompanionCallback:
@@ -25059,6 +25280,7 @@ class $$BoatsTableTableManager
                 Value<String> llmApiKeys = const Value.absent(),
                 Value<String?> activeLlmProvider = const Value.absent(),
                 Value<String> polarJson = const Value.absent(),
+                Value<String> polarBySeaStateJson = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => BoatsCompanion.insert(
                 id: id,
@@ -25076,6 +25298,7 @@ class $$BoatsTableTableManager
                 llmApiKeys: llmApiKeys,
                 activeLlmProvider: activeLlmProvider,
                 polarJson: polarJson,
+                polarBySeaStateJson: polarBySeaStateJson,
                 lastModified: lastModified,
               ),
           withReferenceMapper: (p0) => p0
@@ -32621,6 +32844,9 @@ typedef $$SailingPolarSamplesTableCreateCompanionBuilder =
       Value<double?> enginePortRpm,
       Value<double?> engineStbdRpm,
       Value<String> sourceLabel,
+      Value<String> seaState,
+      Value<double?> speedCv,
+      Value<double?> twaStdDeg,
       Value<bool> usedInPolarBuild,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
@@ -32645,6 +32871,9 @@ typedef $$SailingPolarSamplesTableUpdateCompanionBuilder =
       Value<double?> enginePortRpm,
       Value<double?> engineStbdRpm,
       Value<String> sourceLabel,
+      Value<String> seaState,
+      Value<double?> speedCv,
+      Value<double?> twaStdDeg,
       Value<bool> usedInPolarBuild,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
@@ -32746,6 +32975,21 @@ class $$SailingPolarSamplesTableFilterComposer
 
   ColumnFilters<String> get sourceLabel => $composableBuilder(
     column: $table.sourceLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get seaState => $composableBuilder(
+    column: $table.seaState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get speedCv => $composableBuilder(
+    column: $table.speedCv,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get twaStdDeg => $composableBuilder(
+    column: $table.twaStdDeg,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -32864,6 +33108,21 @@ class $$SailingPolarSamplesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get seaState => $composableBuilder(
+    column: $table.seaState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get speedCv => $composableBuilder(
+    column: $table.speedCv,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get twaStdDeg => $composableBuilder(
+    column: $table.twaStdDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get usedInPolarBuild => $composableBuilder(
     column: $table.usedInPolarBuild,
     builder: (column) => ColumnOrderings(column),
@@ -32961,6 +33220,15 @@ class $$SailingPolarSamplesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get seaState =>
+      $composableBuilder(column: $table.seaState, builder: (column) => column);
+
+  GeneratedColumn<double> get speedCv =>
+      $composableBuilder(column: $table.speedCv, builder: (column) => column);
+
+  GeneratedColumn<double> get twaStdDeg =>
+      $composableBuilder(column: $table.twaStdDeg, builder: (column) => column);
+
   GeneratedColumn<bool> get usedInPolarBuild => $composableBuilder(
     column: $table.usedInPolarBuild,
     builder: (column) => column,
@@ -33036,6 +33304,9 @@ class $$SailingPolarSamplesTableTableManager
                 Value<double?> enginePortRpm = const Value.absent(),
                 Value<double?> engineStbdRpm = const Value.absent(),
                 Value<String> sourceLabel = const Value.absent(),
+                Value<String> seaState = const Value.absent(),
+                Value<double?> speedCv = const Value.absent(),
+                Value<double?> twaStdDeg = const Value.absent(),
                 Value<bool> usedInPolarBuild = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
@@ -33058,6 +33329,9 @@ class $$SailingPolarSamplesTableTableManager
                 enginePortRpm: enginePortRpm,
                 engineStbdRpm: engineStbdRpm,
                 sourceLabel: sourceLabel,
+                seaState: seaState,
+                speedCv: speedCv,
+                twaStdDeg: twaStdDeg,
                 usedInPolarBuild: usedInPolarBuild,
                 isSynced: isSynced,
                 lastModified: lastModified,
@@ -33082,6 +33356,9 @@ class $$SailingPolarSamplesTableTableManager
                 Value<double?> enginePortRpm = const Value.absent(),
                 Value<double?> engineStbdRpm = const Value.absent(),
                 Value<String> sourceLabel = const Value.absent(),
+                Value<String> seaState = const Value.absent(),
+                Value<double?> speedCv = const Value.absent(),
+                Value<double?> twaStdDeg = const Value.absent(),
                 Value<bool> usedInPolarBuild = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
@@ -33104,6 +33381,9 @@ class $$SailingPolarSamplesTableTableManager
                 enginePortRpm: enginePortRpm,
                 engineStbdRpm: engineStbdRpm,
                 sourceLabel: sourceLabel,
+                seaState: seaState,
+                speedCv: speedCv,
+                twaStdDeg: twaStdDeg,
                 usedInPolarBuild: usedInPolarBuild,
                 isSynced: isSynced,
                 lastModified: lastModified,

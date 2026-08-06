@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** #275 polar follow-ups — background collector, STW, anonymized sync (schema 18).
-- **Apply on Supabase:** boats.polar (#258) + sailing_polar_samples migration (#275).
+- **Last (grok):** #276 polar local upgrades — sea-state buckets, steady/outliers/spline, polar chart (schema 19).
+- **Apply on Supabase:** boats.polar + polarBySeaState + sailing_polar_samples (+ seaState) migrations.
 - **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 

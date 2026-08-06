@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import '../../domain/repositories/boat_repository.dart';
 import '../../models/models.dart';
-import '../drift/app_database.dart';
+import '../../services/polar_local_improve.dart';
 import '../../services/sync_service.dart';
+import '../drift/app_database.dart';
 
 /// Boat on Drift (S1); sync-participating.
 class BoatRepositoryImpl implements BoatRepository {
@@ -31,6 +32,7 @@ class BoatRepositoryImpl implements BoatRepository {
         .toList()
     ..activeLlmProvider = r.activeLlmProvider
     ..polar = parsePolarTable(r.polarJson)
+    ..polarBySeaState = parsePolarBySeaState(r.polarBySeaStateJson)
     ..lastModified = r.lastModified;
 
   BoatsCompanion _toCompanion(Boat b) => BoatsCompanion(
@@ -49,6 +51,7 @@ class BoatRepositoryImpl implements BoatRepository {
             jsonEncode(b.llmApiKeys.map((e) => e.toStorageJson()).toList())),
         activeLlmProvider: Value(b.activeLlmProvider),
         polarJson: Value(encodePolarTable(b.polar)),
+        polarBySeaStateJson: Value(encodePolarBySeaState(b.polarBySeaState)),
         lastModified: Value(b.lastModified),
       );
 

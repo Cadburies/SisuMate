@@ -149,6 +149,9 @@ class Boats extends Table {
   // for real weather routing (#238) — no privacy/sync-gating concerns
   // unlike llmApiKeys, so it's pushed/pulled plainly like any other field.
   TextColumn get polarJson => text().withDefault(const Constant('[]'))();
+  // #276: per-sea-state polars — JSON map calm|moderate|rough → PolarPoint[].
+  TextColumn get polarBySeaStateJson =>
+      text().withDefault(const Constant('{}'))();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -636,6 +639,10 @@ class SailingPolarSamples extends Table {
   RealColumn get enginePortRpm => real().nullable()();
   RealColumn get engineStbdRpm => real().nullable()();
   TextColumn get sourceLabel => text().withDefault(const Constant(''))();
+  /// #276 — calm | moderate | rough | unknown
+  TextColumn get seaState => text().withDefault(const Constant('unknown'))();
+  RealColumn get speedCv => real().nullable()();
+  RealColumn get twaStdDeg => real().nullable()();
   BoolColumn get usedInPolarBuild =>
       boolean().withDefault(const Constant(false))();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
@@ -691,7 +698,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

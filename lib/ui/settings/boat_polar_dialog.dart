@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 
@@ -102,9 +104,10 @@ class _BoatPolarDialogState extends ConsumerState<BoatPolarDialog> {
                 'along a route.\n\n'
                 'While sailing (instruments online, engines not showing revs), '
                 'the app stores samples in the background (no Anchor Alarm '
-                'required). Prefers speed-through-water (STW) over SOG. '
-                'Anonymized metrics sync when Pro/online. Improve offline '
-                'with bucket stats, or with AI when a boat LLM key is set.',
+                'required). Prefers STW over SOG; rejects manoeuvres; tags '
+                'smooth / moderate / rough sea state from instrument variance. '
+                'Improve offline (outliers + smooth) or with AI when a boat '
+                'LLM key is set. Open the polar diagram to see curves fill in.',
               ),
               const SizedBox(height: 8),
               Text(
@@ -142,6 +145,16 @@ class _BoatPolarDialogState extends ConsumerState<BoatPolarDialog> {
                         : () => _improvePolar(tryLlm: true),
                     icon: const Icon(Icons.auto_awesome, size: 18),
                     label: const Text('Improve with AI'),
+                  ),
+                  TextButton.icon(
+                    onPressed: (_improving || _saving)
+                        ? null
+                        : () {
+                            Navigator.of(context).pop();
+                            context.push(AppRoutes.polarChart);
+                          },
+                    icon: const Icon(Icons.radar_outlined, size: 18),
+                    label: const Text('Open diagram'),
                   ),
                 ],
               ),
