@@ -38,7 +38,7 @@ class UserSettings {
 
   /// #263 — Yacht Devices YDWG-02 (or equivalent) web/NMEA gateway on the
   /// boat LAN. Separate from the PredictWind DataHub path. Empty → use
-  /// dart-define / built-in defaults (`YDWGIP`, `YDWG_USERNAME`,
+  /// dart-define / built-in defaults (`YDWG_URL`, `YDWG_USERNAME`,
   /// `YDWG_PASSWORD`). Local-only, never synced.
   String ydwgUrl = '';
   String ydwgUsername = '';

@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (grok):** #276 polar local upgrades — sea-state buckets, steady/outliers/spline, polar chart (schema 19).
+- **Last (grok):** #279 TitleTile menu far-right · #278 home swipe-dismiss · #277 gateway define dedupe.
 - **Apply on Supabase:** boats.polar + polarBySeaState + sailing_polar_samples (+ seaState) migrations.
 - **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.

@@ -47,7 +47,7 @@ import 'error_log_service.dart';
 /// subnets, or the phone joins the IoT network directly — this service has
 /// no way to fix that itself; it can only time out on "local" and fall
 /// back to remote when the two subnets aren't bridged. A Yacht Devices
-/// YDWG-02 on the same IoT VLAN sits at `192.168.10.30` (`YDWGIP` /
+/// YDWG-02 on the same IoT VLAN sits at `192.168.10.30` (`YDWG_URL` /
 /// [defaultYdwgUrl]) — raw NMEA gateway, not LuCI; Discover only pings
 /// reachability. Full NMEA parse is still deferred (#263).
 ///
@@ -238,16 +238,10 @@ class PredictWindDatahubService {
   static const _hubUrl = String.fromEnvironment('PREDICTWIND_HUB_URL');
   static const _hubHttpUrl =
       String.fromEnvironment('PREDICTWIND_HUB_HTTP_URL');
+  /// #277 — canonical boat-LAN DataHub URL (no bare-IP alias).
   static const _hubLocalUrl =
       String.fromEnvironment('PREDICTWIND_HUB_LOCAL_URL');
-  /// Optional bare IP for the PredictWind DataHub on the boat LAN
-  /// (`DATAHUBIP` in dart-defines / .env), e.g. `192.168.10.31`.
-  static const _dataHubIp = String.fromEnvironment('DATAHUBIP');
-  /// Optional bare IP for a Yacht Devices YDWG-02 on the boat LAN
-  /// (`YDWGIP` in dart-defines / .env), e.g. `192.168.10.30`.
-  static const _ydwgIp = String.fromEnvironment('YDWGIP');
-  /// Optional full base URL for the YDWG (`YDWG_URL`), e.g.
-  /// `http://192.168.10.30`. Wins over [\_ydwgIp] when set.
+  /// #277 — canonical boat-LAN YDWG base URL (no bare-IP alias).
   static const _ydwgUrlEnv = String.fromEnvironment('YDWG_URL');
   static const _ydwgUsernameEnv =
       String.fromEnvironment('YDWG_USERNAME');
@@ -271,8 +265,8 @@ class PredictWindDatahubService {
   /// Boat-LAN DataHub default when no dart-define is set (this boat's IoT VLAN).
   static const _fallbackDataHubLocalUrl = 'http://192.168.10.31';
 
-  /// Boat-LAN YDWG-02 default when `YDWGIP` / `YDWG_URL` are unset.
-  static const _fallbackYdwgIp = '192.168.10.30';
+  /// Boat-LAN YDWG-02 default when `YDWG_URL` is unset.
+  static const _fallbackYdwgUrl = 'http://192.168.10.30';
 
   /// Factory web-UI credentials for YDWG-02 (admin / admin).
   static const defaultYdwgUsername = 'admin';
@@ -286,22 +280,20 @@ class PredictWindDatahubService {
     return 'http://$t';
   }
 
-  /// DataHub on the boat network — from `PREDICTWIND_HUB_LOCAL_URL` or
-  /// `DATAHUBIP`, else [\_fallbackDataHubLocalUrl].
+  /// DataHub on the boat network — from `PREDICTWIND_HUB_LOCAL_URL`, else
+  /// [\_fallbackDataHubLocalUrl].
   static String get defaultDataHubLocalUrl {
     if (_hubLocalUrl.isNotEmpty) return _asHttpBase(_hubLocalUrl);
-    if (_dataHubIp.isNotEmpty) return _asHttpBase(_dataHubIp);
     return _fallbackDataHubLocalUrl;
   }
 
-  /// Yacht Devices YDWG-02 on the boat network — from `YDWG_URL` or
-  /// `YDWGIP`, else [\_fallbackYdwgIp]. Web UI at `/home.html` (login
+  /// Yacht Devices YDWG-02 on the boat network — from `YDWG_URL`, else
+  /// [\_fallbackYdwgUrl]. Web UI at `/home.html` (login
   /// `POST /login?login=&password=` → session cookie). NMEA data ports
   /// are separate; this URL is for config + login probe.
   static String get defaultYdwgUrl {
     if (_ydwgUrlEnv.isNotEmpty) return _asHttpBase(_ydwgUrlEnv);
-    if (_ydwgIp.isNotEmpty) return _asHttpBase(_ydwgIp);
-    return _asHttpBase(_fallbackYdwgIp);
+    return _fallbackYdwgUrl;
   }
 
   /// YDWG web login — dart-define when set, else factory `admin`.
