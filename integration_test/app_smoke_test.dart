@@ -80,6 +80,7 @@ void main() {
 
     expect(find.text('Shopping'), findsOneWidget);
     expect(find.text('Safety'), findsOneWidget);
+    expect(find.text('Polar'), findsOneWidget);
     expect(find.text('Games'), findsOneWidget);
   });
 

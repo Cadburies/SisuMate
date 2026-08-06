@@ -5,8 +5,7 @@
 
 ## NEXT
 
-- **Last (grok):** schema rule + apply/verify scripts; remote still needs `SUPABASE_DB_URL` to apply polar migrations.
-- **Apply on Supabase:** set `SUPABASE_DB_URL` (Dashboard → Database URI) then `./scripts/apply_supabase_migrations.sh`.
+- **Last (grok):** Polar home tile (`PolarChartScreen` /settings/polar); Games last on home grid.
 - **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
@@ -37,7 +36,7 @@
 
 ## App (one paragraph)
 
-Offline-first Flutter app for sailors. Modules: Checklists, Shopping, Captain's Log, Maintenance, Safety, Documents, Crew, Inventory, Fuel & Water, Chef, Cocktails, Games, Weather, Community. Free = read-only + ads (+ limited free edits). Pro = completion, boat sync, crew share code, no ads. Seed data into Drift on first launch.
+Offline-first Flutter app for sailors. Modules: Checklists, Shopping, Captain's Log, Maintenance, Safety, Documents, Crew, Inventory, Fuel & Water, Chef, Cocktails, Weather, Polar, Anchor Alarm, Community, Games (last on home). Free = read-only + ads (+ limited free edits). Pro = completion, boat sync, crew share code, no ads. Seed data into Drift on first launch.
 
 ## Stack
 

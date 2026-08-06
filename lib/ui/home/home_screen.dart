@@ -168,7 +168,7 @@ class HomeScreen extends ConsumerWidget {
                       color: Colors.cyan,
                       onTap: () => context.push(AppRoutes.community),
                     ),
-                    // ── Row 5: passage & entertainment ────────────────
+                    // ── Row 5: passage tools ──────────────────────────
                     _AppTile(
                       title: 'Weather',
                       icon: Icons.wb_cloudy,
@@ -176,16 +176,23 @@ class HomeScreen extends ConsumerWidget {
                       onTap: () => context.push(AppRoutes.weather),
                     ),
                     _AppTile(
-                      title: 'Games',
-                      icon: Icons.casino,
-                      color: Colors.indigo,
-                      onTap: () => context.push(AppRoutes.games),
+                      title: 'Polar',
+                      icon: Icons.radar,
+                      color: Colors.cyanAccent,
+                      onTap: () => context.push(AppRoutes.polarChart),
                     ),
                     _AppTile(
                       title: 'Anchor Alarm',
                       icon: Icons.anchor,
                       color: Colors.blueGrey,
                       onTap: () => context.push(AppRoutes.anchorAlarm),
+                    ),
+                    // ── Last: entertainment ───────────────────────────
+                    _AppTile(
+                      title: 'Games',
+                      icon: Icons.casino,
+                      color: Colors.indigo,
+                      onTap: () => context.push(AppRoutes.games),
                     ),
                   ],
                 ),

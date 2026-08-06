@@ -168,7 +168,7 @@ green suite is the trigger, not a reason to pause for confirmation:
 - **Schema change ⇒ migrate + verify (non-negotiable).** Any task that touches Drift tables/columns (`app_database.dart`), domain models that map to them, or Supabase wire fields **must** in the **same** change:
   1. Bump `AppDatabase.schemaVersion` (local wipe/recreate path stays acceptable).
   2. Add/update `supabase/migrations/YYYYMMDDHHMMSS_*.sql` for every remote column/table/RLS change (idempotent `if not exists` / `drop policy if exists` preferred).
-  3. **Apply** remote migrations before claiming done: `./scripts/apply_supabase_migrations.sh` (needs `SUPABASE_DB_URL` — Dashboard → Database → connection URI; not the anon key).
+  3. **Apply** remote migrations before claiming done via the **Supabase MCP only** (`list_migrations` → `apply_migration` for each not-yet-applied file under `supabase/migrations/`, in order). Project ref from `SUPABASE_URL` in `dart-defines.json` (e.g. `mvjgenxntirjgmwrsmmv`). Do **not** use `psql`, Dashboard SQL editor as the primary path, or a `SUPABASE_DB_URL` shell apply script.
   4. **Verify** remote parity: `./scripts/verify_supabase_schema.sh --require` (or leave live suite unskipped so verify runs after TEST8).
   5. Run `dart run build_runner build` when Drift tables change; never hand-edit `app_database.g.dart`.
   A green host suite with `--skip-live` is **not** enough if the task changed schema and remote still lacks the columns (e.g. `boats.polar` / `sailing_polar_samples`). Comment the issue with apply/verify result.
@@ -243,8 +243,7 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 | `run_full_suite.sh` | **Default post-task gate** — SEC3 → analyze → `flutter test` → TEST8 live RLS → schema parity → `integration_test/`. Flags: `--skip-live`, `--skip-integration`, `--device <id>`. See §6 above. |
 | `scan_release_secrets.sh` | SEC3: scan pubspec/assets/lib (+ optional APK/IPA) for leaked credentials |
 | `test_supabase_rls.sh` | TEST8: live Supabase auth/RLS smoke (`dart-defines.json`; skips if missing) |
-| `apply_supabase_migrations.sh` | Apply `supabase/migrations/*.sql` in order (needs `SUPABASE_DB_URL`); then `verify_supabase_schema.sh --require` |
-| `verify_supabase_schema.sh` | Live REST check for wire columns/tables (`boats.polar`, `polarBySeaState`, `sailing_polar_samples`…). `--require` fails hard |
+| `verify_supabase_schema.sh` | Live REST check for wire columns/tables (`boats.polar`, `polarBySeaState`, `sailing_polar_samples`…). `--require` fails hard. **Apply** outstanding SQL via Supabase MCP (`apply_migration`), not a shell/DB-URL script. |
 
 ### Dev / device helpers (primitives — no assertions of their own)
 

@@ -111,8 +111,8 @@ for label, status, detail in checks:
 if failed:
     fail(
         f"{len(failed)} schema check(s) failed. "
-        "Run: ./scripts/apply_supabase_migrations.sh "
-        "(needs SUPABASE_DB_URL from Dashboard → Database connection string)."
+        "Apply outstanding files under supabase/migrations/ via Supabase MCP "
+        "(list_migrations → apply_migration), then re-run this script."
     )
 
 print("verify_supabase_schema: ok")

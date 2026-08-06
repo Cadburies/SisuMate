@@ -59,7 +59,8 @@ if [[ "$SKIP_LIVE" -eq 0 ]]; then
   bash scripts/test_supabase_rls.sh
   echo "==> live Supabase schema parity (boats.polar, polar samples, …)"
   # Soft: skips when offline / no creds. After a schema change, agents must
-  # also run ./scripts/apply_supabase_migrations.sh so this stays green.
+  # apply outstanding supabase/migrations/*.sql via Supabase MCP
+  # (list_migrations → apply_migration) so this stays green.
   bash scripts/verify_supabase_schema.sh
 else
   echo "==> skipping live Supabase RLS + schema parity (--skip-live)"
