@@ -99,14 +99,15 @@ Zero build errors before claiming done.
 2. **`flutter analyze`**
 3. **`flutter test`** — all unit/widget/TEST6/P0–P3 host tests under `test/`
 4. **TEST8 live RLS** — `scripts/test_supabase_rls.sh` (skips cleanly without `dart-defines.json` / offline)
-5. **TEST9** — `flutter test integration_test` (default device: `flutter-tester`)
+5. **Live schema parity** — `scripts/verify_supabase_schema.sh` (same skip rules; after any schema change, apply migrations first)
+6. **TEST9** — `flutter test integration_test` (default device: `flutter-tester`)
 
 #### Flags
 
 | Flag | Effect |
 | --- | --- |
 | *(none)* | Full suite above |
-| `--skip-live` | Skip live Supabase RLS (offline / no credentials) |
+| `--skip-live` | Skip live Supabase RLS **and** schema parity (offline / no credentials) |
 | `--skip-integration` | Skip `integration_test/` |
 | `--device <id>` | Run integration_test on that device instead of flutter-tester |
 
@@ -116,7 +117,8 @@ Fallback if the script is unavailable:
 bash scripts/scan_release_secrets.sh
 flutter analyze
 flutter test
-bash scripts/test_supabase_rls.sh   # optional; skips without dart-defines
+bash scripts/test_supabase_rls.sh          # optional; skips without dart-defines
+bash scripts/verify_supabase_schema.sh     # optional; skips without dart-defines
 flutter test integration_test -d flutter-tester
 ```
 
@@ -163,6 +165,13 @@ green suite is the trigger, not a reason to pause for confirmation:
 ## Mandatory rules
 
 - **No real install base yet** (dev phone + sims only). Schema/model changes do not need backward-compatible migrations or data-preserving upgrade paths — wiping and reseeding a local test device or the Supabase test project is an acceptable resolution. Still cascade every DB-affecting change through all related layers in the same change: domain model → Drift column/repo mapping → Supabase column/RLS → sync (wire-prefix/outbox) → UI. `schemaVersion` and `supabase/migrations/` keep incrementing normally as changes land — this removes the *migration-safety* obligation, not the version-tracking mechanism itself.
+- **Schema change ⇒ migrate + verify (non-negotiable).** Any task that touches Drift tables/columns (`app_database.dart`), domain models that map to them, or Supabase wire fields **must** in the **same** change:
+  1. Bump `AppDatabase.schemaVersion` (local wipe/recreate path stays acceptable).
+  2. Add/update `supabase/migrations/YYYYMMDDHHMMSS_*.sql` for every remote column/table/RLS change (idempotent `if not exists` / `drop policy if exists` preferred).
+  3. **Apply** remote migrations before claiming done: `./scripts/apply_supabase_migrations.sh` (needs `SUPABASE_DB_URL` — Dashboard → Database → connection URI; not the anon key).
+  4. **Verify** remote parity: `./scripts/verify_supabase_schema.sh --require` (or leave live suite unskipped so verify runs after TEST8).
+  5. Run `dart run build_runner build` when Drift tables change; never hand-edit `app_database.g.dart`.
+  A green host suite with `--skip-live` is **not** enough if the task changed schema and remote still lacks the columns (e.g. `boats.polar` / `sailing_polar_samples`). Comment the issue with apply/verify result.
 - Zero analyze/build errors is the exit criterion.
 - Never edit `lib/data/drift/app_database.g.dart` by hand.
 - Never call Drift or Supabase from UI — use repositories via `lib/core/di.dart`.
@@ -231,9 +240,11 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 
 | Script | Purpose |
 | --- | --- |
-| `run_full_suite.sh` | **Default post-task gate** — SEC3 → analyze → `flutter test` → TEST8 live RLS → `integration_test/`. Flags: `--skip-live`, `--skip-integration`, `--device <id>`. See §6 above. |
+| `run_full_suite.sh` | **Default post-task gate** — SEC3 → analyze → `flutter test` → TEST8 live RLS → schema parity → `integration_test/`. Flags: `--skip-live`, `--skip-integration`, `--device <id>`. See §6 above. |
 | `scan_release_secrets.sh` | SEC3: scan pubspec/assets/lib (+ optional APK/IPA) for leaked credentials |
 | `test_supabase_rls.sh` | TEST8: live Supabase auth/RLS smoke (`dart-defines.json`; skips if missing) |
+| `apply_supabase_migrations.sh` | Apply `supabase/migrations/*.sql` in order (needs `SUPABASE_DB_URL`); then `verify_supabase_schema.sh --require` |
+| `verify_supabase_schema.sh` | Live REST check for wire columns/tables (`boats.polar`, `polarBySeaState`, `sailing_polar_samples`…). `--require` fails hard |
 
 ### Dev / device helpers (primitives — no assertions of their own)
 

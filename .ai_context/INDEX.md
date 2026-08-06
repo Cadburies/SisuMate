@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** #279 TitleTile menu far-right · #278 home swipe-dismiss · #277 gateway define dedupe.
-- **Apply on Supabase:** boats.polar + polarBySeaState + sailing_polar_samples (+ seaState) migrations.
+- **Last (grok):** schema rule + apply/verify scripts; remote still needs `SUPABASE_DB_URL` to apply polar migrations.
+- **Apply on Supabase:** set `SUPABASE_DB_URL` (Dashboard → Database URI) then `./scripts/apply_supabase_migrations.sh`.
 - **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 

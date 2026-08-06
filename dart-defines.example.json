@@ -3,6 +3,7 @@
   "SUPABASE_ANON_KEY": "your-anon-key-here",
   "SUPABASE_DEBUG_EMAIL": "",
   "SUPABASE_DEBUG_PASSWORD": "",
+  "SUPABASE_DB_URL": "",
   "XAI_KEY": "",
   "PREDICTWIND_HUB_URL": "",
   "PREDICTWIND_HUB_HTTP_URL": "",

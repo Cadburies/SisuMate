@@ -1,5 +1,6 @@
 -- #275: anonymized under-sail polar samples (performance metrics only).
 -- No lat/lon track; crew can share measured TWA×TWS×boatSpeed for polar healing.
+-- Idempotent: safe to re-run.
 create table if not exists public.sailing_polar_samples (
   "supabaseId" text primary key,
   "boatSupabaseId" text not null references public.boats("supabaseId") on delete cascade,
@@ -19,10 +20,17 @@ create index if not exists sailing_polar_samples_boat_observed
 
 alter table public.sailing_polar_samples enable row level security;
 
+drop policy if exists sisu_boat_scoped on public.sailing_polar_samples;
 -- Wire ids are boat-prefixed (`guid::uuid`); match other boat-scoped tables.
 create policy sisu_boat_scoped on public.sailing_polar_samples
   for all to authenticated
   using (split_part("supabaseId", '::', 1) in (select accessible_boat_ids()))
   with check (split_part("supabaseId", '::', 1) in (select accessible_boat_ids()));
 
-alter publication supabase_realtime add table public.sailing_polar_samples;
+do $$
+begin
+  alter publication supabase_realtime add table public.sailing_polar_samples;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
