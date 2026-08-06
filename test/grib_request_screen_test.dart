@@ -36,19 +36,20 @@ void main() {
     await pumpScreen(tester, initialLat: 40, initialLon: -120);
 
     // Default box is initial +/- 2 degrees, default resolution 1,1,
-    // default hours 24,48,72, default param WIND.
+    // hours include 0 for NOAA but Saildocs query drops analysis (0).
     expect(
       find.textContaining(
           'send gfs:38N,42N,122W,118W|1,1|24,48,72|WIND'),
       findsOneWidget,
     );
+    expect(find.textContaining('Download free GFS for this area'), findsOneWidget);
   });
 
   testWidgets('editing a field updates the query preview live',
       (tester) async {
     await pumpScreen(tester, initialLat: 40, initialLon: -120);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Lat max'), '50');
+    await tester.enterText(find.widgetWithText(TextField, 'Lat max (N)'), '50');
     await tester.pump();
 
     expect(find.textContaining('38N,50N'), findsOneWidget);

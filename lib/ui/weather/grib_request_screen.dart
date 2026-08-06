@@ -1,31 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/app_router.dart';
 import '../../core/colors.dart';
+import '../../services/grib_download_service.dart';
 import '../../services/saildocs_query_service.dart';
 
-/// #245: low-bandwidth GRIB request — builds a saildocs-style query for a
-/// bounding box and hands it off via `mailto:` (or clipboard, as a
-/// fallback for setups where `mailto:` isn't wired to anything useful,
-/// e.g. a satellite messenger app that isn't the OS default mail handler)
-/// to whichever email client the user already has configured for their
-/// satellite/HF connection. This app never sends the email itself. The
-/// response (a GRIB attachment) is imported via #244's existing GRIB
-/// viewer — no new receiving mechanism here.
+/// #245/#281: free GRIB for a planned area — direct NOAA GFS download and/or
+/// Saildocs email query (low-bandwidth). Response files open in the GRIB viewer.
 class GribRequestScreen extends StatefulWidget {
   final double? initialLat;
   final double? initialLon;
+  final double? initialLatMin;
+  final double? initialLatMax;
+  final double? initialLonMin;
+  final double? initialLonMax;
 
-  const GribRequestScreen({super.key, this.initialLat, this.initialLon});
+  const GribRequestScreen({
+    super.key,
+    this.initialLat,
+    this.initialLon,
+    this.initialLatMin,
+    this.initialLatMax,
+    this.initialLonMin,
+    this.initialLonMax,
+  });
 
   @override
   State<GribRequestScreen> createState() => _GribRequestScreenState();
 }
 
 class _GribRequestScreenState extends State<GribRequestScreen> {
-  static const _defaultLat = 33.45;
-  static const _defaultLon = -112.07;
+  static const _defaultLat = 12.05; // southern Grenada-ish seed (not a city)
+  static const _defaultLon = -61.75;
   static const _defaultBoxDeg = 2.0;
 
   late final TextEditingController _latMinCtrl;
@@ -34,22 +43,38 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
   late final TextEditingController _lonMaxCtrl;
   final _latResCtrl = TextEditingController(text: '1');
   final _lonResCtrl = TextEditingController(text: '1');
-  final _hoursCtrl = TextEditingController(text: '24,48,72');
+  final _hoursCtrl = TextEditingController(text: '0,24,48,72');
   final Set<String> _selectedParams = {'WIND'};
+  bool _downloading = false;
+  String? _downloadStatus;
 
   @override
   void initState() {
     super.initState();
-    final lat = widget.initialLat ?? _defaultLat;
-    final lon = widget.initialLon ?? _defaultLon;
-    _latMinCtrl =
-        TextEditingController(text: (lat - _defaultBoxDeg).toStringAsFixed(1));
-    _latMaxCtrl =
-        TextEditingController(text: (lat + _defaultBoxDeg).toStringAsFixed(1));
-    _lonMinCtrl =
-        TextEditingController(text: (lon - _defaultBoxDeg).toStringAsFixed(1));
-    _lonMaxCtrl =
-        TextEditingController(text: (lon + _defaultBoxDeg).toStringAsFixed(1));
+    if (widget.initialLatMin != null &&
+        widget.initialLatMax != null &&
+        widget.initialLonMin != null &&
+        widget.initialLonMax != null) {
+      _latMinCtrl = TextEditingController(
+          text: widget.initialLatMin!.toStringAsFixed(2));
+      _latMaxCtrl = TextEditingController(
+          text: widget.initialLatMax!.toStringAsFixed(2));
+      _lonMinCtrl = TextEditingController(
+          text: widget.initialLonMin!.toStringAsFixed(2));
+      _lonMaxCtrl = TextEditingController(
+          text: widget.initialLonMax!.toStringAsFixed(2));
+    } else {
+      final lat = widget.initialLat ?? _defaultLat;
+      final lon = widget.initialLon ?? _defaultLon;
+      _latMinCtrl =
+          TextEditingController(text: (lat - _defaultBoxDeg).toStringAsFixed(1));
+      _latMaxCtrl =
+          TextEditingController(text: (lat + _defaultBoxDeg).toStringAsFixed(1));
+      _lonMinCtrl =
+          TextEditingController(text: (lon - _defaultBoxDeg).toStringAsFixed(1));
+      _lonMaxCtrl =
+          TextEditingController(text: (lon + _defaultBoxDeg).toStringAsFixed(1));
+    }
   }
 
   @override
@@ -64,38 +89,56 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
     super.dispose();
   }
 
-  SaildocsQueryParams? _params() {
+  GribBBox? _bbox() {
     final latMin = double.tryParse(_latMinCtrl.text.trim());
     final latMax = double.tryParse(_latMaxCtrl.text.trim());
     final lonMin = double.tryParse(_lonMinCtrl.text.trim());
     final lonMax = double.tryParse(_lonMaxCtrl.text.trim());
-    final latRes = double.tryParse(_latResCtrl.text.trim());
-    final lonRes = double.tryParse(_lonResCtrl.text.trim());
     if (latMin == null ||
         latMax == null ||
         lonMin == null ||
-        lonMax == null ||
-        latRes == null ||
-        lonRes == null) {
+        lonMax == null) {
       return null;
     }
+    return GribBBox(
+      latMin: latMin,
+      latMax: latMax,
+      lonMin: lonMin,
+      lonMax: lonMax,
+    );
+  }
+
+  SaildocsQueryParams? _params() {
+    final box = _bbox();
+    final latRes = double.tryParse(_latResCtrl.text.trim());
+    final lonRes = double.tryParse(_lonResCtrl.text.trim());
+    if (box == null || latRes == null || lonRes == null) return null;
     final hours = _hoursCtrl.text
         .split(',')
         .map((s) => int.tryParse(s.trim()))
         .whereType<int>()
         .toList();
-    if (hours.isEmpty || _selectedParams.isEmpty) return null;
+    // Saildocs uses positive forecast hours; drop analysis (0) if present.
+    final saildocsHours = hours.where((h) => h > 0).toList();
+    if (saildocsHours.isEmpty || _selectedParams.isEmpty) return null;
+    final b = box.normalized();
     return SaildocsQueryParams(
-      latMin: latMin,
-      latMax: latMax,
-      lonMin: lonMin,
-      lonMax: lonMax,
+      latMin: b.latMin,
+      latMax: b.latMax,
+      lonMin: b.lonMin,
+      lonMax: b.lonMax,
       latResolution: latRes,
       lonResolution: lonRes,
-      forecastHours: hours,
+      forecastHours: saildocsHours,
       parameters: _selectedParams.toList(),
     );
   }
+
+  List<int> _hours() => _hoursCtrl.text
+      .split(',')
+      .map((s) => int.tryParse(s.trim()))
+      .whereType<int>()
+      .toList();
 
   Future<void> _copyQuery(String query) async {
     await Clipboard.setData(ClipboardData(text: query));
@@ -116,56 +159,161 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
     ));
   }
 
+  Future<void> _downloadFreeNoaa() async {
+    final box = _bbox();
+    final hours = _hours();
+    if (box == null || hours.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Enter a valid area and forecast hours first.'),
+      ));
+      return;
+    }
+    setState(() {
+      _downloading = true;
+      _downloadStatus = 'Starting free NOAA GFS download…';
+    });
+    final svc = GribDownloadService();
+    try {
+      final result = await svc.downloadNoaaGfs(
+        box: box,
+        forecastHours: hours,
+        onProgress: (s) {
+          if (mounted) setState(() => _downloadStatus = s);
+        },
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+      if (result.ok) {
+        context.push(AppRoutes.gribViewer);
+      }
+    } finally {
+      svc.close();
+      if (mounted) {
+        setState(() {
+          _downloading = false;
+          _downloadStatus = null;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final params = _params();
     final query = params == null ? null : buildSaildocsQuery(params);
+    final primary = SisuColors.getTextPrimaryColor(isDark);
+    final secondary = SisuColors.getTextSecondaryColor(isDark);
 
     return Scaffold(
       backgroundColor: SisuColors.getAppBackground(isDark),
-      appBar: AppBar(title: const Text('Request GRIB (low-bandwidth)')),
+      appBar: AppBar(title: const Text('Free GRIB download')),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
           Text(
-            'Builds a saildocs-style GRIB request for a low-bandwidth '
-            'connection (satellite/HF email). This never sends the '
-            'email itself — hand it off to whichever email client you '
-            'already use offshore. Import the GRIB file you receive back '
-            'via the GRIB viewer.',
-            style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)),
+            'Download free forecast GRIBs for the area you are planning, '
+            'or build a Saildocs email request for low-bandwidth (sat/HF). '
+            'Imported files open in the GRIB viewer.',
+            style: TextStyle(color: secondary, height: 1.35),
           ),
-          const SizedBox(height: 12),
-          Text('Area',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: SisuColors.getTextPrimaryColor(isDark))),
+          const SizedBox(height: 16),
+          Text('Area (degrees)',
+              style: TextStyle(fontWeight: FontWeight.bold, color: primary)),
           const SizedBox(height: 6),
           Row(
             children: [
               Expanded(
-                  child: _numberField(_latMinCtrl, 'Lat min', signed: true)),
+                  child: _numberField(_latMinCtrl, 'Lat min (S)', signed: true)),
               const SizedBox(width: 8),
               Expanded(
-                  child: _numberField(_latMaxCtrl, 'Lat max', signed: true)),
+                  child: _numberField(_latMaxCtrl, 'Lat max (N)', signed: true)),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                  child: _numberField(_lonMinCtrl, 'Lon min', signed: true)),
+                  child: _numberField(_lonMinCtrl, 'Lon min (W)', signed: true)),
               const SizedBox(width: 8),
               Expanded(
-                  child: _numberField(_lonMaxCtrl, 'Lon max', signed: true)),
+                  child: _numberField(_lonMaxCtrl, 'Lon max (E)', signed: true)),
             ],
           ),
           const SizedBox(height: 12),
-          Text('Resolution (degrees)',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: SisuColors.getTextPrimaryColor(isDark))),
+          Text('Forecast hours (comma-separated)',
+              style: TextStyle(fontWeight: FontWeight.bold, color: primary)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _hoursCtrl,
+            decoration: const InputDecoration(
+                isDense: true, border: OutlineInputBorder()),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 16),
+          // ── Free direct download (NOAA) ────────────────────────────
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: SisuColors.getTileColor(isDark),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: SisuColors.tileElevation(isDark),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Free direct download — NOAA GFS 0.25°',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, color: primary)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'No account. Wind (10 m U/V) + mean sea level pressure '
+                    'for your box from NOMADS. Needs normal internet '
+                    '(not sat email). Multiple hours are saved as one GRIB.',
+                    style: TextStyle(color: secondary, fontSize: 12, height: 1.3),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_downloadStatus != null) ...[
+                    Text(_downloadStatus!,
+                        style: TextStyle(color: secondary, fontSize: 12)),
+                    const SizedBox(height: 8),
+                  ],
+                  FilledButton.icon(
+                    onPressed: _downloading ? null : _downloadFreeNoaa,
+                    icon: _downloading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_download_outlined, size: 18),
+                    label: Text(
+                      _downloading
+                          ? 'Downloading…'
+                          : 'Download free GFS for this area',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // ── Saildocs (low bandwidth) ───────────────────────────────
+          Text('Low-bandwidth — Saildocs email (also free)',
+              style: TextStyle(fontWeight: FontWeight.bold, color: primary)),
+          const SizedBox(height: 6),
+          Text(
+            'Builds a query for query@saildocs.com. This app never sends '
+            'the email — hand it off to your satellite/HF client. Import '
+            'the GRIB attachment in the viewer when it arrives.',
+            style: TextStyle(color: secondary, fontSize: 12, height: 1.3),
+          ),
+          const SizedBox(height: 12),
+          Text('Resolution (degrees, Saildocs only)',
+              style: TextStyle(fontWeight: FontWeight.w600, color: primary)),
           const SizedBox(height: 6),
           Row(
             children: [
@@ -175,22 +323,8 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Text('Forecast hours (comma-separated)',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: SisuColors.getTextPrimaryColor(isDark))),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _hoursCtrl,
-            decoration: const InputDecoration(
-                isDense: true, border: OutlineInputBorder()),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          Text('Parameters',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: SisuColors.getTextPrimaryColor(isDark))),
+          Text('Parameters (Saildocs)',
+              style: TextStyle(fontWeight: FontWeight.w600, color: primary)),
           Wrap(
             spacing: 8,
             children: [
@@ -208,20 +342,16 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text('Query',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: SisuColors.getTextPrimaryColor(isDark))),
+              style: TextStyle(fontWeight: FontWeight.w600, color: primary)),
           const SizedBox(height: 6),
           if (query == null)
             Text('Enter valid area/resolution/hours/parameters above.',
-                style: TextStyle(color: SisuColors.getTextSecondaryColor(isDark)))
+                style: TextStyle(color: secondary))
           else ...[
             SelectableText(query,
-                style: TextStyle(
-                    fontFamily: 'monospace',
-                    color: SisuColors.getTextPrimaryColor(isDark))),
+                style: TextStyle(fontFamily: 'monospace', color: primary)),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -239,6 +369,12 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
               ],
             ),
           ],
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => context.push(AppRoutes.gribViewer),
+            icon: const Icon(Icons.map_outlined, size: 18),
+            label: const Text('Open GRIB viewer'),
+          ),
         ],
       ),
     );
@@ -248,9 +384,10 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
       {bool signed = false}) {
     return TextField(
       controller: ctrl,
-      decoration:
-          InputDecoration(labelText: label, isDense: true, border: const OutlineInputBorder()),
-      keyboardType: TextInputType.numberWithOptions(decimal: true, signed: signed),
+      decoration: InputDecoration(
+          labelText: label, isDense: true, border: const OutlineInputBorder()),
+      keyboardType:
+          TextInputType.numberWithOptions(decimal: true, signed: signed),
       onChanged: (_) => setState(() {}),
     );
   }

@@ -581,7 +581,17 @@ GoRouter createAppRouter() {
               GoRoute(
                 path: 'request',
                 name: 'gribRequest',
-                builder: (context, state) => const GribRequestScreen(),
+                builder: (context, state) {
+                  final extra = state.extra as Map?;
+                  return GribRequestScreen(
+                    initialLat: (extra?['lat'] as num?)?.toDouble(),
+                    initialLon: (extra?['lon'] as num?)?.toDouble(),
+                    initialLatMin: (extra?['latMin'] as num?)?.toDouble(),
+                    initialLatMax: (extra?['latMax'] as num?)?.toDouble(),
+                    initialLonMin: (extra?['lonMin'] as num?)?.toDouble(),
+                    initialLonMax: (extra?['lonMax'] as num?)?.toDouble(),
+                  );
+                },
               ),
             ],
           ),

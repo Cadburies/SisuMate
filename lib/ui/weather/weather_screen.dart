@@ -591,6 +591,17 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                     onPressed: () => context.push(AppRoutes.gribViewer),
                   ),
                   IconButton(
+                    icon: Icon(Icons.cloud_download_outlined, color: color),
+                    tooltip: 'Free GRIB download',
+                    onPressed: () => context.push(
+                      AppRoutes.gribRequest,
+                      extra: {
+                        'lat': double.tryParse(_latCtrl.text),
+                        'lon': double.tryParse(_lonCtrl.text),
+                      },
+                    ),
+                  ),
+                  IconButton(
                     icon: Icon(
                       _locating ? Icons.hourglass_top : Icons.my_location,
                       color: color,

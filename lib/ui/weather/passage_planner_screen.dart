@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
+import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../models/models.dart' show PolarPoint;
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/boat_polar_service.dart';
+import '../../services/grib_download_service.dart';
 import '../../services/weather_routing_service.dart';
 import '../../services/weather_service.dart';
 import 'passage_weather_briefing_dialog.dart';
@@ -228,6 +231,20 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
       );
     }
     return map;
+  }
+
+  /// #281: open free GRIB download with a box covering all waypoints (+ margin).
+  void _openGribDownloadForRoute() {
+    final box = GribBBox.fromPoints(
+      _wps.map((w) => (lat: w.lat, lon: w.lon)),
+      marginDeg: 1.0,
+    ).normalized();
+    context.push(AppRoutes.gribRequest, extra: {
+      'latMin': box.latMin,
+      'latMax': box.latMax,
+      'lonMin': box.lonMin,
+      'lonMax': box.lonMax,
+    });
   }
 
   /// #238: computes an isochrone-routed path from the first to the last
@@ -515,6 +532,22 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
                   ],
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // #281: free GRIB download for the planned route bounding box.
+          OutlinedButton.icon(
+            onPressed: _openGribDownloadForRoute,
+            icon: const Icon(Icons.cloud_download_outlined, size: 18),
+            label: const Text('Download free GRIBs for this route'),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'NOAA GFS (internet) or Saildocs email query for the area '
+            'covering your waypoints.',
+            style: TextStyle(
+              fontSize: 11,
+              color: SisuColors.getTextSecondaryColor(isDark),
             ),
           ),
           const SizedBox(height: 12),
