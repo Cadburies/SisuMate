@@ -282,3 +282,35 @@ Map<String, List<PolarPoint>> parsePolarBySeaState(String? raw) {
     return {};
   }
 }
+
+/// #276 — pure map update when resetting one sea-state polar.
+Map<String, List<PolarPoint>> removeSeaStatePolar(
+  Map<String, List<PolarPoint>> map,
+  String seaWire,
+) {
+  final out = Map<String, List<PolarPoint>>.from(map);
+  out.remove(seaWire);
+  return out;
+}
+
+/// Primary routing polar after removing [removedSeaWire] (or all).
+///
+/// Resetting **calm** clears the primary table (stale smooth targets must
+/// not linger). Resetting moderate/rough leaves primary unchanged. When
+/// calm remains in [remaining], primary follows that curve.
+List<PolarPoint> primaryPolarAfterSeaStateReset({
+  required Map<String, List<PolarPoint>> remaining,
+  required List<PolarPoint> previousPrimary,
+  String? removedSeaWire,
+  bool resetAll = false,
+}) {
+  if (resetAll) return const [];
+  if (remaining.containsKey(SeaState.calm.wireValue)) {
+    return List<PolarPoint>.from(remaining[SeaState.calm.wireValue]!);
+  }
+  if (removedSeaWire == SeaState.calm.wireValue ||
+      removedSeaWire == null && remaining.isEmpty) {
+    return const [];
+  }
+  return List<PolarPoint>.from(previousPrimary);
+}

@@ -134,4 +134,39 @@ class SailingPolarSampleRepository {
       usedInPolarBuild: Value(true),
     ));
   }
+
+  /// #276 — delete samples for [boatSupabaseId], optionally one [seaState] only.
+  /// Queues remote deletes when sync is available.
+  Future<int> deleteForBoat(
+    String boatSupabaseId, {
+    String? seaState,
+  }) async {
+    if (boatSupabaseId.isEmpty) return 0;
+    final q = db.select(db.sailingPolarSamples)
+      ..where((t) => t.boatSupabaseId.equals(boatSupabaseId));
+    if (seaState != null) {
+      q.where((t) => t.seaState.equals(seaState));
+    }
+    final rows = await q.get();
+    if (rows.isEmpty) return 0;
+    for (final r in rows) {
+      if (r.supabaseId.isNotEmpty) {
+        await syncService?.queueOutgoingChange(
+          'sailing_polar_samples',
+          {'supabaseId': r.supabaseId},
+          isDelete: true,
+        );
+      }
+    }
+    await (db.delete(db.sailingPolarSamples)
+          ..where((t) {
+            var expr = t.boatSupabaseId.equals(boatSupabaseId);
+            if (seaState != null) {
+              expr = expr & t.seaState.equals(seaState);
+            }
+            return expr;
+          }))
+        .go();
+    return rows.length;
+  }
 }

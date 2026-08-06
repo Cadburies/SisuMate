@@ -21,6 +21,7 @@ class PolarChartScreen extends ConsumerStatefulWidget {
 
 class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
   bool _improving = false;
+  bool _resetting = false;
   String? _status;
   Map<String, int> _counts = {};
   SeaState _liveSea = SeaState.unknown;
@@ -58,6 +59,93 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
     if (!mounted) return;
     setState(() {
       _improving = false;
+      _status = result.message;
+    });
+    ref.invalidate(activeBoatProvider);
+    await _refreshMeta();
+  }
+
+  Future<void> _confirmReset({
+    required Boat boat,
+    SeaState? seaState,
+  }) async {
+    final isAll = seaState == null;
+    final title = isAll
+        ? 'Reset all polars?'
+        : 'Reset ${seaState.label} polar?';
+    var deleteSamples = false;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            return AlertDialog(
+              title: Text(title),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAll
+                        ? 'Clears every sea-state curve and the primary '
+                            'routing polar.'
+                        : 'Clears the ${seaState.label} curve'
+                            '${seaState == SeaState.calm ? ' and the primary routing polar (Smooth targets)' : ''}.',
+                  ),
+                  const SizedBox(height: 12),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: deleteSamples,
+                    onChanged: (v) =>
+                        setLocal(() => deleteSamples = v ?? false),
+                    title: Text(
+                      isAll
+                          ? 'Also delete all under-sail samples'
+                          : 'Also delete ${seaState.label} samples',
+                    ),
+                    subtitle: const Text(
+                      'If kept, Improve offline can rebuild from existing data.',
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: SisuColors.notAvailableBackground,
+                    foregroundColor: SisuColors.dialogButtonOnColor,
+                  ),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Reset'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() {
+      _resetting = true;
+      _status = null;
+    });
+    final svc = ref.read(polarLlmImproveServiceProvider);
+    final result = isAll
+        ? await svc.resetAll(boat: boat, deleteSamples: deleteSamples)
+        : await svc.resetSeaState(
+            boat: boat,
+            seaState: seaState,
+            deleteSamples: deleteSamples,
+          );
+    if (!mounted) return;
+    setState(() {
+      _resetting = false;
       _status = result.message;
     });
     ref.invalidate(activeBoatProvider);
@@ -206,7 +294,8 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _improving ? null : _improveOffline,
+                  onPressed:
+                      (_improving || _resetting) ? null : _improveOffline,
                   icon: _improving
                       ? const SizedBox(
                           width: 16,
@@ -215,6 +304,62 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
                         )
                       : const Icon(Icons.analytics_outlined, size: 18),
                   label: const Text('Improve offline'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Reset polar curves',
+            style: TextStyle(
+              color: SisuColors.getTextPrimaryColor(isDark),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Clear a sea-state polar without wiping the others. Optionally '
+            'delete that sea state’s samples so Improve starts clean.',
+            style: TextStyle(
+              color: SisuColors.getTextSecondaryColor(isDark),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final sea in SeaState.chartOrder)
+                OutlinedButton.icon(
+                  onPressed: (_improving || _resetting)
+                      ? null
+                      : () => _confirmReset(boat: boat, seaState: sea),
+                  icon: Icon(
+                    Icons.restart_alt,
+                    size: 16,
+                    color: SisuColors.seaStateLineColor(sea.wireValue),
+                  ),
+                  label: Text('Reset ${sea.label}'),
+                ),
+              TextButton.icon(
+                onPressed: (_improving || _resetting)
+                    ? null
+                    : () => _confirmReset(boat: boat),
+                icon: _resetting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        Icons.delete_outline,
+                        size: 16,
+                        color: SisuColors.notAvailableText,
+                      ),
+                label: Text(
+                  'Reset all',
+                  style: TextStyle(color: SisuColors.notAvailableText),
                 ),
               ),
             ],

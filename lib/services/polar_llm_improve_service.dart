@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../data/repositories/sailing_polar_sample_repository.dart';
 import '../domain/repositories/boat_repository.dart';
 import '../models/models.dart';
+import '../models/sea_state.dart';
 import 'llm_client_service.dart';
 import 'polar_bucket_aggregator.dart';
 import 'polar_local_improve.dart';
@@ -126,6 +127,85 @@ class PolarLlmImproveService {
           : 'Polar updated from ${all.length} samples '
               '(${local.usableBucketCount} buckets offline, sea states '
               '[$seaSummary]) → ${merged.length} primary points.',
+    );
+  }
+
+  /// #276 — clear one sea-state polar curve (and optionally its samples).
+  ///
+  /// Resetting **Smooth (calm)** also clears the primary routing polar when
+  /// no calm curve remains. Moderate/rough resets leave the primary alone.
+  Future<PolarImproveResult> resetSeaState({
+    required Boat boat,
+    required SeaState seaState,
+    bool deleteSamples = false,
+  }) async {
+    if (seaState == SeaState.unknown) {
+      return const PolarImproveResult(
+        ok: false,
+        message: 'Pick Smooth, Moderate, or Rough to reset.',
+      );
+    }
+    final wire = seaState.wireValue;
+    final remaining =
+        removeSeaStatePolar(boat.polarBySeaState, wire);
+    final primary = primaryPolarAfterSeaStateReset(
+      remaining: remaining,
+      previousPrimary: boat.polar,
+      removedSeaWire: wire,
+    );
+
+    var deleted = 0;
+    if (deleteSamples && boat.supabaseId.isNotEmpty) {
+      deleted = await _samples.deleteForBoat(
+        boat.supabaseId,
+        seaState: wire,
+      );
+    }
+
+    boat.polarBySeaState = remaining;
+    boat.polar = primary;
+    boat.lastModified = DateTime.now().toUtc();
+    await _boats.updateBoat(boat);
+
+    final sampleNote = deleteSamples
+        ? ' Deleted $deleted ${seaState.label.toLowerCase()} sample'
+            '${deleted == 1 ? '' : 's'}.'
+        : ' Samples kept — Improve can rebuild this curve.';
+
+    return PolarImproveResult(
+      ok: true,
+      polar: primary,
+      polarBySeaState: remaining,
+      message:
+          'Reset ${seaState.label} polar (${remaining.length} sea-state '
+          'curve${remaining.length == 1 ? '' : 's'} left).$sampleNote',
+    );
+  }
+
+  /// Clear every sea-state curve + primary polar (optional all samples).
+  Future<PolarImproveResult> resetAll({
+    required Boat boat,
+    bool deleteSamples = false,
+  }) async {
+    var deleted = 0;
+    if (deleteSamples && boat.supabaseId.isNotEmpty) {
+      deleted = await _samples.deleteForBoat(boat.supabaseId);
+    }
+
+    boat.polar = [];
+    boat.polarBySeaState = {};
+    boat.lastModified = DateTime.now().toUtc();
+    await _boats.updateBoat(boat);
+
+    final sampleNote = deleteSamples
+        ? ' Deleted $deleted sample${deleted == 1 ? '' : 's'}.'
+        : ' Samples kept — Improve can rebuild.';
+
+    return PolarImproveResult(
+      ok: true,
+      polar: const [],
+      polarBySeaState: const {},
+      message: 'Reset all polar curves.$sampleNote',
     );
   }
 

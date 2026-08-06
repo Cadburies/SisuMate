@@ -81,5 +81,54 @@ void main() {
       expect(back['calm']!.single.boatSpeedKt, 7);
       expect(back['rough']!.single.boatSpeedKt, 4);
     });
+
+    test('removeSeaStatePolar drops only that key', () {
+      final map = {
+        'calm': [const PolarPoint(twaDeg: 90, twsKt: 12, boatSpeedKt: 7)],
+        'rough': [const PolarPoint(twaDeg: 90, twsKt: 12, boatSpeedKt: 4)],
+      };
+      final next = removeSeaStatePolar(map, 'rough');
+      expect(next.keys, ['calm']);
+      expect(map.keys, containsAll(['calm', 'rough'])); // original intact
+    });
+
+    test('primaryPolarAfterSeaStateReset clears primary when calm removed', () {
+      final remaining = {
+        'rough': [const PolarPoint(twaDeg: 90, twsKt: 12, boatSpeedKt: 4)],
+      };
+      final primary = primaryPolarAfterSeaStateReset(
+        remaining: remaining,
+        previousPrimary: const [
+          PolarPoint(twaDeg: 90, twsKt: 12, boatSpeedKt: 7),
+        ],
+        removedSeaWire: 'calm',
+      );
+      expect(primary, isEmpty);
+    });
+
+    test('primaryPolarAfterSeaStateReset keeps primary when rough removed', () {
+      final remaining = {
+        'calm': [const PolarPoint(twaDeg: 90, twsKt: 12, boatSpeedKt: 7)],
+      };
+      final primary = primaryPolarAfterSeaStateReset(
+        remaining: remaining,
+        previousPrimary: const [
+          PolarPoint(twaDeg: 90, twsKt: 12, boatSpeedKt: 7),
+        ],
+        removedSeaWire: 'rough',
+      );
+      expect(primary.single.boatSpeedKt, 7);
+    });
+
+    test('primaryPolarAfterSeaStateReset resetAll clears primary', () {
+      final primary = primaryPolarAfterSeaStateReset(
+        remaining: const {},
+        previousPrimary: const [
+          PolarPoint(twaDeg: 90, twsKt: 12, boatSpeedKt: 7),
+        ],
+        resetAll: true,
+      );
+      expect(primary, isEmpty);
+    });
   });
 }
