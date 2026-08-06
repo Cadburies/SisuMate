@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (grok):** free GRIB download (NOAA GFS NOMADS) for route/area + Saildocs email.
+- **Last (grok):** #281 Polar screen tabs — Diagram / Boat / Sea state.
 - **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 

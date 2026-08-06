@@ -12,7 +12,7 @@ import 'package:sisu_mate/ui/settings/polar_chart_screen.dart';
 
 import 'test_helpers/platform_mocks.dart';
 
-/// Polar chart shows live instrument fields that a sample would log.
+/// #281 — Polar chart tabs: Diagram · Boat · Sea state.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -33,8 +33,7 @@ void main() {
     await db.close();
   });
 
-  testWidgets('shows Live sample fields with boat speed / TWA / TWS labels',
-      (tester) async {
+  Future<void> pumpPolar(WidgetTester tester) async {
     await db.into(db.boats).insert(BoatsCompanion.insert(
           supabaseId: const Value('boat-polar-1'),
           name: const Value('Test Boat'),
@@ -49,17 +48,14 @@ void main() {
     final container = ProviderContainer(overrides: [
       appDatabaseProvider.overrideWithValue(db),
       isProProvider.overrideWith((ref) => Stream.value(false)),
-      // Avoid real sensors_plus platform channels in host tests.
       imuSeaStateServiceProvider.overrideWithValue(imu),
     ]);
     addTearDown(container.dispose);
 
-    // Warm active boat so the screen leaves the "no boat" empty state.
     final boat = await container.read(activeBoatProvider.future);
     expect(boat, isNotNull);
-    expect(boat!.supabaseId, 'boat-polar-1');
 
-    await tester.binding.setSurfaceSize(const Size(400, 2400));
+    await tester.binding.setSurfaceSize(const Size(400, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
@@ -69,22 +65,31 @@ void main() {
       ),
     );
 
-    // Bounded settle for FutureProviders + post-frame IMU/instrument refresh.
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
+  }
+
+  testWidgets('shows three tabs: Diagram, Boat, Sea state', (tester) async {
+    await pumpPolar(tester);
 
     expect(find.text('Polar diagram'), findsOneWidget);
-    expect(find.text('Phone IMU suggested sea state'), findsOneWidget);
-    expect(find.text('Proxy Hs'), findsOneWidget);
+    expect(find.text('Diagram'), findsOneWidget);
+    expect(find.text('Boat'), findsOneWidget);
+    expect(find.text('Sea state'), findsOneWidget);
+  });
 
-    // ListView may lazily build below the fold — scroll into sample fields.
-    await tester.scrollUntilVisible(
-      find.text('Live sample fields'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
+  testWidgets('Diagram tab has improve action; instrument fields are on Boat',
+      (tester) async {
+    await pumpPolar(tester);
+
+    // Default tab = Diagram
+    expect(find.text('Improve offline'), findsOneWidget);
+    expect(find.text('Live sample fields'), findsNothing);
+    expect(find.text('Phone IMU suggested sea state'), findsNothing);
+
+    await tester.tap(find.text('Boat'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Live sample fields'), findsOneWidget);
     expect(find.text('Boat speed'), findsOneWidget);
@@ -92,6 +97,22 @@ void main() {
     expect(find.text('TWS'), findsOneWidget);
     expect(find.text('SOG'), findsOneWidget);
     expect(find.text('STW'), findsOneWidget);
-    expect(find.text('Sea state'), findsOneWidget);
+    // Sea-state IMU card not on Boat tab.
+    expect(find.text('Phone IMU suggested sea state'), findsNothing);
+  });
+
+  testWidgets('Sea state tab shows working sea state + phone IMU card',
+      (tester) async {
+    await pumpPolar(tester);
+
+    await tester.tap(find.text('Sea state'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Working sea state'), findsOneWidget);
+    expect(find.text('Samples by sea state'), findsOneWidget);
+    expect(find.text('Phone IMU suggested sea state'), findsOneWidget);
+    expect(find.text('Proxy Hs'), findsOneWidget);
+    expect(find.text('Live sample fields'), findsNothing);
+    expect(find.text('Improve offline'), findsNothing);
   });
 }

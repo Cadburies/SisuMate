@@ -14,7 +14,7 @@ import '../../services/imu_heave_estimator.dart';
 import '../../services/polar_sample_eligibility.dart';
 import '../components/title_tile.dart';
 
-/// #276 — polar diagram: fill-in progress, per-sea-state curves, live sea state.
+/// #276/#281 — polar diagram with tabs: Diagram · Boat · Sea state.
 class PolarChartScreen extends ConsumerStatefulWidget {
   const PolarChartScreen({super.key});
 
@@ -22,7 +22,8 @@ class PolarChartScreen extends ConsumerStatefulWidget {
   ConsumerState<PolarChartScreen> createState() => _PolarChartScreenState();
 }
 
-class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
+class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
+    with SingleTickerProviderStateMixin {
   bool _improving = false;
   bool _resetting = false;
   bool _refreshingLive = false;
@@ -36,10 +37,12 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
   Timer? _livePoll;
   /// Instrument hub is polled less often than IMU (expensive / WiFi).
   int _pollTick = 0;
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     // Ensure phone IMU is sampling while this screen is open.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(imuSeaStateServiceProvider).start();
@@ -55,6 +58,7 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
   @override
   void dispose() {
     _livePoll?.cancel();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -262,6 +266,8 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final boatAsync = ref.watch(activeBoatProvider);
+    final primary = SisuColors.getTextPrimaryColor(isDark);
+    final secondary = SisuColors.getTextSecondaryColor(isDark);
 
     return Scaffold(
       backgroundColor: SisuColors.getAppBackground(isDark),
@@ -269,6 +275,18 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
         child: Column(
           children: [
             const TitleTile(title: 'Polar diagram'),
+            // #281 — Diagram · Boat · Sea state
+            TabBar(
+              controller: _tabController,
+              labelColor: primary,
+              unselectedLabelColor: secondary,
+              indicatorColor: SisuColors.completedBackground,
+              tabs: const [
+                Tab(icon: Icon(Icons.radar, size: 20), text: 'Diagram'),
+                Tab(icon: Icon(Icons.sailing, size: 20), text: 'Boat'),
+                Tab(icon: Icon(Icons.waves, size: 20), text: 'Sea state'),
+              ],
+            ),
             Expanded(
               child: boatAsync.when(
                 loading: () =>
@@ -279,13 +297,18 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
                     return Center(
                       child: Text(
                         'No active boat — set one in Settings.',
-                        style: TextStyle(
-                          color: SisuColors.getTextSecondaryColor(isDark),
-                        ),
+                        style: TextStyle(color: secondary),
                       ),
                     );
                   }
-                  return _body(context, isDark, boat);
+                  return TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _diagramTab(isDark, boat),
+                      _boatTab(isDark),
+                      _seaStateTab(isDark),
+                    ],
+                  );
                 },
               ),
             ),
@@ -295,7 +318,8 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
     );
   }
 
-  Widget _body(BuildContext context, bool isDark, Boat boat) {
+  /// Tab 1 — polar chart, TWS filter, improve/reset.
+  Widget _diagramTab(bool isDark, Boat boat) {
     final multi = boat.polarBySeaState;
     final hasMulti = multi.isNotEmpty;
     final curves = <String, List<PolarPoint>>{
@@ -316,10 +340,6 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          _liveSeaChip(isDark),
-          const SizedBox(height: 10),
-          _imuSuggestedSeaCard(isDark),
-          const SizedBox(height: 12),
           Text(
             'Curves fill in from under-sail samples (instruments online, '
             'engines not showing revs). Smooth seas get the target polar; '
@@ -331,10 +351,6 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 12),
-          _liveLogFieldsCard(isDark),
-          const SizedBox(height: 12),
-          _sampleCountsRow(isDark),
           const SizedBox(height: 12),
           if (twsOptions.isNotEmpty) ...[
             Text(
@@ -483,6 +499,65 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
               fontSize: 12,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Tab 2 — live instrument values that would be logged.
+  Widget _boatTab(bool isDark) {
+    return RefreshIndicator(
+      onRefresh: () => _refreshMeta(fetchInstruments: true),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          Text(
+            'What the under-sail collector would write from boat instruments '
+            '(DataHub / NMEA / failover). Leave instruments online; engines '
+            'should not show revs for a sample to be eligible.',
+            style: TextStyle(
+              color: SisuColors.getTextSecondaryColor(isDark),
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _liveLogFieldsCard(isDark),
+        ],
+      ),
+    );
+  }
+
+  /// Tab 3 — instrument + phone IMU sea-state diagnostics.
+  Widget _seaStateTab(bool isDark) {
+    return RefreshIndicator(
+      onRefresh: () => _refreshMeta(fetchInstruments: true),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          Text(
+            'Sea-state buckets keep Smooth / Moderate / Rough polars separate '
+            'so rough water does not pull the target curve down.',
+            style: TextStyle(
+              color: SisuColors.getTextSecondaryColor(isDark),
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _liveSeaChip(isDark),
+          const SizedBox(height: 12),
+          Text(
+            'Samples by sea state',
+            style: TextStyle(
+              color: SisuColors.getTextPrimaryColor(isDark),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _sampleCountsRow(isDark),
+          const SizedBox(height: 16),
+          _imuSuggestedSeaCard(isDark),
         ],
       ),
     );
