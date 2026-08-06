@@ -68,6 +68,48 @@ void main() {
       expect(s.stwKt, 5.5);
     });
 
+    test('logFieldSnapshot shows values that would be logged', () {
+      final snap = PolarSampleEligibility.logFieldSnapshot(
+        data: data(sog: 6, stw: 5.5, tws: 12, twd: 0, cog: 45),
+        boatSupabaseId: 'boat-1',
+      );
+      expect(snap.wouldAccept, isTrue);
+      expect(snap.boatSpeedKt, '5.5 kn');
+      expect(snap.speedSource, 'stw');
+      expect(snap.sogKt, '6.0 kn');
+      expect(snap.stwKt, '5.5 kn');
+      expect(snap.twaDeg, '45°');
+      expect(snap.twsKt, '12.0 kn');
+      expect(snap.textFields.map((f) => f.label), containsAll([
+        'Boat speed',
+        'SOG',
+        'STW',
+        'TWA',
+        'TWS',
+        'Sea state',
+        'Engine port RPM',
+      ]));
+    });
+
+    test('logFieldSnapshot rejectReason when engines running', () {
+      final live = PredictWindBoatData(
+        sogKt: 5,
+        windSpeedKt: 12,
+        windDirectionDeg: 0,
+        cogDeg: 45,
+        enginePortRpm: 1200,
+        observedAt: DateTime.utc(2026, 8, 5, 12),
+      );
+      final snap = PolarSampleEligibility.logFieldSnapshot(
+        data: live,
+        boatSupabaseId: 'boat-1',
+      );
+      expect(snap.wouldAccept, isFalse);
+      expect(snap.statusMessage, contains('Engine RPM'));
+      expect(snap.enginePortRpm, '1200');
+      expect(snap.sogKt, '5.0 kn');
+    });
+
     test('toSyncJson is anonymized (no engines / track fields)', () {
       final s = PolarSampleEligibility.tryBuild(
         data: data(),

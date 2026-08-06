@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../models/sea_state.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
+import '../../services/boat_instrument_failover_service.dart';
 import '../../services/polar_sample_eligibility.dart';
 import '../components/title_tile.dart';
 
@@ -22,28 +24,116 @@ class PolarChartScreen extends ConsumerStatefulWidget {
 class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
   bool _improving = false;
   bool _resetting = false;
+  bool _refreshingLive = false;
   String? _status;
   Map<String, int> _counts = {};
   SeaState _liveSea = SeaState.unknown;
+  PolarLogFieldSnapshot _logFields = PolarLogFieldSnapshot.empty;
   /// Which TWS (kt) curve set to emphasize; null = overlay all common.
   double? _focusTws;
+  Timer? _livePoll;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshMeta());
+    // Same instrument path as the background collector — refresh while open.
+    _livePoll = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => unawaited(_refreshMeta()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _livePoll?.cancel();
+    super.dispose();
   }
 
   Future<void> _refreshMeta() async {
-    final boat = ref.read(activeBoatProvider).asData?.value;
-    if (boat == null || boat.supabaseId.isEmpty) return;
-    final collector = ref.read(sailingPolarCollectorProvider);
-    final counts = await collector.sampleCountsBySeaState(boat.supabaseId);
-    if (!mounted) return;
-    setState(() {
-      _counts = counts;
-      _liveSea = collector.currentSeaState;
-    });
+    if (_refreshingLive) return;
+    _refreshingLive = true;
+    try {
+      final boat = ref.read(activeBoatProvider).asData?.value;
+      if (boat == null || boat.supabaseId.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _logFields = PolarLogFieldSnapshot.empty;
+          _counts = {};
+          _liveSea = SeaState.unknown;
+        });
+        return;
+      }
+      final collector = ref.read(sailingPolarCollectorProvider);
+      final counts = await collector.sampleCountsBySeaState(boat.supabaseId);
+
+      // Live instrument snapshot → same fields the sample row would store.
+      PolarLogFieldSnapshot fields = PolarLogFieldSnapshot.empty;
+      try {
+        final settings = await ref.read(userSettingsProvider.future);
+        if (settings != null) {
+          const failover = BoatInstrumentFailoverService();
+          final snap = await failover.fetch(settings: settings);
+          final data = snap.boatData;
+          if (data != null) {
+            // Keep sea-state window warm even when not fully eligible.
+            final preferred = PolarSampleEligibility.preferredBoatSpeed(
+              stwKt: data.stwKt,
+              sogKt: data.sogKt,
+            );
+            final cog = data.cogDeg;
+            final twd = data.windDirectionDeg;
+            final tws = data.windSpeedKt;
+            if (preferred != null &&
+                cog != null &&
+                twd != null &&
+                tws != null) {
+              collector.observeForSeaState(
+                boatSupabaseId: boat.supabaseId,
+                boatSpeedKt: preferred.speed,
+                twaDeg: PolarSampleEligibility.absoluteTwaDeg(cog, twd),
+                twsKt: tws,
+                sogKt: data.sogKt,
+                stwKt: data.stwKt,
+                at: data.observedAt,
+              );
+            }
+          }
+          final metrics = collector.lastMetrics;
+          fields = PolarSampleEligibility.logFieldSnapshot(
+            data: data,
+            boatSupabaseId: boat.supabaseId,
+            seaState: collector.currentSeaState,
+            speedCv: metrics?.speedCv,
+            twaStdDeg: metrics?.twaStdDeg,
+            instrumentSummary: snap.summary,
+          );
+        } else {
+          fields = PolarSampleEligibility.logFieldSnapshot(
+            data: null,
+            boatSupabaseId: boat.supabaseId,
+            seaState: collector.currentSeaState,
+            instrumentSummary: 'User settings not loaded',
+          );
+        }
+      } catch (e) {
+        fields = PolarSampleEligibility.logFieldSnapshot(
+          data: null,
+          boatSupabaseId: boat.supabaseId,
+          seaState: collector.currentSeaState,
+          instrumentSummary: 'Instrument fetch failed: $e',
+        );
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _counts = counts;
+        _liveSea = collector.currentSeaState;
+        _logFields = fields;
+      });
+    } finally {
+      _refreshingLive = false;
+    }
   }
 
   Future<void> _improveOffline() async {
@@ -223,6 +313,8 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
               height: 1.35,
             ),
           ),
+          const SizedBox(height: 12),
+          _liveLogFieldsCard(isDark),
           const SizedBox(height: 12),
           _sampleCountsRow(isDark),
           const SizedBox(height: 12),
@@ -416,8 +508,109 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
             IconButton(
               tooltip: 'Refresh',
               onPressed: _refreshMeta,
-              icon: Icon(Icons.refresh, color: fg),
+              icon: _refreshingLive
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: fg,
+                      ),
+                    )
+                  : Icon(Icons.refresh, color: fg),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Read-only text fields for every value a polar sample would store.
+  Widget _liveLogFieldsCard(bool isDark) {
+    final snap = _logFields;
+    final ok = snap.wouldAccept;
+    final statusColor = ok
+        ? SisuColors.completedText
+        : SisuColors.getTextSecondaryColor(isDark);
+    final primary = SisuColors.getTextPrimaryColor(isDark);
+    final secondary = SisuColors.getTextSecondaryColor(isDark);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: SisuColors.getTileColor(isDark),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: SisuColors.tileElevation(isDark),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Live sample fields',
+              style: TextStyle(
+                color: primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'What the collector would write if this reading is accepted. '
+              'Wire sync keeps boat speed, SOG/STW, TWA, TWS, sea state; '
+              'COG/TWD/engines stay local.',
+              style: TextStyle(color: secondary, fontSize: 12, height: 1.3),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  ok ? Icons.check_circle_outline : Icons.info_outline,
+                  size: 18,
+                  color: statusColor,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    snap.statusMessage,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            for (final field in snap.textFields) ...[
+              // Read-only text-field chrome (InputDecorator) — same visual as
+              // form fields without allocating controllers each rebuild.
+              InputDecorator(
+                key: ValueKey('polar_log_${field.label}'),
+                decoration: InputDecoration(
+                  labelText: field.label,
+                  helperText: field.hint,
+                  helperMaxLines: 2,
+                  isDense: true,
+                  filled: true,
+                  fillColor: SisuColors.getListSurface(isDark),
+                  border: const OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: secondary.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
+                child: Text(
+                  field.value,
+                  style: TextStyle(color: primary, fontSize: 14),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
           ],
         ),
       ),

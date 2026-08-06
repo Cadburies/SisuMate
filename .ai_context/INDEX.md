@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (grok):** Polar home tile (`PolarChartScreen` /settings/polar); Games last on home grid.
+- **Last (grok):** Polar chart shows live sample log fields (SOG/STW/TWA/TWS/…).
 - **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
