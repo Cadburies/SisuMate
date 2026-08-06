@@ -10,6 +10,24 @@ import '../../core/colors.dart';
 import '../../providers/passage_readiness_provider.dart';
 import '../../services/suggestion_engine.dart';
 
+/// #278 — session-only hide for home strips (process restart restores them).
+/// Does not delete underlying readiness/suggestion data.
+class _SessionDismissNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void dismiss() => state = true;
+}
+
+final homePassageReadinessDismissedProvider =
+    NotifierProvider<_SessionDismissNotifier, bool>(
+  _SessionDismissNotifier.new,
+);
+final homeSuggestionsDismissedProvider =
+    NotifierProvider<_SessionDismissNotifier, bool>(
+  _SessionDismissNotifier.new,
+);
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -18,6 +36,10 @@ class HomeScreen extends ConsumerWidget {
     final suggestions = ref.watch(boatSuggestionsProvider);
     final readiness = ref.watch(passageReadinessProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final readinessDismissed =
+        ref.watch(homePassageReadinessDismissedProvider);
+    final suggestionsDismissed =
+        ref.watch(homeSuggestionsDismissedProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -29,9 +51,40 @@ class HomeScreen extends ConsumerWidget {
                 title: 'Sisu Mate',
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
               ),
-              _PassageReadinessCard(readiness: readiness, isDark: isDark),
-              if (suggestions.isNotEmpty)
-                _SuggestionsBanner(suggestions: suggestions, isDark: isDark),
+              if (!readinessDismissed)
+                Dismissible(
+                  key: const ValueKey('home_passage_readiness'),
+                  direction: DismissDirection.horizontal,
+                  onDismissed: (_) {
+                    ref
+                        .read(homePassageReadinessDismissedProvider.notifier)
+                        .dismiss();
+                  },
+                  background: _homeDismissBackground(isDark, alignEnd: false),
+                  secondaryBackground:
+                      _homeDismissBackground(isDark, alignEnd: true),
+                  child: _PassageReadinessCard(
+                    readiness: readiness,
+                    isDark: isDark,
+                  ),
+                ),
+              if (suggestions.isNotEmpty && !suggestionsDismissed)
+                Dismissible(
+                  key: const ValueKey('home_suggestions'),
+                  direction: DismissDirection.horizontal,
+                  onDismissed: (_) {
+                    ref
+                        .read(homeSuggestionsDismissedProvider.notifier)
+                        .dismiss();
+                  },
+                  background: _homeDismissBackground(isDark, alignEnd: false),
+                  secondaryBackground:
+                      _homeDismissBackground(isDark, alignEnd: true),
+                  child: _SuggestionsBanner(
+                    suggestions: suggestions,
+                    isDark: isDark,
+                  ),
+                ),
               Expanded(
                 child: GridView.count(
                   crossAxisCount: 3,
@@ -187,10 +240,28 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+Widget _homeDismissBackground(bool isDark, {required bool alignEnd}) {
+  return Container(
+    alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+    margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      color: SisuColors.hideAction,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      'Dismiss',
+      style: TextStyle(
+        color: SisuColors.dialogButtonOnColor,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
+}
+
 /// BAI1 — single go/no-go verdict: safety checklist + maintenance overdue +
 /// cached weather + fuel/water runway, combined into "Ready" or a short list
-/// of things to fix first. Always shown (unlike the tip banner below) — a
-/// clean "Ready for passage" is itself useful reassurance, not just a warning.
+/// of things to fix first. Swipe-dismissable for the session (#278).
 class _PassageReadinessCard extends StatelessWidget {
   final PassageReadiness readiness;
   final bool isDark;
@@ -252,6 +323,7 @@ class _PassageReadinessCard extends StatelessWidget {
 }
 
 /// S4 home strip — offline-rules maintenance / weather suggestions.
+/// Swipe-dismissable for the session (#278).
 class _SuggestionsBanner extends StatelessWidget {
   final List<BoatSuggestion> suggestions;
   final bool isDark;
