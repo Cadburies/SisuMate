@@ -52,6 +52,7 @@ import '../data/repositories/sailing_polar_sample_repository.dart';
 import '../services/sailing_polar_collector.dart';
 import '../services/polar_llm_improve_service.dart';
 import '../services/polar_background_collector.dart';
+import '../services/imu_sea_state_service.dart';
 
 final databaseServiceProvider =
     Provider<DatabaseService>((ref) => DatabaseService());
@@ -249,8 +250,18 @@ final sailingPolarSampleRepositoryProvider =
   );
 });
 
+/// #280 — shared phone IMU sea-state stream (started with polar collector).
+final imuSeaStateServiceProvider = Provider<ImuSeaStateService>((ref) {
+  final s = ImuSeaStateService();
+  ref.onDispose(s.stop);
+  return s;
+});
+
 final sailingPolarCollectorProvider = Provider<SailingPolarCollector>((ref) {
-  return SailingPolarCollector(ref.watch(sailingPolarSampleRepositoryProvider));
+  return SailingPolarCollector(
+    ref.watch(sailingPolarSampleRepositoryProvider),
+    imu: ref.watch(imuSeaStateServiceProvider),
+  );
 });
 
 final polarLlmImproveServiceProvider = Provider<PolarLlmImproveService>((ref) {
@@ -262,12 +273,18 @@ final polarLlmImproveServiceProvider = Provider<PolarLlmImproveService>((ref) {
 
 final polarBackgroundCollectorProvider =
     Provider<PolarBackgroundCollector>((ref) {
+  final imu = ref.watch(imuSeaStateServiceProvider);
   final c = PolarBackgroundCollector(
     collector: ref.watch(sailingPolarCollectorProvider),
     boatRepository: ref.watch(boatRepositoryProvider),
     settingsRepository: ref.watch(userSettingsRepositoryProvider),
   );
-  ref.onDispose(c.stop);
+  // IMU runs while the polar collector is alive (foreground lifecycle).
+  imu.start();
+  ref.onDispose(() {
+    c.stop();
+    imu.stop();
+  });
   return c;
 });
 

@@ -643,6 +643,12 @@ class SailingPolarSamples extends Table {
   TextColumn get seaState => text().withDefault(const Constant('unknown'))();
   RealColumn get speedCv => real().nullable()();
   RealColumn get twaStdDeg => real().nullable()();
+  /// #280 — phone IMU local diagnostics (not synced).
+  RealColumn get imuHsM => real().nullable()();
+  RealColumn get imuAccelRms => real().nullable()();
+  RealColumn get imuAccelP90 => real().nullable()();
+  RealColumn get imuDominantPeriodS => real().nullable()();
+  TextColumn get imuSuggestedSeaState => text().nullable()();
   BoolColumn get usedInPolarBuild =>
       boolean().withDefault(const Constant(false))();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
@@ -698,7 +704,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

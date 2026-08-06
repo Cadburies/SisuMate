@@ -1,6 +1,8 @@
 import '../data/repositories/sailing_polar_sample_repository.dart';
 import '../models/sailing_polar_sample.dart';
 import '../models/sea_state.dart';
+import 'imu_heave_estimator.dart';
+import 'imu_sea_state_service.dart';
 import 'polar_sample_eligibility.dart';
 import 'predictwind_datahub_service.dart';
 import 'sea_state_estimator.dart';
@@ -9,8 +11,9 @@ import 'sea_state_estimator.dart';
 /// eligibility + steady-state pass. Maintains a rolling window for sea-state
 /// estimation (instrument variance) and live UI.
 class SailingPolarCollector {
-  SailingPolarCollector(this._repo);
+  SailingPolarCollector(this._repo, {ImuSeaStateService? imu}) : _imu = imu;
   final SailingPolarSampleRepository _repo;
+  final ImuSeaStateService? _imu;
 
   /// Per-boat rolling instrument windows for sea-state / steady-state.
   final Map<String, List<InstrumentReading>> _windows = {};
@@ -65,6 +68,22 @@ class SailingPolarCollector {
     sample.seaState = metrics.seaState.wireValue;
     sample.speedCv = metrics.speedCv;
     sample.twaStdDeg = metrics.twaStdDeg;
+
+    // #280 — stamp phone IMU diagnostics; fuse seaState when IMU confident.
+    final imuEst = _imu?.currentEstimate;
+    if (imuEst != null) {
+      sample.imuHsM = imuEst.significantWaveHeightM;
+      sample.imuAccelRms = imuEst.residualAccelRms;
+      sample.imuAccelP90 = imuEst.residualAccelP90;
+      sample.imuDominantPeriodS = imuEst.dominantPeriodS;
+      sample.imuSuggestedSeaState = imuEst.seaState.wireValue;
+      if (imuEst.confident && imuEst.seaState != SeaState.unknown) {
+        sample.seaState = ImuHeaveEstimator.rougher(
+          metrics.seaState,
+          imuEst.seaState,
+        ).wireValue;
+      }
+    }
 
     final last = await _repo.lastObservedAt(boatSupabaseId);
     if (!PolarSampleEligibility.enoughTimeSince(last, sample.observedAt)) {

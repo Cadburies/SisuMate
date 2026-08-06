@@ -1,8 +1,10 @@
-/// #276 — instrument-derived sea state for polar learning.
+/// #276/#280 — sea state for polar learning.
 ///
-/// Not Douglas scale / buoy wave height. Fully offline proxy from short-term
-/// variance of boat instruments (speed CV + TWA std). Rough water inflates
-/// those; calm water keeps them low. Buckets keep polar targets honest:
+/// Two offline proxies feed the same buckets:
+/// - **Instrument variance** (speed CV + TWA std) — [SeaStateEstimator]
+/// - **Phone IMU** heave / proxy Hs with WMO-style bands — [ImuHeaveEstimator]
+///
+/// Not a calibrated buoy Douglas scale. Buckets keep polar targets honest:
 /// smooth-sailing polars are not mixed with rough-sea samples the boat
 /// cannot match.
 enum SeaState {

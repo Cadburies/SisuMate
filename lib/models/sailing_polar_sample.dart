@@ -52,6 +52,14 @@ class SailingPolarSample {
   double? speedCv;
   double? twaStdDeg;
 
+  /// #280 — phone IMU diagnostics (local only; not on wire).
+  double? imuHsM;
+  double? imuAccelRms;
+  double? imuAccelP90;
+  double? imuDominantPeriodS;
+  /// Suggested sea state from IMU Hs proxy (calm|moderate|rough|unknown).
+  String? imuSuggestedSeaState;
+
   /// True after this sample contributed to a polar improve pass.
   bool usedInPolarBuild = false;
 
@@ -80,6 +88,11 @@ class SailingPolarSample {
         'seaState': seaState,
         'speedCv': speedCv,
         'twaStdDeg': twaStdDeg,
+        'imuHsM': imuHsM,
+        'imuAccelRms': imuAccelRms,
+        'imuAccelP90': imuAccelP90,
+        'imuDominantPeriodS': imuDominantPeriodS,
+        'imuSuggestedSeaState': imuSuggestedSeaState,
         'usedInPolarBuild': usedInPolarBuild,
         'isSynced': isSynced,
         'lastModified': lastModified.toIso8601String(),
@@ -126,6 +139,11 @@ class SailingPolarSample {
       ..seaState = j['seaState'] as String? ?? 'unknown'
       ..speedCv = d(j['speedCv'])
       ..twaStdDeg = d(j['twaStdDeg'])
+      ..imuHsM = d(j['imuHsM'])
+      ..imuAccelRms = d(j['imuAccelRms'])
+      ..imuAccelP90 = d(j['imuAccelP90'])
+      ..imuDominantPeriodS = d(j['imuDominantPeriodS'])
+      ..imuSuggestedSeaState = j['imuSuggestedSeaState'] as String?
       ..usedInPolarBuild = j['usedInPolarBuild'] as bool? ?? false
       ..isSynced = j['isSynced'] as bool? ?? false
       ..lastModified = DateTime.tryParse(j['lastModified'] as String? ?? '')

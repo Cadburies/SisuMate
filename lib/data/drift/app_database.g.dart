@@ -21745,6 +21745,59 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _imuHsMMeta = const VerificationMeta('imuHsM');
+  @override
+  late final GeneratedColumn<double> imuHsM = GeneratedColumn<double>(
+    'imu_hs_m',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _imuAccelRmsMeta = const VerificationMeta(
+    'imuAccelRms',
+  );
+  @override
+  late final GeneratedColumn<double> imuAccelRms = GeneratedColumn<double>(
+    'imu_accel_rms',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _imuAccelP90Meta = const VerificationMeta(
+    'imuAccelP90',
+  );
+  @override
+  late final GeneratedColumn<double> imuAccelP90 = GeneratedColumn<double>(
+    'imu_accel_p90',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _imuDominantPeriodSMeta =
+      const VerificationMeta('imuDominantPeriodS');
+  @override
+  late final GeneratedColumn<double> imuDominantPeriodS =
+      GeneratedColumn<double>(
+        'imu_dominant_period_s',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _imuSuggestedSeaStateMeta =
+      const VerificationMeta('imuSuggestedSeaState');
+  @override
+  late final GeneratedColumn<String> imuSuggestedSeaState =
+      GeneratedColumn<String>(
+        'imu_suggested_sea_state',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _usedInPolarBuildMeta = const VerificationMeta(
     'usedInPolarBuild',
   );
@@ -21810,6 +21863,11 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
     seaState,
     speedCv,
     twaStdDeg,
+    imuHsM,
+    imuAccelRms,
+    imuAccelP90,
+    imuDominantPeriodS,
+    imuSuggestedSeaState,
     usedInPolarBuild,
     isSynced,
     lastModified,
@@ -21970,6 +22028,48 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
         twaStdDeg.isAcceptableOrUnknown(data['twa_std_deg']!, _twaStdDegMeta),
       );
     }
+    if (data.containsKey('imu_hs_m')) {
+      context.handle(
+        _imuHsMMeta,
+        imuHsM.isAcceptableOrUnknown(data['imu_hs_m']!, _imuHsMMeta),
+      );
+    }
+    if (data.containsKey('imu_accel_rms')) {
+      context.handle(
+        _imuAccelRmsMeta,
+        imuAccelRms.isAcceptableOrUnknown(
+          data['imu_accel_rms']!,
+          _imuAccelRmsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('imu_accel_p90')) {
+      context.handle(
+        _imuAccelP90Meta,
+        imuAccelP90.isAcceptableOrUnknown(
+          data['imu_accel_p90']!,
+          _imuAccelP90Meta,
+        ),
+      );
+    }
+    if (data.containsKey('imu_dominant_period_s')) {
+      context.handle(
+        _imuDominantPeriodSMeta,
+        imuDominantPeriodS.isAcceptableOrUnknown(
+          data['imu_dominant_period_s']!,
+          _imuDominantPeriodSMeta,
+        ),
+      );
+    }
+    if (data.containsKey('imu_suggested_sea_state')) {
+      context.handle(
+        _imuSuggestedSeaStateMeta,
+        imuSuggestedSeaState.isAcceptableOrUnknown(
+          data['imu_suggested_sea_state']!,
+          _imuSuggestedSeaStateMeta,
+        ),
+      );
+    }
     if (data.containsKey('used_in_polar_build')) {
       context.handle(
         _usedInPolarBuildMeta,
@@ -22087,6 +22187,26 @@ class $SailingPolarSamplesTable extends SailingPolarSamples
         DriftSqlType.double,
         data['${effectivePrefix}twa_std_deg'],
       ),
+      imuHsM: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}imu_hs_m'],
+      ),
+      imuAccelRms: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}imu_accel_rms'],
+      ),
+      imuAccelP90: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}imu_accel_p90'],
+      ),
+      imuDominantPeriodS: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}imu_dominant_period_s'],
+      ),
+      imuSuggestedSeaState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}imu_suggested_sea_state'],
+      ),
       usedInPolarBuild: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}used_in_polar_build'],
@@ -22135,6 +22255,13 @@ class SailingPolarSampleRow extends DataClass
   final String seaState;
   final double? speedCv;
   final double? twaStdDeg;
+
+  /// #280 — phone IMU local diagnostics (not synced).
+  final double? imuHsM;
+  final double? imuAccelRms;
+  final double? imuAccelP90;
+  final double? imuDominantPeriodS;
+  final String? imuSuggestedSeaState;
   final bool usedInPolarBuild;
   final bool isSynced;
   final DateTime lastModified;
@@ -22160,6 +22287,11 @@ class SailingPolarSampleRow extends DataClass
     required this.seaState,
     this.speedCv,
     this.twaStdDeg,
+    this.imuHsM,
+    this.imuAccelRms,
+    this.imuAccelP90,
+    this.imuDominantPeriodS,
+    this.imuSuggestedSeaState,
     required this.usedInPolarBuild,
     required this.isSynced,
     required this.lastModified,
@@ -22209,6 +22341,21 @@ class SailingPolarSampleRow extends DataClass
     }
     if (!nullToAbsent || twaStdDeg != null) {
       map['twa_std_deg'] = Variable<double>(twaStdDeg);
+    }
+    if (!nullToAbsent || imuHsM != null) {
+      map['imu_hs_m'] = Variable<double>(imuHsM);
+    }
+    if (!nullToAbsent || imuAccelRms != null) {
+      map['imu_accel_rms'] = Variable<double>(imuAccelRms);
+    }
+    if (!nullToAbsent || imuAccelP90 != null) {
+      map['imu_accel_p90'] = Variable<double>(imuAccelP90);
+    }
+    if (!nullToAbsent || imuDominantPeriodS != null) {
+      map['imu_dominant_period_s'] = Variable<double>(imuDominantPeriodS);
+    }
+    if (!nullToAbsent || imuSuggestedSeaState != null) {
+      map['imu_suggested_sea_state'] = Variable<String>(imuSuggestedSeaState);
     }
     map['used_in_polar_build'] = Variable<bool>(usedInPolarBuild);
     map['is_synced'] = Variable<bool>(isSynced);
@@ -22261,6 +22408,21 @@ class SailingPolarSampleRow extends DataClass
       twaStdDeg: twaStdDeg == null && nullToAbsent
           ? const Value.absent()
           : Value(twaStdDeg),
+      imuHsM: imuHsM == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imuHsM),
+      imuAccelRms: imuAccelRms == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imuAccelRms),
+      imuAccelP90: imuAccelP90 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imuAccelP90),
+      imuDominantPeriodS: imuDominantPeriodS == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imuDominantPeriodS),
+      imuSuggestedSeaState: imuSuggestedSeaState == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imuSuggestedSeaState),
       usedInPolarBuild: Value(usedInPolarBuild),
       isSynced: Value(isSynced),
       lastModified: Value(lastModified),
@@ -22294,6 +22456,15 @@ class SailingPolarSampleRow extends DataClass
       seaState: serializer.fromJson<String>(json['seaState']),
       speedCv: serializer.fromJson<double?>(json['speedCv']),
       twaStdDeg: serializer.fromJson<double?>(json['twaStdDeg']),
+      imuHsM: serializer.fromJson<double?>(json['imuHsM']),
+      imuAccelRms: serializer.fromJson<double?>(json['imuAccelRms']),
+      imuAccelP90: serializer.fromJson<double?>(json['imuAccelP90']),
+      imuDominantPeriodS: serializer.fromJson<double?>(
+        json['imuDominantPeriodS'],
+      ),
+      imuSuggestedSeaState: serializer.fromJson<String?>(
+        json['imuSuggestedSeaState'],
+      ),
       usedInPolarBuild: serializer.fromJson<bool>(json['usedInPolarBuild']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
@@ -22324,6 +22495,11 @@ class SailingPolarSampleRow extends DataClass
       'seaState': serializer.toJson<String>(seaState),
       'speedCv': serializer.toJson<double?>(speedCv),
       'twaStdDeg': serializer.toJson<double?>(twaStdDeg),
+      'imuHsM': serializer.toJson<double?>(imuHsM),
+      'imuAccelRms': serializer.toJson<double?>(imuAccelRms),
+      'imuAccelP90': serializer.toJson<double?>(imuAccelP90),
+      'imuDominantPeriodS': serializer.toJson<double?>(imuDominantPeriodS),
+      'imuSuggestedSeaState': serializer.toJson<String?>(imuSuggestedSeaState),
       'usedInPolarBuild': serializer.toJson<bool>(usedInPolarBuild),
       'isSynced': serializer.toJson<bool>(isSynced),
       'lastModified': serializer.toJson<DateTime>(lastModified),
@@ -22352,6 +22528,11 @@ class SailingPolarSampleRow extends DataClass
     String? seaState,
     Value<double?> speedCv = const Value.absent(),
     Value<double?> twaStdDeg = const Value.absent(),
+    Value<double?> imuHsM = const Value.absent(),
+    Value<double?> imuAccelRms = const Value.absent(),
+    Value<double?> imuAccelP90 = const Value.absent(),
+    Value<double?> imuDominantPeriodS = const Value.absent(),
+    Value<String?> imuSuggestedSeaState = const Value.absent(),
     bool? usedInPolarBuild,
     bool? isSynced,
     DateTime? lastModified,
@@ -22381,6 +22562,15 @@ class SailingPolarSampleRow extends DataClass
     seaState: seaState ?? this.seaState,
     speedCv: speedCv.present ? speedCv.value : this.speedCv,
     twaStdDeg: twaStdDeg.present ? twaStdDeg.value : this.twaStdDeg,
+    imuHsM: imuHsM.present ? imuHsM.value : this.imuHsM,
+    imuAccelRms: imuAccelRms.present ? imuAccelRms.value : this.imuAccelRms,
+    imuAccelP90: imuAccelP90.present ? imuAccelP90.value : this.imuAccelP90,
+    imuDominantPeriodS: imuDominantPeriodS.present
+        ? imuDominantPeriodS.value
+        : this.imuDominantPeriodS,
+    imuSuggestedSeaState: imuSuggestedSeaState.present
+        ? imuSuggestedSeaState.value
+        : this.imuSuggestedSeaState,
     usedInPolarBuild: usedInPolarBuild ?? this.usedInPolarBuild,
     isSynced: isSynced ?? this.isSynced,
     lastModified: lastModified ?? this.lastModified,
@@ -22426,6 +22616,19 @@ class SailingPolarSampleRow extends DataClass
       seaState: data.seaState.present ? data.seaState.value : this.seaState,
       speedCv: data.speedCv.present ? data.speedCv.value : this.speedCv,
       twaStdDeg: data.twaStdDeg.present ? data.twaStdDeg.value : this.twaStdDeg,
+      imuHsM: data.imuHsM.present ? data.imuHsM.value : this.imuHsM,
+      imuAccelRms: data.imuAccelRms.present
+          ? data.imuAccelRms.value
+          : this.imuAccelRms,
+      imuAccelP90: data.imuAccelP90.present
+          ? data.imuAccelP90.value
+          : this.imuAccelP90,
+      imuDominantPeriodS: data.imuDominantPeriodS.present
+          ? data.imuDominantPeriodS.value
+          : this.imuDominantPeriodS,
+      imuSuggestedSeaState: data.imuSuggestedSeaState.present
+          ? data.imuSuggestedSeaState.value
+          : this.imuSuggestedSeaState,
       usedInPolarBuild: data.usedInPolarBuild.present
           ? data.usedInPolarBuild.value
           : this.usedInPolarBuild,
@@ -22460,6 +22663,11 @@ class SailingPolarSampleRow extends DataClass
           ..write('seaState: $seaState, ')
           ..write('speedCv: $speedCv, ')
           ..write('twaStdDeg: $twaStdDeg, ')
+          ..write('imuHsM: $imuHsM, ')
+          ..write('imuAccelRms: $imuAccelRms, ')
+          ..write('imuAccelP90: $imuAccelP90, ')
+          ..write('imuDominantPeriodS: $imuDominantPeriodS, ')
+          ..write('imuSuggestedSeaState: $imuSuggestedSeaState, ')
           ..write('usedInPolarBuild: $usedInPolarBuild, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
@@ -22490,6 +22698,11 @@ class SailingPolarSampleRow extends DataClass
     seaState,
     speedCv,
     twaStdDeg,
+    imuHsM,
+    imuAccelRms,
+    imuAccelP90,
+    imuDominantPeriodS,
+    imuSuggestedSeaState,
     usedInPolarBuild,
     isSynced,
     lastModified,
@@ -22519,6 +22732,11 @@ class SailingPolarSampleRow extends DataClass
           other.seaState == this.seaState &&
           other.speedCv == this.speedCv &&
           other.twaStdDeg == this.twaStdDeg &&
+          other.imuHsM == this.imuHsM &&
+          other.imuAccelRms == this.imuAccelRms &&
+          other.imuAccelP90 == this.imuAccelP90 &&
+          other.imuDominantPeriodS == this.imuDominantPeriodS &&
+          other.imuSuggestedSeaState == this.imuSuggestedSeaState &&
           other.usedInPolarBuild == this.usedInPolarBuild &&
           other.isSynced == this.isSynced &&
           other.lastModified == this.lastModified);
@@ -22547,6 +22765,11 @@ class SailingPolarSamplesCompanion
   final Value<String> seaState;
   final Value<double?> speedCv;
   final Value<double?> twaStdDeg;
+  final Value<double?> imuHsM;
+  final Value<double?> imuAccelRms;
+  final Value<double?> imuAccelP90;
+  final Value<double?> imuDominantPeriodS;
+  final Value<String?> imuSuggestedSeaState;
   final Value<bool> usedInPolarBuild;
   final Value<bool> isSynced;
   final Value<DateTime> lastModified;
@@ -22572,6 +22795,11 @@ class SailingPolarSamplesCompanion
     this.seaState = const Value.absent(),
     this.speedCv = const Value.absent(),
     this.twaStdDeg = const Value.absent(),
+    this.imuHsM = const Value.absent(),
+    this.imuAccelRms = const Value.absent(),
+    this.imuAccelP90 = const Value.absent(),
+    this.imuDominantPeriodS = const Value.absent(),
+    this.imuSuggestedSeaState = const Value.absent(),
     this.usedInPolarBuild = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
@@ -22598,6 +22826,11 @@ class SailingPolarSamplesCompanion
     this.seaState = const Value.absent(),
     this.speedCv = const Value.absent(),
     this.twaStdDeg = const Value.absent(),
+    this.imuHsM = const Value.absent(),
+    this.imuAccelRms = const Value.absent(),
+    this.imuAccelP90 = const Value.absent(),
+    this.imuDominantPeriodS = const Value.absent(),
+    this.imuSuggestedSeaState = const Value.absent(),
     this.usedInPolarBuild = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
@@ -22624,6 +22857,11 @@ class SailingPolarSamplesCompanion
     Expression<String>? seaState,
     Expression<double>? speedCv,
     Expression<double>? twaStdDeg,
+    Expression<double>? imuHsM,
+    Expression<double>? imuAccelRms,
+    Expression<double>? imuAccelP90,
+    Expression<double>? imuDominantPeriodS,
+    Expression<String>? imuSuggestedSeaState,
     Expression<bool>? usedInPolarBuild,
     Expression<bool>? isSynced,
     Expression<DateTime>? lastModified,
@@ -22650,6 +22888,13 @@ class SailingPolarSamplesCompanion
       if (seaState != null) 'sea_state': seaState,
       if (speedCv != null) 'speed_cv': speedCv,
       if (twaStdDeg != null) 'twa_std_deg': twaStdDeg,
+      if (imuHsM != null) 'imu_hs_m': imuHsM,
+      if (imuAccelRms != null) 'imu_accel_rms': imuAccelRms,
+      if (imuAccelP90 != null) 'imu_accel_p90': imuAccelP90,
+      if (imuDominantPeriodS != null)
+        'imu_dominant_period_s': imuDominantPeriodS,
+      if (imuSuggestedSeaState != null)
+        'imu_suggested_sea_state': imuSuggestedSeaState,
       if (usedInPolarBuild != null) 'used_in_polar_build': usedInPolarBuild,
       if (isSynced != null) 'is_synced': isSynced,
       if (lastModified != null) 'last_modified': lastModified,
@@ -22678,6 +22923,11 @@ class SailingPolarSamplesCompanion
     Value<String>? seaState,
     Value<double?>? speedCv,
     Value<double?>? twaStdDeg,
+    Value<double?>? imuHsM,
+    Value<double?>? imuAccelRms,
+    Value<double?>? imuAccelP90,
+    Value<double?>? imuDominantPeriodS,
+    Value<String?>? imuSuggestedSeaState,
     Value<bool>? usedInPolarBuild,
     Value<bool>? isSynced,
     Value<DateTime>? lastModified,
@@ -22704,6 +22954,11 @@ class SailingPolarSamplesCompanion
       seaState: seaState ?? this.seaState,
       speedCv: speedCv ?? this.speedCv,
       twaStdDeg: twaStdDeg ?? this.twaStdDeg,
+      imuHsM: imuHsM ?? this.imuHsM,
+      imuAccelRms: imuAccelRms ?? this.imuAccelRms,
+      imuAccelP90: imuAccelP90 ?? this.imuAccelP90,
+      imuDominantPeriodS: imuDominantPeriodS ?? this.imuDominantPeriodS,
+      imuSuggestedSeaState: imuSuggestedSeaState ?? this.imuSuggestedSeaState,
       usedInPolarBuild: usedInPolarBuild ?? this.usedInPolarBuild,
       isSynced: isSynced ?? this.isSynced,
       lastModified: lastModified ?? this.lastModified,
@@ -22776,6 +23031,23 @@ class SailingPolarSamplesCompanion
     if (twaStdDeg.present) {
       map['twa_std_deg'] = Variable<double>(twaStdDeg.value);
     }
+    if (imuHsM.present) {
+      map['imu_hs_m'] = Variable<double>(imuHsM.value);
+    }
+    if (imuAccelRms.present) {
+      map['imu_accel_rms'] = Variable<double>(imuAccelRms.value);
+    }
+    if (imuAccelP90.present) {
+      map['imu_accel_p90'] = Variable<double>(imuAccelP90.value);
+    }
+    if (imuDominantPeriodS.present) {
+      map['imu_dominant_period_s'] = Variable<double>(imuDominantPeriodS.value);
+    }
+    if (imuSuggestedSeaState.present) {
+      map['imu_suggested_sea_state'] = Variable<String>(
+        imuSuggestedSeaState.value,
+      );
+    }
     if (usedInPolarBuild.present) {
       map['used_in_polar_build'] = Variable<bool>(usedInPolarBuild.value);
     }
@@ -22812,6 +23084,11 @@ class SailingPolarSamplesCompanion
           ..write('seaState: $seaState, ')
           ..write('speedCv: $speedCv, ')
           ..write('twaStdDeg: $twaStdDeg, ')
+          ..write('imuHsM: $imuHsM, ')
+          ..write('imuAccelRms: $imuAccelRms, ')
+          ..write('imuAccelP90: $imuAccelP90, ')
+          ..write('imuDominantPeriodS: $imuDominantPeriodS, ')
+          ..write('imuSuggestedSeaState: $imuSuggestedSeaState, ')
           ..write('usedInPolarBuild: $usedInPolarBuild, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
@@ -32847,6 +33124,11 @@ typedef $$SailingPolarSamplesTableCreateCompanionBuilder =
       Value<String> seaState,
       Value<double?> speedCv,
       Value<double?> twaStdDeg,
+      Value<double?> imuHsM,
+      Value<double?> imuAccelRms,
+      Value<double?> imuAccelP90,
+      Value<double?> imuDominantPeriodS,
+      Value<String?> imuSuggestedSeaState,
       Value<bool> usedInPolarBuild,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
@@ -32874,6 +33156,11 @@ typedef $$SailingPolarSamplesTableUpdateCompanionBuilder =
       Value<String> seaState,
       Value<double?> speedCv,
       Value<double?> twaStdDeg,
+      Value<double?> imuHsM,
+      Value<double?> imuAccelRms,
+      Value<double?> imuAccelP90,
+      Value<double?> imuDominantPeriodS,
+      Value<String?> imuSuggestedSeaState,
       Value<bool> usedInPolarBuild,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
@@ -32990,6 +33277,31 @@ class $$SailingPolarSamplesTableFilterComposer
 
   ColumnFilters<double> get twaStdDeg => $composableBuilder(
     column: $table.twaStdDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get imuHsM => $composableBuilder(
+    column: $table.imuHsM,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get imuAccelRms => $composableBuilder(
+    column: $table.imuAccelRms,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get imuAccelP90 => $composableBuilder(
+    column: $table.imuAccelP90,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get imuDominantPeriodS => $composableBuilder(
+    column: $table.imuDominantPeriodS,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imuSuggestedSeaState => $composableBuilder(
+    column: $table.imuSuggestedSeaState,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -33123,6 +33435,31 @@ class $$SailingPolarSamplesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get imuHsM => $composableBuilder(
+    column: $table.imuHsM,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get imuAccelRms => $composableBuilder(
+    column: $table.imuAccelRms,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get imuAccelP90 => $composableBuilder(
+    column: $table.imuAccelP90,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get imuDominantPeriodS => $composableBuilder(
+    column: $table.imuDominantPeriodS,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imuSuggestedSeaState => $composableBuilder(
+    column: $table.imuSuggestedSeaState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get usedInPolarBuild => $composableBuilder(
     column: $table.usedInPolarBuild,
     builder: (column) => ColumnOrderings(column),
@@ -33229,6 +33566,29 @@ class $$SailingPolarSamplesTableAnnotationComposer
   GeneratedColumn<double> get twaStdDeg =>
       $composableBuilder(column: $table.twaStdDeg, builder: (column) => column);
 
+  GeneratedColumn<double> get imuHsM =>
+      $composableBuilder(column: $table.imuHsM, builder: (column) => column);
+
+  GeneratedColumn<double> get imuAccelRms => $composableBuilder(
+    column: $table.imuAccelRms,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get imuAccelP90 => $composableBuilder(
+    column: $table.imuAccelP90,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get imuDominantPeriodS => $composableBuilder(
+    column: $table.imuDominantPeriodS,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get imuSuggestedSeaState => $composableBuilder(
+    column: $table.imuSuggestedSeaState,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get usedInPolarBuild => $composableBuilder(
     column: $table.usedInPolarBuild,
     builder: (column) => column,
@@ -33307,6 +33667,11 @@ class $$SailingPolarSamplesTableTableManager
                 Value<String> seaState = const Value.absent(),
                 Value<double?> speedCv = const Value.absent(),
                 Value<double?> twaStdDeg = const Value.absent(),
+                Value<double?> imuHsM = const Value.absent(),
+                Value<double?> imuAccelRms = const Value.absent(),
+                Value<double?> imuAccelP90 = const Value.absent(),
+                Value<double?> imuDominantPeriodS = const Value.absent(),
+                Value<String?> imuSuggestedSeaState = const Value.absent(),
                 Value<bool> usedInPolarBuild = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
@@ -33332,6 +33697,11 @@ class $$SailingPolarSamplesTableTableManager
                 seaState: seaState,
                 speedCv: speedCv,
                 twaStdDeg: twaStdDeg,
+                imuHsM: imuHsM,
+                imuAccelRms: imuAccelRms,
+                imuAccelP90: imuAccelP90,
+                imuDominantPeriodS: imuDominantPeriodS,
+                imuSuggestedSeaState: imuSuggestedSeaState,
                 usedInPolarBuild: usedInPolarBuild,
                 isSynced: isSynced,
                 lastModified: lastModified,
@@ -33359,6 +33729,11 @@ class $$SailingPolarSamplesTableTableManager
                 Value<String> seaState = const Value.absent(),
                 Value<double?> speedCv = const Value.absent(),
                 Value<double?> twaStdDeg = const Value.absent(),
+                Value<double?> imuHsM = const Value.absent(),
+                Value<double?> imuAccelRms = const Value.absent(),
+                Value<double?> imuAccelP90 = const Value.absent(),
+                Value<double?> imuDominantPeriodS = const Value.absent(),
+                Value<String?> imuSuggestedSeaState = const Value.absent(),
                 Value<bool> usedInPolarBuild = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
@@ -33384,6 +33759,11 @@ class $$SailingPolarSamplesTableTableManager
                 seaState: seaState,
                 speedCv: speedCv,
                 twaStdDeg: twaStdDeg,
+                imuHsM: imuHsM,
+                imuAccelRms: imuAccelRms,
+                imuAccelP90: imuAccelP90,
+                imuDominantPeriodS: imuDominantPeriodS,
+                imuSuggestedSeaState: imuSuggestedSeaState,
                 usedInPolarBuild: usedInPolarBuild,
                 isSynced: isSynced,
                 lastModified: lastModified,

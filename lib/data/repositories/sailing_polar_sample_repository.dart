@@ -33,6 +33,11 @@ class SailingPolarSampleRepository {
     ..seaState = r.seaState
     ..speedCv = r.speedCv
     ..twaStdDeg = r.twaStdDeg
+    ..imuHsM = r.imuHsM
+    ..imuAccelRms = r.imuAccelRms
+    ..imuAccelP90 = r.imuAccelP90
+    ..imuDominantPeriodS = r.imuDominantPeriodS
+    ..imuSuggestedSeaState = r.imuSuggestedSeaState
     ..usedInPolarBuild = r.usedInPolarBuild
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified;
@@ -59,6 +64,11 @@ class SailingPolarSampleRepository {
         seaState: Value(s.seaState),
         speedCv: Value(s.speedCv),
         twaStdDeg: Value(s.twaStdDeg),
+        imuHsM: Value(s.imuHsM),
+        imuAccelRms: Value(s.imuAccelRms),
+        imuAccelP90: Value(s.imuAccelP90),
+        imuDominantPeriodS: Value(s.imuDominantPeriodS),
+        imuSuggestedSeaState: Value(s.imuSuggestedSeaState),
         usedInPolarBuild: Value(s.usedInPolarBuild),
         isSynced: Value(s.isSynced),
         lastModified: Value(s.lastModified),

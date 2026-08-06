@@ -10,6 +10,7 @@ import '../../models/models.dart';
 import '../../models/sea_state.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/boat_instrument_failover_service.dart';
+import '../../services/imu_heave_estimator.dart';
 import '../../services/polar_sample_eligibility.dart';
 import '../components/title_tile.dart';
 
@@ -28,20 +29,27 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
   String? _status;
   Map<String, int> _counts = {};
   SeaState _liveSea = SeaState.unknown;
+  ImuSeaStateEstimate _imuEstimate = ImuSeaStateEstimate.empty;
   PolarLogFieldSnapshot _logFields = PolarLogFieldSnapshot.empty;
   /// Which TWS (kt) curve set to emphasize; null = overlay all common.
   double? _focusTws;
   Timer? _livePoll;
+  /// Instrument hub is polled less often than IMU (expensive / WiFi).
+  int _pollTick = 0;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshMeta());
-    // Same instrument path as the background collector — refresh while open.
-    _livePoll = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) => unawaited(_refreshMeta()),
-    );
+    // Ensure phone IMU is sampling while this screen is open.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(imuSeaStateServiceProvider).start();
+      unawaited(_refreshMeta(fetchInstruments: true));
+    });
+    // IMU every 3s; boat instruments every ~15s.
+    _livePoll = Timer.periodic(const Duration(seconds: 3), (_) {
+      _pollTick++;
+      unawaited(_refreshMeta(fetchInstruments: _pollTick % 5 == 0));
+    });
   }
 
   @override
@@ -50,79 +58,86 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
     super.dispose();
   }
 
-  Future<void> _refreshMeta() async {
+  Future<void> _refreshMeta({bool fetchInstruments = true}) async {
     if (_refreshingLive) return;
     _refreshingLive = true;
     try {
       final boat = ref.read(activeBoatProvider).asData?.value;
+      final imu = ref.read(imuSeaStateServiceProvider);
+      imu.start();
+      final imuEst = imu.currentEstimate;
+
       if (boat == null || boat.supabaseId.isEmpty) {
         if (!mounted) return;
         setState(() {
           _logFields = PolarLogFieldSnapshot.empty;
           _counts = {};
           _liveSea = SeaState.unknown;
+          _imuEstimate = imuEst;
         });
         return;
       }
       final collector = ref.read(sailingPolarCollectorProvider);
       final counts = await collector.sampleCountsBySeaState(boat.supabaseId);
 
-      // Live instrument snapshot → same fields the sample row would store.
-      PolarLogFieldSnapshot fields = PolarLogFieldSnapshot.empty;
-      try {
-        final settings = await ref.read(userSettingsProvider.future);
-        if (settings != null) {
-          const failover = BoatInstrumentFailoverService();
-          final snap = await failover.fetch(settings: settings);
-          final data = snap.boatData;
-          if (data != null) {
-            // Keep sea-state window warm even when not fully eligible.
-            final preferred = PolarSampleEligibility.preferredBoatSpeed(
-              stwKt: data.stwKt,
-              sogKt: data.sogKt,
-            );
-            final cog = data.cogDeg;
-            final twd = data.windDirectionDeg;
-            final tws = data.windSpeedKt;
-            if (preferred != null &&
-                cog != null &&
-                twd != null &&
-                tws != null) {
-              collector.observeForSeaState(
-                boatSupabaseId: boat.supabaseId,
-                boatSpeedKt: preferred.speed,
-                twaDeg: PolarSampleEligibility.absoluteTwaDeg(cog, twd),
-                twsKt: tws,
-                sogKt: data.sogKt,
+      PolarLogFieldSnapshot fields = _logFields;
+      if (fetchInstruments) {
+        // Live instrument snapshot → same fields the sample row would store.
+        fields = PolarLogFieldSnapshot.empty;
+        try {
+          final settings = await ref.read(userSettingsProvider.future);
+          if (settings != null) {
+            const failover = BoatInstrumentFailoverService();
+            final snap = await failover.fetch(settings: settings);
+            final data = snap.boatData;
+            if (data != null) {
+              final preferred = PolarSampleEligibility.preferredBoatSpeed(
                 stwKt: data.stwKt,
-                at: data.observedAt,
+                sogKt: data.sogKt,
               );
+              final cog = data.cogDeg;
+              final twd = data.windDirectionDeg;
+              final tws = data.windSpeedKt;
+              if (preferred != null &&
+                  cog != null &&
+                  twd != null &&
+                  tws != null) {
+                collector.observeForSeaState(
+                  boatSupabaseId: boat.supabaseId,
+                  boatSpeedKt: preferred.speed,
+                  twaDeg: PolarSampleEligibility.absoluteTwaDeg(cog, twd),
+                  twsKt: tws,
+                  sogKt: data.sogKt,
+                  stwKt: data.stwKt,
+                  at: data.observedAt,
+                );
+              }
             }
+            final metrics = collector.lastMetrics;
+            fields = PolarSampleEligibility.logFieldSnapshot(
+              data: data,
+              boatSupabaseId: boat.supabaseId,
+              seaState: collector.currentSeaState,
+              speedCv: metrics?.speedCv,
+              twaStdDeg: metrics?.twaStdDeg,
+              instrumentSummary: snap.summary,
+            );
+          } else {
+            fields = PolarSampleEligibility.logFieldSnapshot(
+              data: null,
+              boatSupabaseId: boat.supabaseId,
+              seaState: collector.currentSeaState,
+              instrumentSummary: 'User settings not loaded',
+            );
           }
-          final metrics = collector.lastMetrics;
-          fields = PolarSampleEligibility.logFieldSnapshot(
-            data: data,
-            boatSupabaseId: boat.supabaseId,
-            seaState: collector.currentSeaState,
-            speedCv: metrics?.speedCv,
-            twaStdDeg: metrics?.twaStdDeg,
-            instrumentSummary: snap.summary,
-          );
-        } else {
+        } catch (e) {
           fields = PolarSampleEligibility.logFieldSnapshot(
             data: null,
             boatSupabaseId: boat.supabaseId,
             seaState: collector.currentSeaState,
-            instrumentSummary: 'User settings not loaded',
+            instrumentSummary: 'Instrument fetch failed: $e',
           );
         }
-      } catch (e) {
-        fields = PolarSampleEligibility.logFieldSnapshot(
-          data: null,
-          boatSupabaseId: boat.supabaseId,
-          seaState: collector.currentSeaState,
-          instrumentSummary: 'Instrument fetch failed: $e',
-        );
       }
 
       if (!mounted) return;
@@ -130,6 +145,7 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
         _counts = counts;
         _liveSea = collector.currentSeaState;
         _logFields = fields;
+        _imuEstimate = imuEst;
       });
     } finally {
       _refreshingLive = false;
@@ -296,11 +312,13 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
       ..sort();
 
     return RefreshIndicator(
-      onRefresh: _refreshMeta,
+      onRefresh: () => _refreshMeta(fetchInstruments: true),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           _liveSeaChip(isDark),
+          const SizedBox(height: 10),
+          _imuSuggestedSeaCard(isDark),
           const SizedBox(height: 12),
           Text(
             'Curves fill in from under-sail samples (instruments online, '
@@ -521,6 +539,150 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// #280 — phone IMU suggested sea state (WMO-style Hs bands).
+  Widget _imuSuggestedSeaCard(bool isDark) {
+    final est = _imuEstimate;
+    final sea = est.seaState;
+    final primary = SisuColors.getTextPrimaryColor(isDark);
+    final secondary = SisuColors.getTextSecondaryColor(isDark);
+    final line = est.confident
+        ? SisuColors.seaStateLineColor(sea.wireValue)
+        : secondary;
+    final hs = est.significantWaveHeightM;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: SisuColors.getTileColor(isDark),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: SisuColors.tileElevation(isDark),
+        border: Border.all(color: line.withValues(alpha: 0.45), width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.phone_android, color: line, size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Phone IMU suggested sea state',
+                    style: TextStyle(
+                      color: primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                if (est.confident)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: SisuColors.seaStateChipBg(sea.wireValue),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      sea.label,
+                      style: TextStyle(
+                        color: SisuColors.dialogButtonOnColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              est.statusMessage,
+              style: TextStyle(
+                color: line,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Bands (proxy Hs, boat-relative): '
+              'Smooth < ${ImuHeaveEstimator.hsCalmMaxM} m · '
+              'Moderate < ${ImuHeaveEstimator.hsModerateMaxM} m · '
+              'Rough ≥ ${ImuHeaveEstimator.hsModerateMaxM} m. '
+              'Not a calibrated buoy — leave the phone still relative to the hull.',
+              style: TextStyle(color: secondary, fontSize: 11, height: 1.3),
+            ),
+            const SizedBox(height: 12),
+            _imuField(
+              isDark,
+              'Proxy Hs',
+              hs == null ? '—' : '${hs.toStringAsFixed(2)} m',
+              '4·σ(heave) from leaky double-integrate',
+            ),
+            _imuField(
+              isDark,
+              'Residual accel RMS',
+              '${est.residualAccelRms.toStringAsFixed(3)} m/s²',
+              'High-pass |a|−g window RMS',
+            ),
+            _imuField(
+              isDark,
+              'Residual accel p90',
+              '${est.residualAccelP90.toStringAsFixed(3)} m/s²',
+              'High quantile of |residual|',
+            ),
+            _imuField(
+              isDark,
+              'Dominant period',
+              est.dominantPeriodS == null
+                  ? '—'
+                  : '${est.dominantPeriodS!.toStringAsFixed(1)} s',
+              'Zero-crossing estimate',
+            ),
+            _imuField(
+              isDark,
+              'Window',
+              '${est.sampleCount} samples · '
+                  '${est.windowSeconds.toStringAsFixed(0)} s',
+              null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _imuField(
+    bool isDark,
+    String label,
+    String value,
+    String? hint,
+  ) {
+    final primary = SisuColors.getTextPrimaryColor(isDark);
+    final secondary = SisuColors.getTextSecondaryColor(isDark);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InputDecorator(
+        key: ValueKey('imu_field_$label'),
+        decoration: InputDecoration(
+          labelText: label,
+          helperText: hint,
+          helperMaxLines: 2,
+          isDense: true,
+          filled: true,
+          fillColor: SisuColors.getListSurface(isDark),
+          border: const OutlineInputBorder(),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: secondary.withValues(alpha: 0.35)),
+          ),
+        ),
+        child: Text(value, style: TextStyle(color: primary, fontSize: 14)),
       ),
     );
   }

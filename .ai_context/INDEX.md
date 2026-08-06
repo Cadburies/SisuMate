@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (grok):** Polar chart shows live sample log fields (SOG/STW/TWA/TWS/…).
+- **Last (grok):** #280 phone IMU sea-state (heave/Hs proxy, WMO bands) on polar chart + local sample log.
 - **Open backlog:** `gh issue list`.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
