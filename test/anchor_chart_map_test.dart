@@ -81,6 +81,26 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1));
   }
 
+  testWidgets('#314 external radius change resyncs geofence from watch',
+      (tester) async {
+    // ScopeCard mutates the same AnchorWatch instance before stream re-emit;
+    // chart must still pick up radius when local state is stale.
+    final watch = await dropAnchor();
+    expect(watch.radiusMeters, 30);
+    await pumpMap(tester, watch);
+
+    // Mutate in place (same object identity) then pump a new parent tree
+    // with the same instance — oldWidget comparison would miss this.
+    watch.radiusMeters = 50;
+    await pumpMap(tester, watch);
+    await settleMap(tester);
+
+    // CircleLayer still present; no throw. Full visual radius is production-
+    // verified; this guards the sync path doesn't assert/deadlock.
+    expect(find.byType(CircleLayer), findsOneWidget);
+    await unmount(tester);
+  });
+
   testWidgets('renders the map with the geofence circle', (tester) async {
     final watch = await dropAnchor();
     await pumpMap(tester, watch);

@@ -118,19 +118,20 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   @override
   void didUpdateWidget(covariant AnchorChartMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // #304 — pull radius/anchor/danger changes from the scope sliders while
-    // not mid-handle-drag (dragging owns local geometry until persist).
+    // #304 / #314 — pull radius/anchor/danger changes from the scope sliders
+    // while not mid-handle-drag. Compare against **local** geometry, not
+    // oldWidget: ScopeCard mutates the same AnchorWatch instance before the
+    // stream re-emits, so old.radiusMeters == next.radiusMeters and the
+    // circle never moved (reported: 50 m slider leaves chart stuck).
     if (_dragging) return;
-    final old = oldWidget.activeWatch;
     final next = widget.activeWatch;
-    if (old.id != next.id ||
-        old.anchorLat != next.anchorLat ||
-        old.anchorLon != next.anchorLon ||
-        old.radiusMeters != next.radiusMeters ||
-        old.dangerZoneCenterDeg != next.dangerZoneCenterDeg ||
-        old.dangerZoneWidthDeg != next.dangerZoneWidthDeg ||
-        old.dangerZoneInnerRadiusMeters != next.dangerZoneInnerRadiusMeters ||
-        old.dangerZoneEnabled != next.dangerZoneEnabled) {
+    if (_anchorLat != next.anchorLat ||
+        _anchorLon != next.anchorLon ||
+        _radiusMeters != next.radiusMeters ||
+        _dangerCenterDeg != next.dangerZoneCenterDeg ||
+        _dangerWidthDeg != next.dangerZoneWidthDeg ||
+        _dangerInnerRadiusMeters != next.dangerZoneInnerRadiusMeters ||
+        (oldWidget.activeWatch.dangerZoneEnabled != next.dangerZoneEnabled)) {
       _syncFromWatch();
     }
   }

@@ -1102,8 +1102,9 @@ class _RadiusEditorState extends State<_RadiusEditor> {
             onChangeEnd: (_) => widget.onCommit(),
           ),
         ),
+        // #315 — wide enough for 100–120+ m with the "m" suffix visible.
         SizedBox(
-          width: 72,
+          width: 96,
           child: TextField(
             controller: _textCtrl,
             focusNode: _textFocus,
@@ -1113,6 +1114,7 @@ class _RadiusEditorState extends State<_RadiusEditor> {
               isDense: true,
               suffixText: 'm',
               border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             ),
             onSubmitted: (_) => _submitText(),
             onTapOutside: (_) => _submitText(),
