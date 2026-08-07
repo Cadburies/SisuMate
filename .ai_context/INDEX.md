@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** closed remaining #291–#301 offline-ops wave (pack/scope/reorder/debrief/watch/…).
-- **Open backlog:** `gh issue list` (should be thin; new work only).
+- **Last (grok):** #304 scope↔radius↔map sync + #305 Info depth on Anchor Alarm.
+- **Open anchor:** #303 location failover, #306 gateway→Settings, #307 multi-alarms/defaults.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

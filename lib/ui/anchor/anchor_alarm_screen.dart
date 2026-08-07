@@ -411,6 +411,8 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                       activeWatch: activeWatch,
                                       boatLat: _boatLat,
                                       boatLon: _boatLon,
+                                      // #304 — map radius drag can back-solve scope.
+                                      depthMeters: _boatData?.depthMeters,
                                     ),
                                   ],
                                   const SizedBox(height: 12),
@@ -637,8 +639,13 @@ class _ScopeCard extends ConsumerStatefulWidget {
 }
 
 class _ScopeCardState extends ConsumerState<_ScopeCard> {
+  static const _alarm = AnchorAlarmService();
+
   late double _ratio;
   late double _radius;
+  /// True while the user is mid-drag on a local control so an external
+  /// watch update (map persist) doesn't clobber the in-flight gesture.
+  bool _editingLocally = false;
 
   @override
   void initState() {
@@ -650,9 +657,15 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
   @override
   void didUpdateWidget(covariant _ScopeCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.activeWatch.id != widget.activeWatch.id) {
-      _ratio = widget.activeWatch.scopeRatio;
-      _radius = widget.activeWatch.radiusMeters;
+    // #304 — re-sync from the watch when the map (or another card) changes
+    // radius/scope, not only when the watch id changes.
+    if (_editingLocally) return;
+    final w = widget.activeWatch;
+    if (oldWidget.activeWatch.id != w.id ||
+        oldWidget.activeWatch.scopeRatio != w.scopeRatio ||
+        oldWidget.activeWatch.radiusMeters != w.radiusMeters) {
+      _ratio = w.scopeRatio;
+      _radius = w.radiusMeters;
     }
   }
 
@@ -663,16 +676,61 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
     await ref.read(anchorWatchRepositoryProvider).updateWatch(updated);
   }
 
+  /// #304 — when live depth is known, keep radius = (depth) × scope.
+  void _applyScope(double ratio) {
+    _ratio = ratio;
+    final depth = widget.depthMeters;
+    if (depth != null && depth > 0) {
+      _radius = _alarm.suggestRadiusMeters(
+        depthMeters: depth,
+        scopeRatio: _ratio,
+      );
+    }
+  }
+
+  /// #304 — when live depth is known, back-solve scope from radius.
+  void _applyRadius(double radius) {
+    _radius = radius;
+    final depth = widget.depthMeters;
+    if (depth != null && depth > 0) {
+      final next = _alarm.scopeFromRadius(
+        radiusMeters: _radius,
+        depthMeters: depth,
+      );
+      if (next != null) _ratio = next;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final depth = widget.depthMeters;
+    final depthKnown = depth != null && depth > 0;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Scope & Alarm Radius', style: Theme.of(context).textTheme.titleSmall),
+            Text('Scope & Alarm Radius',
+                style: Theme.of(context).textTheme.titleSmall),
+            if (depthKnown)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  'Linked to live depth (${depth.toStringAsFixed(1)} m): '
+                  'changing scope updates radius and vice versa.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  'No live depth — scope and radius edit independently. '
+                  'Map radius still stays in sync with the slider.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
             Row(
               children: [
                 const SizedBox(width: 90, child: Text('Scope ratio')),
@@ -683,32 +741,45 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
                     max: 10,
                     divisions: 18,
                     label: '${_ratio.toStringAsFixed(1)}:1',
-                    onChanged: (v) => setState(() => _ratio = v),
-                    onChangeEnd: (_) => _persist(),
+                    onChangeStart: (_) => _editingLocally = true,
+                    onChanged: (v) => setState(() => _applyScope(v)),
+                    onChangeEnd: (_) async {
+                      await _persist();
+                      _editingLocally = false;
+                    },
                   ),
                 ),
-                SizedBox(width: 48, child: Text('${_ratio.toStringAsFixed(1)}:1')),
+                SizedBox(
+                    width: 48,
+                    child: Text('${_ratio.toStringAsFixed(1)}:1')),
               ],
             ),
             _RadiusEditor(
               label: 'Radius',
               value: _radius,
               sliderMax: _maxSliderRadiusMeters,
-              onChanged: (v) => setState(() => _radius = v),
-              onCommit: _persist,
+              onChangeStart: () => _editingLocally = true,
+              onChanged: (v) => setState(() => _applyRadius(v)),
+              onCommit: () async {
+                await _persist();
+                _editingLocally = false;
+              },
             ),
-            if (depth != null)
+            if (depthKnown)
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton(
                   onPressed: () {
                     setState(() {
-                      _radius = const AnchorAlarmService()
-                          .suggestRadiusMeters(depthMeters: depth, scopeRatio: _ratio);
+                      _radius = _alarm.suggestRadiusMeters(
+                        depthMeters: depth,
+                        scopeRatio: _ratio,
+                      );
                     });
                     _persist();
                   },
-                  child: Text('Suggest from live depth (${depth.toStringAsFixed(1)} m)'),
+                  child: Text(
+                      'Reset radius from scope × depth (${depth.toStringAsFixed(1)} m)'),
                 ),
               ),
           ],
@@ -867,12 +938,15 @@ class _RadiusEditor extends StatefulWidget {
   final double sliderMax;
   final ValueChanged<double> onChanged;
   final VoidCallback onCommit;
+  /// #304 — optional so danger-zone inner radius can keep the old API.
+  final VoidCallback? onChangeStart;
   const _RadiusEditor({
     required this.label,
     required this.value,
     required this.sliderMax,
     required this.onChanged,
     required this.onCommit,
+    this.onChangeStart,
   });
 
   @override
@@ -910,6 +984,7 @@ class _RadiusEditorState extends State<_RadiusEditor> {
   void _submitText() {
     final parsed = double.tryParse(_textCtrl.text.trim());
     if (parsed != null && parsed > 0) {
+      widget.onChangeStart?.call();
       widget.onChanged(parsed);
       widget.onCommit();
     } else {
@@ -929,6 +1004,7 @@ class _RadiusEditorState extends State<_RadiusEditor> {
             max: widget.sliderMax,
             divisions: widget.sliderMax.round() - 5,
             label: '${widget.value.toStringAsFixed(0)} m',
+            onChangeStart: (_) => widget.onChangeStart?.call(),
             onChanged: widget.onChanged,
             onChangeEnd: (_) => widget.onCommit(),
           ),

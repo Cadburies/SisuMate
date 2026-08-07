@@ -81,6 +81,20 @@ class AnchorAlarmService {
     return waterColumn * scopeRatio;
   }
 
+  /// #304 — inverse of [suggestRadiusMeters]: scope ratio from a chosen
+  /// geofence radius and water column (depth + freeboard/roller height).
+  /// Returns null when the column is unknown or non-positive so callers keep
+  /// the previous scope instead of inventing a ratio.
+  double? scopeFromRadius({
+    required double radiusMeters,
+    required double depthMeters,
+    double freeboardMeters = 0,
+  }) {
+    final waterColumn = depthMeters + (freeboardMeters < 0 ? 0 : freeboardMeters);
+    if (waterColumn <= 0 || radiusMeters <= 0) return null;
+    return radiusMeters / waterColumn;
+  }
+
   /// #293 — append a GPS breadcrumb while armed; drops points closer than
   /// [minStepMeters] to the last sample so the trail stays light.
   List<({double lat, double lon, DateTime at})> appendSwingPoint({

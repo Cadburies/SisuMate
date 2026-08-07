@@ -45,6 +45,7 @@ void main() {
     double lon = -61.7,
     double tws = 6.8,
     double twd = 115,
+    double? dpt,
     int quality = 4,
     Duration unixtimeOffset = Duration.zero,
   }) {
@@ -64,6 +65,7 @@ void main() {
           'lon': lon,
           'tws': tws,
           'twd': twd,
+          'dpt': ?dpt,
           'quality': quality,
           'unixtime': unixtime,
         }),
@@ -175,7 +177,23 @@ void main() {
     expect(find.text('COG'), findsOneWidget);
     expect(find.text('Apparent wind'), findsOneWidget);
     expect(find.text('Boat GPS'), findsOneWidget);
+    expect(find.text('Depth'), findsOneWidget);
     expect(find.text('No anchor set'), findsOneWidget);
+    await unmount(tester);
+  });
+
+  testWidgets('#305 — Info tab shows live depth from Hub dpt', (tester) async {
+    await pumpScreen(
+      tester,
+      httpClient: hubClient(dpt: 8.25),
+      hubService: connectedHubService,
+    );
+
+    await tester.tap(find.text('Info'));
+    await settleUi(tester);
+
+    expect(find.text('Depth'), findsOneWidget);
+    expect(find.text('8.3 m'), findsOneWidget); // toStringAsFixed(1)
     await unmount(tester);
   });
 

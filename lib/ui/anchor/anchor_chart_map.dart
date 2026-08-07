@@ -52,11 +52,14 @@ class AnchorChartMap extends ConsumerStatefulWidget {
   final AnchorWatch activeWatch;
   final double? boatLat;
   final double? boatLon;
+  /// #304 — when set, geofence radius drags also update [AnchorWatch.scopeRatio].
+  final double? depthMeters;
   const AnchorChartMap({
     super.key,
     required this.activeWatch,
     required this.boatLat,
     required this.boatLon,
+    this.depthMeters,
   });
 
   @override
@@ -115,7 +118,21 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   @override
   void didUpdateWidget(covariant AnchorChartMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.activeWatch.id != widget.activeWatch.id) _syncFromWatch();
+    // #304 — pull radius/anchor/danger changes from the scope sliders while
+    // not mid-handle-drag (dragging owns local geometry until persist).
+    if (_dragging) return;
+    final old = oldWidget.activeWatch;
+    final next = widget.activeWatch;
+    if (old.id != next.id ||
+        old.anchorLat != next.anchorLat ||
+        old.anchorLon != next.anchorLon ||
+        old.radiusMeters != next.radiusMeters ||
+        old.dangerZoneCenterDeg != next.dangerZoneCenterDeg ||
+        old.dangerZoneWidthDeg != next.dangerZoneWidthDeg ||
+        old.dangerZoneInnerRadiusMeters != next.dangerZoneInnerRadiusMeters ||
+        old.dangerZoneEnabled != next.dangerZoneEnabled) {
+      _syncFromWatch();
+    }
   }
 
   @override
@@ -154,10 +171,21 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
   Future<void> _persist() async {
     // #273 — always store outer == geofence radius so the column stays
     // consistent without a schema drop (still used by isInDangerZone).
+    // #304 — when live depth is known, keep scope ratio matched to radius.
+    var scopeRatio = widget.activeWatch.scopeRatio;
+    final depth = widget.depthMeters;
+    if (depth != null && depth > 0) {
+      final next = _alarmService.scopeFromRadius(
+        radiusMeters: _radiusMeters,
+        depthMeters: depth,
+      );
+      if (next != null) scopeRatio = next;
+    }
     final updated = widget.activeWatch
       ..anchorLat = _anchorLat
       ..anchorLon = _anchorLon
       ..radiusMeters = _radiusMeters
+      ..scopeRatio = scopeRatio
       ..dangerZoneCenterDeg = _dangerCenterDeg
       ..dangerZoneWidthDeg = _dangerWidthDeg
       ..dangerZoneInnerRadiusMeters = _dangerInnerRadiusMeters

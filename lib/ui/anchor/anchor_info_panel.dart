@@ -100,6 +100,18 @@ class AnchorInfoPanel extends StatelessWidget {
                 : '${distFromAnchor.toStringAsFixed(0)} m',
           ),
         ],
+        // #305 — depth is independent of GPS fix (sounder can stream without a fix).
+        _metricCard(
+          context,
+          icon: Icons.waves,
+          title: 'Depth',
+          value: data?.depthMeters == null
+              ? 'Unavailable'
+              : '${data!.depthMeters!.toStringAsFixed(1)} m',
+          subtitle: data?.depthMeters == null
+              ? 'Needs a depth reading from boat instruments.'
+              : 'Water depth below transducer (instruments)',
+        ),
         _metricCard(
           context,
           icon: Icons.speed,

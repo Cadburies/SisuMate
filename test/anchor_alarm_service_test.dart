@@ -208,6 +208,32 @@ void main() {
       );
     });
 
+    test('#304 scopeFromRadius is inverse of suggestRadiusMeters', () {
+      expect(
+        service.scopeFromRadius(radiusMeters: 30, depthMeters: 6),
+        5,
+      );
+      expect(
+        service.scopeFromRadius(
+          radiusMeters: 40,
+          depthMeters: 6,
+          freeboardMeters: 2,
+        ),
+        5, // 40 / (6+2)
+      );
+    });
+
+    test('#304 scopeFromRadius returns null for non-positive column', () {
+      expect(
+        service.scopeFromRadius(radiusMeters: 30, depthMeters: 0),
+        isNull,
+      );
+      expect(
+        service.scopeFromRadius(radiusMeters: 0, depthMeters: 6),
+        isNull,
+      );
+    });
+
     test('#293 swing trail drops near-duplicate points', () {
       var trail = <({double lat, double lon, DateTime at})>[];
       trail = service.appendSwingPoint(
