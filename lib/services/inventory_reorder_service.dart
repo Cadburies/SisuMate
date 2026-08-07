@@ -1,0 +1,88 @@
+import '../models/models.dart';
+
+/// #298 — local min-qty reorder suggestions from inventory → shopping lines.
+///
+/// No schema change: default threshold is 1 (quantity &lt; 1 or ≤ [defaultMinQty]).
+/// Optional note tags: `min:2` or `min=2` override per item.
+class InventoryReorderLine {
+  final InventoryItem item;
+  final double minQty;
+  final double shortfall;
+
+  const InventoryReorderLine({
+    required this.item,
+    required this.minQty,
+    required this.shortfall,
+  });
+
+  String get suggestedName => item.name;
+
+  double get suggestedQty => shortfall > 0 ? shortfall : minQty;
+}
+
+class InventoryReorderService {
+  InventoryReorderService._();
+
+  /// Default: suggest reorder when quantity is at or below this.
+  static const double defaultMinQty = 1;
+
+  /// Parse `min:N` / `min=N` from notes; else [defaultMinQty].
+  static double minQtyFor(InventoryItem item, {double fallback = defaultMinQty}) {
+    final notes = item.notes?.toLowerCase() ?? '';
+    final m = RegExp(r'\bmin\s*[:=]\s*(\d+(?:\.\d+)?)').firstMatch(notes);
+    if (m != null) {
+      return double.tryParse(m.group(1)!) ?? fallback;
+    }
+    return fallback;
+  }
+
+  /// Items at or below min qty (positive shortfall to restock to min).
+  static List<InventoryReorderLine> lowStock(
+    Iterable<InventoryItem> items, {
+    double defaultMin = defaultMinQty,
+  }) {
+    final out = <InventoryReorderLine>[];
+    for (final item in items) {
+      final min = minQtyFor(item, fallback: defaultMin);
+      if (item.quantity <= min) {
+        final short = (min - item.quantity).clamp(0.0, double.infinity);
+        // Always restock at least 1 unit when at/below min.
+        out.add(InventoryReorderLine(
+          item: item,
+          minQty: min,
+          shortfall: short <= 0 ? 1.0 : short,
+        ));
+      }
+    }
+    out.sort((a, b) => a.item.name.toLowerCase().compareTo(b.item.name.toLowerCase()));
+    return out;
+  }
+
+  /// Distinct location labels for filter UI (non-empty, sorted).
+  /// Case-insensitive dedupe; keeps first-seen casing.
+  static List<String> locationTree(Iterable<InventoryItem> items) {
+    final byKey = <String, String>{};
+    for (final i in items) {
+      final loc = i.location?.trim();
+      if (loc == null || loc.isEmpty) continue;
+      byKey.putIfAbsent(loc.toLowerCase(), () => loc);
+    }
+    final list = byKey.values.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return list;
+  }
+
+  /// Filter by location (case-insensitive exact match on trimmed location).
+  static List<InventoryItem> filterByLocation(
+    Iterable<InventoryItem> items,
+    String? location,
+  ) {
+    if (location == null || location.trim().isEmpty) {
+      return items.toList();
+    }
+    final key = location.trim().toLowerCase();
+    return items
+        .where((i) => (i.location ?? '').trim().toLowerCase() == key)
+        .toList();
+  }
+}

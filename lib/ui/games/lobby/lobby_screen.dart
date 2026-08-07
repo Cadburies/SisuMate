@@ -54,6 +54,8 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
   GameAiDifficulty _nextAiDifficulty = GameAiDifficulty.normal;
   /// GAI5: play style applied to the next AI seat added.
   GameAiPersona _nextAiPersona = GameAiPersona.balanced;
+  /// #299: named offline preset index into [GameAiSeatPreset.all].
+  int _presetIndex = 1; // balanced
   final List<BonsoirService> _discovered = [];
   StreamSubscription<LobbyPlayer>? _joinSub;
   StreamSubscription<String>? _leaveSub;
@@ -156,6 +158,15 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
 
   void _cycleNextAiPersona() {
     setState(() => _nextAiPersona = _nextAiPersona.next);
+  }
+
+  void _cycleAiPreset() {
+    setState(() {
+      _presetIndex = (_presetIndex + 1) % GameAiSeatPreset.all.length;
+      final p = GameAiSeatPreset.all[_presetIndex];
+      _nextAiDifficulty = p.difficulty;
+      _nextAiPersona = p.persona;
+    });
   }
 
   void _removeAiPlayer(String id) {
@@ -322,6 +333,8 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
           onCycleAiDifficulty: _cycleNextAiDifficulty,
           nextAiPersona: _nextAiPersona,
           onCycleAiPersona: _cycleNextAiPersona,
+          nextPresetLabel: GameAiSeatPreset.all[_presetIndex].label,
+          onCycleAiPreset: _cycleAiPreset,
           onRemoveAi: _removeAiPlayer,
         ),
       _LobbyView.joining => _JoiningView(
@@ -407,6 +420,8 @@ class _HostingView extends StatelessWidget {
   final VoidCallback onCycleAiDifficulty;
   final GameAiPersona nextAiPersona;
   final VoidCallback onCycleAiPersona;
+  final String nextPresetLabel;
+  final VoidCallback onCycleAiPreset;
 
   const _HostingView({
     required this.players,
@@ -417,6 +432,8 @@ class _HostingView extends StatelessWidget {
     required this.onCycleAiDifficulty,
     required this.nextAiPersona,
     required this.onCycleAiPersona,
+    required this.nextPresetLabel,
+    required this.onCycleAiPreset,
   });
 
   @override
@@ -480,6 +497,13 @@ class _HostingView extends StatelessWidget {
               selected: true,
               onSelected: (_) => onCycleAiPersona(),
               avatar: const Icon(Icons.psychology_outlined, size: 16),
+            ),
+            // #299 — night-watch casual / competitive presets (fully local).
+            FilterChip(
+              label: Text('Preset: $nextPresetLabel'),
+              selected: true,
+              onSelected: (_) => onCycleAiPreset(),
+              avatar: const Icon(Icons.nightlight_round, size: 16),
             ),
             FilledButton.tonalIcon(
               onPressed: onAddAi,

@@ -199,4 +199,38 @@ class ProvisionCalculator {
       consolidatedItems: consolidatedItems,
     );
   }
+
+  /// #295 — items on the provision list that are missing from My Pantry
+  /// (name match). Pure offline shopping-gap list for a passage.
+  static List<ProvisionItem> shoppingGaps({
+    required ProvisionResult provision,
+    required List<PantryIngredient> pantry,
+  }) {
+    final have = pantry
+        .map((p) => p.name.toLowerCase().trim())
+        .where((n) => n.isNotEmpty)
+        .toSet();
+    bool covered(String name) {
+      final n = name.toLowerCase().trim();
+      if (have.contains(n)) return true;
+      return have.any((h) => n.contains(h) || h.contains(n));
+    }
+
+    final gaps = <ProvisionItem>[];
+    for (final p in provision.consolidatedItems) {
+      if (!covered(p.name)) gaps.add(p);
+    }
+    for (final g in provision.portionedItems) {
+      if (!covered(g.name)) {
+        final qty = g.quantities.whereType<double>().fold<double>(0, (a, b) => a + b);
+        gaps.add(ProvisionItem(
+          g.name,
+          g.quantities.any((q) => q != null) ? qty : null,
+          g.unit,
+        ));
+      }
+    }
+    gaps.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return gaps;
+  }
 }

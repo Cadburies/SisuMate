@@ -65,14 +65,47 @@ class AnchorAlarmService {
     return angleDiff(boatBearing, centerDeg).abs() <= widthDeg / 2;
   }
 
-  /// Suggested geofence radius: scope (chain paid out) ≈ depth × ratio.
-  /// Depth-based, so it only applies when a live depth reading exists —
-  /// callers fall back to a fixed default otherwise.
+  /// Suggested geofence radius from scope ratio.
+  ///
+  /// Classic rule: scope ≈ (depth + freeboard) × ratio, so the swing radius
+  /// is that chain length (meters). [freeboardMeters] defaults to 0 when
+  /// unknown (depth-only). Depth-based, so it only applies when a live depth
+  /// reading exists — callers fall back to a fixed default otherwise.
   double suggestRadiusMeters({
     required double depthMeters,
     required double scopeRatio,
-  }) =>
-      depthMeters * scopeRatio;
+    double freeboardMeters = 0,
+  }) {
+    final waterColumn = depthMeters + (freeboardMeters < 0 ? 0 : freeboardMeters);
+    if (waterColumn <= 0 || scopeRatio <= 0) return 0;
+    return waterColumn * scopeRatio;
+  }
+
+  /// #293 — append a GPS breadcrumb while armed; drops points closer than
+  /// [minStepMeters] to the last sample so the trail stays light.
+  List<({double lat, double lon, DateTime at})> appendSwingPoint({
+    required List<({double lat, double lon, DateTime at})> trail,
+    required double lat,
+    required double lon,
+    DateTime? at,
+    double minStepMeters = 3,
+    int maxPoints = 500,
+  }) {
+    final t = at ?? DateTime.now().toUtc();
+    if (trail.isNotEmpty) {
+      final last = trail.last;
+      final d = distanceMeters(
+        lat1: last.lat,
+        lon1: last.lon,
+        lat2: lat,
+        lon2: lon,
+      );
+      if (d < minStepMeters) return trail;
+    }
+    final next = [...trail, (lat: lat, lon: lon, at: t)];
+    if (next.length <= maxPoints) return next;
+    return next.sublist(next.length - maxPoints);
+  }
 
   /// #266 — meters of margin remaining before the geofence perimeter
   /// (`radius − distanceFromAnchor`). Positive = still inside; zero = on

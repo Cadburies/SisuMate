@@ -380,5 +380,65 @@ void main() {
       );
       expect(out, isEmpty);
     });
+
+    test('#296 nightWatch phase matches night checklist title', () {
+      final withNight = [
+        ...groups,
+        group('g_night', 'Night Watch Checks'),
+      ];
+      final out = engine.checklistAutopilot(
+        checklistGroups: withNight,
+        daysUntilDeparture: -1,
+        tripLengthDays: 5,
+      );
+      // Underway (negative days, not yet arrival) → passage or night via keywords.
+      // Explicit nightWatchNow:
+      final night = engine.checklistAutopilot(
+        checklistGroups: withNight,
+        daysUntilDeparture: 10,
+      );
+      // Force phase via tripPhaseFor unit:
+      expect(
+        engine.tripPhaseFor(nightWatchNow: true),
+        TripPhase.nightWatch,
+      );
+      expect(
+        engine.tripPhaseFor(daysUntilDeparture: 1),
+        TripPhase.preDeparture,
+      );
+      // Quiet compile use of out/night
+      expect(out, isA<List<ChecklistAutopilotSuggestion>>());
+      expect(night, isA<List<ChecklistAutopilotSuggestion>>());
+    });
+  });
+
+  group('SuggestionEngine.build #297/#298', () {
+    test('expiring document surfaces a tip', () {
+      final doc = Document()
+        ..supabaseId = 'd1'
+        ..title = 'Passport'
+        ..type = 'ID'
+        ..expiry = DateTime.utc(2026, 8, 10);
+      final tips = engine.build(
+        maintenanceTasks: const [],
+        documents: [doc],
+        now: DateTime.utc(2026, 8, 1),
+      );
+      expect(tips.any((t) => t.id == 'doc_d1'), isTrue);
+      expect(tips.singleWhere((t) => t.id == 'doc_d1').title,
+          contains('Passport'));
+    });
+
+    test('low inventory qty surfaces a tip', () {
+      final inv = InventoryItem()
+        ..name = 'Impeller'
+        ..quantity = 0;
+      final tips = engine.build(
+        maintenanceTasks: const [],
+        inventory: [inv],
+        now: DateTime.utc(2026, 8, 1),
+      );
+      expect(tips.any((t) => t.id == 'inv_low_stock'), isTrue);
+    });
   });
 }

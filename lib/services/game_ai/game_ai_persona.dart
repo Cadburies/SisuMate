@@ -1,3 +1,5 @@
+import 'game_ai_difficulty.dart';
+
 /// GAI5: offline bot *style* for multiplayer AI seats — orthogonal to
 /// [GameAiDifficulty] (skill). Same skill, different risk appetite.
 enum GameAiPersona {
@@ -83,4 +85,53 @@ enum GameAiPersona {
         GameAiPersona.tight => 0.05,
         GameAiPersona.chaos => 0.45,
       };
+}
+
+/// #299 — named offline presets for lobby (difficulty + persona).
+///
+/// Fully local; no LLM. Night-watch casual vs competitive table.
+class GameAiSeatPreset {
+  final String id;
+  final String label;
+  final GameAiDifficulty difficulty;
+  final GameAiPersona persona;
+  final String blurb;
+
+  const GameAiSeatPreset({
+    required this.id,
+    required this.label,
+    required this.difficulty,
+    required this.persona,
+    required this.blurb,
+  });
+
+  static const nightWatchCasual = GameAiSeatPreset(
+    id: 'night_watch_casual',
+    label: 'Night-watch casual',
+    difficulty: GameAiDifficulty.easy,
+    persona: GameAiPersona.chaos,
+    blurb: 'Soft AI + unpredictable — good for 0200 drinks watch.',
+  );
+
+  static const competitive = GameAiSeatPreset(
+    id: 'competitive',
+    label: 'Competitive',
+    difficulty: GameAiDifficulty.hard,
+    persona: GameAiPersona.tight,
+    blurb: 'Hard + tight — presses skill, few soft bluffs.',
+  );
+
+  static const balancedTable = GameAiSeatPreset(
+    id: 'balanced_table',
+    label: 'Balanced table',
+    difficulty: GameAiDifficulty.normal,
+    persona: GameAiPersona.balanced,
+    blurb: 'Default EV-ish play for mixed skill tables.',
+  );
+
+  static const all = <GameAiSeatPreset>[
+    nightWatchCasual,
+    balancedTable,
+    competitive,
+  ];
 }

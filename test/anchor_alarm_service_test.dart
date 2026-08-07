@@ -196,6 +196,41 @@ void main() {
         30,
       );
     });
+
+    test('#293 freeboard increases suggested radius', () {
+      expect(
+        service.suggestRadiusMeters(
+          depthMeters: 6,
+          scopeRatio: 5,
+          freeboardMeters: 2,
+        ),
+        40, // (6+2)*5
+      );
+    });
+
+    test('#293 swing trail drops near-duplicate points', () {
+      var trail = <({double lat, double lon, DateTime at})>[];
+      trail = service.appendSwingPoint(
+        trail: trail,
+        lat: 0,
+        lon: 0,
+        at: DateTime.utc(2026, 8, 1),
+      );
+      trail = service.appendSwingPoint(
+        trail: trail,
+        lat: 0.000001, // ~0.1 m — under 3 m step
+        lon: 0,
+        at: DateTime.utc(2026, 8, 1, 0, 1),
+      );
+      expect(trail, hasLength(1));
+      trail = service.appendSwingPoint(
+        trail: trail,
+        lat: 0.0001, // ~11 m
+        lon: 0,
+        at: DateTime.utc(2026, 8, 1, 0, 2),
+      );
+      expect(trail, hasLength(2));
+    });
   });
 
   group('#266 — info-tab geometry helpers', () {

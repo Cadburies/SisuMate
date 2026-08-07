@@ -33,6 +33,9 @@ class ChecklistAutopilotSuggestion {
   const ChecklistAutopilotSuggestion({required this.group, required this.reason});
 }
 
+/// #296 — trip-phase for checklist autopilot templates.
+enum TripPhase { preDeparture, nightWatch, arrival, passage }
+
 class BoatSuggestion {
   final String id;
   final String title;
@@ -71,6 +74,10 @@ class SuggestionEngine {
     DateTime? lastLogDate,
     /// BAI7: optional fuel/water runway estimates (same shape as readiness).
     List<TankBurnEstimate> fuelEstimates = const [],
+    /// #297: documents with optional [Document.expiry].
+    List<Document> documents = const [],
+    /// #298: inventory rows for min-qty low-stock tips.
+    List<InventoryItem> inventory = const [],
   }) {
     final at = now ?? DateTime.now().toUtc();
     final out = <BoatSuggestion>[];
@@ -158,6 +165,51 @@ class SuggestionEngine {
             'left from recent fills$rangeBit — top up before a longer passage.',
         severity: days <= 2 ? SuggestionSeverity.urgent : SuggestionSeverity.watch,
         routePath: '/fuel',
+      ));
+    }
+
+    // #297: document expiry countdown (passport / insurance / radio).
+    for (final d in documents) {
+      final exp = d.expiry?.toUtc();
+      if (exp == null) continue;
+      final day = DateTime.utc(at.year, at.month, at.day);
+      final expDay = DateTime.utc(exp.year, exp.month, exp.day);
+      final days = expDay.difference(day).inDays;
+      if (days > 90) continue;
+      out.add(BoatSuggestion(
+        id: 'doc_${d.supabaseId.isNotEmpty ? d.supabaseId : d.id}',
+        title: days < 0
+            ? 'Expired: ${d.title}'
+            : days == 0
+                ? 'Expires today: ${d.title}'
+                : 'Expiring soon: ${d.title}',
+        detail: days < 0
+            ? '${d.type} expired ${-days} day(s) ago — renew before clearance.'
+            : '${d.type} expires in $days day(s). Keep a copy offline in Documents.',
+        severity: days <= 14
+            ? SuggestionSeverity.urgent
+            : SuggestionSeverity.watch,
+        routePath: '/documents',
+      ));
+    }
+
+    // #298: low inventory qty (default min 1; notes may set min:N).
+    var lowStockCount = 0;
+    for (final item in inventory) {
+      final notes = item.notes?.toLowerCase() ?? '';
+      final m = RegExp(r'\bmin\s*[:=]\s*(\d+(?:\.\d+)?)').firstMatch(notes);
+      final min = m != null ? (double.tryParse(m.group(1)!) ?? 1.0) : 1.0;
+      if (item.quantity <= min) lowStockCount++;
+    }
+    if (lowStockCount > 0) {
+      out.add(BoatSuggestion(
+        id: 'inv_low_stock',
+        title: lowStockCount == 1
+            ? '1 spare at/below min qty'
+            : '$lowStockCount spares at/below min qty',
+        detail: 'Restock from Inventory (or add shopping lines) before passage.',
+        severity: SuggestionSeverity.watch,
+        routePath: '/inventory',
       ));
     }
 
@@ -287,7 +339,63 @@ class SuggestionEngine {
       suggest('watch', 'Multi-day passage — plan watch monitoring');
     }
 
+    // #296 — trip-phase templates (keyword match on checklist titles).
+    // Callers pass phase via daysUntilDeparture / tripLength; we also expose
+    // explicit phase helper below for UI chips.
+    final phase = tripPhaseFor(
+      daysUntilDeparture: daysUntilDeparture,
+      tripLengthDays: tripLengthDays,
+    );
+    switch (phase) {
+      case TripPhase.preDeparture:
+        // Avoid bare "departure" — it matches "One Week Before Departure".
+        suggest('pre-departure', 'Pre-departure checklist');
+        suggest('pre departure', 'Pre-departure checklist');
+        suggest('cast off', 'Pre-departure checklist');
+        suggest('leave dock', 'Pre-departure checklist');
+      case TripPhase.nightWatch:
+        suggest('night watch', 'Night watch template');
+        suggest('overnight', 'Night watch template');
+        suggest('night-watch', 'Night watch template');
+      case TripPhase.arrival:
+        suggest('arrival', 'Arrival / dock checklist');
+        suggest('docking', 'Arrival / dock checklist');
+        suggest('mooring', 'Arrival / dock checklist');
+        suggest('harbour', 'Arrival / dock checklist');
+      case TripPhase.passage:
+        suggest('underway', 'Underway / passage checklist');
+        suggest('passage plan', 'Underway / passage checklist');
+      case null:
+        break;
+    }
+
     return out;
+  }
+
+  /// #296 — coarse trip phase for autopilot templates.
+  TripPhase? tripPhaseFor({
+    int? daysUntilDeparture,
+    int? tripLengthDays,
+    /// When true, treat as currently on night watch (UI toggle / time-of-day).
+    bool nightWatchNow = false,
+  }) {
+    if (nightWatchNow) return TripPhase.nightWatch;
+    if (daysUntilDeparture != null && daysUntilDeparture <= 1) {
+      return TripPhase.preDeparture;
+    }
+    if (daysUntilDeparture != null &&
+        daysUntilDeparture < 0 &&
+        tripLengthDays != null &&
+        -daysUntilDeparture >= tripLengthDays - 1) {
+      return TripPhase.arrival;
+    }
+    if (daysUntilDeparture != null && daysUntilDeparture < 0) {
+      return TripPhase.passage;
+    }
+    if (daysUntilDeparture != null && daysUntilDeparture <= 7) {
+      return TripPhase.preDeparture;
+    }
+    return null;
   }
 
   /// Public so callers outside this engine (e.g. a maintenance-task list

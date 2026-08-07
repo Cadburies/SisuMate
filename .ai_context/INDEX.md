@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** #294 fuel range UI, #292 polar coverage, #288 local history, #291 wave speed factor.
-- **Open backlog:** `gh issue list` — #291 offline pack/currents still open; P3 #293–#301.
+- **Last (grok):** closed remaining #291–#301 offline-ops wave (pack/scope/reorder/debrief/watch/…).
+- **Open backlog:** `gh issue list` (should be thin; new work only).
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

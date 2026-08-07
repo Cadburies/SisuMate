@@ -291,5 +291,32 @@ void main() {
       expect(result.portionedItems, isEmpty);
       expect(result.allergenWarnings, isEmpty);
     });
+
+    test('#295 shoppingGaps lists provision items missing from pantry', () {
+      final plan = MealPlan()
+        ..guestCount = 2
+        ..numberOfDays = 1
+        ..startDate = DateTime.utc(2026, 8, 3) // Monday
+        ..slots = [
+          _slot(0, 'dinner', 'r1', 'Pasta'),
+        ];
+      final result = ProvisionCalculator.compute(
+        plan: plan,
+        ingredientsByRecipe: {
+          'r1': [
+            _ingredient('Pasta', quantity: 200, unit: 'g'),
+            _ingredient('Olive Oil', quantity: 2, unit: 'tbsp'),
+          ],
+        },
+        pantry: [_pantryItem('Olive Oil', category: 'pantry')],
+        profiles: const [],
+      );
+      final gaps = ProvisionCalculator.shoppingGaps(
+        provision: result,
+        pantry: [_pantryItem('Olive Oil', category: 'pantry')],
+      );
+      expect(gaps.map((g) => g.name), contains('Pasta'));
+      expect(gaps.map((g) => g.name), isNot(contains('Olive Oil')));
+    });
   });
 }

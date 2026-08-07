@@ -284,6 +284,10 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
       }
       final windDirDeg = sample!.windDirDeg!;
       final windSpeedKt = sample.windMs! / UnitConverter.msPerKnot;
+      // #291 — use marine Hs when present (degrades to wind-only if missing).
+      final waveHs = bundle.marine.isNotEmpty
+          ? bundle.marine.first.waveHeightM
+          : null;
       final route = computeIsochroneRoute(
         start: (lat: _wps.first.lat, lon: _wps.first.lon),
         end: (lat: _wps.last.lat, lon: _wps.last.lon),
@@ -291,6 +295,9 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
         windAt: ({required lat, required lon, required time}) =>
             (windDirDeg: windDirDeg, windSpeedKt: windSpeedKt),
         startTime: DateTime.now(),
+        waveAt: waveHs == null
+            ? null
+            : ({required lat, required lon, required time}) => waveHs,
       );
       if (!mounted) return;
       setState(() => _computedRoute = route);
