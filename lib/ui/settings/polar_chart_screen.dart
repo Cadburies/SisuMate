@@ -392,17 +392,20 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
             ),
             const SizedBox(height: 12),
           ],
+          // #316 — clip + expand so the painter fills the tile and never
+          // bleeds under legend/intro text below.
           DecoratedBox(
             decoration: BoxDecoration(
               color: SisuColors.getTileColor(isDark),
               borderRadius: BorderRadius.circular(12),
               boxShadow: SisuColors.tileElevation(isDark),
             ),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: 1,
                 child: CustomPaint(
+                  key: const ValueKey('polar_diagram_paint'),
                   painter: _PolarDiagramPainter(
                     curvesBySea: curves,
                     focusTws: _focusTws,
@@ -411,6 +414,9 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
                         .withValues(alpha: 0.35),
                     labelColor: SisuColors.getTextSecondaryColor(isDark),
                   ),
+                  // Force layout to the AspectRatio constraints (painter
+                  // alone prefers Size.zero under loose mins).
+                  child: const SizedBox.expand(),
                 ),
               ),
             ),
@@ -975,7 +981,12 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
   }
 }
 
-/// Half-polar diagram: TWA 0° at top, 180° at bottom; radius = boat speed.
+/// Full polar diagram centered in its tile: TWA 0° at top, 180° at bottom;
+/// radius = boat speed. Port/starboard mirrored (symmetric polars).
+///
+/// #316 — previous half-polar used origin near the top of a square tile so
+/// curves sat high/off the painted area and could bleed past the tile under
+/// following text (no clip + non-filling CustomPaint).
 class _PolarDiagramPainter extends CustomPainter {
   final Map<String, List<PolarPoint>> curvesBySea;
   final double? focusTws;
@@ -993,8 +1004,21 @@ class _PolarDiagramPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height * 0.08);
-    final maxR = math.min(size.width / 2 - 16, size.height * 0.88);
+    if (size.width <= 0 || size.height <= 0) return;
+
+    // Hard clip to the paint bounds so nothing escapes the tile.
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+
+    // Inset so TWA/speed labels stay inside the clipped rect.
+    const labelPad = 18.0;
+    final center = Offset(size.width / 2, size.height / 2);
+    final maxR =
+        math.min(size.width, size.height) / 2 - labelPad;
+    if (maxR <= 4) {
+      canvas.restore();
+      return;
+    }
 
     double maxSpeed = 8;
     for (final pts in curvesBySea.values) {
@@ -1010,26 +1034,23 @@ class _PolarDiagramPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    // Speed rings
+    // Speed rings (full circles)
     for (var kn = 2.0; kn <= maxSpeed; kn += 2) {
       final r = maxR * (kn / maxSpeed);
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: r),
-        -math.pi / 2,
-        math.pi,
-        false,
-        gridPaint,
-      );
+      canvas.drawCircle(center, r, gridPaint);
     }
 
-    // TWA rays every 30°
+    // TWA rays every 30° on both port and starboard
     for (var twa = 0.0; twa <= 180.0; twa += 30) {
-      final a = _angleForTwa(twa);
-      final end = center + Offset(math.cos(a), math.sin(a)) * maxR;
-      canvas.drawLine(center, end, gridPaint);
+      for (final stbd in const [true, false]) {
+        // Skip drawing the 0°/180° ray twice.
+        if (!stbd && (twa == 0.0 || twa == 180.0)) continue;
+        final a = _angleForTwa(twa, starboard: stbd);
+        final end = center + Offset(math.cos(a), math.sin(a)) * maxR;
+        canvas.drawLine(center, end, gridPaint);
+      }
     }
 
-    // Labels: 0 / 90 / 180
     final tp = TextPainter(textDirection: TextDirection.ltr);
     void label(String s, Offset o) {
       tp.text = TextSpan(
@@ -1037,15 +1058,23 @@ class _PolarDiagramPainter extends CustomPainter {
         style: TextStyle(color: labelColor, fontSize: 10),
       );
       tp.layout();
-      tp.paint(canvas, o - Offset(tp.width / 2, tp.height / 2));
+      // Keep label fully inside [0, size].
+      final dx = (o.dx - tp.width / 2).clamp(2.0, size.width - tp.width - 2);
+      final dy =
+          (o.dy - tp.height / 2).clamp(2.0, size.height - tp.height - 2);
+      tp.paint(canvas, Offset(dx, dy));
     }
 
-    label('0°', center + const Offset(0, -10));
-    label('90°', center + Offset(maxR + 14, 0));
-    label('180°', center + Offset(0, maxR + 12));
-    label('${maxSpeed.toStringAsFixed(0)} kn', center + Offset(-maxR * 0.55, maxR * 0.55));
+    label('0°', center + Offset(0, -maxR - 2));
+    label('90°', center + Offset(maxR + 2, 0));
+    label('180°', center + Offset(0, maxR + 2));
+    label('90° P', center + Offset(-maxR - 2, 0));
+    label(
+      '${maxSpeed.toStringAsFixed(0)} kn',
+      center + Offset(maxR * 0.55, maxR * 0.55),
+    );
 
-    // Draw curves: for each sea state, group by TWS and draw
+    // Curves: each sea state, group by TWS; mirror port/starboard.
     for (final sea in SeaState.chartOrder) {
       final pts = curvesBySea[sea.wireValue];
       if (pts == null || pts.isEmpty) continue;
@@ -1059,40 +1088,15 @@ class _PolarDiagramPainter extends CustomPainter {
         final sorted = [...group]
           ..sort((a, b) => polarNormalizeTwa(a.twaDeg)
               .compareTo(polarNormalizeTwa(b.twaDeg)));
-        if (sorted.length < 2) {
-          if (sorted.length == 1) {
-            final p = sorted.first;
-            final pos = _point(center, maxR, maxSpeed, p);
-            canvas.drawCircle(
-              pos,
-              3.5,
-              Paint()..color = color,
-            );
-          }
-          continue;
-        }
-        final path = Path();
-        for (var i = 0; i < sorted.length; i++) {
-          final pos = _point(center, maxR, maxSpeed, sorted[i]);
-          if (i == 0) {
-            path.moveTo(pos.dx, pos.dy);
-          } else {
-            path.lineTo(pos.dx, pos.dy);
-          }
-        }
-        canvas.drawPath(
-          path,
-          Paint()
-            ..color = color
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2.2
-            ..strokeJoin = StrokeJoin.round,
-        );
-        for (final p in sorted) {
-          canvas.drawCircle(
-            _point(center, maxR, maxSpeed, p),
-            2.5,
-            Paint()..color = color,
+        for (final stbd in const [true, false]) {
+          _drawCurveSide(
+            canvas: canvas,
+            sorted: sorted,
+            center: center,
+            maxR: maxR,
+            maxSpeed: maxSpeed,
+            color: color,
+            starboard: stbd,
           );
         }
       }
@@ -1108,26 +1112,74 @@ class _PolarDiagramPainter extends CustomPainter {
         canvas,
         Offset(
           (size.width - tp.width) / 2,
-          size.height * 0.45,
+          (size.height - tp.height) / 2,
         ),
+      );
+    }
+
+    canvas.restore();
+  }
+
+  void _drawCurveSide({
+    required Canvas canvas,
+    required List<PolarPoint> sorted,
+    required Offset center,
+    required double maxR,
+    required double maxSpeed,
+    required Color color,
+    required bool starboard,
+  }) {
+    if (sorted.isEmpty) return;
+    if (sorted.length == 1) {
+      canvas.drawCircle(
+        _point(center, maxR, maxSpeed, sorted.first, starboard: starboard),
+        3.5,
+        Paint()..color = color,
+      );
+      return;
+    }
+    final path = Path();
+    for (var i = 0; i < sorted.length; i++) {
+      final pos =
+          _point(center, maxR, maxSpeed, sorted[i], starboard: starboard);
+      if (i == 0) {
+        path.moveTo(pos.dx, pos.dy);
+      } else {
+        path.lineTo(pos.dx, pos.dy);
+      }
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..strokeJoin = StrokeJoin.round,
+    );
+    for (final p in sorted) {
+      canvas.drawCircle(
+        _point(center, maxR, maxSpeed, p, starboard: starboard),
+        2.5,
+        Paint()..color = color,
       );
     }
   }
 
-  /// 0° TWA = up; 180° = down; angles clockwise to starboard.
-  double _angleForTwa(double twaDeg) {
+  /// 0° TWA = up; 180° = down; starboard clockwise, port counter-clockwise.
+  double _angleForTwa(double twaDeg, {required bool starboard}) {
     final t = polarNormalizeTwa(twaDeg);
-    // Screen: -pi/2 is up; increase clockwise.
-    return -math.pi / 2 + (t / 180.0) * math.pi;
+    final signed = starboard ? t : -t;
+    return -math.pi / 2 + (signed / 180.0) * math.pi;
   }
 
   Offset _point(
     Offset center,
     double maxR,
     double maxSpeed,
-    PolarPoint p,
-  ) {
-    final a = _angleForTwa(p.twaDeg);
+    PolarPoint p, {
+    required bool starboard,
+  }) {
+    final a = _angleForTwa(p.twaDeg, starboard: starboard);
     final r = maxR * (p.boatSpeedKt / maxSpeed).clamp(0.0, 1.0);
     return center + Offset(math.cos(a), math.sin(a)) * r;
   }

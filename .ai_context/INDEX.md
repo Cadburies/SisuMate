@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** #310 quantity model Phase A/C (packs, provision shortfall, freezer bags).
-- **Open:** #313 HA token help; #310 follow-ups (guest drink prefs, bar on-hand UI).
+- **Last (grok):** #316 polar diagram clip/fill (centered full polar in tile).
+- **Open:** backlog empty of open issues after #316; #310 follow-ups if reopened.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

@@ -103,19 +103,30 @@ void main() {
     expect(find.text('Phone IMU suggested sea state'), findsNothing);
   });
 
-  testWidgets('#308 polar chart is above the descriptive intro text',
+  testWidgets('#308/#316 polar chart fills tile above intro; non-zero size',
       (tester) async {
     await pumpPolar(tester);
 
-    final chart = find.byType(CustomPaint);
+    final chart = find.byKey(const ValueKey('polar_diagram_paint'));
     final intro = find.textContaining('Curves fill in from under-sail');
-    expect(chart, findsWidgets);
+    expect(chart, findsOneWidget);
     expect(intro, findsOneWidget);
 
-    final chartTop = tester.getTopLeft(chart.first).dy;
+    final chartTop = tester.getTopLeft(chart).dy;
     final introTop = tester.getTopLeft(intro).dy;
     expect(chartTop, lessThan(introTop),
         reason: 'diagram must sit above the long description (#308)');
+
+    // #316 — CustomPaint must actually fill the square tile (not Size.zero
+    // with paint bleeding under text below).
+    final size = tester.getSize(chart);
+    expect(size.width, greaterThan(100));
+    expect(size.height, greaterThan(100));
+    expect((size.width - size.height).abs(), lessThan(1.0),
+        reason: 'chart tile is 1:1 aspect');
+    final chartBottom = tester.getBottomLeft(chart).dy;
+    expect(chartBottom, lessThan(introTop),
+        reason: 'chart bounds must end above intro (#316 no bleed)');
   });
 
   testWidgets('Sea state tab shows working sea state + phone IMU card',
