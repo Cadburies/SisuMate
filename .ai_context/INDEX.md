@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** #308 polar chart above text; #312 HA IP/mDNS UX.
-- **Open:** #310 quantity model; #313 HA token help.
+- **Last (grok):** #310 quantity model Phase A/C (packs, provision shortfall, freezer bags).
+- **Open:** #313 HA token help; #310 follow-ups (guest drink prefs, bar on-hand UI).
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

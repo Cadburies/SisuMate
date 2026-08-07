@@ -27,6 +27,7 @@ import '../../services/recipe_allergen_service.dart';
 import '../../services/calorie_calculator.dart';
 import '../../services/recipe_share_service.dart';
 import '../../services/recipe_import_service.dart';
+import '../../services/quantity_model.dart';
 import '../../models/models.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
@@ -1604,15 +1605,49 @@ class ChefRecipeDetailScreenState extends ConsumerState<ChefRecipeDetailScreen> 
     List<RecipeIngredient> ingredients,
     List<PantryIngredient> pantryIngredients,
   ) async {
-    final missing =
-        _missingRecipeIngredientsPantry(ingredients, pantryIngredients);
-    if (missing.isEmpty) return;
+    // #310 — scale by servings and convert to purchase packs when catalog
+    // package size is known (not raw recipe grams as buy qty).
+    final model = const QuantityModel();
+    final byName = {
+      for (final p in pantryIngredients) p.name.toLowerCase().trim(): p,
+    };
     final repo = ref.read(shoppingRepositoryProvider);
     var addedCount = 0;
-    for (final ingredient in missing) {
-      final added = await repo.ensureInShopping(
+    for (final ingredient in ingredients) {
+      if (ingredient.isGarnish || ingredient.isOptional) continue;
+      final key = ingredient.name.toLowerCase().trim();
+      final pantry = byName[key];
+      // Boolean stocked (no amount) → covered (legacy).
+      if (pantry?.inMyPantry == true && pantry!.quantity == null) {
+        continue;
+      }
+      final needQty = ingredient.quantity == null
+          ? null
+          : ingredient.quantity! * _servings;
+      final purchase = pantry != null
+          ? PurchaseSpec.fromCatalog(
+              packageQty: pantry.quantity,
+              packageUnit: pantry.unit,
+              priceUnit: pantry.lastKnownPriceUnit,
+              price: pantry.lastKnownPrice,
+            )
+          : const PurchaseSpec(unitLabel: 'pack');
+      final have = pantry == null || !pantry.inMyPantry
+          ? 0.0
+          : (model.pantryOnHandBase(pantry, needUnit: ingredient.unit) ?? 0);
+      final line = model.shopLine(
         name: ingredient.name,
+        needQty: needQty,
+        needUnit: ingredient.unit,
+        haveBase: have,
+        purchase: purchase,
+      );
+      if (line == null) continue;
+      final added = await repo.ensureInShopping(
+        name: line.name,
         origin: 'pantry',
+        quantity: line.packages,
+        unit: line.unitLabel,
       );
       if (added) addedCount++;
     }
@@ -1622,7 +1657,7 @@ class ChefRecipeDetailScreenState extends ConsumerState<ChefRecipeDetailScreen> 
           content: Text(
             addedCount == 0
                 ? 'All missing ingredients already on the shopping list'
-                : '$addedCount ingredient${addedCount == 1 ? '' : 's'} added to shopping',
+                : '$addedCount pack line${addedCount == 1 ? '' : 's'} added to shopping',
           ),
         ),
       );

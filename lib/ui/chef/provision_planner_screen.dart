@@ -51,6 +51,11 @@ class _ProvisionPlannerScreenState
         title: const Text('Provision List'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.add_shopping_cart_outlined),
+            tooltip: 'Add pack shortfall to shopping',
+            onPressed: () => _addPackGapsToShopping(context),
+          ),
+          IconButton(
             icon: const Icon(Icons.email_outlined),
             tooltip: 'Email provision list',
             onPressed: () => _emailList(context),
@@ -151,15 +156,21 @@ class _ProvisionPlannerScreenState
           const SizedBox(height: 16),
         ],
         if (result.portionedItems.isNotEmpty) ...[
-          Text('To Portion Individually',
+          Text('Freezer / butcher packs',
               style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            'One bag per meal — bag contents are already guest-scaled.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline),
+          ),
           const SizedBox(height: 6),
           ...result.portionedItems.map((r) => ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.set_meal_outlined,
                     color: SisuColors.completedBackground),
-                title: Text(r.formatted),
+                title: Text(r.freezerPackPlan),
+                subtitle: Text(r.formatted),
               )),
           const SizedBox(height: 16),
         ],
@@ -178,8 +189,90 @@ class _ProvisionPlannerScreenState
                     color: SisuColors.incompleteBackground),
                 title: Text(r.formatted),
               )),
+        // #310 — pack-aware shortfall for shopping.
+        ..._shopGapSection(context, result, pantry),
       ],
     );
+  }
+
+  List<Widget> _shopGapSection(
+    BuildContext context,
+    ProvisionResult result,
+    List<PantryIngredient> pantry,
+  ) {
+    final packs = ProvisionCalculator.shoppingPackGaps(
+      provision: result,
+      pantry: pantry,
+    );
+    if (packs.isEmpty) {
+      return [
+        const SizedBox(height: 16),
+        Text('Shopping shortfall',
+            style: Theme.of(context).textTheme.titleSmall),
+        Text('Nothing to buy — pantry covers the plan (or plan is empty).',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline)),
+      ];
+    }
+    return [
+      const SizedBox(height: 16),
+      Text('Shopping shortfall (packs)',
+          style: Theme.of(context).textTheme.titleSmall),
+      Text(
+        'Buy counts use package size from the catalog (e.g. 500 g bag), '
+        'not raw recipe grams.',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.outline),
+      ),
+      const SizedBox(height: 6),
+      ...packs.map((line) => ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.local_grocery_store_outlined),
+            title: Text(line.formatted),
+            subtitle: line.note != null ? Text(line.note!) : null,
+            trailing: line.lineEstimate != null
+                ? Text('\$${line.lineEstimate!.toStringAsFixed(2)}')
+                : null,
+          )),
+    ];
+  }
+
+  Future<void> _addPackGapsToShopping(BuildContext context) async {
+    final ingredientsByRecipe = await _ingredientsByRecipe;
+    final pantry = ref.read(pantryIngredientsProvider).asData?.value ?? [];
+    final profiles = ref.read(guestProfilesProvider).asData?.value ?? [];
+    final result = _compute(ingredientsByRecipe, pantry, profiles);
+    final packs = ProvisionCalculator.shoppingPackGaps(
+      provision: result,
+      pantry: pantry,
+    );
+    if (packs.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No pack shortfall to add')),
+        );
+      }
+      return;
+    }
+    final repo = ref.read(shoppingRepositoryProvider);
+    var added = 0;
+    for (final line in packs) {
+      final ok = await repo.ensureInShopping(
+        name: line.name,
+        origin: 'pantry',
+        quantity: line.packages,
+        unit: line.unitLabel,
+      );
+      if (ok) added++;
+    }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(added == 0
+            ? 'All shortfall lines already on the shopping list'
+            : 'Added $added pack line${added == 1 ? '' : 's'} to shopping'),
+      ));
+    }
   }
 
   Future<String> _buildProvisionText() async {
@@ -194,15 +287,26 @@ class _ProvisionPlannerScreenState
       ..writeln('${plan.guestCount} guests')
       ..writeln();
     if (result.portionedItems.isNotEmpty) {
-      buffer.writeln('To Portion Individually:');
+      buffer.writeln('Freezer / butcher packs:');
       for (final r in result.portionedItems) {
-        buffer.writeln('- ${r.formatted}');
+        buffer.writeln('- ${r.freezerPackPlan}');
       }
       buffer.writeln();
     }
     buffer.writeln('Consolidated Provisions:');
     for (final r in result.consolidatedItems) {
       buffer.writeln('- ${r.formatted}');
+    }
+    final packs = ProvisionCalculator.shoppingPackGaps(
+      provision: result,
+      pantry: pantry,
+    );
+    if (packs.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('Shopping shortfall (packs):');
+      for (final line in packs) {
+        buffer.writeln('- ${line.formatted}');
+      }
     }
     return buffer.toString();
   }

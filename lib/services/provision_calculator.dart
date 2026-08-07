@@ -1,4 +1,5 @@
 import '../models/models.dart';
+import 'quantity_model.dart';
 import 'recipe_allergen_service.dart';
 import 'trip_schedule.dart';
 
@@ -74,6 +75,29 @@ class PortionedGroup {
       return '${qtyLabel.isEmpty ? name : qtyLabel} (${notes[i]})';
     });
     return '$name — ${entries.join(', ')}';
+  }
+
+  /// #310 — freezer / butcher bag plan: one bag per meal occurrence.
+  /// e.g. "3 bags × (6 × 500 g) — Mon Dinner, Wed Dinner, Fri Dinner"
+  String get freezerPackPlan {
+    if (count == 0) return name;
+    if (_isUniform) {
+      final perMeal = _qtyLabel(quantities.first, unit);
+      if (perMeal.isEmpty) {
+        return '$count freezer bag${count == 1 ? '' : 's'} (${notes.join(', ')})';
+      }
+      // quantities already guest-scaled, so "6 × 500 g" style is per-meal total.
+      return '$count bag${count == 1 ? '' : 's'} × $perMeal '
+          '(${notes.join(', ')}) · trip total '
+          '${_qtyLabel((quantities.first ?? 0) * count, unit)}';
+    }
+    return formatted;
+  }
+
+  double? get tripTotalQuantity {
+    final nums = quantities.whereType<double>();
+    if (nums.isEmpty) return null;
+    return nums.fold<double>(0, (a, b) => a + b);
   }
 }
 
@@ -202,11 +226,14 @@ class ProvisionCalculator {
 
   /// #295 — items on the provision list that are missing from My Pantry
   /// (name match). Pure offline shopping-gap list for a passage.
+  ///
+  /// Prefer [shoppingPackGaps] (#310) for pack-aware shopping lines.
   static List<ProvisionItem> shoppingGaps({
     required ProvisionResult provision,
     required List<PantryIngredient> pantry,
   }) {
     final have = pantry
+        .where((p) => p.inMyPantry)
         .map((p) => p.name.toLowerCase().trim())
         .where((n) => n.isNotEmpty)
         .toSet();
@@ -222,7 +249,8 @@ class ProvisionCalculator {
     }
     for (final g in provision.portionedItems) {
       if (!covered(g.name)) {
-        final qty = g.quantities.whereType<double>().fold<double>(0, (a, b) => a + b);
+        final qty =
+            g.quantities.whereType<double>().fold<double>(0, (a, b) => a + b);
         gaps.add(ProvisionItem(
           g.name,
           g.quantities.any((q) => q != null) ? qty : null,
@@ -232,5 +260,88 @@ class ProvisionCalculator {
     }
     gaps.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return gaps;
+  }
+
+  /// #310 — amount-aware shortfall as **purchase pack** shopping lines.
+  ///
+  /// Uses catalog package size + price from matching pantry rows when present;
+  /// `ceil((need − have) / packSize)`.
+  ///
+  /// Stock rules:
+  /// - not in My Pantry → have = 0
+  /// - in My Pantry with convertible [quantity] → that on-hand amount
+  /// - in My Pantry with null quantity → treated as covered (legacy boolean)
+  /// - in My Pantry with quantity 0 → have = 0 (still short)
+  static List<ShopPackLine> shoppingPackGaps({
+    required ProvisionResult provision,
+    required List<PantryIngredient> pantry,
+    QuantityModel model = const QuantityModel(),
+  }) {
+    final byName = <String, PantryIngredient>{
+      for (final p in pantry) p.name.toLowerCase().trim(): p,
+    };
+
+    PantryIngredient? match(String name) {
+      final n = name.toLowerCase().trim();
+      if (byName.containsKey(n)) return byName[n];
+      for (final e in byName.entries) {
+        if (n.contains(e.key) || e.key.contains(n)) return e.value;
+      }
+      return null;
+    }
+
+    final lines = <ShopPackLine>[];
+
+    void addNeed(String name, double? qty, String? unit, {String? note}) {
+      final p = match(name);
+      // Seed quantity/unit are catalog package size; price unit is pack label.
+      final purchase = p != null
+          ? PurchaseSpec.fromCatalog(
+              packageQty: p.quantity,
+              packageUnit: p.unit,
+              priceUnit: p.lastKnownPriceUnit,
+              price: p.lastKnownPrice,
+            )
+          : const PurchaseSpec(unitLabel: 'pack');
+
+      double haveBase = 0;
+      if (p != null && p.inMyPantry) {
+        if (p.quantity == null) {
+          // Boolean stocked, no amount — legacy covered.
+          return;
+        }
+        final oh = model.pantryOnHandBase(p, needUnit: unit ?? purchase.sizeUnit);
+        // When stocked, seed qty is often "one full package" as on-hand.
+        haveBase = oh ?? 0;
+        // If stocked amount equals catalog package and we only know package
+        // via same fields, on-hand is one pack of that measure — OK.
+      }
+
+      final line = model.shopLine(
+        name: name,
+        needQty: qty,
+        needUnit: unit,
+        haveBase: haveBase,
+        purchase: purchase,
+        note: note,
+      );
+      if (line != null) lines.add(line);
+    }
+
+    for (final p in provision.consolidatedItems) {
+      addNeed(p.name, p.quantity, p.unit);
+    }
+    for (final g in provision.portionedItems) {
+      addNeed(
+        g.name,
+        g.tripTotalQuantity,
+        g.unit,
+        note: g.freezerPackPlan,
+      );
+    }
+
+    lines.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return lines;
   }
 }

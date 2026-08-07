@@ -19,11 +19,13 @@ PantryIngredient _pantryItem(
   String name, {
   required String category,
   List<String> allergenTags = const [],
+  bool inMyPantry = true,
 }) {
   return PantryIngredient()
     ..name = name
     ..category = category
-    ..allergenTags = allergenTags;
+    ..allergenTags = allergenTags
+    ..inMyPantry = inMyPantry;
 }
 
 MealPlanSlot _slot(int dayOffset, String mealType, String recipeId, String recipeName) {
@@ -317,6 +319,85 @@ void main() {
       );
       expect(gaps.map((g) => g.name), contains('Pasta'));
       expect(gaps.map((g) => g.name), isNot(contains('Olive Oil')));
+    });
+
+    test('#310 shoppingPackGaps couscous bags and empty stock', () {
+      // 3 dinners × 6 guests × 50 g = 900 g couscous.
+      final plan = MealPlan()
+        ..guestCount = 6
+        ..numberOfDays = 7
+        ..startDate = DateTime.utc(2026, 8, 3)
+        ..slots = [
+          _slot(0, 'dinner', 'r1', 'Couscous night'),
+          _slot(2, 'dinner', 'r1', 'Couscous night'),
+          _slot(4, 'dinner', 'r1', 'Couscous night'),
+        ];
+      final result = ProvisionCalculator.compute(
+        plan: plan,
+        ingredientsByRecipe: {
+          'r1': [_ingredient('Couscous', quantity: 50, unit: 'g')],
+        },
+        pantry: const [],
+        profiles: const [],
+      );
+      final couscous = result.consolidatedItems
+          .firstWhere((i) => i.name == 'Couscous');
+      expect(couscous.quantity, 900); // 50×6×3
+
+      final catalog = PantryIngredient()
+        ..name = 'Couscous'
+        ..quantity = 500
+        ..unit = 'g'
+        ..lastKnownPrice = 4
+        ..lastKnownPriceUnit = '500g pack'
+        ..inMyPantry = false;
+
+      final packs = ProvisionCalculator.shoppingPackGaps(
+        provision: result,
+        pantry: [catalog],
+      );
+      expect(packs, hasLength(1));
+      expect(packs.single.packages, 2);
+      expect(packs.single.lineEstimate, 8);
+      expect(packs.single.unitLabel, contains('500g'));
+
+      // On hand 500 g → 1 bag short.
+      catalog
+        ..inMyPantry = true
+        ..quantity = 500;
+      final packs2 = ProvisionCalculator.shoppingPackGaps(
+        provision: result,
+        pantry: [catalog],
+      );
+      expect(packs2.single.packages, 1);
+    });
+
+    test('#310 freezer pack plan for protein meals', () {
+      final plan = MealPlan()
+        ..guestCount = 6
+        ..numberOfDays = 7
+        ..startDate = DateTime.utc(2026, 8, 3) // Monday
+        ..slots = [
+          _slot(0, 'dinner', 'r1', 'Tenderloin'),
+          _slot(2, 'dinner', 'r1', 'Tenderloin'),
+          _slot(4, 'dinner', 'r1', 'Tenderloin'),
+        ];
+      final result = ProvisionCalculator.compute(
+        plan: plan,
+        ingredientsByRecipe: {
+          'r1': [
+            _ingredient('Beef Tenderloin', quantity: 500, unit: 'g'),
+          ],
+        },
+        pantry: const [],
+        profiles: const [],
+      );
+      expect(result.portionedItems, hasLength(1));
+      final g = result.portionedItems.first;
+      expect(g.count, 3);
+      expect(g.tripTotalQuantity, 9000); // 500×6×3
+      expect(g.freezerPackPlan, contains('3 bag'));
+      expect(g.freezerPackPlan.toLowerCase(), contains('trip total'));
     });
   });
 }

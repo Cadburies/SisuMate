@@ -156,14 +156,19 @@ class ShoppingRepositoryImpl implements ShoppingRepository {
     await syncService.queueOutgoingChange('shopping_items', item.toJson());
     // Buying stocks matching bar/pantry ingredients → cocktail/menu counts refresh.
     if (item.isBought) {
-      await _stockIngredientsMatching(item.name);
+      await _stockIngredientsMatching(item.name, item: item);
     }
   }
 
   /// Mark any Bar + Pantry rows with this name as in-stock (case-insensitive).
-  Future<void> _stockIngredientsMatching(String name) async {
+  ///
+  /// #310 — first mark-bought: set on-hand to packs × catalog package size
+  /// (seed qty is package size while not stocked). Re-buys add another pack.
+  Future<void> _stockIngredientsMatching(String name, {ShoppingItem? item}) async {
     final lower = name.toLowerCase().trim();
     if (lower.isEmpty) return;
+
+    final packs = item == null ? 1 : (item.quantity < 1 ? 1 : item.quantity);
 
     final barRows = await db.select(db.barIngredients).get();
     var barChanged = false;
@@ -181,11 +186,24 @@ class ShoppingRepositoryImpl implements ShoppingRepository {
     final pantryRows = await db.select(db.pantryIngredients).get();
     var pantryChanged = false;
     for (final row in pantryRows) {
-      if (row.name.toLowerCase().trim() != lower || row.inMyPantry) continue;
+      if (row.name.toLowerCase().trim() != lower) continue;
+      final packageSize = row.quantity;
+      final double? onHand;
+      if (!row.inMyPantry) {
+        // First stock: N full packages.
+        onHand = packageSize == null ? null : packageSize * packs;
+      } else if (packageSize != null) {
+        // Already stocked: quantity is on-hand; add N packages of same size.
+        // (Best-effort when package size ≈ previous on-hand unit.)
+        onHand = (row.quantity ?? 0) + packageSize * packs;
+      } else {
+        onHand = row.quantity;
+      }
       await (db.update(db.pantryIngredients)
             ..where((t) => t.supabaseId.equals(row.supabaseId)))
           .write(PantryIngredientsCompanion(
             inMyPantry: const Value(true),
+            quantity: onHand == null ? const Value.absent() : Value(onHand),
             lastModified: Value(DateTime.now().toUtc()),
           ));
       pantryChanged = true;
