@@ -82,8 +82,12 @@ String friendlyConnectionError(Object e) {
         'now.';
   }
   if (s.contains('failed host lookup') ||
-      s.contains('no address associated')) {
-    return "Can't find that address — check the Hub's network settings.";
+      s.contains('no address associated') ||
+      s.contains('name or service not known') ||
+      s.contains('nodename nor servname')) {
+    // #312 — DNS / mDNS failures; HA callers may append IP guidance.
+    return "Can't resolve that hostname — check spelling, or use the "
+        'device IP on the boat network (e.g. http://192.168.0.20:8123).';
   }
   if (s.contains('network is unreachable') ||
       s.contains('no route to host')) {

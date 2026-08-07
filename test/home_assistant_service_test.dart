@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -103,6 +105,39 @@ void main() {
     test('not configured when token missing', () {
       const svc = HomeAssistantService(baseUrl: 'http://ha.local:8123');
       expect(svc.isConfigured, isFalse);
+    });
+
+    test('#312 probeConnection DNS fail on .local suggests LAN IP', () async {
+      final client = MockClient((request) async {
+        throw const SocketException(
+          'Failed host lookup: \'homeassistant.local\'',
+        );
+      });
+      const svc = HomeAssistantService(
+        baseUrl: 'http://homeassistant.local:8123',
+        token: 'tok',
+      );
+
+      final r = await svc.probeConnection(client: client);
+      expect(r.ok, isFalse);
+      expect(r.detail!.toLowerCase(), contains('mdns'));
+      expect(r.detail, contains('192.168'));
+      expect(r.detail, contains('homeassistant.local'));
+    });
+
+    test('#312 probeConnection accepts plain IP base URL shape', () async {
+      final client = MockClient((request) async {
+        expect(request.url.host, '192.168.0.20');
+        expect(request.url.port, 8123);
+        return http.Response('{"message":"API running."}', 200);
+      });
+      const svc = HomeAssistantService(
+        baseUrl: 'http://192.168.0.20:8123',
+        token: 'tok',
+      );
+      final r = await svc.probeConnection(client: client);
+      expect(r.ok, isTrue);
+      expect(r.detail, contains('192.168.0.20'));
     });
   });
 }

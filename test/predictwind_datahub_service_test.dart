@@ -154,10 +154,12 @@ void main() {
     });
 
     test('maps a DNS lookup failure', () {
+      // #312 — guide sailors toward LAN IP when hostname fails (phones/mDNS).
       expect(
         friendlyConnectionError(
             Exception('Failed host lookup: remote.rdsensing.com')),
-        "Can't find that address — check the Hub's network settings.",
+        "Can't resolve that hostname — check spelling, or use the "
+        'device IP on the boat network (e.g. http://192.168.0.20:8123).',
       );
     });
 

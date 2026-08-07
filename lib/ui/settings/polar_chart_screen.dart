@@ -346,23 +346,24 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
     }.toList()
       ..sort();
 
+    // #308 — chart (and TWS filter / legend) first; long intro copy below.
+    final introCopy = Text(
+      'Curves fill in from under-sail samples (instruments online, '
+      'engines not showing revs). Smooth seas get the target polar; '
+      'rough seas build a separate, lower curve — that is why you often '
+      'cannot match the polar in chop.',
+      style: TextStyle(
+        color: SisuColors.getTextSecondaryColor(isDark),
+        fontSize: 13,
+        height: 1.35,
+      ),
+    );
+
     return RefreshIndicator(
       onRefresh: () => _refreshMeta(fetchInstruments: true),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          Text(
-            'Curves fill in from under-sail samples (instruments online, '
-            'engines not showing revs). Smooth seas get the target polar; '
-            'rough seas build a separate, lower curve — that is why you often '
-            'cannot match the polar in chop.',
-            style: TextStyle(
-              color: SisuColors.getTextSecondaryColor(isDark),
-              fontSize: 13,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 12),
           if (twsOptions.isNotEmpty) ...[
             Text(
               'True wind speed filter',
@@ -416,6 +417,8 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
           ),
           const SizedBox(height: 12),
           _legend(isDark, curves),
+          const SizedBox(height: 16),
+          introCopy,
           const SizedBox(height: 12),
           // #292 — measured-polar coverage + auto improve hint.
           Text(

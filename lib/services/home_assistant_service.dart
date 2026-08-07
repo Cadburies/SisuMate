@@ -119,11 +119,36 @@ class HomeAssistantService {
     } catch (e) {
       return GatewayProbeResult(
         ok: false,
-        detail: friendlyConnectionError(e),
+        detail: _friendlyHaProbeError(e, base),
       );
     } finally {
       if (client == null) c.close();
     }
+  }
+
+  /// #312 — DNS / mDNS failures get an HA-specific hint (phones often
+  /// cannot resolve `homeassistant.local`; LAN IP always works).
+  static String _friendlyHaProbeError(Object e, String baseUrl) {
+    final raw = e.toString().toLowerCase();
+    final dns = raw.contains('failed host lookup') ||
+        raw.contains('no address associated') ||
+        raw.contains('name or service not known') ||
+        raw.contains('nodename nor servname') ||
+        raw.contains('temporary failure in name resolution');
+    if (!dns) return friendlyConnectionError(e);
+
+    final host = Uri.tryParse(baseUrl)?.host ?? '';
+    final isLocalMdns = host.endsWith('.local');
+    if (isLocalMdns) {
+      return 'Could not resolve "$host" (mDNS/.local often fails on phones). '
+          'Use the Home Assistant LAN IP instead '
+          '(e.g. http://192.168.0.20:8123).';
+    }
+    if (host.isNotEmpty) {
+      return 'Could not resolve "$host". Try the device IP on boat WiFi '
+          '(e.g. http://192.168.0.20:8123).';
+    }
+    return friendlyConnectionError(e);
   }
 
   /// Pull GPS (+ optional wind/depth) into [PredictWindBoatData].

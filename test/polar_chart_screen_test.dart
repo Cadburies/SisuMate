@@ -103,6 +103,21 @@ void main() {
     expect(find.text('Phone IMU suggested sea state'), findsNothing);
   });
 
+  testWidgets('#308 polar chart is above the descriptive intro text',
+      (tester) async {
+    await pumpPolar(tester);
+
+    final chart = find.byType(CustomPaint);
+    final intro = find.textContaining('Curves fill in from under-sail');
+    expect(chart, findsWidgets);
+    expect(intro, findsOneWidget);
+
+    final chartTop = tester.getTopLeft(chart.first).dy;
+    final introTop = tester.getTopLeft(intro).dy;
+    expect(chartTop, lessThan(introTop),
+        reason: 'diagram must sit above the long description (#308)');
+  });
+
   testWidgets('Sea state tab shows working sea state + phone IMU card',
       (tester) async {
     await pumpPolar(tester);

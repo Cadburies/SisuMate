@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** closed anchor #303/#306/#307 (position failover, Settings instruments, multi-alarms).
-- **Open:** #310 quantity model; polar #308.
+- **Last (grok):** #308 polar chart above text; #312 HA IP/mDNS UX.
+- **Open:** #310 quantity model; #313 HA token help.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

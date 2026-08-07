@@ -35,8 +35,8 @@ void main() {
     WidgetTester tester, {
     http.Client? httpClient,
   }) async {
-    // Tall surface: DataHub + YDWG + HA cards + Save below the fold.
-    await tester.binding.setSurfaceSize(const Size(400, 2400));
+    // Tall surface: DataHub + YDWG + HA (incl. #312 IP help) + Save.
+    await tester.binding.setSurfaceSize(const Size(400, 3600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -52,8 +52,9 @@ void main() {
   Future<void> reveal(WidgetTester tester, Finder finder) async {
     await tester.scrollUntilVisible(
       finder,
-      300.0,
+      400.0,
       scrollable: find.byType(Scrollable).first,
+      maxScrolls: 40,
     );
     await tester.ensureVisible(finder);
     await tester.pump();
@@ -65,6 +66,10 @@ void main() {
     await pumpScreen(tester);
 
     expect(find.text('Boat instruments / GPS'), findsOneWidget);
+    // #312 — HA section documents IP preference + preset chips.
+    expect(find.textContaining('LAN IP is preferred on phones'), findsOneWidget);
+    expect(find.widgetWithText(ActionChip, 'HA .local'), findsOneWidget);
+    expect(find.widgetWithText(ActionChip, 'HA IP example'), findsOneWidget);
     expect(find.text('Found:'), findsNothing);
     expect(find.text('Default for DataHub'), findsOneWidget);
     expect(find.widgetWithText(ActionChip, 'DataHub internet'), findsOneWidget);

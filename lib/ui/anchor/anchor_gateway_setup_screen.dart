@@ -408,7 +408,7 @@ class _AnchorGatewaySetupScreenState
             ? 'Enter a Home Assistant remote URL first '
                 '(e.g. https://….ui.nabu.casa).'
             : 'Enter a Home Assistant local URL first '
-                '(e.g. http://homeassistant.local:8123).';
+                '(e.g. http://192.168.0.20:8123 or homeassistant.local).';
         _messageIsError = true;
       });
       return;
@@ -823,21 +823,56 @@ class _AnchorGatewaySetupScreenState
                             '(Nabu Casa / reverse proxy) for beach-bar '
                             'failover when you are off the boat.\n'
                             'Shared long-lived access token (HA Profile → '
-                            'Create Token). GPS entity should expose '
-                            'latitude/longitude attributes '
-                            '(e.g. device_tracker.boat), or use separate '
-                            'lat/lon sensors.\n'
+                            'Long-lived access tokens → Create Token). '
+                            'GPS entity should expose latitude/longitude '
+                            'attributes (e.g. device_tracker.boat), or use '
+                            'separate lat/lon sensors.\n'
                             'Failover order: DataHub local → HA local → '
                             'DataHub internet → HA internet.',
+                          ),
+                          const SizedBox(height: 8),
+                          // #312 — IP is first-class on phones; .local is optional.
+                          const Text(
+                            'Local URL: a LAN IP is preferred on phones '
+                            '(e.g. http://192.168.0.20:8123). '
+                            'homeassistant.local uses mDNS and often fails '
+                            'to resolve on iOS/Android — IP always works if '
+                            'you are on the same WiFi as HA.',
+                            style: TextStyle(fontSize: 13, height: 1.3),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              ActionChip(
+                                label: const Text('HA .local'),
+                                onPressed: busy
+                                    ? null
+                                    : () => setState(() {
+                                          _haUrlCtrl.text =
+                                              'http://homeassistant.local:8123';
+                                        }),
+                              ),
+                              ActionChip(
+                                label: const Text('HA IP example'),
+                                onPressed: busy
+                                    ? null
+                                    : () => setState(() {
+                                          _haUrlCtrl.text =
+                                              'http://192.168.0.20:8123';
+                                        }),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: _haUrlCtrl,
                             decoration: const InputDecoration(
                               labelText: 'HA local URL (boat network)',
-                              hintText: 'http://homeassistant.local:8123',
+                              hintText: 'http://192.168.0.20:8123',
                               helperText:
-                                  'Like DataHub local — used first on boat WiFi',
+                                  'LAN IP preferred on phones; used first on boat WiFi',
                             ),
                             enabled: !busy,
                             autocorrect: false,
