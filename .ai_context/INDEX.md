@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** #309 shopping pack-price fix + #311 Pro ad-slot grid holes.
-- **Open:** #310 quantity model; anchor #303/#306/#307; polar #308.
+- **Last (grok):** closed anchor #303/#306/#307 (position failover, Settings instruments, multi-alarms).
+- **Open:** #310 quantity model; polar #308.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

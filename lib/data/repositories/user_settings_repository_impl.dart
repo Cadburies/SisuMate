@@ -28,6 +28,10 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
     ..boatName = r.boatName
     ..freeEditsUsed = r.freeEditsUsed
     ..defaultAnchorScopeRatio = r.defaultAnchorScopeRatio
+    ..anchorRollerHeightMeters = r.anchorRollerHeightMeters
+    ..anchorMinDepthMeters = r.anchorMinDepthMeters
+    ..anchorMaxWindKt = r.anchorMaxWindKt
+    ..anchorAisAlarmEnabled = r.anchorAisAlarmEnabled
     ..predictwindHubLocalUrl = r.predictwindHubLocalUrl
     ..predictwindHubUsername = r.predictwindHubUsername
     ..predictwindHubPassword = r.predictwindHubPassword
@@ -63,6 +67,10 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
         boatName: Value(s.boatName),
         freeEditsUsed: Value(s.freeEditsUsed),
         defaultAnchorScopeRatio: Value(s.defaultAnchorScopeRatio),
+        anchorRollerHeightMeters: Value(s.anchorRollerHeightMeters),
+        anchorMinDepthMeters: Value(s.anchorMinDepthMeters),
+        anchorMaxWindKt: Value(s.anchorMaxWindKt),
+        anchorAisAlarmEnabled: Value(s.anchorAisAlarmEnabled),
         predictwindHubLocalUrl: Value(s.predictwindHubLocalUrl),
         predictwindHubUsername: Value(s.predictwindHubUsername),
         predictwindHubPassword: Value(s.predictwindHubPassword),

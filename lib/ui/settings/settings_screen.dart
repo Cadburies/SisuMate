@@ -267,6 +267,18 @@ class SettingsScreen extends ConsumerWidget {
           _buildSectionHeader(context, 'Units'),
           const _UnitsSettingsSection(),
           const Divider(),
+          _buildSectionHeader(context, 'Boat instruments / GPS'),
+          ListTile(
+            leading: const Icon(Icons.sensors),
+            title: const Text('DataHub, YDWG & Home Assistant'),
+            subtitle: const Text(
+              'Configure boat instrument gateways used by Anchor, '
+              'Weather position, and polar sampling',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.boatInstruments),
+          ),
+          const Divider(),
           _buildSectionHeader(context, 'Anchor Alarm'),
           Consumer(
             builder: (context, ref, child) {
@@ -689,27 +701,51 @@ class _AnchorAlarmSettingsSection extends ConsumerStatefulWidget {
 class _AnchorAlarmSettingsSectionState
     extends ConsumerState<_AnchorAlarmSettingsSection> {
   late final TextEditingController _scopeRatioController;
+  late final TextEditingController _rollerController;
+  late final TextEditingController _minDepthController;
+  late final TextEditingController _maxWindController;
+  late bool _aisEnabled;
 
   @override
   void initState() {
     super.initState();
+    final s = widget.settings;
     _scopeRatioController = TextEditingController(
-      text: (widget.settings?.defaultAnchorScopeRatio ?? 5.0)
-          .toStringAsFixed(1),
+      text: (s?.defaultAnchorScopeRatio ?? 5.0).toStringAsFixed(1),
     );
+    _rollerController = TextEditingController(
+      text: (s?.anchorRollerHeightMeters ?? 0).toStringAsFixed(1),
+    );
+    _minDepthController = TextEditingController(
+      text: (s?.anchorMinDepthMeters ?? 0).toStringAsFixed(1),
+    );
+    _maxWindController = TextEditingController(
+      text: (s?.anchorMaxWindKt ?? 0).toStringAsFixed(0),
+    );
+    _aisEnabled = s?.anchorAisAlarmEnabled ?? false;
   }
 
   @override
   void dispose() {
     _scopeRatioController.dispose();
+    _rollerController.dispose();
+    _minDepthController.dispose();
+    _maxWindController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final ratio = double.tryParse(_scopeRatioController.text.trim());
     if (ratio == null || ratio <= 0) return;
+    final roller = double.tryParse(_rollerController.text.trim()) ?? 0;
+    final minDepth = double.tryParse(_minDepthController.text.trim()) ?? 0;
+    final maxWind = double.tryParse(_maxWindController.text.trim()) ?? 0;
     final updated = (widget.settings ?? UserSettings())
-      ..defaultAnchorScopeRatio = ratio;
+      ..defaultAnchorScopeRatio = ratio
+      ..anchorRollerHeightMeters = roller < 0 ? 0 : roller
+      ..anchorMinDepthMeters = minDepth < 0 ? 0 : minDepth
+      ..anchorMaxWindKt = maxWind < 0 ? 0 : maxWind
+      ..anchorAisAlarmEnabled = _aisEnabled;
     await ref.read(userSettingsRepositoryProvider).updateSettings(updated);
     ref.invalidate(userSettingsProvider);
   }
@@ -724,15 +760,68 @@ class _AnchorAlarmSettingsSectionState
             controller: _scopeRatioController,
             decoration: const InputDecoration(
               labelText: 'Default chain scope ratio',
-              helperText: 'e.g. 5.0 for 5:1 — chain paid out vs. depth. '
-                  'Suggests the anchor alarm circle; editable per drop.',
+              helperText: 'e.g. 5.0 for 5:1 — chain paid out vs. depth + roller. '
+                  'Suggests the alarm circle; editable per drop.',
               helperMaxLines: 2,
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onEditingComplete: _save,
             onTapOutside: (_) => _save(),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _rollerController,
+            decoration: const InputDecoration(
+              labelText: 'Anchor roller height above water (m)',
+              helperText:
+                  'Bow roller / freeboard to rode lead. Added to depth for '
+                  'scope: radius ≈ (depth + roller) × ratio. Tide offsets '
+                  'are not auto-applied yet.',
+              helperMaxLines: 3,
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onEditingComplete: _save,
+            onTapOutside: (_) => _save(),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _minDepthController,
+            decoration: const InputDecoration(
+              labelText: 'Min depth alarm (m)',
+              helperText: 'Alarm when live depth falls below this. 0 = off.',
+              helperMaxLines: 2,
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onEditingComplete: _save,
+            onTapOutside: (_) => _save(),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _maxWindController,
+            decoration: const InputDecoration(
+              labelText: 'Strong wind alarm (kn)',
+              helperText:
+                  'Alarm when apparent wind (or true if AWS missing) exceeds '
+                  'this. 0 = off. Uses system alert + haptic.',
+              helperMaxLines: 3,
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onEditingComplete: _save,
+            onTapOutside: (_) => _save(),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('AIS collision alarm'),
+            subtitle: const Text(
+              'Armed for when an AIS feed is available. No ship targets '
+              'in-app yet — this will not fire until a feed is wired.',
+            ),
+            value: _aisEnabled,
+            onChanged: (v) {
+              setState(() => _aisEnabled = v);
+              _save();
+            },
+          ),
         ],
       ),
     );

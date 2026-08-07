@@ -7,11 +7,15 @@ import '../../services/predictwind_datahub_service.dart';
 /// #266 — read-only instrument snapshot for the Anchor Alarm "Info" tab.
 ///
 /// Order is safety-first: remaining geofence margin and bearing to anchor
-/// before raw coordinates. Each row has a clear unavailable state when the
-/// Hub has no fix (or no active watch).
+/// before raw coordinates. Position may come from phone GPS (#303) when
+/// instruments lack a fix — pass [positionLat]/[positionLon] from the parent.
 class AnchorInfoPanel extends StatelessWidget {
   final AnchorWatch? activeWatch;
   final PredictWindBoatData? boatData;
+  /// #303 — best-available boat lat/lon (instruments or phone).
+  final double? positionLat;
+  final double? positionLon;
+  final String? positionSourceLabel;
 
   static const _alarm = AnchorAlarmService();
 
@@ -19,15 +23,21 @@ class AnchorInfoPanel extends StatelessWidget {
     super.key,
     required this.activeWatch,
     required this.boatData,
+    this.positionLat,
+    this.positionLon,
+    this.positionSourceLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final watch = activeWatch;
     final data = boatData;
-    final hasFix = data?.hasFix ?? false;
-    final boatLat = hasFix ? data!.latitude : null;
-    final boatLon = hasFix ? data!.longitude : null;
+    // Prefer unified position; fall back to instrument fix only.
+    final boatLat = positionLat ??
+        ((data?.hasFix ?? false) ? data!.latitude : null);
+    final boatLon = positionLon ??
+        ((data?.hasFix ?? false) ? data!.longitude : null);
+    final hasPos = boatLat != null && boatLon != null;
 
     double? distFromAnchor;
     double? marginToPerimeter;
@@ -76,7 +86,7 @@ class AnchorInfoPanel extends StatelessWidget {
                     ? '${marginToPerimeter.toStringAsFixed(0)} m remaining'
                     : '${(-marginToPerimeter).toStringAsFixed(0)} m past circle',
             subtitle: marginToPerimeter == null
-                ? 'Needs a live boat position from the Hub.'
+                ? 'Needs a live boat position (instruments or phone GPS).'
                 : marginToPerimeter >= 0
                     ? 'Still inside the ${watch.radiusMeters.toStringAsFixed(0)} m alarm circle.'
                     : 'Outside the safe swinging circle.',
@@ -146,14 +156,12 @@ class AnchorInfoPanel extends StatelessWidget {
           context,
           icon: Icons.gps_fixed,
           title: 'Boat GPS',
-          value: hasFix
-              ? '${boatLat!.toStringAsFixed(5)}, ${boatLon!.toStringAsFixed(5)}'
+          value: hasPos
+              ? '${boatLat.toStringAsFixed(5)}, ${boatLon.toStringAsFixed(5)}'
               : 'Unavailable',
-          subtitle: hasFix
-              ? (data!.viaLocalNetwork
-                  ? 'Source: PredictWind Hub (local WiFi)'
-                  : 'Source: PredictWind Hub (internet)')
-              : 'Waiting for a Hub fix.',
+          subtitle: hasPos
+              ? 'Source: ${positionSourceLabel ?? data?.sourceLabel ?? 'Unknown'}'
+              : 'Waiting for instruments or phone GPS.',
         ),
         if (watch != null)
           _metricCard(

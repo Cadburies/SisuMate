@@ -233,6 +233,49 @@ void main() {
         isNull,
       );
     });
+  });
+
+  group('#307 multi-condition alarms', () {
+    test('isShallow when depth under min and min > 0', () {
+      expect(
+        service.isShallow(depthMeters: 2.5, minDepthMeters: 3),
+        isTrue,
+      );
+      expect(
+        service.isShallow(depthMeters: 4, minDepthMeters: 3),
+        isFalse,
+      );
+      expect(
+        service.isShallow(depthMeters: 1, minDepthMeters: 0),
+        isFalse,
+        reason: '0 min = disabled',
+      );
+      expect(
+        service.isShallow(depthMeters: null, minDepthMeters: 3),
+        isFalse,
+      );
+    });
+
+    test('isStrongWind when wind above max and max > 0', () {
+      expect(
+        service.isStrongWind(windKt: 25, maxWindKt: 20),
+        isTrue,
+      );
+      expect(
+        service.isStrongWind(windKt: 15, maxWindKt: 20),
+        isFalse,
+      );
+      expect(
+        service.isStrongWind(windKt: 50, maxWindKt: 0),
+        isFalse,
+        reason: '0 max = disabled',
+      );
+    });
+
+    test('isAisCollisionRisk never true without a feed', () {
+      expect(service.isAisCollisionRisk(enabled: true), isFalse);
+      expect(service.isAisCollisionRisk(enabled: false), isFalse);
+    });
 
     test('#293 swing trail drops near-duplicate points', () {
       var trail = <({double lat, double lon, DateTime at})>[];

@@ -455,6 +455,24 @@ class UserSettingsTable extends Table {
   RealColumn get defaultAnchorScopeRatio =>
       real().withDefault(const Constant(5.0))();
 
+  /// #307 — bow roller / rode lead height above water (m). Added to depth
+  /// for scope = (depth + roller) × ratio. 0 = depth-only.
+  RealColumn get anchorRollerHeightMeters =>
+      real().withDefault(const Constant(0.0))();
+
+  /// #307 — min depth alarm (m). 0 = disabled.
+  RealColumn get anchorMinDepthMeters =>
+      real().withDefault(const Constant(0.0))();
+
+  /// #307 — strong wind alarm (kn, AWS preferred). 0 = disabled.
+  RealColumn get anchorMaxWindKt =>
+      real().withDefault(const Constant(0.0))();
+
+  /// #307 — AIS collision alarm armed in UI. No AIS feed yet — evaluation
+  /// is a no-op until a source exists; setting is retained for config UX.
+  BoolColumn get anchorAisAlarmEnabled =>
+      boolean().withDefault(const Constant(false))();
+
   /// #263 — set via the Anchor Alarm's gateway setup screen (auto-discover
   /// or manual IP:port); overrides the dart-defines default when non-empty.
   TextColumn get predictwindHubLocalUrl =>
@@ -704,7 +722,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

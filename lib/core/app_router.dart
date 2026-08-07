@@ -101,12 +101,15 @@ abstract final class AppRoutes {
   static const gribViewer = '/weather/grib';
   static const gribRequest = '/weather/grib/request';
   static const anchorAlarm = '/anchor-alarm';
+  /// Legacy path — redirects to [boatInstruments] (#306).
   static const anchorGatewaySetup = '/anchor-alarm/gateway-setup';
   static const games = '/games';
   static const gamePlay = '/games/play/:gameId';
   static const gameLobby = '/games/lobby/:gameId';
   static const gameHelp = '/games/help';
   static const settings = '/settings';
+  /// #306 — boat instruments / GPS gateway (DataHub, YDWG, HA).
+  static const boatInstruments = '/settings/boat-instruments';
   static const boats = '/boats';
   static const accountSetup = '/account';
   static const joinBoat = '/join';
@@ -642,10 +645,11 @@ GoRouter createAppRouter() {
         name: 'anchorAlarm',
         builder: (context, state) => const AnchorAlarmScreen(),
         routes: [
+          // #306 — keep old deep link; send users to global Settings instruments.
           GoRoute(
             path: 'gateway-setup',
             name: 'anchorGatewaySetup',
-            builder: (context, state) => const AnchorGatewaySetupScreen(),
+            redirect: (context, state) => AppRoutes.boatInstruments,
           ),
         ],
       ),
@@ -654,6 +658,11 @@ GoRouter createAppRouter() {
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
         routes: [
+          GoRoute(
+            path: 'boat-instruments',
+            name: 'boatInstruments',
+            builder: (context, state) => const AnchorGatewaySetupScreen(),
+          ),
           GoRoute(
             path: 'sync',
             name: 'syncStatus',

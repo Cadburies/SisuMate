@@ -95,6 +95,33 @@ class AnchorAlarmService {
     return radiusMeters / waterColumn;
   }
 
+  /// #307 — true when live depth is under the configured min (and min > 0).
+  bool isShallow({
+    required double? depthMeters,
+    required double minDepthMeters,
+  }) {
+    if (minDepthMeters <= 0 || depthMeters == null) return false;
+    return depthMeters < minDepthMeters;
+  }
+
+  /// #307 — true when wind speed exceeds the threshold (and max > 0).
+  /// Callers should pass AWS when available, else TWS.
+  bool isStrongWind({
+    required double? windKt,
+    required double maxWindKt,
+  }) {
+    if (maxWindKt <= 0 || windKt == null) return false;
+    return windKt > maxWindKt;
+  }
+
+  /// #307 — AIS risk evaluation seam. No ship targets in the app yet, so
+  /// this always returns false; keep the method so UI can arm the setting
+  /// without inventing targets.
+  bool isAisCollisionRisk({required bool enabled}) {
+    if (!enabled) return false;
+    return false;
+  }
+
   /// #293 — append a GPS breadcrumb while armed; drops points closer than
   /// [minStepMeters] to the last sample so the trail stays light.
   List<({double lat, double lon, DateTime at})> appendSwingPoint({

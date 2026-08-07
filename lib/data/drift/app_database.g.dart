@@ -15979,6 +15979,57 @@ class $UserSettingsTableTable extends UserSettingsTable
         requiredDuringInsert: false,
         defaultValue: const Constant(5.0),
       );
+  static const VerificationMeta _anchorRollerHeightMetersMeta =
+      const VerificationMeta('anchorRollerHeightMeters');
+  @override
+  late final GeneratedColumn<double> anchorRollerHeightMeters =
+      GeneratedColumn<double>(
+        'anchor_roller_height_meters',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.0),
+      );
+  static const VerificationMeta _anchorMinDepthMetersMeta =
+      const VerificationMeta('anchorMinDepthMeters');
+  @override
+  late final GeneratedColumn<double> anchorMinDepthMeters =
+      GeneratedColumn<double>(
+        'anchor_min_depth_meters',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.0),
+      );
+  static const VerificationMeta _anchorMaxWindKtMeta = const VerificationMeta(
+    'anchorMaxWindKt',
+  );
+  @override
+  late final GeneratedColumn<double> anchorMaxWindKt = GeneratedColumn<double>(
+    'anchor_max_wind_kt',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _anchorAisAlarmEnabledMeta =
+      const VerificationMeta('anchorAisAlarmEnabled');
+  @override
+  late final GeneratedColumn<bool> anchorAisAlarmEnabled =
+      GeneratedColumn<bool>(
+        'anchor_ais_alarm_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("anchor_ais_alarm_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
   static const VerificationMeta _predictwindHubLocalUrlMeta =
       const VerificationMeta('predictwindHubLocalUrl');
   @override
@@ -16178,6 +16229,10 @@ class $UserSettingsTableTable extends UserSettingsTable
     boatName,
     freeEditsUsed,
     defaultAnchorScopeRatio,
+    anchorRollerHeightMeters,
+    anchorMinDepthMeters,
+    anchorMaxWindKt,
+    anchorAisAlarmEnabled,
     predictwindHubLocalUrl,
     predictwindHubUsername,
     predictwindHubPassword,
@@ -16335,6 +16390,42 @@ class $UserSettingsTableTable extends UserSettingsTable
         defaultAnchorScopeRatio.isAcceptableOrUnknown(
           data['default_anchor_scope_ratio']!,
           _defaultAnchorScopeRatioMeta,
+        ),
+      );
+    }
+    if (data.containsKey('anchor_roller_height_meters')) {
+      context.handle(
+        _anchorRollerHeightMetersMeta,
+        anchorRollerHeightMeters.isAcceptableOrUnknown(
+          data['anchor_roller_height_meters']!,
+          _anchorRollerHeightMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('anchor_min_depth_meters')) {
+      context.handle(
+        _anchorMinDepthMetersMeta,
+        anchorMinDepthMeters.isAcceptableOrUnknown(
+          data['anchor_min_depth_meters']!,
+          _anchorMinDepthMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('anchor_max_wind_kt')) {
+      context.handle(
+        _anchorMaxWindKtMeta,
+        anchorMaxWindKt.isAcceptableOrUnknown(
+          data['anchor_max_wind_kt']!,
+          _anchorMaxWindKtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('anchor_ais_alarm_enabled')) {
+      context.handle(
+        _anchorAisAlarmEnabledMeta,
+        anchorAisAlarmEnabled.isAcceptableOrUnknown(
+          data['anchor_ais_alarm_enabled']!,
+          _anchorAisAlarmEnabledMeta,
         ),
       );
     }
@@ -16547,6 +16638,22 @@ class $UserSettingsTableTable extends UserSettingsTable
         DriftSqlType.double,
         data['${effectivePrefix}default_anchor_scope_ratio'],
       )!,
+      anchorRollerHeightMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}anchor_roller_height_meters'],
+      )!,
+      anchorMinDepthMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}anchor_min_depth_meters'],
+      )!,
+      anchorMaxWindKt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}anchor_max_wind_kt'],
+      )!,
+      anchorAisAlarmEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}anchor_ais_alarm_enabled'],
+      )!,
       predictwindHubLocalUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}predictwind_hub_local_url'],
@@ -16643,6 +16750,20 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
   /// drops are pre-filled with, e.g. `5.0` for 5:1. Editable per-drop.
   final double defaultAnchorScopeRatio;
 
+  /// #307 — bow roller / rode lead height above water (m). Added to depth
+  /// for scope = (depth + roller) × ratio. 0 = depth-only.
+  final double anchorRollerHeightMeters;
+
+  /// #307 — min depth alarm (m). 0 = disabled.
+  final double anchorMinDepthMeters;
+
+  /// #307 — strong wind alarm (kn, AWS preferred). 0 = disabled.
+  final double anchorMaxWindKt;
+
+  /// #307 — AIS collision alarm armed in UI. No AIS feed yet — evaluation
+  /// is a no-op until a source exists; setting is retained for config UX.
+  final bool anchorAisAlarmEnabled;
+
   /// #263 — set via the Anchor Alarm's gateway setup screen (auto-discover
   /// or manual IP:port); overrides the dart-defines default when non-empty.
   final String predictwindHubLocalUrl;
@@ -16682,6 +16803,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     this.boatName,
     required this.freeEditsUsed,
     required this.defaultAnchorScopeRatio,
+    required this.anchorRollerHeightMeters,
+    required this.anchorMinDepthMeters,
+    required this.anchorMaxWindKt,
+    required this.anchorAisAlarmEnabled,
     required this.predictwindHubLocalUrl,
     required this.predictwindHubUsername,
     required this.predictwindHubPassword,
@@ -16734,6 +16859,12 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     map['default_anchor_scope_ratio'] = Variable<double>(
       defaultAnchorScopeRatio,
     );
+    map['anchor_roller_height_meters'] = Variable<double>(
+      anchorRollerHeightMeters,
+    );
+    map['anchor_min_depth_meters'] = Variable<double>(anchorMinDepthMeters);
+    map['anchor_max_wind_kt'] = Variable<double>(anchorMaxWindKt);
+    map['anchor_ais_alarm_enabled'] = Variable<bool>(anchorAisAlarmEnabled);
     map['predictwind_hub_local_url'] = Variable<String>(predictwindHubLocalUrl);
     map['predictwind_hub_username'] = Variable<String>(predictwindHubUsername);
     map['predictwind_hub_password'] = Variable<String>(predictwindHubPassword);
@@ -16791,6 +16922,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           : Value(boatName),
       freeEditsUsed: Value(freeEditsUsed),
       defaultAnchorScopeRatio: Value(defaultAnchorScopeRatio),
+      anchorRollerHeightMeters: Value(anchorRollerHeightMeters),
+      anchorMinDepthMeters: Value(anchorMinDepthMeters),
+      anchorMaxWindKt: Value(anchorMaxWindKt),
+      anchorAisAlarmEnabled: Value(anchorAisAlarmEnabled),
       predictwindHubLocalUrl: Value(predictwindHubLocalUrl),
       predictwindHubUsername: Value(predictwindHubUsername),
       predictwindHubPassword: Value(predictwindHubPassword),
@@ -16835,6 +16970,16 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       freeEditsUsed: serializer.fromJson<int>(json['freeEditsUsed']),
       defaultAnchorScopeRatio: serializer.fromJson<double>(
         json['defaultAnchorScopeRatio'],
+      ),
+      anchorRollerHeightMeters: serializer.fromJson<double>(
+        json['anchorRollerHeightMeters'],
+      ),
+      anchorMinDepthMeters: serializer.fromJson<double>(
+        json['anchorMinDepthMeters'],
+      ),
+      anchorMaxWindKt: serializer.fromJson<double>(json['anchorMaxWindKt']),
+      anchorAisAlarmEnabled: serializer.fromJson<bool>(
+        json['anchorAisAlarmEnabled'],
       ),
       predictwindHubLocalUrl: serializer.fromJson<String>(
         json['predictwindHubLocalUrl'],
@@ -16898,6 +17043,12 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       'defaultAnchorScopeRatio': serializer.toJson<double>(
         defaultAnchorScopeRatio,
       ),
+      'anchorRollerHeightMeters': serializer.toJson<double>(
+        anchorRollerHeightMeters,
+      ),
+      'anchorMinDepthMeters': serializer.toJson<double>(anchorMinDepthMeters),
+      'anchorMaxWindKt': serializer.toJson<double>(anchorMaxWindKt),
+      'anchorAisAlarmEnabled': serializer.toJson<bool>(anchorAisAlarmEnabled),
       'predictwindHubLocalUrl': serializer.toJson<String>(
         predictwindHubLocalUrl,
       ),
@@ -16954,6 +17105,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     Value<String?> boatName = const Value.absent(),
     int? freeEditsUsed,
     double? defaultAnchorScopeRatio,
+    double? anchorRollerHeightMeters,
+    double? anchorMinDepthMeters,
+    double? anchorMaxWindKt,
+    bool? anchorAisAlarmEnabled,
     String? predictwindHubLocalUrl,
     String? predictwindHubUsername,
     String? predictwindHubPassword,
@@ -16992,6 +17147,11 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     freeEditsUsed: freeEditsUsed ?? this.freeEditsUsed,
     defaultAnchorScopeRatio:
         defaultAnchorScopeRatio ?? this.defaultAnchorScopeRatio,
+    anchorRollerHeightMeters:
+        anchorRollerHeightMeters ?? this.anchorRollerHeightMeters,
+    anchorMinDepthMeters: anchorMinDepthMeters ?? this.anchorMinDepthMeters,
+    anchorMaxWindKt: anchorMaxWindKt ?? this.anchorMaxWindKt,
+    anchorAisAlarmEnabled: anchorAisAlarmEnabled ?? this.anchorAisAlarmEnabled,
     predictwindHubLocalUrl:
         predictwindHubLocalUrl ?? this.predictwindHubLocalUrl,
     predictwindHubUsername:
@@ -17059,6 +17219,18 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       defaultAnchorScopeRatio: data.defaultAnchorScopeRatio.present
           ? data.defaultAnchorScopeRatio.value
           : this.defaultAnchorScopeRatio,
+      anchorRollerHeightMeters: data.anchorRollerHeightMeters.present
+          ? data.anchorRollerHeightMeters.value
+          : this.anchorRollerHeightMeters,
+      anchorMinDepthMeters: data.anchorMinDepthMeters.present
+          ? data.anchorMinDepthMeters.value
+          : this.anchorMinDepthMeters,
+      anchorMaxWindKt: data.anchorMaxWindKt.present
+          ? data.anchorMaxWindKt.value
+          : this.anchorMaxWindKt,
+      anchorAisAlarmEnabled: data.anchorAisAlarmEnabled.present
+          ? data.anchorAisAlarmEnabled.value
+          : this.anchorAisAlarmEnabled,
       predictwindHubLocalUrl: data.predictwindHubLocalUrl.present
           ? data.predictwindHubLocalUrl.value
           : this.predictwindHubLocalUrl,
@@ -17125,6 +17297,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           ..write('boatName: $boatName, ')
           ..write('freeEditsUsed: $freeEditsUsed, ')
           ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio, ')
+          ..write('anchorRollerHeightMeters: $anchorRollerHeightMeters, ')
+          ..write('anchorMinDepthMeters: $anchorMinDepthMeters, ')
+          ..write('anchorMaxWindKt: $anchorMaxWindKt, ')
+          ..write('anchorAisAlarmEnabled: $anchorAisAlarmEnabled, ')
           ..write('predictwindHubLocalUrl: $predictwindHubLocalUrl, ')
           ..write('predictwindHubUsername: $predictwindHubUsername, ')
           ..write('predictwindHubPassword: $predictwindHubPassword, ')
@@ -17165,6 +17341,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     boatName,
     freeEditsUsed,
     defaultAnchorScopeRatio,
+    anchorRollerHeightMeters,
+    anchorMinDepthMeters,
+    anchorMaxWindKt,
+    anchorAisAlarmEnabled,
     predictwindHubLocalUrl,
     predictwindHubUsername,
     predictwindHubPassword,
@@ -17202,6 +17382,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           other.boatName == this.boatName &&
           other.freeEditsUsed == this.freeEditsUsed &&
           other.defaultAnchorScopeRatio == this.defaultAnchorScopeRatio &&
+          other.anchorRollerHeightMeters == this.anchorRollerHeightMeters &&
+          other.anchorMinDepthMeters == this.anchorMinDepthMeters &&
+          other.anchorMaxWindKt == this.anchorMaxWindKt &&
+          other.anchorAisAlarmEnabled == this.anchorAisAlarmEnabled &&
           other.predictwindHubLocalUrl == this.predictwindHubLocalUrl &&
           other.predictwindHubUsername == this.predictwindHubUsername &&
           other.predictwindHubPassword == this.predictwindHubPassword &&
@@ -17238,6 +17422,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
   final Value<String?> boatName;
   final Value<int> freeEditsUsed;
   final Value<double> defaultAnchorScopeRatio;
+  final Value<double> anchorRollerHeightMeters;
+  final Value<double> anchorMinDepthMeters;
+  final Value<double> anchorMaxWindKt;
+  final Value<bool> anchorAisAlarmEnabled;
   final Value<String> predictwindHubLocalUrl;
   final Value<String> predictwindHubUsername;
   final Value<String> predictwindHubPassword;
@@ -17271,6 +17459,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.boatName = const Value.absent(),
     this.freeEditsUsed = const Value.absent(),
     this.defaultAnchorScopeRatio = const Value.absent(),
+    this.anchorRollerHeightMeters = const Value.absent(),
+    this.anchorMinDepthMeters = const Value.absent(),
+    this.anchorMaxWindKt = const Value.absent(),
+    this.anchorAisAlarmEnabled = const Value.absent(),
     this.predictwindHubLocalUrl = const Value.absent(),
     this.predictwindHubUsername = const Value.absent(),
     this.predictwindHubPassword = const Value.absent(),
@@ -17305,6 +17497,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.boatName = const Value.absent(),
     this.freeEditsUsed = const Value.absent(),
     this.defaultAnchorScopeRatio = const Value.absent(),
+    this.anchorRollerHeightMeters = const Value.absent(),
+    this.anchorMinDepthMeters = const Value.absent(),
+    this.anchorMaxWindKt = const Value.absent(),
+    this.anchorAisAlarmEnabled = const Value.absent(),
     this.predictwindHubLocalUrl = const Value.absent(),
     this.predictwindHubUsername = const Value.absent(),
     this.predictwindHubPassword = const Value.absent(),
@@ -17339,6 +17535,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Expression<String>? boatName,
     Expression<int>? freeEditsUsed,
     Expression<double>? defaultAnchorScopeRatio,
+    Expression<double>? anchorRollerHeightMeters,
+    Expression<double>? anchorMinDepthMeters,
+    Expression<double>? anchorMaxWindKt,
+    Expression<bool>? anchorAisAlarmEnabled,
     Expression<String>? predictwindHubLocalUrl,
     Expression<String>? predictwindHubUsername,
     Expression<String>? predictwindHubPassword,
@@ -17375,6 +17575,13 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       if (freeEditsUsed != null) 'free_edits_used': freeEditsUsed,
       if (defaultAnchorScopeRatio != null)
         'default_anchor_scope_ratio': defaultAnchorScopeRatio,
+      if (anchorRollerHeightMeters != null)
+        'anchor_roller_height_meters': anchorRollerHeightMeters,
+      if (anchorMinDepthMeters != null)
+        'anchor_min_depth_meters': anchorMinDepthMeters,
+      if (anchorMaxWindKt != null) 'anchor_max_wind_kt': anchorMaxWindKt,
+      if (anchorAisAlarmEnabled != null)
+        'anchor_ais_alarm_enabled': anchorAisAlarmEnabled,
       if (predictwindHubLocalUrl != null)
         'predictwind_hub_local_url': predictwindHubLocalUrl,
       if (predictwindHubUsername != null)
@@ -17422,6 +17629,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Value<String?>? boatName,
     Value<int>? freeEditsUsed,
     Value<double>? defaultAnchorScopeRatio,
+    Value<double>? anchorRollerHeightMeters,
+    Value<double>? anchorMinDepthMeters,
+    Value<double>? anchorMaxWindKt,
+    Value<bool>? anchorAisAlarmEnabled,
     Value<String>? predictwindHubLocalUrl,
     Value<String>? predictwindHubUsername,
     Value<String>? predictwindHubPassword,
@@ -17457,6 +17668,12 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
       freeEditsUsed: freeEditsUsed ?? this.freeEditsUsed,
       defaultAnchorScopeRatio:
           defaultAnchorScopeRatio ?? this.defaultAnchorScopeRatio,
+      anchorRollerHeightMeters:
+          anchorRollerHeightMeters ?? this.anchorRollerHeightMeters,
+      anchorMinDepthMeters: anchorMinDepthMeters ?? this.anchorMinDepthMeters,
+      anchorMaxWindKt: anchorMaxWindKt ?? this.anchorMaxWindKt,
+      anchorAisAlarmEnabled:
+          anchorAisAlarmEnabled ?? this.anchorAisAlarmEnabled,
       predictwindHubLocalUrl:
           predictwindHubLocalUrl ?? this.predictwindHubLocalUrl,
       predictwindHubUsername:
@@ -17541,6 +17758,24 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     if (defaultAnchorScopeRatio.present) {
       map['default_anchor_scope_ratio'] = Variable<double>(
         defaultAnchorScopeRatio.value,
+      );
+    }
+    if (anchorRollerHeightMeters.present) {
+      map['anchor_roller_height_meters'] = Variable<double>(
+        anchorRollerHeightMeters.value,
+      );
+    }
+    if (anchorMinDepthMeters.present) {
+      map['anchor_min_depth_meters'] = Variable<double>(
+        anchorMinDepthMeters.value,
+      );
+    }
+    if (anchorMaxWindKt.present) {
+      map['anchor_max_wind_kt'] = Variable<double>(anchorMaxWindKt.value);
+    }
+    if (anchorAisAlarmEnabled.present) {
+      map['anchor_ais_alarm_enabled'] = Variable<bool>(
+        anchorAisAlarmEnabled.value,
       );
     }
     if (predictwindHubLocalUrl.present) {
@@ -17631,6 +17866,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
           ..write('boatName: $boatName, ')
           ..write('freeEditsUsed: $freeEditsUsed, ')
           ..write('defaultAnchorScopeRatio: $defaultAnchorScopeRatio, ')
+          ..write('anchorRollerHeightMeters: $anchorRollerHeightMeters, ')
+          ..write('anchorMinDepthMeters: $anchorMinDepthMeters, ')
+          ..write('anchorMaxWindKt: $anchorMaxWindKt, ')
+          ..write('anchorAisAlarmEnabled: $anchorAisAlarmEnabled, ')
           ..write('predictwindHubLocalUrl: $predictwindHubLocalUrl, ')
           ..write('predictwindHubUsername: $predictwindHubUsername, ')
           ..write('predictwindHubPassword: $predictwindHubPassword, ')
@@ -30518,6 +30757,10 @@ typedef $$UserSettingsTableTableCreateCompanionBuilder =
       Value<String?> boatName,
       Value<int> freeEditsUsed,
       Value<double> defaultAnchorScopeRatio,
+      Value<double> anchorRollerHeightMeters,
+      Value<double> anchorMinDepthMeters,
+      Value<double> anchorMaxWindKt,
+      Value<bool> anchorAisAlarmEnabled,
       Value<String> predictwindHubLocalUrl,
       Value<String> predictwindHubUsername,
       Value<String> predictwindHubPassword,
@@ -30553,6 +30796,10 @@ typedef $$UserSettingsTableTableUpdateCompanionBuilder =
       Value<String?> boatName,
       Value<int> freeEditsUsed,
       Value<double> defaultAnchorScopeRatio,
+      Value<double> anchorRollerHeightMeters,
+      Value<double> anchorMinDepthMeters,
+      Value<double> anchorMaxWindKt,
+      Value<bool> anchorAisAlarmEnabled,
       Value<String> predictwindHubLocalUrl,
       Value<String> predictwindHubUsername,
       Value<String> predictwindHubPassword,
@@ -30661,6 +30908,26 @@ class $$UserSettingsTableTableFilterComposer
 
   ColumnFilters<double> get defaultAnchorScopeRatio => $composableBuilder(
     column: $table.defaultAnchorScopeRatio,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get anchorRollerHeightMeters => $composableBuilder(
+    column: $table.anchorRollerHeightMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get anchorMinDepthMeters => $composableBuilder(
+    column: $table.anchorMinDepthMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get anchorMaxWindKt => $composableBuilder(
+    column: $table.anchorMaxWindKt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get anchorAisAlarmEnabled => $composableBuilder(
+    column: $table.anchorAisAlarmEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -30834,6 +31101,26 @@ class $$UserSettingsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get anchorRollerHeightMeters => $composableBuilder(
+    column: $table.anchorRollerHeightMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get anchorMinDepthMeters => $composableBuilder(
+    column: $table.anchorMinDepthMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get anchorMaxWindKt => $composableBuilder(
+    column: $table.anchorMaxWindKt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get anchorAisAlarmEnabled => $composableBuilder(
+    column: $table.anchorAisAlarmEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get predictwindHubLocalUrl => $composableBuilder(
     column: $table.predictwindHubLocalUrl,
     builder: (column) => ColumnOrderings(column),
@@ -30993,6 +31280,26 @@ class $$UserSettingsTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get anchorRollerHeightMeters => $composableBuilder(
+    column: $table.anchorRollerHeightMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get anchorMinDepthMeters => $composableBuilder(
+    column: $table.anchorMinDepthMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get anchorMaxWindKt => $composableBuilder(
+    column: $table.anchorMaxWindKt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get anchorAisAlarmEnabled => $composableBuilder(
+    column: $table.anchorAisAlarmEnabled,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get predictwindHubLocalUrl => $composableBuilder(
     column: $table.predictwindHubLocalUrl,
     builder: (column) => column,
@@ -31125,6 +31432,10 @@ class $$UserSettingsTableTableTableManager
                 Value<String?> boatName = const Value.absent(),
                 Value<int> freeEditsUsed = const Value.absent(),
                 Value<double> defaultAnchorScopeRatio = const Value.absent(),
+                Value<double> anchorRollerHeightMeters = const Value.absent(),
+                Value<double> anchorMinDepthMeters = const Value.absent(),
+                Value<double> anchorMaxWindKt = const Value.absent(),
+                Value<bool> anchorAisAlarmEnabled = const Value.absent(),
                 Value<String> predictwindHubLocalUrl = const Value.absent(),
                 Value<String> predictwindHubUsername = const Value.absent(),
                 Value<String> predictwindHubPassword = const Value.absent(),
@@ -31159,6 +31470,10 @@ class $$UserSettingsTableTableTableManager
                 boatName: boatName,
                 freeEditsUsed: freeEditsUsed,
                 defaultAnchorScopeRatio: defaultAnchorScopeRatio,
+                anchorRollerHeightMeters: anchorRollerHeightMeters,
+                anchorMinDepthMeters: anchorMinDepthMeters,
+                anchorMaxWindKt: anchorMaxWindKt,
+                anchorAisAlarmEnabled: anchorAisAlarmEnabled,
                 predictwindHubLocalUrl: predictwindHubLocalUrl,
                 predictwindHubUsername: predictwindHubUsername,
                 predictwindHubPassword: predictwindHubPassword,
@@ -31194,6 +31509,10 @@ class $$UserSettingsTableTableTableManager
                 Value<String?> boatName = const Value.absent(),
                 Value<int> freeEditsUsed = const Value.absent(),
                 Value<double> defaultAnchorScopeRatio = const Value.absent(),
+                Value<double> anchorRollerHeightMeters = const Value.absent(),
+                Value<double> anchorMinDepthMeters = const Value.absent(),
+                Value<double> anchorMaxWindKt = const Value.absent(),
+                Value<bool> anchorAisAlarmEnabled = const Value.absent(),
                 Value<String> predictwindHubLocalUrl = const Value.absent(),
                 Value<String> predictwindHubUsername = const Value.absent(),
                 Value<String> predictwindHubPassword = const Value.absent(),
@@ -31228,6 +31547,10 @@ class $$UserSettingsTableTableTableManager
                 boatName: boatName,
                 freeEditsUsed: freeEditsUsed,
                 defaultAnchorScopeRatio: defaultAnchorScopeRatio,
+                anchorRollerHeightMeters: anchorRollerHeightMeters,
+                anchorMinDepthMeters: anchorMinDepthMeters,
+                anchorMaxWindKt: anchorMaxWindKt,
+                anchorAisAlarmEnabled: anchorAisAlarmEnabled,
                 predictwindHubLocalUrl: predictwindHubLocalUrl,
                 predictwindHubUsername: predictwindHubUsername,
                 predictwindHubPassword: predictwindHubPassword,

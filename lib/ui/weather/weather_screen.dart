@@ -10,12 +10,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
+import '../../core/di.dart';
 import '../../core/units.dart';
+import '../../models/models.dart';
+import '../../services/boat_position_service.dart';
 import '../../services/error_log_service.dart';
 import '../../services/location_service.dart';
 import '../../services/map_tile_cache_service.dart';
 import '../../services/map_tile_providers.dart';
 import '../../services/marine_hazard_service.dart';
+import '../../services/predictwind_datahub_service.dart';
 import '../../services/tide_service.dart';
 import '../../services/weather_service.dart';
 import '../components/title_tile.dart';
@@ -23,10 +27,12 @@ import '../components/common_drawer.dart';
 import 'caching_tile_provider.dart';
 
 /// Weather hub — Open-Meteo forecast + map pin (S3) + device GPS (WX1).
+/// #303 — prefers boat instruments for position, then phone GPS.
 class WeatherScreen extends ConsumerStatefulWidget {
   final LocationService? locationService;
+  final BoatPositionService? positionService;
 
-  const WeatherScreen({super.key, this.locationService});
+  const WeatherScreen({super.key, this.locationService, this.positionService});
 
   @override
   ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
@@ -54,6 +60,8 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   bool _mapReady = false;
   late final LocationService _locationService =
       widget.locationService ?? const LocationService();
+  late final BoatPositionService _positionService = widget.positionService ??
+      BoatPositionService(locationService: _locationService);
   // #240/#241: multi-provider basemap + tile-download/cache framework.
   final _tileCacheService = MapTileCacheService();
   String _providerId = mapTileBaseProviders.first.id;
@@ -164,18 +172,50 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     }
   }
 
-  /// WX1: request permission and fill lat/lon from the device.
+  /// WX1 / #303: instruments first, then phone GPS for lat/lon.
   Future<void> _useDeviceLocation({bool silent = false}) async {
     if (_locating) return;
     setState(() => _locating = true);
     try {
-      final result = await _locationService.getCurrentPosition();
+      final settings = await ref.read(userSettingsProvider.future);
+      final hub = _hubFromSettings(settings);
+      final result = await _positionService.fetchBest(
+        settings: settings,
+        hubService: hub,
+        allowPhoneFallback: true,
+      );
       if (!mounted) return;
-      switch (result.failureReason) {
+
+      if (result.hasPosition) {
+        final lat = result.latitude!;
+        final lon = result.longitude!;
+        setState(() {
+          _latCtrl.text = lat.toStringAsFixed(4);
+          _lonCtrl.text = lon.toStringAsFixed(4);
+          _placeName = null;
+        });
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('weather_place_name');
+        _recenterMap(lat, lon);
+        if (!silent && mounted) {
+          final src = result.positionSourceLabel;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Position from $src'),
+            duration: const Duration(seconds: 2),
+          ));
+        }
+        await _load();
+        return;
+      }
+
+      // No instruments and phone failed — surface the phone failure reason.
+      switch (result.phoneFailure) {
         case LocationFailureReason.serviceDisabled:
           if (!silent) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Turn on location services to use GPS'),
+              content: Text(
+                'No boat instruments fix and location services are off',
+              ),
             ));
           }
           return;
@@ -183,53 +223,61 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
           if (!silent) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
-                  'Location permission denied — enter coordinates or tap the map'),
-            ));
-          }
-          return;
-        case LocationFailureReason.error:
-          // #283 — timeouts / no-fix indoors are expected control flow
-          // (SnackBar is enough). Only log unexpected location failures so
-          // triage does not file one GitHub issue per slow GPS.
-          final err = result.error;
-          final msg = err?.toString() ?? '';
-          final expectedTimeout = msg.contains('TimeoutException') ||
-              msg.contains('time limit') ||
-              msg.contains('TIMEOUT');
-          if (!expectedTimeout) {
-            unawaited(ErrorLogService().logWarning(
-              'location lookup failed: $err',
-              context: 'weather_screen: _locate',
-            ));
-          }
-          if (!silent) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(
-                expectedTimeout
-                    ? 'GPS timed out — try outdoors or enter coordinates'
-                    : 'Could not get location: $err',
+                'No boat instruments fix — location permission denied. '
+                'Enter coordinates or tap the map',
               ),
             ));
           }
           return;
+        case LocationFailureReason.error:
         case null:
-          final pos = result.position!;
-          // New pin ⇒ drop any previous place label so reverse-geocode runs.
-          // (Previously we kept "Phoenix, Maricopa County…" after GPS moved
-          // the coords, and WeatherService skipped reverse geocode.)
-          setState(() {
-            _latCtrl.text = pos.latitude.toStringAsFixed(4);
-            _lonCtrl.text = pos.longitude.toStringAsFixed(4);
-            _placeName = null;
-          });
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('weather_place_name');
-          _recenterMap(pos.latitude, pos.longitude);
-          await _load();
+          if (!silent) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                'Could not get position from instruments or phone GPS',
+              ),
+            ));
+          }
+          return;
+      }
+    } catch (e) {
+      if (!silent) {
+        unawaited(ErrorLogService().logWarning(
+          'position lookup failed: $e',
+          context: 'weather_screen: _locate',
+        ));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not get location: $e')),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _locating = false);
     }
+  }
+
+  /// #303 — same DataHub settings override as Anchor Alarm.
+  PredictWindDatahubService _hubFromSettings(UserSettings? settings) {
+    if (settings == null) return const PredictWindDatahubService();
+    final savedUrl = settings.predictwindHubLocalUrl.trim();
+    final user = settings.predictwindHubUsername.isNotEmpty
+        ? settings.predictwindHubUsername
+        : null;
+    final pass = settings.predictwindHubPassword.isNotEmpty
+        ? settings.predictwindHubPassword
+        : null;
+    if (savedUrl.isEmpty && user == null && pass == null) {
+      return const PredictWindDatahubService();
+    }
+    final isLan = savedUrl.isNotEmpty &&
+        PredictWindDatahubService.isPrivateLanUrl(savedUrl);
+    return PredictWindDatahubService(
+      localBaseUrlOverride: isLan ? savedUrl : null,
+      baseUrlOverride: !isLan && savedUrl.isNotEmpty ? savedUrl : null,
+      usernameOverride: user,
+      passwordOverride: pass,
+    );
   }
 
   /// [placeName] only when the user picked a search hit (trust that label).

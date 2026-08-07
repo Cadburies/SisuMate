@@ -14,7 +14,7 @@ import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/anchor_alarm_service.dart';
-import '../../services/boat_instrument_failover_service.dart';
+import '../../services/boat_position_service.dart';
 import '../../services/predictwind_datahub_service.dart';
 import 'anchor_chart_map.dart';
 import 'anchor_info_panel.dart';
@@ -33,18 +33,18 @@ const _maxSliderRadiusMeters = 120.0;
 /// geofence circle (default ratio from Settings, always adjustable), and
 /// an optional wind-swing danger-zone sector.
 ///
-/// GPS/wind come **only** from boat instruments via multi-source failover
-/// ([BoatInstrumentFailoverService]) — deliberately no phone GPS fallback
-/// (a phone can be carried off the boat). Order: local DataHub → local
-/// Home Assistant → internet DataHub → internet HA. When no source has a
-/// usable fix, the screen shows a calm warning and the drag/danger-zone
-/// alarm does not evaluate (losing instruments must never itself read as
-/// "the boat dragged").
+/// #303 — Position prefers boat instruments ([BoatPositionService] multi-
+/// source failover), then phone GPS when instruments have no usable fix.
+/// UI shows the active source. Losing instruments alone is never treated
+/// as a drag — alarms evaluate only when a position (either source) exists.
+/// Depth/wind stay instrument-only when available.
 ///
-/// The alarm (system sound + haptic, repeating every 2s while triggered)
-/// only fires while this screen is open and the app is in the foreground —
-/// there is no background/lock-screen service yet (tracked separately;
-/// see the issue's Notes on background-execution infrastructure).
+/// #307 — Also evaluates min-depth and strong-wind thresholds from Settings
+/// (and an AIS arming switch with no feed yet). Distinct reason chips;
+/// system alert + haptic for all conditions.
+///
+/// Alarms only fire while this screen is open and the app is in the
+/// foreground — no background service yet.
 class AnchorAlarmScreen extends ConsumerStatefulWidget {
   const AnchorAlarmScreen({
     super.key,
@@ -52,10 +52,16 @@ class AnchorAlarmScreen extends ConsumerStatefulWidget {
     this.httpClient,
     this.pollInterval = const Duration(seconds: 20),
     this.showChartMap = true,
+    this.positionService = const BoatPositionService(),
+    /// Production: true (#303). Widget tests that assert Hub-only copy pass
+    /// false so Geolocator is never hit under flutter_test.
+    this.allowPhoneFallback = true,
   });
 
   final PredictWindDatahubService hubService;
   final http.Client? httpClient;
+  final BoatPositionService positionService;
+  final bool allowPhoneFallback;
 
   /// Auto-refresh cadence — a real, lingering `Timer.periodic` is a classic
   /// `flutter_test` hang source (the test binding waits on pending real
@@ -86,10 +92,18 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
   bool _isRefreshing = false;
   PredictWindHubStatus? _hubStatus;
   PredictWindBoatData? _boatData;
+  /// #303 — lat/lon may come from phone when instruments lack a fix.
+  double? _positionLat;
+  double? _positionLon;
+  BoatPositionSource? _positionSource;
+  String _positionSourceLabel = 'No position';
 
   bool _alarmActive = false;
   bool _isOutsideCircle = false;
   bool _isInDangerZone = false;
+  bool _isShallow = false;
+  bool _isStrongWind = false;
+  bool _isAisRisk = false;
 
   Timer? _pollTimer;
   Timer? _alarmTimer;
@@ -115,14 +129,13 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
     super.dispose();
   }
 
-  // Hub-only — deliberately no phone GPS fallback (see class doc). Null
-  // whenever the Hub has no fresh, usable fix, regardless of the reason.
-  double? get _boatLat => _boatData?.hasFix ?? false ? _boatData!.latitude : null;
-  double? get _boatLon => _boatData?.hasFix ?? false ? _boatData!.longitude : null;
+  // #303 — best available lat/lon (instruments or phone).
+  double? get _boatLat => _positionLat;
+  double? get _boatLon => _positionLon;
 
   /// #263 — dart-defines-backed [widget.hubService] is the base; saved
   /// DataHub settings layer on top. Multi-source failover (HA, remote) is
-  /// handled by [BoatInstrumentFailoverService].
+  /// handled inside [BoatPositionService].
   Future<PredictWindDatahubService> _effectiveHubService() async {
     final settings = await ref.read(userSettingsProvider.future);
     if (settings == null) return widget.hubService;
@@ -153,22 +166,26 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
     setState(() => _isRefreshing = true);
     final settings = await ref.read(userSettingsProvider.future);
     final hubService = await _effectiveHubService();
-    const failover = BoatInstrumentFailoverService();
-    final snap = await failover.fetch(
+    final pos = await widget.positionService.fetchBest(
       settings: settings,
       hubService: hubService,
       client: widget.httpClient,
+      allowPhoneFallback: widget.allowPhoneFallback,
     );
     if (!mounted) return;
     setState(() {
-      _hubStatus = snap.hubStatus;
-      _boatData = snap.boatData;
+      _hubStatus = pos.instruments.hubStatus;
+      _boatData = pos.boatData;
+      _positionLat = pos.latitude;
+      _positionLon = pos.longitude;
+      _positionSource = pos.positionSource;
+      _positionSourceLabel = pos.positionSourceLabel;
       _initialLoadDone = true;
       _isRefreshing = false;
     });
     // #274 — offline polar learning: store under-sail samples when engines
     // are not showing revs and SOG/wind are valid.
-    final boatData = snap.boatData;
+    final boatData = pos.boatData;
     if (boatData != null) {
       unawaited(_maybeCollectPolarSample(boatData));
     }
@@ -193,6 +210,7 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
 
   void _recomputeAlarm() {
     final anchorWatch = ref.read(activeAnchorWatchProvider).value;
+    final settings = ref.read(userSettingsProvider).asData?.value;
     final lat = _boatLat;
     final lon = _boatLon;
 
@@ -219,13 +237,31 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
             outerRadiusMeters: anchorWatch.radiusMeters,
           );
     }
-    final active = outside || inDanger;
+
+    // #307 — shallow / wind / AIS (AIS is a no-op until a feed exists).
+    final shallow = _alarmService.isShallow(
+      depthMeters: _boatData?.depthMeters,
+      minDepthMeters: settings?.anchorMinDepthMeters ?? 0,
+    );
+    final windKt = _boatData?.apparentWindSpeedKt ?? _boatData?.windSpeedKt;
+    final strongWind = _alarmService.isStrongWind(
+      windKt: windKt,
+      maxWindKt: settings?.anchorMaxWindKt ?? 0,
+    );
+    final ais = _alarmService.isAisCollisionRisk(
+      enabled: settings?.anchorAisAlarmEnabled ?? false,
+    );
+
+    final active = outside || inDanger || shallow || strongWind || ais;
 
     if (mounted) {
       setState(() {
         _alarmActive = active;
         _isOutsideCircle = outside;
         _isInDangerZone = inDanger;
+        _isShallow = shallow;
+        _isStrongWind = strongWind;
+        _isAisRisk = ais;
       });
     }
 
@@ -233,11 +269,13 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
     _alarmTimer = null;
     if (active) {
       _playAlarmTick();
-      _alarmTimer = Timer.periodic(const Duration(seconds: 2), (_) => _playAlarmTick());
+      _alarmTimer =
+          Timer.periodic(const Duration(seconds: 2), (_) => _playAlarmTick());
     }
   }
 
   void _playAlarmTick() {
+    // #307 — system alert for all conditions (bundled tones later).
     SystemSound.play(SystemSoundType.alert);
     HapticFeedback.vibrate();
   }
@@ -249,9 +287,14 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
 
     final settings = await ref.read(userSettingsProvider.future);
     final ratio = settings?.defaultAnchorScopeRatio ?? 5.0;
+    final roller = settings?.anchorRollerHeightMeters ?? 0;
     final depth = _boatData?.depthMeters;
     final radius = depth != null
-        ? _alarmService.suggestRadiusMeters(depthMeters: depth, scopeRatio: ratio)
+        ? _alarmService.suggestRadiusMeters(
+            depthMeters: depth,
+            scopeRatio: ratio,
+            freeboardMeters: roller,
+          )
         : _defaultRadiusMeters;
 
     final watch = AnchorWatch()
@@ -384,6 +427,9 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                   _AlarmBanner(
                                     outsideCircle: _isOutsideCircle,
                                     inDangerZone: _isInDangerZone,
+                                    shallow: _isShallow,
+                                    strongWind: _isStrongWind,
+                                    ais: _isAisRisk,
                                   ),
                                   const SizedBox(height: 12),
                                 ] else if (activeWatch != null &&
@@ -419,6 +465,12 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                   _ScopeCard(
                                     activeWatch: activeWatch,
                                     depthMeters: _boatData?.depthMeters,
+                                    rollerHeightMeters: ref
+                                            .watch(userSettingsProvider)
+                                            .asData
+                                            ?.value
+                                            ?.anchorRollerHeightMeters ??
+                                        0,
                                   ),
                                   const SizedBox(height: 12),
                                   _DangerZoneCard(activeWatch: activeWatch),
@@ -429,13 +481,20 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                   isRefreshing: _isRefreshing,
                                   onRefresh: _refresh,
                                   onConfigure: () async {
+                                    // #306 — instruments live in global Settings.
                                     await context
-                                        .push(AppRoutes.anchorGatewaySetup);
+                                        .push(AppRoutes.boatInstruments);
                                     if (mounted) unawaited(_refresh());
                                   },
                                 ),
                                 const SizedBox(height: 12),
-                                _PositionCard(boatData: _boatData),
+                                _PositionCard(
+                                  boatData: _boatData,
+                                  positionLat: _positionLat,
+                                  positionLon: _positionLon,
+                                  positionSourceLabel: _positionSourceLabel,
+                                  positionSource: _positionSource,
+                                ),
                                 const SizedBox(height: 12),
                                 _WindCard(boatData: _boatData),
                               ],
@@ -446,6 +505,9 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                             child: AnchorInfoPanel(
                               activeWatch: activeWatch,
                               boatData: _boatData,
+                              positionLat: _positionLat,
+                              positionLon: _positionLon,
+                              positionSourceLabel: _positionSourceLabel,
                             ),
                           ),
                         ],
@@ -494,16 +556,31 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
 class _AlarmBanner extends StatelessWidget {
   final bool outsideCircle;
   final bool inDangerZone;
-  const _AlarmBanner({required this.outsideCircle, required this.inDangerZone});
+  final bool shallow;
+  final bool strongWind;
+  final bool ais;
+  const _AlarmBanner({
+    required this.outsideCircle,
+    required this.inDangerZone,
+    this.shallow = false,
+    this.strongWind = false,
+    this.ais = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final message = outsideCircle && inDangerZone
-        ? 'ANCHOR ALARM — outside the safe circle and in the danger zone!'
-        : inDangerZone
-            ? 'ANCHOR ALARM — the boat has swung into the danger zone!'
-            : 'ANCHOR ALARM — the boat has dragged outside the safe circle!';
+    // #307 — list every active reason so multi-condition is clear.
+    final reasons = <String>[
+      if (outsideCircle) 'Drag (outside circle)',
+      if (inDangerZone) 'Danger zone',
+      if (shallow) 'Shallow (min depth)',
+      if (strongWind) 'Strong wind',
+      if (ais) 'AIS risk',
+    ];
+    final message = reasons.isEmpty
+        ? 'ANCHOR ALARM'
+        : 'ANCHOR ALARM — ${reasons.join(' · ')}';
 
     return Card(
       color: theme.colorScheme.error,
@@ -632,7 +709,13 @@ class _AnchorStatusCard extends StatelessWidget {
 class _ScopeCard extends ConsumerStatefulWidget {
   final AnchorWatch activeWatch;
   final double? depthMeters;
-  const _ScopeCard({required this.activeWatch, required this.depthMeters});
+  /// #307 — bow roller height from Settings (freeboard in scope math).
+  final double rollerHeightMeters;
+  const _ScopeCard({
+    required this.activeWatch,
+    required this.depthMeters,
+    this.rollerHeightMeters = 0,
+  });
 
   @override
   ConsumerState<_ScopeCard> createState() => _ScopeCardState();
@@ -676,7 +759,10 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
     await ref.read(anchorWatchRepositoryProvider).updateWatch(updated);
   }
 
-  /// #304 — when live depth is known, keep radius = (depth) × scope.
+  double get _roller =>
+      widget.rollerHeightMeters < 0 ? 0 : widget.rollerHeightMeters;
+
+  /// #304/#307 — when live depth is known, radius = (depth + roller) × scope.
   void _applyScope(double ratio) {
     _ratio = ratio;
     final depth = widget.depthMeters;
@@ -684,11 +770,12 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
       _radius = _alarm.suggestRadiusMeters(
         depthMeters: depth,
         scopeRatio: _ratio,
+        freeboardMeters: _roller,
       );
     }
   }
 
-  /// #304 — when live depth is known, back-solve scope from radius.
+  /// #304/#307 — when live depth is known, back-solve scope from radius.
   void _applyRadius(double radius) {
     _radius = radius;
     final depth = widget.depthMeters;
@@ -696,6 +783,7 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
       final next = _alarm.scopeFromRadius(
         radiusMeters: _radius,
         depthMeters: depth,
+        freeboardMeters: _roller,
       );
       if (next != null) _ratio = next;
     }
@@ -705,6 +793,9 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
   Widget build(BuildContext context) {
     final depth = widget.depthMeters;
     final depthKnown = depth != null && depth > 0;
+    final rollerNote = _roller > 0
+        ? ' + roller ${_roller.toStringAsFixed(1)} m'
+        : '';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -717,7 +808,7 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  'Linked to live depth (${depth.toStringAsFixed(1)} m): '
+                  'Linked to live depth (${depth.toStringAsFixed(1)} m$rollerNote): '
                   'changing scope updates radius and vice versa.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
@@ -774,12 +865,14 @@ class _ScopeCardState extends ConsumerState<_ScopeCard> {
                       _radius = _alarm.suggestRadiusMeters(
                         depthMeters: depth,
                         scopeRatio: _ratio,
+                        freeboardMeters: _roller,
                       );
                     });
                     _persist();
                   },
                   child: Text(
-                      'Reset radius from scope × depth (${depth.toStringAsFixed(1)} m)'),
+                    'Reset radius from scope × (depth$rollerNote)',
+                  ),
                 ),
               ),
           ],
@@ -1061,12 +1154,13 @@ class _HubStatusCard extends StatelessWidget {
       case PredictWindHubConnectionState.notConfigured:
         title = 'No instrument source configured';
         detail =
-            'Open Gateway Setup to add DataHub, YDWG, or Home Assistant.';
+            'Open Settings → Boat instruments to add DataHub, YDWG, or HA.';
         icon = Icons.link_off;
         color = theme.colorScheme.outline;
       case PredictWindHubConnectionState.missingCredentials:
         title = 'Instrument login missing';
-        detail = 'Add DataHub login or Home Assistant token in Gateway Setup.';
+        detail =
+            'Add DataHub login or Home Assistant token under Boat instruments.';
         icon = Icons.lock_outline;
         color = theme.colorScheme.tertiary;
       case PredictWindHubConnectionState.connected:
@@ -1086,7 +1180,7 @@ class _HubStatusCard extends StatelessWidget {
       case PredictWindHubConnectionState.unreachable:
         title = 'Boat instruments unreachable';
         detail = s?.detail ??
-            'Tried local then internet sources. Check Gateway Setup.';
+            'Tried local then internet sources. Check Boat instruments settings.';
         icon = Icons.wifi_off;
         color = theme.colorScheme.error;
     }
@@ -1126,46 +1220,53 @@ class _HubStatusCard extends StatelessWidget {
   }
 }
 
-/// #256 follow-up — GPS position, Hub-only (no phone GPS; see the screen's
-/// class doc for why). Distinguishes "no data at all" from "the Hub has a
-/// reading but it's stale/no-fix" ([PredictWindBoatData.hasFix]), since the
-/// latter matters for anchor watch trust even though `boatData` is non-null.
+/// #303 — GPS position from instruments or phone fallback.
 class _PositionCard extends StatelessWidget {
   final PredictWindBoatData? boatData;
-  const _PositionCard({required this.boatData});
+  final double? positionLat;
+  final double? positionLon;
+  final String positionSourceLabel;
+  final BoatPositionSource? positionSource;
+  const _PositionCard({
+    required this.boatData,
+    required this.positionLat,
+    required this.positionLon,
+    required this.positionSourceLabel,
+    required this.positionSource,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final data = boatData;
-    final hasFix = data?.hasFix ?? false;
     final theme = Theme.of(context);
+    final hasPos = positionLat != null && positionLon != null;
+    final fromPhone = positionSource == BoatPositionSource.phoneGps;
 
     String title;
     String subtitle;
-    if (hasFix) {
-      title = '${data!.latitude!.toStringAsFixed(5)}, '
-          '${data.longitude!.toStringAsFixed(5)}';
-      subtitle = data.sourceLabel != null
-          ? 'Source: ${data.sourceLabel}'
-          : (data.viaLocalNetwork
-              ? 'Source: local network'
-              : 'Source: internet');
-    } else if (data == null) {
+    if (hasPos) {
+      title =
+          '${positionLat!.toStringAsFixed(5)}, ${positionLon!.toStringAsFixed(5)}';
+      subtitle = 'Source: $positionSourceLabel'
+          '${fromPhone ? ' (instruments had no fix)' : ''}';
+    } else if (boatData == null) {
       title = 'Position unavailable';
-      subtitle = 'No instrument source connected.';
-    } else if (data.isStale()) {
+      subtitle = 'No instruments and no phone GPS fix.';
+    } else if (boatData!.isStale()) {
       title = 'Position unavailable';
-      subtitle = 'Last reading is stale — instruments may be off.';
+      subtitle =
+          'Instrument reading stale and phone GPS unavailable — cannot verify.';
     } else {
       title = 'Position unavailable';
-      subtitle = 'Connected, waiting for a GPS fix.';
+      subtitle = 'Waiting for instrument fix or phone GPS.';
     }
 
     return Card(
       child: ListTile(
         leading: Icon(
-          hasFix ? Icons.gps_fixed : Icons.gps_off,
-          color: hasFix ? null : theme.colorScheme.outline,
+          hasPos
+              ? (fromPhone ? Icons.phone_android : Icons.gps_fixed)
+              : Icons.gps_off,
+          color: hasPos ? null : theme.colorScheme.outline,
         ),
         title: Text(title),
         subtitle: Text(subtitle),

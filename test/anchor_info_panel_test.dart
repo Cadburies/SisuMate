@@ -27,6 +27,8 @@ void main() {
         AnchorInfoPanel(
           activeWatch: null,
           boatData: boat(depthMeters: 7.5),
+          positionLat: null,
+          positionLon: null,
         ),
       ),
     );
@@ -45,6 +47,9 @@ void main() {
         AnchorInfoPanel(
           activeWatch: null,
           boatData: boat(lat: 12, lon: -61),
+          positionLat: 12,
+          positionLon: -61,
+          positionSourceLabel: 'Phone GPS',
         ),
       ),
     );
@@ -71,6 +76,9 @@ void main() {
         AnchorInfoPanel(
           activeWatch: watch,
           boatData: boat(depthMeters: 6.0, lat: 12.0001, lon: -61),
+          positionLat: 12.0001,
+          positionLon: -61,
+          positionSourceLabel: 'DataHub (local)',
         ),
       ),
     );

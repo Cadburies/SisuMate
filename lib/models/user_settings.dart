@@ -26,6 +26,18 @@ class UserSettings {
   /// #256 — default chain-scope ratio new anchor drops are pre-filled with.
   double defaultAnchorScopeRatio = 5.0;
 
+  /// #307 — bow roller height above water (m) in scope math.
+  double anchorRollerHeightMeters = 0.0;
+
+  /// #307 — shallow alarm threshold (m). 0 = off.
+  double anchorMinDepthMeters = 0.0;
+
+  /// #307 — strong-wind alarm threshold (kn). 0 = off.
+  double anchorMaxWindKt = 0.0;
+
+  /// #307 — AIS alarm armed in UI (no live feed yet).
+  bool anchorAisAlarmEnabled = false;
+
   /// #263 — set via the Anchor Alarm's gateway setup/onboarding screen
   /// (auto-discovered or manually entered), stored so the user doesn't
   /// re-enter it every session. Empty means "use the dart-defines default,
@@ -80,6 +92,10 @@ class UserSettings {
           boatName == other.boatName &&
           freeEditsUsed == other.freeEditsUsed &&
           defaultAnchorScopeRatio == other.defaultAnchorScopeRatio &&
+          anchorRollerHeightMeters == other.anchorRollerHeightMeters &&
+          anchorMinDepthMeters == other.anchorMinDepthMeters &&
+          anchorMaxWindKt == other.anchorMaxWindKt &&
+          anchorAisAlarmEnabled == other.anchorAisAlarmEnabled &&
           predictwindHubLocalUrl == other.predictwindHubLocalUrl &&
           predictwindHubUsername == other.predictwindHubUsername &&
           predictwindHubPassword == other.predictwindHubPassword &&
@@ -115,6 +131,10 @@ class UserSettings {
         boatName,
         freeEditsUsed,
         defaultAnchorScopeRatio,
+        anchorRollerHeightMeters,
+        anchorMinDepthMeters,
+        anchorMaxWindKt,
+        anchorAisAlarmEnabled,
         predictwindHubLocalUrl,
         predictwindHubUsername,
         predictwindHubPassword,
@@ -143,6 +163,10 @@ class UserSettings {
       'fromName: $fromName, replyToEmail: $replyToEmail, '
       'boatName: $boatName, freeEditsUsed: $freeEditsUsed, '
       'defaultAnchorScopeRatio: $defaultAnchorScopeRatio, '
+      'anchorRollerHeightMeters: $anchorRollerHeightMeters, '
+      'anchorMinDepthMeters: $anchorMinDepthMeters, '
+      'anchorMaxWindKt: $anchorMaxWindKt, '
+      'anchorAisAlarmEnabled: $anchorAisAlarmEnabled, '
       'predictwindHubLocalUrl: $predictwindHubLocalUrl, '
       'predictwindHubUsername: $predictwindHubUsername, '
       'ydwgUrl: $ydwgUrl, ydwgUsername: $ydwgUsername, '

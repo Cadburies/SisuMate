@@ -8,7 +8,7 @@ import '../../models/models.dart';
 import '../../services/home_assistant_service.dart';
 import '../../services/predictwind_datahub_service.dart';
 
-/// #263 — Anchor Alarm's gateway setup/onboarding screen.
+/// #263 / #306 — Boat instruments / GPS gateway setup (global Settings).
 ///
 /// **PredictWind DataHub** (LuCI / nmead): username/password, Discover
 /// (local + remote tunnel URLs), manual address + Test, Save.
@@ -20,6 +20,9 @@ import '../../services/predictwind_datahub_service.dart';
 /// and internet (Nabu Casa / reverse proxy), shared long-lived token +
 /// entity IDs. Failover tries HA local with other local sources, then HA
 /// internet with other remote sources.
+///
+/// Opened from Settings → Boat instruments / GPS (and legacy Anchor deep
+/// link redirects here).
 class AnchorGatewaySetupScreen extends ConsumerStatefulWidget {
   const AnchorGatewaySetupScreen({
     super.key,
@@ -555,7 +558,7 @@ class _AnchorGatewaySetupScreenState
       body: SafeArea(
         child: Column(
           children: [
-            const TitleTile(title: 'Gateway Setup'),
+            const TitleTile(title: 'Boat instruments / GPS'),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(12),

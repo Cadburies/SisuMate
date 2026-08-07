@@ -175,9 +175,13 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
     var scopeRatio = widget.activeWatch.scopeRatio;
     final depth = widget.depthMeters;
     if (depth != null && depth > 0) {
+      final roller = ref.read(userSettingsProvider).asData?.value
+              ?.anchorRollerHeightMeters ??
+          0;
       final next = _alarmService.scopeFromRadius(
         radiusMeters: _radiusMeters,
         depthMeters: depth,
+        freeboardMeters: roller,
       );
       if (next != null) scopeRatio = next;
     }

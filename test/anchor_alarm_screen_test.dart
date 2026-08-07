@@ -125,6 +125,7 @@ void main() {
     WidgetTester tester, {
     http.Client? httpClient,
     PredictWindDatahubService hubService = const PredictWindDatahubService(),
+    bool allowPhoneFallback = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -144,6 +145,9 @@ void main() {
             // Chart-map MapController dispose is flaky under flutter_test;
             // chart coverage is in anchor_chart_map_test.dart.
             showChartMap: false,
+            // #303 — production enables phone fallback; host tests keep
+            // instruments-only so Geolocator is never invoked.
+            allowPhoneFallback: allowPhoneFallback,
           ),
         ),
       ),
@@ -152,7 +156,7 @@ void main() {
   }
 
   testWidgets(
-      'Hub not configured shows a clear state — no phone GPS fallback',
+      'Hub not configured shows a clear state (tests disable phone fallback)',
       (tester) async {
     await pumpScreen(tester);
 
@@ -161,7 +165,7 @@ void main() {
     expect(find.text('Info'), findsOneWidget);
     expect(find.text('No instrument source configured'), findsOneWidget);
     expect(find.text('Position unavailable'), findsOneWidget);
-    expect(find.text('No instrument source connected.'), findsOneWidget);
+    expect(find.text('No instruments and no phone GPS fix.'), findsOneWidget);
     expect(find.text('Wind data unavailable'), findsOneWidget);
     await unmount(tester);
   });
@@ -215,9 +219,11 @@ void main() {
         httpClient: hubClient(quality: 0), hubService: connectedHubService);
 
     expect(find.text('Position unavailable'), findsOneWidget);
+    // #303 — with phone fallback disabled in tests, no lat/lon is invented.
     expect(
-        find.text('Connected, waiting for a GPS fix.'),
-        findsOneWidget);
+      find.textContaining('Waiting for instrument fix or phone GPS'),
+      findsOneWidget,
+    );
     await unmount(tester);
   });
 
@@ -232,8 +238,9 @@ void main() {
 
     expect(find.text('Position unavailable'), findsOneWidget);
     expect(
-        find.text('Last reading is stale — instruments may be off.'),
-        findsOneWidget);
+      find.textContaining('Instrument reading stale'),
+      findsOneWidget,
+    );
     await unmount(tester);
   });
 

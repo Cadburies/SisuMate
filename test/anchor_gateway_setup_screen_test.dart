@@ -64,7 +64,7 @@ void main() {
       (tester) async {
     await pumpScreen(tester);
 
-    expect(find.text('Gateway Setup'), findsOneWidget);
+    expect(find.text('Boat instruments / GPS'), findsOneWidget);
     expect(find.text('Found:'), findsNothing);
     expect(find.text('Default for DataHub'), findsOneWidget);
     expect(find.widgetWithText(ActionChip, 'DataHub internet'), findsOneWidget);
