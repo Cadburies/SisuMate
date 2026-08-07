@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** closed #282–#285 triage batch (GRIB picker, GPS timeout, hub DNS log noise).
-- **Open backlog:** `gh issue list`.
+- **Last (grok):** research wave filed #286–#302 (offline-first AI + per-module improvements).
+- **Open backlog:** `gh issue list` — start P2: #286 epic, #287 log parse, #289 maint risk, #290 packs, #291 weather, #302 import.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 
