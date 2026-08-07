@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** #316 polar diagram clip/fill (centered full polar in tile).
-- **Open:** backlog empty of open issues after #316; #310 follow-ups if reopened.
+- **Last (grok):** #317 shopping AI — per-item offline guide + optional LLM; list customs on title bar.
+- **Open:** backlog empty; live “nearest shops” needs Places follow-up if desired.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

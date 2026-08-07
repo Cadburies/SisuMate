@@ -180,6 +180,30 @@ void main() {
     expect((payload['rulesExcerpt'] as String).length, 4000);
   });
 
+  test('#317 shoppingGuideQuery whitelist: item fields + optional region only',
+      () {
+    final payload = LlmPayloadBuilder.shoppingGuideQuery(
+      itemName: 'Brown sugar',
+      origin: 'pantry',
+      quantity: 2,
+      unit: 'kg',
+      notes: 'for coffee',
+      region: 'Turkey',
+      lastPurchasePrice: 3.5,
+      lastPurchasePlace: 'Migros',
+    );
+
+    expect(payload['itemName'], 'Brown sugar');
+    expect(payload['origin'], 'pantry');
+    expect(payload['quantity'], 2);
+    expect(payload['unit'], 'kg');
+    expect(payload['notes'], 'for coffee');
+    expect(payload['region'], 'Turkey');
+    expect(payload['lastPurchasePrice'], 3.5);
+    expect(payload['lastPurchasePlace'], 'Migros');
+    expect(payload.containsKey('boatSupabaseId'), isFalse);
+  });
+
   test('parseLogEntryText passes the freeform text through verbatim — '
       'intentionally not whitelist-filtered, since the text itself is the '
       'whole payload', () {

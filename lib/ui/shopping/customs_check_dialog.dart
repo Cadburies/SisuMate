@@ -10,20 +10,38 @@ import '../../services/compliance_pack_service.dart';
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
 
-/// #228 / #290: customs check — offline red-flag pack first, optional AI.
+/// #228 / #290 / #317: list-level customs check — offline red-flag pack first,
+/// optional AI on a pasted rules excerpt. Per-item shopping help uses
+/// [ShoppingItemAiDialog] instead (title-bar entry for this dialog).
 class CustomsCheckDialog extends ConsumerStatefulWidget {
-  const CustomsCheckDialog({super.key});
+  /// Optional prefill (e.g. names from the open shopping list).
+  final String? initialItemDescription;
+
+  const CustomsCheckDialog({super.key, this.initialItemDescription});
 
   @override
   ConsumerState<CustomsCheckDialog> createState() => _CustomsCheckDialogState();
 }
 
 class _CustomsCheckDialogState extends ConsumerState<CustomsCheckDialog> {
-  final _itemCtrl = TextEditingController();
+  late final TextEditingController _itemCtrl;
   final _excerptCtrl = TextEditingController();
   String? _offlineReport;
   LlmResult? _llm;
   bool _llmLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialItemDescription?.trim() ?? '';
+    _itemCtrl = TextEditingController(text: initial);
+    if (initial.isNotEmpty) {
+      // Auto-run offline pack when opened from the list title bar.
+      _offlineReport = CompliancePackService.formatHits(
+        CompliancePackService.matchCustomsItem(initial),
+      );
+    }
+  }
 
   @override
   void dispose() {

@@ -7,15 +7,13 @@ import 'package:sisu_mate/core/di.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/services/revenuecat_service.dart';
 import 'package:sisu_mate/ui/shopping/customs_check_dialog.dart';
+import 'package:sisu_mate/ui/shopping/shopping_item_ai_dialog.dart';
 import 'package:sisu_mate/ui/shopping/shopping_screen.dart';
 
 import 'test_helpers/platform_mocks.dart';
 
-/// #228: customs/provisioning import-restriction check — reached via a
-/// shopping item's AI badge (#208 separation from the swipe-revealed
-/// Complete/Hide/Email actions), reasons only over pasted text (no live
-/// search — that's #224's shape), and never claims to be an official
-/// customs determination.
+/// #228 / #317: per-item AI badge → shopping guide (prefilled); list customs
+/// on the title bar. Offline-first; never claims official customs advice.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
@@ -56,6 +54,7 @@ void main() {
             supabaseId: const Value('cat_spares_item'),
             categorySupabaseId: const Value('cat_spares'),
             name: const Value('Duty-free rum'),
+            origin: const Value('bar'),
           ),
         );
 
@@ -71,29 +70,55 @@ void main() {
     ));
     await tester.pump();
     await tester.pump();
-    // Origin group header is a collapsed ExpansionTile until tapped open.
-    await tester.tap(find.text('Spares'));
+    // Origin groups are ExpansionTiles (header = capitalized origin).
+    final originHeader = find.text('Bar');
+    if (originHeader.evaluate().isNotEmpty) {
+      await tester.tap(originHeader);
+    } else {
+      final tiles = find.byType(ExpansionTile);
+      if (tiles.evaluate().isNotEmpty) {
+        await tester.tap(tiles.first);
+      }
+    }
     await tester.pumpAndSettle();
     return container;
   }
 
-  testWidgets('tapping a shopping item\'s AI badge opens the customs-check '
-      'dialog', (tester) async {
+  testWidgets('#317 per-item AI badge opens prefilled shopping guide',
+      (tester) async {
     await pumpScreen(tester);
 
     expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
     await tester.tap(find.byIcon(Icons.auto_awesome));
     await tester.pumpAndSettle();
 
-    expect(find.byType(CustomsCheckDialog), findsOneWidget);
-    expect(find.text('Item(s) you\'re carrying'), findsOneWidget);
-    expect(find.text('Check offline pack'), findsOneWidget);
+    expect(find.byType(ShoppingItemAiDialog), findsOneWidget);
+    expect(find.byType(CustomsCheckDialog), findsNothing);
+    expect(find.textContaining('Duty-free rum'), findsWidgets);
+    expect(find.textContaining('Offline shopping guide'), findsOneWidget);
+    expect(find.text('Improve with AI (online)'), findsOneWidget);
+    // Alcohol customs pack should auto-appear offline for rum.
+    expect(find.textContaining('Alcohol quantities'), findsOneWidget);
   });
 
-  testWidgets('offline pack flags drones without needing an AI key',
+  testWidgets('#317 title-bar opens list customs with prefilled names',
       (tester) async {
     await pumpScreen(tester);
-    await tester.tap(find.byIcon(Icons.auto_awesome));
+
+    await tester.tap(find.byTooltip('Customs check (list)'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CustomsCheckDialog), findsOneWidget);
+    expect(find.text('Item(s) you\'re carrying'), findsOneWidget);
+    // Prefill should include the visible item name.
+    expect(find.textContaining('Duty-free rum'), findsWidgets);
+    expect(find.textContaining('Alcohol'), findsWidgets);
+  });
+
+  testWidgets('list customs offline pack flags drones without an AI key',
+      (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.byTooltip('Customs check (list)'));
     await tester.pumpAndSettle();
 
     await tester.enterText(

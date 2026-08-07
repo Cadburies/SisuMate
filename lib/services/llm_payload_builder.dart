@@ -129,6 +129,43 @@ class LlmPayloadBuilder {
             : rulesExcerpt,
       };
 
+  /// #317 — per-item shopping guide (local names / brands / store types).
+  /// Whitelist only: list-line fields + optional region string the user typed.
+  /// Never photos, boat ids, or freeform settings blobs.
+  static Map<String, dynamic> shoppingGuideQuery({
+    required String itemName,
+    String? origin,
+    int? quantity,
+    String? unit,
+    String? notes,
+    String? region,
+    double? lastPurchasePrice,
+    String? lastPurchasePlace,
+  }) {
+    final notesTrim = notes?.trim();
+    final regionTrim = region?.trim();
+    final placeTrim = lastPurchasePlace?.trim();
+    return {
+      'itemName': itemName,
+      'origin': ?origin,
+      'quantity': ?quantity,
+      'unit': ?unit,
+      if (notesTrim != null && notesTrim.isNotEmpty)
+        'notes': notesTrim.length > 500
+            ? notesTrim.substring(0, 500)
+            : notesTrim,
+      if (regionTrim != null && regionTrim.isNotEmpty)
+        'region': regionTrim.length > 120
+            ? regionTrim.substring(0, 120)
+            : regionTrim,
+      'lastPurchasePrice': ?lastPurchasePrice,
+      if (placeTrim != null && placeTrim.isNotEmpty)
+        'lastPurchasePlace': placeTrim.length > 120
+            ? placeTrim.substring(0, 120)
+            : placeTrim,
+    };
+  }
+
   /// Freeform Captain's Log entry parsing (#220): **intentionally not
   /// whitelist-filtered** like every other builder in this file — the
   /// user's own freeform typed/dictated text *is* the payload; there is no

@@ -23,6 +23,7 @@ import '../../services/import_service.dart';
 import '../../services/email_service.dart';
 import '../../services/smart_shopping_service.dart';
 import 'customs_check_dialog.dart';
+import 'shopping_item_ai_dialog.dart';
 
 enum SortOption { original, name, completed, price, priority }
 
@@ -86,6 +87,29 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
           .map((i) => i.name));
     }
     return names;
+  }
+
+  /// #317 — title-bar list customs: prefill visible unbought names.
+  void _openListCustomsCheck(BuildContext context, WidgetRef ref) {
+    final cats = ref.read(shoppingCategoriesProvider).asData?.value ?? [];
+    final names = <String>[];
+    for (final c in cats) {
+      final items = ref
+              .read(shoppingItemsByCategoryProvider(c.supabaseId))
+              .asData
+              ?.value ??
+          [];
+      for (final it in items) {
+        if (!it.isHidden && !it.isBought) names.add(it.name);
+      }
+    }
+    final prefill = names.take(40).join(', ');
+    showDialog(
+      context: context,
+      builder: (_) => CustomsCheckDialog(
+        initialItemDescription: prefill.isEmpty ? null : prefill,
+      ),
+    );
   }
 
   Future<ImportPersistResult> _importShopping(ImportBatch batch) async {
@@ -157,6 +181,12 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
                 title: 'Shopping & Spares',
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
                 actionsBuilder: (color) => [
+                  // #317 — list-level customs (not the per-item AI badge).
+                  IconButton(
+                    icon: Icon(Icons.public, color: color),
+                    tooltip: 'Customs check (list)',
+                    onPressed: () => _openListCustomsCheck(context, ref),
+                  ),
                   IconButton(
                     icon: Icon(Icons.import_export, color: color),
                     tooltip: 'Import / Export',
@@ -1010,8 +1040,8 @@ class ShoppingItemTile extends ConsumerWidget {
         onTap: () => _openDetail(context, ref),
       ),
     );
-    // #228/#208: AI customs-check badge — a visually distinct entry point,
-    // never mixed into the swipe-revealed Complete/Hide/Email actions above.
+    // #317: per-item shopping AI badge — offline guide + optional LLM,
+    // prefilled from this line. List-level customs lives on the title bar.
     return Stack(
       children: [
         tile,
@@ -1026,7 +1056,7 @@ class ShoppingItemTile extends ConsumerWidget {
               customBorder: const CircleBorder(),
               onTap: () => showDialog(
                 context: context,
-                builder: (_) => const CustomsCheckDialog(),
+                builder: (_) => ShoppingItemAiDialog(item: item),
               ),
               child: const Padding(
                 padding: EdgeInsets.all(6),
