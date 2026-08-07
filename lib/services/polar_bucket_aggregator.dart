@@ -26,6 +26,26 @@ class PolarBucketAggregator {
   /// Minimum samples in a bucket before it can update the polar.
   static const minSamplesPerBucket = 5;
 
+  /// #292 — fraction of TWA×TWS cells with ≥ [minSamples] samples (0–1).
+  static double coverageFraction(
+    Iterable<SailingPolarSample> samples, {
+    double twaStep = 10,
+    List<double> twsCentres = kPolarTwsCentresKt,
+    int minSamples = 1,
+  }) {
+    final buckets = bucket(
+      samples,
+      twaStep: twaStep,
+      twsCentres: twsCentres,
+    );
+    final twaCentres = polarTwaCentresDeg(step: twaStep);
+    final total = twaCentres.length * twsCentres.length;
+    if (total == 0) return 0;
+    final filled =
+        buckets.where((b) => b.sampleCount >= minSamples).length;
+    return filled / total;
+  }
+
   static List<PolarBucket> bucket(
     Iterable<SailingPolarSample> samples, {
     double twaStep = 10,

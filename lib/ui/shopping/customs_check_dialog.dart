@@ -2,61 +2,158 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/app_router.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
+import '../../services/compliance_pack_service.dart';
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
-import '../components/pasted_excerpt_check_dialog.dart';
 
-/// #228: same document-grounded-reasoning shape as #222/#226/#227 — before
-/// crossing a border, the user pastes an excerpt of that country's
-/// customs/import-restriction rules alongside the item(s) they're carrying
-/// (spirits quantity, meat/dairy/produce, firearms-adjacent gear, plant
-/// material), and the LLM assesses whether it looks restricted and what
-/// the excerpt says. Reasons only over pasted text the user themselves
-/// supplied — not a live-search feature (that shape belongs to #224).
-/// Reached only via a shopping/provisioning item's AI badge (#208
-/// separation — never blended into the item's swipe-revealed
-/// Complete/Hide/Email actions).
-///
-/// A thin wrapper over [PastedExcerptCheckDialog] (shared base widget
-/// extracted at #227) — owns only this feature's labels, system prompt,
-/// and payload builder call.
-class CustomsCheckDialog extends ConsumerWidget {
+/// #228 / #290: customs check — offline red-flag pack first, optional AI.
+class CustomsCheckDialog extends ConsumerStatefulWidget {
   const CustomsCheckDialog({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return PastedExcerptCheckDialog(
-      title: 'AI: Customs check',
-      descriptionLabel: 'Item(s) you\'re carrying',
-      descriptionHelper: 'Describe what and how much — e.g. spirits '
-          'quantity, meat/dairy/produce, plant material, firearms-adjacent '
-          'gear.',
-      excerptLabel: 'Customs / import rules excerpt',
-      excerptHelper: 'Paste the relevant section from the destination '
-          'country\'s customs site or cruising guide — not the whole page.',
-      disclaimer: 'This is an AI reading of the text you pasted, not an '
-          'official customs determination — confirm with the destination '
-          'country\'s customs/border authority before relying on it.',
-      onAsk: (item, excerpt) async {
-        final boat = await ref.read(activeBoatProvider.future);
-        final payload = LlmPayloadBuilder.customsQuery(
-          itemDescription: item,
-          rulesExcerpt: excerpt,
-        );
-        return LlmClientService().complete(
-          boat: boat,
-          systemPrompt: 'You are a boat provisioning/customs assistant. '
-              'Given a description of item(s) being carried across a '
-              'border and a pasted excerpt from that country\'s customs or '
-              'import-restriction rules, assess whether the item(s) look '
-              'restricted and explain your reasoning by pointing to what '
-              'in the excerpt supports it. If the excerpt doesn\'t say '
-              'enough to tell, say so plainly. Be concise.',
-          prompt: jsonEncode(payload),
-        );
-      },
+  ConsumerState<CustomsCheckDialog> createState() => _CustomsCheckDialogState();
+}
+
+class _CustomsCheckDialogState extends ConsumerState<CustomsCheckDialog> {
+  final _itemCtrl = TextEditingController();
+  final _excerptCtrl = TextEditingController();
+  String? _offlineReport;
+  LlmResult? _llm;
+  bool _llmLoading = false;
+
+  @override
+  void dispose() {
+    _itemCtrl.dispose();
+    _excerptCtrl.dispose();
+    super.dispose();
+  }
+
+  void _runOffline() {
+    final item = _itemCtrl.text.trim();
+    if (item.isEmpty) return;
+    setState(() {
+      _offlineReport = CompliancePackService.formatHits(
+        CompliancePackService.matchCustomsItem(item),
+      );
+    });
+  }
+
+  Future<void> _runLlm() async {
+    final item = _itemCtrl.text.trim();
+    final excerpt = _excerptCtrl.text.trim();
+    if (item.isEmpty || excerpt.isEmpty) return;
+    setState(() {
+      _llmLoading = true;
+      _llm = null;
+    });
+    final boat = await ref.read(activeBoatProvider.future);
+    final result = await LlmClientService().complete(
+      boat: boat,
+      systemPrompt: 'You are a boat provisioning/customs assistant. '
+          'Given items being carried and a pasted customs rules excerpt, '
+          'assess restrictions. Be concise. Not official customs advice.',
+      prompt: jsonEncode(LlmPayloadBuilder.customsQuery(
+        itemDescription: item,
+        rulesExcerpt: excerpt,
+      )),
+    );
+    if (mounted) {
+      setState(() {
+        _llm = result;
+        _llmLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.public, color: Colors.deepPurple, size: 20),
+          SizedBox(width: 8),
+          Expanded(child: Text('Customs check')),
+        ],
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _itemCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Item(s) you\'re carrying',
+                  helperText: 'e.g. drone, speargun, fresh meat, spirits…',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              FilledButton(
+                onPressed: _runOffline,
+                child: const Text('Check offline pack'),
+              ),
+              if (_offlineReport != null) ...[
+                const SizedBox(height: 12),
+                Text(_offlineReport!, style: const TextStyle(height: 1.35)),
+              ],
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _excerptCtrl,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Customs rules excerpt (optional AI)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_llmLoading)
+                const Center(child: CircularProgressIndicator())
+              else
+                OutlinedButton.icon(
+                  onPressed: _runLlm,
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('AI read of excerpt (online)'),
+                ),
+              if (_llm != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _llm!.status == LlmResultStatus.success
+                      ? (_llm!.text ?? '')
+                      : (_llm!.errorMessage ?? 'AI unavailable'),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                'Not an official customs determination.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        if (_llm?.status == LlmResultStatus.noKeyConfigured)
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push(AppRoutes.settings);
+            },
+            child: const Text('Go to Settings'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
     );
   }
 }

@@ -120,6 +120,39 @@ class GribDownloadService {
     return x;
   }
 
+  /// #291 — NOAA GFS Wave filter URL (significant wave height / direction).
+  static Uri buildNomadsGfsWaveUrl({
+    required GribBBox box,
+    required DateTime cycleUtc,
+    required int forecastHour,
+  }) {
+    final b = box.normalized();
+    final ymd =
+        '${cycleUtc.year.toString().padLeft(4, '0')}${cycleUtc.month.toString().padLeft(2, '0')}${cycleUtc.day.toString().padLeft(2, '0')}';
+    final cc = cycleUtc.hour.toString().padLeft(2, '0');
+    final fh = forecastHour.toString().padLeft(3, '0');
+    // Global wave product filename pattern (NOMADS gfswave).
+    final file = 'gfswave.t${cc}z.global.0p25.f$fh.grib2';
+    final left = lon0to360(b.lonMin);
+    final right = lon0to360(b.lonMax);
+    return Uri.https(
+      'nomads.ncep.noaa.gov',
+      '/cgi-bin/filter_gfswave.pl',
+      {
+        'file': file,
+        'var_HTSGW': 'on',
+        'var_DIRPW': 'on',
+        'var_PERPW': 'on',
+        'subregion': '',
+        'leftlon': left.toStringAsFixed(2),
+        'rightlon': right.toStringAsFixed(2),
+        'toplat': b.latMax.toStringAsFixed(2),
+        'bottomlat': b.latMin.toStringAsFixed(2),
+        'dir': '/gfs.$ymd/$cc/wave/gridded',
+      },
+    );
+  }
+
   /// Build a single forecast-hour filter URL (pure; for tests + dry-run).
   static Uri buildNomadsGfs025Url({
     required GribBBox box,
@@ -197,6 +230,69 @@ class GribDownloadService {
       }
     }
     return null;
+  }
+
+  /// #291 — download free NOAA GFS Wave fields for [box].
+  Future<GribDownloadResult> downloadNoaaGfsWave({
+    required GribBBox box,
+    List<int> forecastHours = const [0, 24, 48, 72],
+    void Function(String status)? onProgress,
+  }) async {
+    final b = box.normalized();
+    onProgress?.call('Finding GFS Wave cycle (NOAA NOMADS)…');
+    DateTime? cycle;
+    for (final c in candidateCycles(DateTime.now().toUtc())) {
+      final uri = buildNomadsGfsWaveUrl(box: b, cycleUtc: c, forecastHour: 0);
+      try {
+        final res = await _client
+            .get(uri, headers: {'User-Agent': userAgent})
+            .timeout(const Duration(seconds: 25));
+        if (res.statusCode == 200 && _looksLikeGrib(res.bodyBytes)) {
+          cycle = c;
+          break;
+        }
+      } catch (_) {}
+    }
+    if (cycle == null) {
+      return const GribDownloadResult.failure(
+        'No free NOAA GFS Wave cycle available — try wind GFS or Saildocs WAVES.',
+      );
+    }
+    final hours = forecastHours.toSet().toList()..sort();
+    final chunks = <int>[];
+    var okHours = 0;
+    for (final fh in hours) {
+      onProgress?.call('Downloading GFS Wave f${fh.toString().padLeft(3, '0')}…');
+      final uri =
+          buildNomadsGfsWaveUrl(box: b, cycleUtc: cycle, forecastHour: fh);
+      try {
+        final res = await _client
+            .get(uri, headers: {'User-Agent': userAgent})
+            .timeout(networkTimeout);
+        if (res.statusCode == 200 && _looksLikeGrib(res.bodyBytes)) {
+          chunks.addAll(res.bodyBytes);
+          okHours++;
+        }
+      } catch (_) {}
+    }
+    if (chunks.isEmpty) {
+      return const GribDownloadResult.failure(
+        'Wave download returned no GRIB data for this area.',
+      );
+    }
+    final path = await _import.persistBytes(
+      Uint8List.fromList(chunks),
+      suggestedName:
+          'gfswave_${cycle.toUtc().toIso8601String().substring(0, 13).replaceAll(':', '')}',
+    );
+    return GribDownloadResult.success(
+      path: path,
+      cycleUtc: cycle,
+      hoursDownloaded: okHours,
+      source: FreeGribSource.noaaGfs025,
+      message:
+          'Saved free NOAA GFS Wave ($okHours hour step(s)). Open GRIB viewer.',
+    );
   }
 
   /// Download free NOAA GFS wind (+ MSLP) for [box] at [forecastHours].

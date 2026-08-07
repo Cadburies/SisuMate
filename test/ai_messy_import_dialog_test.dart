@@ -143,19 +143,44 @@ void main() {
       expect(find.text('Paste your list'), findsOneWidget);
     });
 
-    testWidgets('with no key configured, parsing says so instead of '
-        'silently failing', (tester) async {
+    testWidgets(
+        '#302 local-first: CSV/line lists parse offline without a key',
+        (tester) async {
       await pumpDialog(tester);
 
       await tester.enterText(
           find.widgetWithText(TextField, 'Paste your list'),
           'impeller x2, fuel filters x5');
-      await tester.tap(find.text('Parse with AI'));
+      await tester.tap(find.text('Parse'));
       await tester.pump();
       await tester.pump();
       await tester.pump();
 
-      expect(find.textContaining('No AI API key is configured'), findsOneWidget);
+      // Local path → preview, no network / no key.
+      expect(find.textContaining('Found'), findsOneWidget);
+      expect(find.text('Import'), findsOneWidget);
+      expect(
+          find.textContaining('No AI API key is configured'), findsNothing);
+    });
+
+    testWidgets(
+        'freeform prose that fails local parse still reports missing key',
+        (tester) async {
+      await pumpDialog(tester);
+
+      // Long prose (not list-like) forces the optional LLM path.
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Paste your list'),
+          'I went shopping at the chandlery yesterday and picked up a '
+          'bunch of random bits and pieces for the boat that I cannot '
+          'really organize into a clean list of names and quantities.');
+      await tester.tap(find.text('Parse'));
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+          find.textContaining('No AI API key is configured'), findsOneWidget);
       expect(find.text('Go to Settings'), findsOneWidget);
     });
   });

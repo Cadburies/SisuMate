@@ -9,6 +9,7 @@ import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/import_service.dart';
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
+import '../../services/messy_import_local_parse.dart';
 import 'import_export.dart';
 
 /// Strips a leading/trailing markdown code fence off an LLM response —
@@ -60,10 +61,43 @@ class _AiMessyImportDialogState extends ConsumerState<AiMessyImportDialog> {
     super.dispose();
   }
 
-  Future<void> _parse() async {
+  Future<void> _parse({bool forceLlm = false}) async {
     final pasted = _textCtrl.text.trim();
     if (pasted.isEmpty) return;
     setState(() => _phase = _Phase.parsing);
+
+    String? boatSupabaseId;
+    try {
+      boatSupabaseId = (await ref.read(activeBoatProvider.future))?.supabaseId;
+    } catch (_) {
+      // Offline / no settings — keep placeholder boat id from parse.
+    }
+
+    // #302 / #286 — local CSV/line parse first (works offline).
+    if (!forceLlm) {
+      final localJson = MessyImportLocalParse.tryParseEnvelope(
+        pasted,
+        kind: widget.io.kind,
+      );
+      if (localJson != null) {
+        try {
+          final batch = ImportService.parse(
+            localJson,
+            boatSupabaseId: boatSupabaseId,
+          );
+          if (batch.kind == widget.io.kind && batch.count > 0) {
+            if (!mounted) return;
+            setState(() {
+              _phase = _Phase.preview;
+              _batch = batch;
+            });
+            return;
+          }
+        } on ImportException {
+          // Fall through to LLM if online.
+        }
+      }
+    }
 
     final boat = await ref.read(activeBoatProvider.future);
     final payload = LlmPayloadBuilder.messyImportQuery(pasted);
@@ -87,16 +121,11 @@ class _AiMessyImportDialogState extends ConsumerState<AiMessyImportDialog> {
       setState(() {
         _phase = _Phase.error;
         _errorStatus = result.status;
-        _errorMessage = result.errorMessage;
+        _errorMessage = result.errorMessage ??
+            'Could not parse offline (try a CSV or one item per line) '
+                'and AI was unavailable.';
       });
       return;
-    }
-
-    String? boatSupabaseId;
-    try {
-      boatSupabaseId = (await ref.read(activeBoatProvider.future))?.supabaseId;
-    } catch (_) {
-      // Offline / no settings — keep placeholder boat id from parse.
     }
 
     try {
@@ -176,9 +205,8 @@ class _AiMessyImportDialogState extends ConsumerState<AiMessyImportDialog> {
           minLines: 5,
           decoration: InputDecoration(
             labelText: 'Paste your list',
-            hintText: 'Paste a spreadsheet export, CSV, or any messy '
-                '${widget.io.label} list — the AI will map it to the '
-                'app\'s format.',
+            hintText: 'CSV, one item per line, or a spreadsheet paste. '
+                'Parsed offline first; AI is only used for freeform prose.',
             border: const OutlineInputBorder(),
           ),
         );
@@ -232,8 +260,8 @@ class _AiMessyImportDialogState extends ConsumerState<AiMessyImportDialog> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: _parse,
-            child: const Text('Parse with AI'),
+            onPressed: () => _parse(forceLlm: false),
+            child: const Text('Parse'),
           ),
         ];
       case _Phase.parsing:

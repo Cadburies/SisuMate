@@ -46,6 +46,28 @@ class TankBurnEstimate {
     required this.sampleFills,
     required this.summary,
   });
+
+  /// #294 — remaining range in NM when L/NM and remaining liters known.
+  double? get remainingRangeNm {
+    final rem = estimatedRemainingLiters;
+    final perNm = litersPerNm;
+    if (rem == null || perNm == null || perNm <= 0 || rem <= 0) return null;
+    return rem / perNm;
+  }
+}
+
+/// #294 — pure helper: days of fuel/water remaining at [litersPerDay].
+double? remainingDaysAtBurn({
+  required double? remainingLiters,
+  required double? litersPerDay,
+}) {
+  if (remainingLiters == null ||
+      litersPerDay == null ||
+      litersPerDay <= 0 ||
+      remainingLiters <= 0) {
+    return null;
+  }
+  return remainingLiters / litersPerDay;
 }
 
 /// BAI4: fuel/water burn estimator from fill logs (+ optional hours / distance).

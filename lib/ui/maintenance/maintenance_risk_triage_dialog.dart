@@ -9,16 +9,10 @@ import '../../models/models.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
+import '../../services/maintenance_risk_scorer.dart';
 
-/// #216 (supersedes the maintenance half of #18) / #208: unlike the single-
-/// item "explain this alert" dialog, this sends the user's **whole**
-/// outstanding maintenance backlog to the LLM and asks for a risk-ranked,
-/// failure-mode-focused triage — reasoning offline rule tables can't do.
-/// Reached only via the distinct AI badge on the maintenance hours/service
-/// log screen (`maintenance_hours_screen.dart`), never blended into that
-/// screen's offline add/edit/delete actions. Payload is built through
-/// `LlmPayloadBuilder.maintenanceBacklog` — descriptions + intervals/hours/
-/// dates only, never notes or crew names (#16).
+/// #216 / #289: maintenance risk triage — **local rules first** (#286),
+/// optional LLM prose when online. Reached via AI badge on maintenance hours.
 class MaintenanceRiskTriageDialog extends ConsumerStatefulWidget {
   final List<MaintenanceTask> tasks;
   const MaintenanceRiskTriageDialog({super.key, required this.tasks});
@@ -30,15 +24,31 @@ class MaintenanceRiskTriageDialog extends ConsumerStatefulWidget {
 
 class _MaintenanceRiskTriageDialogState
     extends ConsumerState<MaintenanceRiskTriageDialog> {
-  LlmResult? _result;
+  late final String _localReport;
+  LlmResult? _llmResult;
+  bool _llmLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _triage();
+    final ranked = MaintenanceRiskScorer.rank(
+      asOf: DateTime.now(),
+      tasks: widget.tasks.map((t) => (
+            description: t.description,
+            intervalHours: t.intervalHours,
+            intervalMonths: t.intervalMonths,
+            lastDoneHours: t.lastDoneHours,
+            lastDoneDate: t.lastDoneDate,
+          )),
+    );
+    _localReport = MaintenanceRiskScorer.formatReport(ranked);
   }
 
-  Future<void> _triage() async {
+  Future<void> _runLlm() async {
+    setState(() {
+      _llmLoading = true;
+      _llmResult = null;
+    });
     final boat = await ref.read(activeBoatProvider.future);
     final payload = LlmPayloadBuilder.maintenanceBacklog(
       asOf: DateTime.now(),
@@ -63,31 +73,67 @@ class _MaintenanceRiskTriageDialogState
           'genuinely risky, say so briefly. No preamble.',
       prompt: jsonEncode(payload),
     );
-    if (mounted) setState(() => _result = result);
+    if (mounted) {
+      setState(() {
+        _llmResult = result;
+        _llmLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final result = _result;
+    final llm = _llmResult;
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(Icons.auto_awesome, color: Colors.deepPurple, size: 20),
+          Icon(Icons.analytics_outlined, color: Colors.deepPurple, size: 20),
           SizedBox(width: 8),
-          Expanded(child: Text('AI: Maintenance Risk Triage')),
+          Expanded(child: Text('Maintenance risk triage')),
         ],
       ),
       content: SizedBox(
         width: double.maxFinite,
-        child: result == null
-            ? const SizedBox(
-                height: 80,
-                child: Center(child: CircularProgressIndicator()),
-              )
-            : _ResultView(result: result),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _localReport,
+                style: const TextStyle(height: 1.35),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              Text(
+                'Optional AI narrative (online + API key)',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              if (_llmLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (llm == null)
+                OutlinedButton.icon(
+                  onPressed: _runLlm,
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('Explain with AI'),
+                )
+              else if (llm.status == LlmResultStatus.success)
+                Text(llm.text ?? '', style: const TextStyle(height: 1.35))
+              else
+                Text(
+                  llm.errorMessage ?? 'AI unavailable',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+            ],
+          ),
+        ),
       ),
       actions: [
-        if (result?.status == LlmResultStatus.noKeyConfigured)
+        if (llm?.status == LlmResultStatus.noKeyConfigured)
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -98,29 +144,6 @@ class _MaintenanceRiskTriageDialogState
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
-        ),
-      ],
-    );
-  }
-}
-
-class _ResultView extends StatelessWidget {
-  final LlmResult result;
-  const _ResultView({required this.result});
-
-  @override
-  Widget build(BuildContext context) {
-    if (result.status == LlmResultStatus.success) {
-      return SingleChildScrollView(child: Text(result.text ?? ''));
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(Icons.info_outline,
-            size: 18, color: Theme.of(context).colorScheme.error),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(result.errorMessage ?? 'Something went wrong.'),
         ),
       ],
     );

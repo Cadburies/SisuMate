@@ -98,7 +98,7 @@ void main() {
       await db.close();
     });
 
-    Future<void> pumpDialog(WidgetTester tester) async {
+    Future<ProviderContainer> pumpDialog(WidgetTester tester) async {
       await db.into(db.boats).insert(BoatsCompanion.insert(
             supabaseId: const Value('boat_1'),
             name: const Value('Sisu'),
@@ -118,11 +118,23 @@ void main() {
 
       await tester.pumpWidget(UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(
-          home: Scaffold(body: AiLogEntryParseDialog()),
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => const AiLogEntryParseDialog(),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
         ),
       ));
-      await tester.pump();
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      return container;
     }
 
     testWidgets('shows a text box first, not a blocking form',
@@ -135,18 +147,39 @@ void main() {
     });
 
     testWidgets(
-        'with no key configured, parsing says so instead of silently '
-        'failing', (tester) async {
+        '#287 local-first: structured freeform parses offline without a key',
+        (tester) async {
       await pumpDialog(tester);
 
-      await tester.enterText(find.byType(TextField), 'calm day, no issues');
+      // "calm" + "12kt SW" → weather/wind fields → local path pops a draft.
+      await tester.enterText(
+          find.byType(TextField), 'calm day, 12kt SW, no issues');
       await tester.tap(find.text('Parse'));
       await tester.pump();
       await tester.pump();
+      await tester.pumpAndSettle();
 
+      // Dialog pops with draft — no network / no key required.
+      expect(find.byType(AiLogEntryParseDialog), findsNothing);
       expect(
-          find.textContaining('No AI API key is configured'), findsOneWidget);
-      expect(find.text('Go to Settings'), findsOneWidget);
+          find.textContaining('No AI API key is configured'), findsNothing);
+    });
+
+    testWidgets(
+        'Parse offline button always uses local heuristics (no key needed)',
+        (tester) async {
+      await pumpDialog(tester);
+
+      await tester.enterText(
+          find.byType(TextField), 'just a quiet watch with nothing special');
+      await tester.tap(find.text('Parse offline'));
+      await tester.pump();
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AiLogEntryParseDialog), findsNothing);
+      expect(
+          find.textContaining('No AI API key is configured'), findsNothing);
     });
   });
 }

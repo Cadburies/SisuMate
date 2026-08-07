@@ -160,6 +160,37 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
   }
 
   Future<void> _downloadFreeNoaa() async {
+    await _runDownload(
+      startMessage: 'Starting free NOAA GFS wind download…',
+      run: (svc, box, hours, onProgress) => svc.downloadNoaaGfs(
+        box: box,
+        forecastHours: hours,
+        onProgress: onProgress,
+      ),
+    );
+  }
+
+  /// #291 — free wave GRIB for the same area.
+  Future<void> _downloadFreeWave() async {
+    await _runDownload(
+      startMessage: 'Starting free NOAA GFS Wave download…',
+      run: (svc, box, hours, onProgress) => svc.downloadNoaaGfsWave(
+        box: box,
+        forecastHours: hours,
+        onProgress: onProgress,
+      ),
+    );
+  }
+
+  Future<void> _runDownload({
+    required String startMessage,
+    required Future<GribDownloadResult> Function(
+      GribDownloadService svc,
+      GribBBox box,
+      List<int> hours,
+      void Function(String) onProgress,
+    ) run,
+  }) async {
     final box = _bbox();
     final hours = _hours();
     if (box == null || hours.isEmpty) {
@@ -170,14 +201,15 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
     }
     setState(() {
       _downloading = true;
-      _downloadStatus = 'Starting free NOAA GFS download…';
+      _downloadStatus = startMessage;
     });
     final svc = GribDownloadService();
     try {
-      final result = await svc.downloadNoaaGfs(
-        box: box,
-        forecastHours: hours,
-        onProgress: (s) {
+      final result = await run(
+        svc,
+        box,
+        hours,
+        (s) {
           if (mounted) setState(() => _downloadStatus = s);
         },
       );
@@ -293,8 +325,14 @@ class _GribRequestScreenState extends State<GribRequestScreen> {
                     label: Text(
                       _downloading
                           ? 'Downloading…'
-                          : 'Download free GFS for this area',
+                          : 'Download free GFS wind for this area',
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: _downloading ? null : _downloadFreeWave,
+                    icon: const Icon(Icons.waves, size: 18),
+                    label: const Text('Download free GFS Wave'),
                   ),
                 ],
               ),

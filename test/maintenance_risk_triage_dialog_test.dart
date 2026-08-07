@@ -99,18 +99,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(MaintenanceRiskTriageDialog), findsOneWidget);
-    expect(find.text('AI: Maintenance Risk Triage'), findsOneWidget);
+    expect(find.text('Maintenance risk triage'), findsOneWidget);
+    // #289 — local report is immediate (no key required).
+    expect(find.textContaining('Offline risk triage'), findsOneWidget);
+    expect(find.text('Explain with AI'), findsOneWidget);
   });
 
   testWidgets(
-      'with no key configured, the dialog says so instead of silently '
-      'failing', (tester) async {
+      'with no key configured, optional AI path says so instead of blocking '
+      'the local report', (tester) async {
     await pumpScreen(tester);
 
     await tester.tap(find.byIcon(Icons.auto_awesome));
     await tester.pumpAndSettle();
-    // Resolve the async _triage() call (no-key path returns immediately,
-    // no real network involved).
+
+    expect(find.textContaining('Offline risk triage'), findsOneWidget);
+    await tester.tap(find.text('Explain with AI'));
+    await tester.pump();
     await tester.pump();
     await tester.pump();
 

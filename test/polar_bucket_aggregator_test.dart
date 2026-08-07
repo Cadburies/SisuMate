@@ -3,6 +3,8 @@ import 'package:sisu_mate/models/models.dart';
 import 'package:sisu_mate/models/sailing_polar_sample.dart';
 import 'package:sisu_mate/services/polar_bucket_aggregator.dart';
 
+// coverage helper tested below
+
 SailingPolarSample sample({
   required double twa,
   required double tws,
@@ -61,6 +63,17 @@ void main() {
         buckets: buckets,
       );
       expect(merged.single.boatSpeedKt, 8.0);
+    });
+
+    test('coverageFraction increases when more cells have samples', () {
+      final empty = PolarBucketAggregator.coverageFraction([]);
+      expect(empty, 0);
+      final few = [
+        for (var i = 0; i < 3; i++) sample(twa: 90, tws: 12, sog: 6),
+      ];
+      final frac = PolarBucketAggregator.coverageFraction(few, minSamples: 1);
+      expect(frac, greaterThan(0));
+      expect(frac, lessThan(1));
     });
   });
 }

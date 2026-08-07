@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** research wave filed #286–#302 (offline-first AI + per-module improvements).
-- **Open backlog:** `gh issue list` — start P2: #286 epic, #287 log parse, #289 maint risk, #290 packs, #291 weather, #302 import.
+- **Last (grok):** shipped #286–#290 + #302 offline-first AI slice; #291 wave GRIB download (routing comfort still open).
+- **Open backlog:** `gh issue list` — remaining #291 routing/waves cost, P3 #292–#301.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

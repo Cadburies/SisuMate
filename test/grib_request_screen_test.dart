@@ -42,7 +42,9 @@ void main() {
           'send gfs:38N,42N,122W,118W|1,1|24,48,72|WIND'),
       findsOneWidget,
     );
-    expect(find.textContaining('Download free GFS for this area'), findsOneWidget);
+    expect(find.textContaining('Download free GFS wind for this area'),
+        findsOneWidget);
+    expect(find.textContaining('Download free GFS Wave'), findsOneWidget);
   });
 
   testWidgets('editing a field updates the query preview live',

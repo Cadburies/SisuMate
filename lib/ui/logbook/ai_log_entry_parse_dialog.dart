@@ -9,6 +9,7 @@ import '../../models/models.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
+import '../../services/log_entry_local_parse.dart';
 
 enum _Phase { input, parsing, error }
 
@@ -78,10 +79,18 @@ class _AiLogEntryParseDialogState
     super.dispose();
   }
 
-  Future<void> _parse() async {
+  Future<void> _parse({bool preferLocalOnly = false}) async {
     final freeform = _textCtrl.text.trim();
     if (freeform.isEmpty) return;
     setState(() => _phase = _Phase.parsing);
+
+    // #287 / #286 — local heuristics first (works offline).
+    final local = LogEntryLocalParse.parse(freeform);
+    if (preferLocalOnly || LogEntryLocalParse.hasStructuredFields(local)) {
+      if (!mounted) return;
+      Navigator.of(context).pop(local);
+      return;
+    }
 
     final boat = await ref.read(activeBoatProvider.future);
     final payload = LlmPayloadBuilder.parseLogEntryText(freeform);
@@ -102,6 +111,12 @@ class _AiLogEntryParseDialogState
     if (!mounted) return;
 
     if (result.status != LlmResultStatus.success) {
+      // Offline / no key: fall back to local parse instead of blocking.
+      if (LogEntryLocalParse.hasStructuredFields(local) ||
+          (local.notes != null && local.notes!.isNotEmpty)) {
+        Navigator.of(context).pop(local);
+        return;
+      }
       setState(() {
         _phase = _Phase.error;
         _errorStatus = result.status;
@@ -111,6 +126,17 @@ class _AiLogEntryParseDialogState
     }
 
     final draft = parseAiLogEntryResponse(result.text ?? '');
+    // Merge: LLM draft wins for null-coalesce with local fills.
+    draft.notes ??= local.notes;
+    draft.weather ??= local.weather;
+    draft.windSpeedKt ??= local.windSpeedKt;
+    draft.windDir ??= local.windDir;
+    draft.sogKt ??= local.sogKt;
+    draft.positionLat ??= local.positionLat;
+    draft.positionLng ??= local.positionLng;
+    draft.seaState ??= local.seaState;
+    draft.logTime ??= local.logTime;
+    if (draft.title.isEmpty) draft.title = local.title;
     Navigator.of(context).pop(draft);
   }
 
@@ -175,8 +201,12 @@ class _AiLogEntryParseDialogState
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () => _parse(preferLocalOnly: true),
+            child: const Text('Parse offline'),
+          ),
           ElevatedButton(
-            onPressed: _parse,
+            onPressed: () => _parse(preferLocalOnly: false),
             child: const Text('Parse'),
           ),
         ];

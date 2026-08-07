@@ -87,27 +87,21 @@ void main() {
 
     expect(find.byType(CustomsCheckDialog), findsOneWidget);
     expect(find.text('Item(s) you\'re carrying'), findsOneWidget);
-    expect(find.text('Customs / import rules excerpt'), findsOneWidget);
+    expect(find.text('Check offline pack'), findsOneWidget);
   });
 
-  testWidgets('with no key configured, asking says so instead of silently '
-      'failing', (tester) async {
+  testWidgets('offline pack flags drones without needing an AI key',
+      (tester) async {
     await pumpScreen(tester);
     await tester.tap(find.byIcon(Icons.auto_awesome));
     await tester.pumpAndSettle();
 
     await tester.enterText(
         find.widgetWithText(TextField, 'Item(s) you\'re carrying'),
-        '2 bottles of rum, fresh fruit');
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Customs / import rules excerpt'),
-        'Spirits over 1L per person must be declared.');
-    await tester.tap(find.text('Ask'));
-    await tester.pump();
-    await tester.pump();
+        'DJI mini drone');
+    await tester.tap(find.text('Check offline pack'));
     await tester.pump();
 
-    expect(find.textContaining('No AI API key is configured'), findsOneWidget);
-    expect(find.text('Go to Settings'), findsOneWidget);
+    expect(find.textContaining('Drones often restricted'), findsOneWidget);
   });
 }

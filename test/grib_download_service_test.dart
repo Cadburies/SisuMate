@@ -86,6 +86,22 @@ void main() {
       expect(GribDownloadService.lon0to360(-61.75), closeTo(298.25, 0.01));
       expect(GribDownloadService.lon0to360(10), 10);
     });
+
+    test('buildNomadsGfsWaveUrl targets filter_gfswave.pl', () {
+      final uri = GribDownloadService.buildNomadsGfsWaveUrl(
+        box: const GribBBox(
+          latMin: 11,
+          latMax: 13,
+          lonMin: -63,
+          lonMax: -60,
+        ),
+        cycleUtc: DateTime.utc(2026, 8, 6, 6),
+        forecastHour: 24,
+      );
+      expect(uri.path, '/cgi-bin/filter_gfswave.pl');
+      expect(uri.queryParameters['var_HTSGW'], 'on');
+      expect(uri.queryParameters['file'], contains('gfswave'));
+    });
   });
 
   group('candidateCycles', () {

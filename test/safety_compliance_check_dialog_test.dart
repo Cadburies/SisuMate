@@ -103,10 +103,24 @@ void main() {
 
     expect(find.byType(SafetyComplianceCheckDialog), findsOneWidget);
     expect(find.text('Item & current state'), findsOneWidget);
-    expect(find.text('Manual / certification excerpt'), findsOneWidget);
+    expect(find.text('Check offline pack'), findsOneWidget);
   });
 
-  testWidgets('with no key configured, asking says so instead of silently '
+  testWidgets('offline pack flags life raft without needing an AI key',
+      (tester) async {
+    await pumpScreen(tester);
+    await openComplianceDialog(tester);
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Item & current state'),
+        'Offshore life raft, last serviced 2023-01, tag looks intact');
+    await tester.tap(find.text('Check offline pack'));
+    await tester.pump();
+
+    expect(find.textContaining('Life raft'), findsWidgets);
+  });
+
+  testWidgets('with no key configured, AI path says so instead of silently '
       'failing', (tester) async {
     await pumpScreen(tester);
     await openComplianceDialog(tester);
@@ -115,9 +129,9 @@ void main() {
         find.widgetWithText(TextField, 'Item & current state'),
         'Offshore life raft, last serviced 2023-01, tag looks intact');
     await tester.enterText(
-        find.widgetWithText(TextField, 'Manual / certification excerpt'),
+        find.widgetWithText(TextField, 'Manual excerpt (optional, for AI)'),
         'Life rafts must be serviced every 12 months from date of packing.');
-    await tester.tap(find.text('Ask'));
+    await tester.tap(find.text('AI read of excerpt (online)'));
     await tester.pump();
     await tester.pump();
     await tester.pump();
