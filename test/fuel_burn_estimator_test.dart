@@ -85,6 +85,22 @@ void main() {
       expect(fuel.litersPerNm, closeTo(0.4, 0.01));
       expect(water.litersPerHour, isNull);
       expect(water.litersPerNm, isNull);
+      // #294 — range = remaining / L/NM when both known.
+      expect(fuel.remainingRangeNm, isNotNull);
+      expect(
+        fuel.remainingRangeNm,
+        closeTo(fuel.estimatedRemainingLiters! / fuel.litersPerNm!, 0.01),
+      );
+      expect(fuel.summary, contains('NM range'));
+      expect(water.remainingRangeNm, isNull);
+    });
+
+    test('#294 remainingDaysAtBurn edges', () {
+      expect(remainingDaysAtBurn(remainingLiters: 50, litersPerDay: 10), 5);
+      expect(remainingDaysAtBurn(remainingLiters: null, litersPerDay: 10),
+          isNull);
+      expect(remainingDaysAtBurn(remainingLiters: 50, litersPerDay: 0), isNull);
+      expect(remainingDaysAtBurn(remainingLiters: 0, litersPerDay: 10), isNull);
     });
 
     test('capacity override and empty ETA when burn exceeds remaining', () {

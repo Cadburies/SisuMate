@@ -271,6 +271,13 @@ class FuelBurnEstimator {
     if (remaining != null) {
       parts.add('${_fmt(remaining)} L est. left');
     }
+    // #294 — range NM when L/NM known (same formula as remainingRangeNm).
+    if (remaining != null &&
+        litersPerNm != null &&
+        litersPerNm > 0 &&
+        remaining > 0) {
+      parts.add('~${_fmt(remaining / litersPerNm)} NM range');
+    }
     return parts.join(' · ');
   }
 

@@ -72,6 +72,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(HistoryPatternDialog), findsOneWidget);
-    expect(find.text('AI: Recurring Issues'), findsOneWidget);
+    // #288 — local-first dialog (optional AI is a secondary action).
+    expect(find.text('Recurring Issues'), findsOneWidget);
   });
 }

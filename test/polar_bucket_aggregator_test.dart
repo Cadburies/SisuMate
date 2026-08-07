@@ -75,5 +75,33 @@ void main() {
       expect(frac, greaterThan(0));
       expect(frac, lessThan(1));
     });
+
+    test('#292 shouldSuggestOfflineImprove thresholds', () {
+      expect(
+        PolarBucketAggregator.shouldSuggestOfflineImprove(sampleCount: 10),
+        isFalse,
+      );
+      expect(
+        PolarBucketAggregator.shouldSuggestOfflineImprove(
+          sampleCount: 30,
+          coverageFraction: 0.1,
+        ),
+        isTrue,
+      );
+      expect(
+        PolarBucketAggregator.shouldSuggestOfflineImprove(
+          sampleCount: 60,
+          coverageFraction: 0.9,
+        ),
+        isTrue,
+      );
+      expect(
+        PolarBucketAggregator.shouldSuggestOfflineImprove(
+          sampleCount: 30,
+          coverageFraction: 0.9,
+        ),
+        isFalse,
+      );
+    });
   });
 }

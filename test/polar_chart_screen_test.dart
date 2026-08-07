@@ -85,6 +85,8 @@ void main() {
 
     // Default tab = Diagram
     expect(find.text('Improve offline'), findsOneWidget);
+    // #292 — coverage line always present (0% with no samples).
+    expect(find.textContaining('Measured coverage:'), findsOneWidget);
     expect(find.text('Live sample fields'), findsNothing);
     expect(find.text('Phone IMU suggested sea state'), findsNothing);
 

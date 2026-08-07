@@ -15,6 +15,26 @@ typedef WindAt = ({double windDirDeg, double windSpeedKt}) Function({
   required DateTime time,
 });
 
+/// #291 — optional significant wave height (m) at a point/time. Null means
+/// "unknown / no wave layer" — routing degrades to wind-only (factor 1.0).
+typedef WaveAt = double? Function({
+  required double lat,
+  required double lon,
+  required DateTime time,
+});
+
+/// #291 — pure comfort factor on boat speed from Hs (meters).
+///
+/// Flat calm → 1.0; rises in penalty through rough seas. Missing data → 1.0
+/// so routes still compute when only wind GRIB is available.
+double waveSpeedFactor(double? significantWaveHeightM) {
+  final hs = significantWaveHeightM;
+  if (hs == null || hs.isNaN || hs <= 0.8) return 1.0;
+  if (hs >= 5.0) return 0.5;
+  // Linear ease from 0.8 m (1.0) to 5.0 m (0.5).
+  return 1.0 - (hs - 0.8) * (0.5 / (5.0 - 0.8));
+}
+
 class IsochroneRoute {
   final List<({double lat, double lon})> path;
   final Duration totalDuration;
@@ -79,6 +99,8 @@ IsochroneRoute? computeIsochroneRoute({
   int headingCount = 24,
   int maxSteps = 72,
   double arrivalToleranceNm = 5,
+  /// #291 — optional Hs field; when null, wind-only routing (no penalty).
+  WaveAt? waveAt,
 }) {
   if (polar.isEmpty || headingCount <= 0) return null;
 
@@ -102,12 +124,18 @@ IsochroneRoute? computeIsochroneRoute({
         final heading = h * sectorWidth;
         final wind = windAt(lat: node.lat, lon: node.lon, time: time);
         final twa = heading - wind.windDirDeg;
-        final speedKt = interpolatePolarBoatSpeedKt(
+        var speedKt = interpolatePolarBoatSpeedKt(
           polar: polar,
           twaDeg: twa,
           twsKt: wind.windSpeedKt,
         );
         if (speedKt == null || speedKt <= 0) continue;
+        // #291 — optional wave comfort penalty (degrades if waveAt missing).
+        if (waveAt != null) {
+          final hs = waveAt(lat: node.lat, lon: node.lon, time: time);
+          speedKt = speedKt * waveSpeedFactor(hs);
+          if (speedKt <= 0) continue;
+        }
         final dest = destinationPoint(
           lat: node.lat,
           lon: node.lon,

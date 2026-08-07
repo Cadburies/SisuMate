@@ -118,16 +118,41 @@ void main() {
         findsOneWidget);
   });
 
-  testWidgets('3+ qualifying notes across both log and maintenance sources '
-      'trigger the query and show the no-key fallback', (tester) async {
+  testWidgets(
+      '#288 local-first: 3+ notes show offline scan without needing a key',
+      (tester) async {
     final now = DateTime.now();
     await pumpDialog(tester, logEntries: [
-      _log(date: now, notes: 'vibration at 2400 RPM'),
+      _log(date: now, notes: 'vibration at 2400 RPM under load'),
       _log(date: now.subtract(const Duration(days: 10)),
-          notes: 'vibration again'),
+          notes: 'vibration returned after motor hours'),
     ], maintenanceTasks: [
-      _task(modified: now, notes: 'checked sensor, reset'),
+      _task(modified: now, notes: 'checked mounts still feel vibration'),
     ]);
+
+    // Local co-occurrence report — no network / no key required.
+    expect(find.textContaining('Offline scan'), findsOneWidget);
+    expect(find.textContaining('vibration'), findsWidgets);
+    expect(find.text('Narrate with AI'), findsOneWidget);
+    expect(find.textContaining('No AI API key is configured'), findsNothing);
+  });
+
+  testWidgets(
+      'Narrate with AI without a key shows the settings fallback',
+      (tester) async {
+    final now = DateTime.now();
+    await pumpDialog(tester, logEntries: [
+      _log(date: now, notes: 'vibration at 2400 RPM under load'),
+      _log(date: now.subtract(const Duration(days: 10)),
+          notes: 'vibration returned after motor hours'),
+    ], maintenanceTasks: [
+      _task(modified: now, notes: 'checked mounts still feel vibration'),
+    ]);
+
+    await tester.tap(find.text('Narrate with AI'));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
 
     expect(find.textContaining('No AI API key is configured'), findsOneWidget);
     expect(find.text('Go to Settings'), findsOneWidget);

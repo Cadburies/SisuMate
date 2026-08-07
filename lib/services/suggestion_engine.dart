@@ -141,17 +141,21 @@ class SuggestionEngine {
     final logTip = _logStaleTip(lastLogDate, at);
     if (logTip != null) out.add(logTip);
 
-    // BAI7: fuel/water runway watch (milder than passage-readiness blockers).
+    // BAI7 / #294: fuel/water runway watch (milder than passage-readiness blockers).
     for (final e in fuelEstimates) {
       final days = e.daysUntilEmpty;
       if (days == null || days > fuelWatchDays) continue;
+      final range = e.remainingRangeNm;
+      final rangeBit = range != null
+          ? ' (~${range >= 100 ? range.toStringAsFixed(0) : range.toStringAsFixed(1)} NM at recent L/NM)'
+          : '';
       out.add(BoatSuggestion(
         id: 'fuel_${e.type.toLowerCase()}',
         title: days <= 2
             ? '${e.type} nearly empty'
             : '${e.type} running low',
         detail: 'Estimated ~$days day${days == 1 ? '' : 's'} of ${e.type.toLowerCase()} '
-            'left from recent fills — top up before a longer passage.',
+            'left from recent fills$rangeBit — top up before a longer passage.',
         severity: days <= 2 ? SuggestionSeverity.urgent : SuggestionSeverity.watch,
         routePath: '/fuel',
       ));

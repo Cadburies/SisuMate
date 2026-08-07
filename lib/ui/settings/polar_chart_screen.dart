@@ -11,6 +11,7 @@ import '../../models/sea_state.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/boat_instrument_failover_service.dart';
 import '../../services/imu_heave_estimator.dart';
+import '../../services/polar_bucket_aggregator.dart';
 import '../../services/polar_sample_eligibility.dart';
 import '../components/title_tile.dart';
 
@@ -29,6 +30,9 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
   bool _refreshingLive = false;
   String? _status;
   Map<String, int> _counts = {};
+  /// #292 — TWA×TWS fill fraction from measured samples (0–1).
+  double _coverageFraction = 0;
+  int _sampleTotal = 0;
   SeaState _liveSea = SeaState.unknown;
   ImuSeaStateEstimate _imuEstimate = ImuSeaStateEstimate.empty;
   PolarLogFieldSnapshot _logFields = PolarLogFieldSnapshot.empty;
@@ -76,6 +80,8 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
         setState(() {
           _logFields = PolarLogFieldSnapshot.empty;
           _counts = {};
+          _coverageFraction = 0;
+          _sampleTotal = 0;
           _liveSea = SeaState.unknown;
           _imuEstimate = imuEst;
         });
@@ -83,6 +89,9 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
       }
       final collector = ref.read(sailingPolarCollectorProvider);
       final counts = await collector.sampleCountsBySeaState(boat.supabaseId);
+      // #292 — coverage + improve-hint inputs (bounded sample list).
+      final recent = await collector.recent(boat.supabaseId, limit: 2000);
+      final coverage = PolarBucketAggregator.coverageFraction(recent);
 
       PolarLogFieldSnapshot fields = _logFields;
       if (fetchInstruments) {
@@ -147,6 +156,8 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
       if (!mounted) return;
       setState(() {
         _counts = counts;
+        _coverageFraction = coverage;
+        _sampleTotal = recent.length;
         _liveSea = collector.currentSeaState;
         _logFields = fields;
         _imuEstimate = imuEst;
@@ -405,7 +416,31 @@ class _PolarChartScreenState extends ConsumerState<PolarChartScreen>
           ),
           const SizedBox(height: 12),
           _legend(isDark, curves),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          // #292 — measured-polar coverage + auto improve hint.
+          Text(
+            'Measured coverage: ${(_coverageFraction * 100).toStringAsFixed(0)}% '
+            'of TWA×TWS cells · $_sampleTotal sample${_sampleTotal == 1 ? '' : 's'}',
+            style: TextStyle(
+              color: SisuColors.getTextSecondaryColor(isDark),
+              fontSize: 12,
+            ),
+          ),
+          if (PolarBucketAggregator.shouldSuggestOfflineImprove(
+            sampleCount: _sampleTotal,
+            coverageFraction: _coverageFraction,
+          )) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Enough new samples to Improve offline (outlier clean + smooth).',
+              style: TextStyle(
+                color: SisuColors.getTextPrimaryColor(isDark),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
           if (_status != null) ...[
             Text(
               _status!,

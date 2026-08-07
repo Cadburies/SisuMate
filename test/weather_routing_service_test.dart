@@ -135,5 +135,46 @@ void main() {
       expect(actualHours, lessThan(naiveDeadUpwindHours),
           reason: 'must be faster than sailing dead upwind the whole way');
     });
+
+    test('#291 waveSpeedFactor is 1.0 when Hs missing or calm', () {
+      expect(waveSpeedFactor(null), 1.0);
+      expect(waveSpeedFactor(0.5), 1.0);
+      expect(waveSpeedFactor(5.0), 0.5);
+      expect(waveSpeedFactor(2.9), lessThan(1.0));
+      expect(waveSpeedFactor(2.9), greaterThan(0.5));
+    });
+
+    test('#291 high waves slow the route vs wind-only (same polar)', () {
+      const polar = [
+        PolarPoint(twaDeg: 0, twsKt: 10, boatSpeedKt: 6),
+        PolarPoint(twaDeg: 90, twsKt: 10, boatSpeedKt: 6),
+        PolarPoint(twaDeg: 180, twsKt: 10, boatSpeedKt: 6),
+      ];
+      const start = (lat: 0.0, lon: 0.0);
+      const end = (lat: 0.0, lon: 1.0);
+
+      final calm = computeIsochroneRoute(
+        start: start,
+        end: end,
+        polar: polar,
+        windAt: constantWind,
+        startTime: DateTime(2026, 7, 9),
+      );
+      final rough = computeIsochroneRoute(
+        start: start,
+        end: end,
+        polar: polar,
+        windAt: constantWind,
+        startTime: DateTime(2026, 7, 9),
+        waveAt: ({required lat, required lon, required time}) => 4.0,
+      );
+
+      expect(calm, isNotNull);
+      expect(rough, isNotNull);
+      expect(
+        rough!.totalDuration.inMinutes,
+        greaterThan(calm!.totalDuration.inMinutes),
+      );
+    });
   });
 }

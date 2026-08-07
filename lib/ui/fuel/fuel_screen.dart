@@ -553,6 +553,11 @@ class _BurnEstimateStripState extends State<_BurnEstimateStrip> {
         parts.add('~${e.daysUntilEmpty}d to empty');
       }
     }
+    // #294 — remaining range when distance-based burn is known.
+    final rangeNm = e.remainingRangeNm;
+    if (rangeNm != null) {
+      parts.add('~${rangeNm >= 100 ? rangeNm.toStringAsFixed(0) : rangeNm.toStringAsFixed(1)} NM range');
+    }
     return parts.join(' · ');
   }
 }

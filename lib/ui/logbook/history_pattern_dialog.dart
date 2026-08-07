@@ -7,27 +7,21 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_router.dart';
 import '../../models/models.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
+import '../../services/history_pattern_local.dart';
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
 
-/// Below this many qualifying notes, the LLM has nothing to find a pattern
-/// in — asking it anyway would just burn the user's BYOK tokens on "not
-/// enough data" restated in prose.
-const int _minHistoryEntries = 3;
+/// Below this many qualifying notes, neither local nor LLM has enough signal.
+const int _minHistoryEntries = HistoryPatternLocal.minNotes;
 
-/// How far back / how many notes to send — keeps the BYOK token bill
-/// bounded regardless of how long a boat's history is (#17-adjacent cost
-/// discipline, not a privacy filter).
+/// How far back / how many notes to scan — keeps work bounded.
 const int _maxHistoryEntries = 40;
 const Duration _lookback = Duration(days: 180);
 
-/// #218 / #208: cross-history pattern detection — reasoning over *many*
-/// historical free-text notes at once (paraphrased recurring themes, not
-/// exact string repeats) is structurally beyond seed data or keyword rules.
-/// Reached via a distinct AI action on Captain's Log's title bar, never
-/// blended into the log list's own actions. Complements (does not
-/// duplicate) #216's risk triage: that reasons over *current* overdue
-/// state, this reasons over *historical* notes.
+/// #218 / #288 / #208: cross-history pattern detection.
+///
+/// Local co-occurrence scan first (always offline); optional LLM narrative
+/// when online + key. Reached via Captain's Log title bar AI action.
 class HistoryPatternDialog extends ConsumerStatefulWidget {
   final List<CaptainLogEntry> logEntries;
   final List<MaintenanceTask> maintenanceTasks;
@@ -44,13 +38,15 @@ class HistoryPatternDialog extends ConsumerStatefulWidget {
 }
 
 class _HistoryPatternDialogState extends ConsumerState<HistoryPatternDialog> {
-  LlmResult? _result;
+  LlmResult? _llmResult;
   bool _notEnoughHistory = false;
+  bool _llmLoading = false;
+  String _localReport = '';
 
   @override
   void initState() {
     super.initState();
-    _detect();
+    _detectLocal();
   }
 
   List<({DateTime date, String source, String text})> _qualifyingEntries() {
@@ -72,12 +68,26 @@ class _HistoryPatternDialogState extends ConsumerState<HistoryPatternDialog> {
     return entries.take(_maxHistoryEntries).toList();
   }
 
-  Future<void> _detect() async {
+  void _detectLocal() {
     final entries = _qualifyingEntries();
     if (entries.length < _minHistoryEntries) {
-      if (mounted) setState(() => _notEnoughHistory = true);
+      setState(() => _notEnoughHistory = true);
       return;
     }
+    final hits = HistoryPatternLocal.detect(entries);
+    setState(() {
+      _localReport = HistoryPatternLocal.formatReport(hits);
+      _notEnoughHistory = false;
+    });
+  }
+
+  Future<void> _narrateWithAi() async {
+    final entries = _qualifyingEntries();
+    if (entries.length < _minHistoryEntries) return;
+    setState(() {
+      _llmLoading = true;
+      _llmResult = null;
+    });
     final boat = await ref.read(activeBoatProvider.future);
     final payload = LlmPayloadBuilder.historySnippets(entries: entries);
     final result = await LlmClientService().complete(
@@ -94,7 +104,12 @@ class _HistoryPatternDialogState extends ConsumerState<HistoryPatternDialog> {
           'recurs, say so briefly. No preamble.',
       prompt: jsonEncode(payload),
     );
-    if (mounted) setState(() => _result = result);
+    if (mounted) {
+      setState(() {
+        _llmLoading = false;
+        _llmResult = result;
+      });
+    }
   }
 
   @override
@@ -104,7 +119,7 @@ class _HistoryPatternDialogState extends ConsumerState<HistoryPatternDialog> {
         children: [
           Icon(Icons.auto_awesome, color: Colors.deepPurple, size: 20),
           SizedBox(width: 8),
-          Expanded(child: Text('AI: Recurring Issues')),
+          Expanded(child: Text('Recurring Issues')),
         ],
       ),
       content: SizedBox(
@@ -112,13 +127,18 @@ class _HistoryPatternDialogState extends ConsumerState<HistoryPatternDialog> {
         child: _buildBody(context),
       ),
       actions: [
-        if (_result?.status == LlmResultStatus.noKeyConfigured)
+        if (_llmResult?.status == LlmResultStatus.noKeyConfigured)
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
               context.push(AppRoutes.settings);
             },
             child: const Text('Go to Settings'),
+          ),
+        if (!_notEnoughHistory && !_llmLoading)
+          TextButton(
+            onPressed: _narrateWithAi,
+            child: const Text('Narrate with AI'),
           ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -134,14 +154,33 @@ class _HistoryPatternDialogState extends ConsumerState<HistoryPatternDialog> {
           'Not enough log or maintenance notes yet to look for patterns — '
           'keep logging and check back later.');
     }
-    final result = _result;
-    if (result == null) {
+    if (_llmLoading) {
       return const SizedBox(
         height: 80,
         child: Center(child: CircularProgressIndicator()),
       );
     }
-    return SingleChildScrollView(child: _ResultView(result: result));
+    final llm = _llmResult;
+    if (llm != null) {
+      return SingleChildScrollView(child: _ResultView(result: llm));
+    }
+    // #288 — local report is the primary offline path.
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_localReport),
+          const SizedBox(height: 8),
+          Text(
+            'Not a diagnosis — investigate in person before acting on this.',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(fontStyle: FontStyle.italic),
+          ),
+        ],
+      ),
+    );
   }
 }
 

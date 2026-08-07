@@ -46,6 +46,25 @@ class PolarBucketAggregator {
     return filled / total;
   }
 
+  /// #292 — true when enough unused samples exist to justify Improve offline.
+  ///
+  /// [sampleCount] is total measured samples for the boat; [minSamples]
+  /// defaults to a modest sail session (~25 rows).
+  static bool shouldSuggestOfflineImprove({
+    required int sampleCount,
+    int minSamples = 25,
+    double? coverageFraction,
+    double lowCoverageBelow = 0.35,
+  }) {
+    if (sampleCount < minSamples) return false;
+    if (coverageFraction != null && coverageFraction < lowCoverageBelow) {
+      return true;
+    }
+    // Dense enough samples even with decent coverage still benefit from
+    // outlier clean + smooth.
+    return sampleCount >= minSamples * 2;
+  }
+
   static List<PolarBucket> bucket(
     Iterable<SailingPolarSample> samples, {
     double twaStep = 10,

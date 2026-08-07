@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** shipped #286–#290 + #302 offline-first AI slice; #291 wave GRIB download (routing comfort still open).
-- **Open backlog:** `gh issue list` — remaining #291 routing/waves cost, P3 #292–#301.
+- **Last (grok):** #294 fuel range UI, #292 polar coverage, #288 local history, #291 wave speed factor.
+- **Open backlog:** `gh issue list` — #291 offline pack/currents still open; P3 #293–#301.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 
