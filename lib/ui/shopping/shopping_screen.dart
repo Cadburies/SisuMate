@@ -951,6 +951,8 @@ class ShoppingItemTile extends ConsumerWidget {
             : ItemListState.shopping;
     final c = SisuColors.itemStateColors(isDark, state);
 
+    // #309 — quantity is buy count (packs); unit is optional pack label
+    // (e.g. "250ml bottle"), not a measure multiplier for price.
     final qtyParts = <String>[];
     if (item.quantity > 1) {
       qtyParts.add('×${item.quantity}');
@@ -960,15 +962,15 @@ class ShoppingItemTile extends ConsumerWidget {
     }
     final qtyLine = qtyParts.isEmpty ? null : qtyParts.join(' ');
 
-    final unitPrice = item.lastPurchasePrice;
+    final packPrice = item.lastPurchasePrice;
     final line = item.lineEstimate;
     String? priceLine;
-    if (unitPrice != null) {
-      final unit = '\$${unitPrice.toStringAsFixed(2)}';
+    if (packPrice != null) {
+      final pack = '\$${packPrice.toStringAsFixed(2)}';
       if (item.quantity > 1 && line != null) {
-        priceLine = '$unit × ${item.quantity} = \$${line.toStringAsFixed(2)}';
+        priceLine = '$pack × ${item.quantity} = \$${line.toStringAsFixed(2)}';
       } else {
-        priceLine = unit;
+        priceLine = pack;
       }
     }
     final placeLine = (item.lastPurchasePlace != null &&

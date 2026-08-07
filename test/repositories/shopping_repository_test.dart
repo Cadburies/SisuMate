@@ -181,6 +181,52 @@ void main() {
       expect(items.single.lineEstimate, 64.0);
     });
 
+    test('#309 pantry package size must not multiply pack price', () async {
+      // Seed shape: Aged Balsamic is 250 ml @ $12/bottle — qty must be 1 pack.
+      final pantryRepo = PantryIngredientRepositoryImpl(db);
+      await pantryRepo.addPantryIngredient(PantryIngredient()
+        ..supabaseId = 'pantry_balsamic'
+        ..name = 'Aged Balsamic Vinegar'
+        ..quantity = 250
+        ..unit = 'ml'
+        ..lastKnownPrice = 12.0
+        ..lastKnownPriceUnit = '250ml bottle');
+
+      // Catalog add path (mirrors ingredient detail after #309): buy count 1,
+      // unit = package label, not 250 × $12.
+      await repo.ensureInShopping(
+        name: 'Aged Balsamic Vinegar',
+        origin: 'pantry',
+        quantity: 1,
+        unit: '250ml bottle',
+      );
+      final items = await repo.watchItems('cat-misc').first;
+      final line = items.single;
+      expect(line.quantity, 1);
+      expect(line.unit, '250ml bottle');
+      expect(line.lastPurchasePrice, 12.0);
+      expect(line.lineEstimate, 12.0);
+
+      // Couscous: 500 g pack @ $4.
+      await pantryRepo.addPantryIngredient(PantryIngredient()
+        ..supabaseId = 'pantry_couscous'
+        ..name = 'Couscous'
+        ..quantity = 500
+        ..unit = 'g'
+        ..lastKnownPrice = 4.0
+        ..lastKnownPriceUnit = '500g pack');
+      await repo.ensureInShopping(
+        name: 'Couscous',
+        origin: 'pantry',
+        quantity: 1,
+        unit: '500g pack',
+      );
+      final all = await repo.watchItems('cat-misc').first;
+      final couscous = all.singleWhere((i) => i.name == 'Couscous');
+      expect(couscous.quantity, 1);
+      expect(couscous.lineEstimate, 4.0);
+    });
+
     test('updateItem syncs price/place back to bar catalog', () async {
       final barRepo = BarIngredientRepositoryImpl(db);
       await barRepo.addBarIngredient(BarIngredient()

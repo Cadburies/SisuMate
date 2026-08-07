@@ -63,4 +63,13 @@ class NativeAdSlotCache {
     }
     return _slots;
   }
+
+  /// #311 — Pro must not reserve list/grid cells for ads. When [showAds]
+  /// is false, return no slots so [childCount] stays equal to content size
+  /// (a shrunk [NativeAdWidget] inside a fixed-aspect [SliverGrid] still
+  /// leaves empty holes).
+  List<int> forList(int itemCount, {required bool showAds}) {
+    if (!showAds) return const [];
+    return call(itemCount);
+  }
 }

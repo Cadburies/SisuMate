@@ -152,7 +152,11 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
 
                   // Build list with native tile ads in ≤4 random slots near
                   // the start (user policy 2026-08-01; see ad_slots.dart).
-                  final adSlots = _adSlotCache(filteredItems.length);
+                  // #311 — Pro: no reserved ad indices.
+                  final adSlots = _adSlotCache.forList(
+                    filteredItems.length,
+                    showAds: !isPro,
+                  );
                   final total = filteredItems.length + adSlots.length;
                   final List<Widget> widgets = [];
                   for (int i = 0; i < total; i++) {

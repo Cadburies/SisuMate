@@ -107,12 +107,20 @@ class _IngredientDetailScreenState
   Future<void> _addToShopping(int i) async {
     final name = _name(i);
     final origin = _isBar ? 'bar' : 'pantry';
-    int qty = 1;
+    // #309 — catalog price is per purchase pack (bottle/bag), not per ml/g.
+    // Seeded pantry `quantity` is package size (e.g. 250 ml), not buy count.
+    // Always start shopping at 1 pack; label the pack when we have one.
+    const qty = 1;
     String? unit;
-    if (!_isBar) {
+    if (_isBar) {
+      final priceUnit = _bar[i].lastKnownPriceUnit?.trim();
+      if (priceUnit != null && priceUnit.isNotEmpty) unit = priceUnit;
+    } else {
       final p = _pantry[i];
-      if (p.quantity != null) qty = p.quantity!.round().clamp(1, 9999);
-      unit = p.unit;
+      final priceUnit = p.lastKnownPriceUnit?.trim();
+      if (priceUnit != null && priceUnit.isNotEmpty) {
+        unit = priceUnit;
+      }
     }
     final added = await ref.read(shoppingRepositoryProvider).ensureInShopping(
           name: name,

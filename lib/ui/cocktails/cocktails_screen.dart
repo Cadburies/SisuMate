@@ -639,11 +639,14 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
           );
         }
 
+        // #311 — never reserve grid ad cells on Pro (shrink leaves holes).
+        final showAds = !(ref.watch(isProProvider).value ?? false);
+
         if (!widget.sortByAvailability) {
           return CustomScrollView(
             slivers: [
               headerSliver,
-              _cocktailGridSliver(filtered, withAds: true),
+              _cocktailGridSliver(filtered, withAds: showAds),
             ],
           );
         }
@@ -666,17 +669,19 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
           slivers: [
             headerSliver,
             _sectionHeaderSliver('Can make now · ${canMake.length}/$total'),
-            if (canMake.isNotEmpty) _cocktailGridSliver(canMake, withAds: true),
+            if (canMake.isNotEmpty)
+              _cocktailGridSliver(canMake, withAds: showAds),
             _sectionHeaderSliver('Almost there · ${almost.length}/$total'),
             if (almost.isNotEmpty)
-              _cocktailGridSliver(almost, withAds: canMake.isEmpty),
+              _cocktailGridSliver(
+                  almost, withAds: showAds && canMake.isEmpty),
             _sectionHeaderSliver(
               'Need ingredients · ${needMore.length}/$total',
             ),
             if (needMore.isNotEmpty)
               _cocktailGridSliver(
                 needMore,
-                withAds: canMake.isEmpty && almost.isEmpty,
+                withAds: showAds && canMake.isEmpty && almost.isEmpty,
               ),
           ],
         );
@@ -2060,8 +2065,10 @@ class _BarTabState extends ConsumerState<_BarTab> {
               if (filtered.isEmpty) {
                 return const Center(child: Text('No ingredients found.'));
               }
-              // Native tile ads in ≤4 random slots near the start.
-              final adSlots = _adSlotCache(filtered.length);
+              // #311 — no ad indices when Pro.
+              final isPro = ref.watch(isProProvider).value ?? false;
+              final adSlots =
+                  _adSlotCache.forList(filtered.length, showAds: !isPro);
               return ListView.builder(
                 // Keys keep tiles stable when data updates without reordering.
                 itemCount: filtered.length + adSlots.length,

@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last (grok):** #304 scope↔radius↔map sync + #305 Info depth on Anchor Alarm.
-- **Open anchor:** #303 location failover, #306 gateway→Settings, #307 multi-alarms/defaults.
+- **Last (grok):** #309 shopping pack-price fix + #311 Pro ad-slot grid holes.
+- **Open:** #310 quantity model; anchor #303/#306/#307; polar #308.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

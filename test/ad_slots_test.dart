@@ -63,6 +63,17 @@ void main() {
       expect(b, isNot(same(a)), reason: 'count change re-rolls slots');
       expect(cache(31), same(b));
     });
+
+    test('#311 forList with showAds:false returns no slots (Pro path)', () {
+      final cache = NativeAdSlotCache();
+      expect(cache.forList(40, showAds: false), isEmpty);
+      // Enabling ads still uses the memoized picker for that count.
+      final free = cache.forList(40, showAds: true);
+      expect(free, isNotEmpty);
+      expect(free.length, lessThanOrEqualTo(4));
+      expect(cache.forList(40, showAds: true), same(free));
+      expect(cache.forList(40, showAds: false), isEmpty);
+    });
   });
 
   group('slot mapping', () {

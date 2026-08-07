@@ -18,12 +18,15 @@ class ShoppingItem {
   bool isHidden = false;
   String? notes;
   String origin = 'spares';
-  /// Expected unit cost for this trip line (from catalog seed or user edit).
+  /// Expected **purchase-unit** cost for this trip line (from catalog seed
+  /// or user edit) — price of one bottle/bag/pack, **not** price per ml/g.
+  /// See #309: [quantity] is buy count of those packs.
   double? lastPurchasePrice;
   /// Where it was last bought / where to buy (synced with bar/pantry place).
   String? lastPurchasePlace;
 
-  /// Line estimate: unit price × quantity (null if no unit price).
+  /// Line estimate: pack price × buy count (null if no pack price).
+  /// [quantity] is how many packages to buy, never package size in ml/g.
   double? get lineEstimate {
     final p = lastPurchasePrice;
     if (p == null) return null;

@@ -696,38 +696,37 @@ class _ChefTabState extends ConsumerState<_ChefTab> {
           );
         }
 
+        // #311 — Pro must not reserve grid cells for ads (shrink ≠ remove cell).
+        final isPro = ref.watch(isProProvider).value ?? false;
+        final slots =
+            _adSlotCache.forList(filtered.length, showAds: !isPro);
+        final count = filtered.length + slots.length;
         return CustomScrollView(
           slivers: [
             headerSliver,
-            Builder(builder: (context) {
-              // Native tile ads in ≤4 random slots near the start
-              // (user policy; see ad_slots.dart).
-              final slots = _adSlotCache(filtered.length);
-              final count = filtered.length + slots.length;
-              return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.48,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (_, i) {
-                      if (isNativeAdSlot(i, slots)) {
-                        return const NativeAdWidget(
-                            style: NativeAdTileStyle.cocktailTile,
-                            contextHint: 'chef');
-                      }
-                      return _RecipeCard(
-                          recipe: filtered[nativeAdContentIndex(i, slots)]);
-                    },
-                    childCount: count,
-                  ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.48,
                 ),
-              );
-            }),
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) {
+                    if (isNativeAdSlot(i, slots)) {
+                      return const NativeAdWidget(
+                          style: NativeAdTileStyle.cocktailTile,
+                          contextHint: 'chef');
+                    }
+                    return _RecipeCard(
+                        recipe: filtered[nativeAdContentIndex(i, slots)]);
+                  },
+                  childCount: count,
+                ),
+              ),
+            ),
           ],
         );
       },
@@ -2146,8 +2145,10 @@ class _PantryTabState extends ConsumerState<_PantryTab> {
               if (filtered.isEmpty) {
                 return const Center(child: Text('No ingredients found.'));
               }
-              // Native tile ads in ≤4 random slots near the start.
-              final adSlots = _adSlotCache(filtered.length);
+              // #311 — no ad indices when Pro (list shrink is fine; stay consistent).
+              final isPro = ref.watch(isProProvider).value ?? false;
+              final adSlots =
+                  _adSlotCache.forList(filtered.length, showAds: !isPro);
               return ListView.builder(
                 itemCount: filtered.length + adSlots.length,
                 itemBuilder: (_, idx) {

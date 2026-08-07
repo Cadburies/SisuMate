@@ -21,6 +21,11 @@ enum NativeAdTileStyle {
 
 /// Free-tier native ad rendered like one of the list's own tiles. Pro → shrink.
 ///
+/// Callers that place this in a **fixed-aspect grid** must not insert an ad
+/// index when Pro (or when ads are disabled) — [SizedBox.shrink] still
+/// occupies the grid cell (#311). Prefer [NativeAdSlotCache.forList] with
+/// `showAds: !isPro`.
+///
 /// Same RT2/SUG4 policy as [BannerAdWidget]: defer load past first frame;
 /// zero height until loaded; collapse on failure (no grey placeholder) —
 /// but failures ARE logged in debug (#124: this used to regress silently).
