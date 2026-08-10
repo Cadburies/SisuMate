@@ -9,12 +9,14 @@ void main() {
       double qty = 1,
       String? notes,
       String? location,
+      String? barcode,
     }) =>
         InventoryItem()
           ..name = name
           ..quantity = qty
           ..notes = notes
-          ..location = location;
+          ..location = location
+          ..barcode = barcode;
 
     test('default min 1 flags zero stock', () {
       final low = InventoryReorderService.lowStock([
@@ -46,6 +48,35 @@ void main() {
             .map((e) => e.name),
         ['A', 'C'],
       );
+    });
+
+    group('findByBarcode (#318)', () {
+      test('returns the item with a matching barcode', () {
+        final items = [
+          item(name: 'Impeller', barcode: '012345678905'),
+          item(name: 'Filters', barcode: '098765432109'),
+        ];
+        expect(
+          InventoryReorderService.findByBarcode(items, '098765432109')
+              ?.name,
+          'Filters',
+        );
+      });
+
+      test('returns null when nothing matches', () {
+        final items = [item(name: 'Impeller', barcode: '012345678905')];
+        expect(
+          InventoryReorderService.findByBarcode(items, 'unknown-code'),
+          isNull,
+        );
+      });
+
+      test('null/empty barcode never matches, even an item with none set',
+          () {
+        final items = [item(name: 'No barcode item')];
+        expect(InventoryReorderService.findByBarcode(items, null), isNull);
+        expect(InventoryReorderService.findByBarcode(items, ''), isNull);
+      });
     });
   });
 }

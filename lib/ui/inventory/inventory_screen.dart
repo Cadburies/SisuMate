@@ -17,6 +17,7 @@ import '../../models/models.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/record_share_service.dart';
 import '../../services/import_service.dart';
+import '../../services/inventory_reorder_service.dart';
 
 final inventoryItemsProvider = StreamProvider<List<InventoryItem>>((ref) {
   return ref.watch(inventoryItemRepositoryProvider).watchInventoryItems();
@@ -42,6 +43,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   final Set<int> _selectedIds = {};
   final _searchCtrl = TextEditingController();
   String _search = '';
+  // #318 — location-tree filter (InventoryReorderService.locationTree was
+  // already implemented and tested but never wired into any UI).
+  String? _locationFilter;
 
   @override
   void dispose() {
@@ -172,16 +176,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   hintText: 'Search inventory...',
                   onChanged: (v) => setState(() => _search = v),
                 ),
+              if (!_selecting)
+                _LocationFilterRow(
+                  locations: InventoryReorderService.locationTree(allItems),
+                  selected: _locationFilter,
+                  onSelected: (loc) => setState(() => _locationFilter = loc),
+                ),
               Expanded(
                 child: itemsAsync.when(
                   data: (items) {
-                    final filtered = items.where((it) {
+                    final searched = items.where((it) {
                       if (_search.isEmpty) return true;
                       final q = _search.toLowerCase();
                       return it.name.toLowerCase().contains(q) ||
                           (it.location?.toLowerCase().contains(q) ?? false) ||
-                          (it.serialNumber?.toLowerCase().contains(q) ?? false);
-                    }).toList();
+                          (it.serialNumber?.toLowerCase().contains(q) ?? false) ||
+                          (it.barcode?.toLowerCase().contains(q) ?? false);
+                    });
+                    final filtered = InventoryReorderService.filterByLocation(
+                        searched, _locationFilter);
                     if (filtered.isEmpty) {
                       return Center(
                           child: Text(items.isEmpty
@@ -254,7 +267,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ? null
           : FloatingActionButton(
               onPressed: () => isPro
-                  ? _showAddEditDialog(context, ref)
+                  ? _showAddEditDialog(context, ref, allItems)
                   : _showProRequiredDialog(context),
               child: const Icon(Icons.add),
             ),
@@ -352,6 +365,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   label: 'Serial number',
                   value: m.serialNumber ?? ''),
               RecordField(
+                  key: 'barcode',
+                  label: 'Barcode',
+                  value: m.barcode ?? ''),
+              RecordField(
                   key: 'notes',
                   label: 'Notes',
                   value: m.notes ?? '',
@@ -374,6 +391,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               ..serialNumber = (values['serialNumber'] ?? '').isEmpty
                   ? null
                   : values['serialNumber']
+              ..barcode =
+                  (values['barcode'] ?? '').isEmpty ? null : values['barcode']
               ..notes = (values['notes'] ?? '').isEmpty ? null : values['notes'];
             await ref
                 .read(inventoryItemRepositoryProvider)
@@ -396,7 +415,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
-  void _showAddEditDialog(BuildContext context, WidgetRef ref,
+  void _showAddEditDialog(
+      BuildContext context, WidgetRef ref, List<InventoryItem> allItems,
       {InventoryItem? existing}) {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -404,6 +424,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       context: context,
       builder: (_) => AddEditInventoryItemDialog(
         existing: existing,
+        // #318 — barcode-collision check on scan (add flow only) needs to
+        // see what's already on hand.
+        existingItems: allItems,
         onSave: (item) async {
           final repo = ref.read(inventoryItemRepositoryProvider);
           if (existing == null) {
@@ -415,6 +438,47 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           messenger
               .showSnackBar(SnackBar(content: Text('${item.name} saved')));
         },
+        onOpenExisting: (match) {
+          navigator.pop();
+          _showAddEditDialog(context, ref, allItems, existing: match);
+        },
+      ),
+    );
+  }
+}
+
+/// #318 — location-tree filter row (only shown once there's more than one
+/// distinct location to filter by; a single-location boat gains nothing
+/// from it). Matches Shopping's horizontal `FilterChip` row pattern.
+class _LocationFilterRow extends StatelessWidget {
+  final List<String> locations;
+  final String? selected;
+  final ValueChanged<String?> onSelected;
+  const _LocationFilterRow({
+    required this.locations,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (locations.length < 2) return const SizedBox.shrink();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Row(
+        children: [
+          for (final loc in locations)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(loc),
+                selected: selected == loc,
+                onSelected: (isSelected) =>
+                    onSelected(isSelected ? loc : null),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -423,8 +487,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 class AddEditInventoryItemDialog extends StatefulWidget {
   final InventoryItem? existing;
   final void Function(InventoryItem) onSave;
-  const AddEditInventoryItemDialog(
-      {super.key, this.existing, required this.onSave});
+  /// #318 — items already on hand, for the barcode-scan duplicate check
+  /// (add flow only; empty/irrelevant when editing).
+  final List<InventoryItem> existingItems;
+  /// Called instead of [onSave] when a scanned barcode matches an existing
+  /// item and the user chooses to open it rather than add a duplicate.
+  final ValueChanged<InventoryItem>? onOpenExisting;
+  const AddEditInventoryItemDialog({
+    super.key,
+    this.existing,
+    required this.onSave,
+    this.existingItems = const [],
+    this.onOpenExisting,
+  });
 
   @override
   State<AddEditInventoryItemDialog> createState() =>
@@ -439,6 +514,7 @@ class AddEditInventoryItemDialogState
   final _quantityCtrl = TextEditingController(text: '1');
   final _unitCtrl = TextEditingController();
   final _serialCtrl = TextEditingController();
+  final _barcodeCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String? _localPath;
 
@@ -454,6 +530,7 @@ class AddEditInventoryItemDialogState
           : existing.quantity.toString();
       _unitCtrl.text = existing.unit ?? '';
       _serialCtrl.text = existing.serialNumber ?? '';
+      _barcodeCtrl.text = existing.barcode ?? '';
       _notesCtrl.text = existing.notes ?? '';
       _localPath = existing.localPath;
     }
@@ -466,6 +543,7 @@ class AddEditInventoryItemDialogState
     _quantityCtrl.dispose();
     _unitCtrl.dispose();
     _serialCtrl.dispose();
+    _barcodeCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
   }
@@ -473,6 +551,47 @@ class AddEditInventoryItemDialogState
   Future<void> _attachPhoto() async {
     final picked = await pickPhotoFromCameraOrGallery(context);
     if (picked != null) setState(() => _localPath = picked.path);
+  }
+
+  /// #318 — scan a barcode into the field; if it already belongs to an
+  /// on-hand item (add flow only — editing an item doesn't collide with
+  /// itself), offer to open that item instead of risking a duplicate.
+  Future<void> _scanBarcode() async {
+    final result = await context.push<String>(AppRoutes.barcodeScanner);
+    if (result == null || !mounted) return;
+
+    final isAdding = widget.existing == null;
+    final match = isAdding
+        ? InventoryReorderService.findByBarcode(widget.existingItems, result)
+        : null;
+
+    if (match != null) {
+      final openExisting = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Already in inventory'),
+          content: Text(
+              'This barcode is already on "${match.name}" (qty '
+              '${_formatQuantity(match)}). Open that item instead of '
+              'adding a new one?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Add anyway'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Open existing'),
+            ),
+          ],
+        ),
+      );
+      if (openExisting == true) {
+        widget.onOpenExisting?.call(match);
+        return;
+      }
+    }
+    if (mounted) setState(() => _barcodeCtrl.text = result);
   }
 
   @override
@@ -532,6 +651,25 @@ class AddEditInventoryItemDialogState
                       const InputDecoration(labelText: 'Serial number'),
                 ),
                 const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _barcodeCtrl,
+                        decoration:
+                            const InputDecoration(labelText: 'Barcode'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.outlined(
+                      icon: const Icon(Icons.qr_code_scanner),
+                      tooltip: 'Scan barcode',
+                      onPressed: _scanBarcode,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _notesCtrl,
                   decoration: const InputDecoration(labelText: 'Notes'),
@@ -589,6 +727,7 @@ class AddEditInventoryItemDialogState
       ..quantity = double.tryParse(_quantityCtrl.text) ?? 1
       ..unit = _unitCtrl.text.isEmpty ? null : _unitCtrl.text
       ..serialNumber = _serialCtrl.text.isEmpty ? null : _serialCtrl.text
+      ..barcode = _barcodeCtrl.text.isEmpty ? null : _barcodeCtrl.text
       ..notes = _notesCtrl.text.isEmpty ? null : _notesCtrl.text
       ..localPath = _localPath;
     widget.onSave(item);

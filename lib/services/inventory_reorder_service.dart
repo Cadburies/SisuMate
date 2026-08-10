@@ -85,4 +85,19 @@ class InventoryReorderService {
         .where((i) => (i.location ?? '').trim().toLowerCase() == key)
         .toList();
   }
+
+  /// #318 — the item already on hand with this exact barcode, if any (for
+  /// the add-item scan flow's "you already have this, open it instead?"
+  /// prompt). Null/empty barcodes never match — an empty scan result or an
+  /// item with no barcode set shouldn't collide with anything.
+  static InventoryItem? findByBarcode(
+    Iterable<InventoryItem> items,
+    String? barcode,
+  ) {
+    if (barcode == null || barcode.isEmpty) return null;
+    for (final i in items) {
+      if (i.barcode == barcode) return i;
+    }
+    return null;
+  }
 }

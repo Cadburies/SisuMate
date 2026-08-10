@@ -13,6 +13,10 @@ class InventoryItem {
   String? serialNumber;
   String? notes;
   String? localPath;
+  /// #318 — scanned/typed barcode (UPC/EAN) for quickly re-finding this
+  /// item on restock; no product-name lookup (unlike Cocktails' bottle
+  /// barcode database — boat spares have no equivalent curated catalog).
+  String? barcode;
   bool isSynced = false;
   DateTime lastModified = DateTime.now().toUtc();
 
@@ -27,6 +31,7 @@ class InventoryItem {
       ..serialNumber = json['serialNumber']
       ..notes = json['notes']
       ..localPath = json['localPath']
+      ..barcode = json['barcode']
       ..isSynced = json['isSynced'] ?? false
       ..lastModified = DateTime.parse(json['lastModified']);
   }
@@ -41,6 +46,7 @@ class InventoryItem {
     'serialNumber': serialNumber,
     'notes': notes,
     'localPath': localPath,
+    'barcode': barcode,
     'isSynced': isSynced,
     'lastModified': lastModified.toIso8601String(),
   };
@@ -60,6 +66,7 @@ class InventoryItem {
           serialNumber == other.serialNumber &&
           notes == other.notes &&
           localPath == other.localPath &&
+          barcode == other.barcode &&
           isSynced == other.isSynced &&
           lastModified == other.lastModified;
 
@@ -75,6 +82,7 @@ class InventoryItem {
         serialNumber,
         notes,
         localPath,
+        barcode,
         isSynced,
         lastModified,
       ]);
@@ -83,6 +91,6 @@ class InventoryItem {
   String toString() => 'InventoryItem(id: $id, supabaseId: $supabaseId, '
       'boatSupabaseId: $boatSupabaseId, name: $name, location: $location, '
       'quantity: $quantity, unit: $unit, serialNumber: $serialNumber, '
-      'notes: $notes, localPath: $localPath, isSynced: $isSynced, '
-      'lastModified: $lastModified)';
+      'notes: $notes, localPath: $localPath, barcode: $barcode, '
+      'isSynced: $isSynced, lastModified: $lastModified)';
 }

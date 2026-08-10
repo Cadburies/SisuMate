@@ -1546,6 +1546,17 @@ class $InventoryItemsTable extends InventoryItems
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _barcodeMeta = const VerificationMeta(
+    'barcode',
+  );
+  @override
+  late final GeneratedColumn<String> barcode = GeneratedColumn<String>(
+    'barcode',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isSyncedMeta = const VerificationMeta(
     'isSynced',
   );
@@ -1585,6 +1596,7 @@ class $InventoryItemsTable extends InventoryItems
     serialNumber,
     notes,
     localPath,
+    barcode,
     isSynced,
     lastModified,
   ];
@@ -1663,6 +1675,12 @@ class $InventoryItemsTable extends InventoryItems
         localPath.isAcceptableOrUnknown(data['local_path']!, _localPathMeta),
       );
     }
+    if (data.containsKey('barcode')) {
+      context.handle(
+        _barcodeMeta,
+        barcode.isAcceptableOrUnknown(data['barcode']!, _barcodeMeta),
+      );
+    }
     if (data.containsKey('is_synced')) {
       context.handle(
         _isSyncedMeta,
@@ -1727,6 +1745,10 @@ class $InventoryItemsTable extends InventoryItems
         DriftSqlType.string,
         data['${effectivePrefix}local_path'],
       ),
+      barcode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}barcode'],
+      ),
       isSynced: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_synced'],
@@ -1756,6 +1778,12 @@ class InventoryItemRow extends DataClass
   final String? serialNumber;
   final String? notes;
   final String? localPath;
+
+  /// #318 — scanned/typed barcode (UPC/EAN), for quickly re-finding an item
+  /// on restock ("scan it, jump straight to its record") rather than a
+  /// product-name lookup (unlike Cocktails' bottle-barcode database, boat
+  /// spares have no equivalent curated catalog to look up against).
+  final String? barcode;
   final bool isSynced;
   final DateTime lastModified;
   const InventoryItemRow({
@@ -1769,6 +1797,7 @@ class InventoryItemRow extends DataClass
     this.serialNumber,
     this.notes,
     this.localPath,
+    this.barcode,
     required this.isSynced,
     required this.lastModified,
   });
@@ -1795,6 +1824,9 @@ class InventoryItemRow extends DataClass
     if (!nullToAbsent || localPath != null) {
       map['local_path'] = Variable<String>(localPath);
     }
+    if (!nullToAbsent || barcode != null) {
+      map['barcode'] = Variable<String>(barcode);
+    }
     map['is_synced'] = Variable<bool>(isSynced);
     map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
@@ -1820,6 +1852,9 @@ class InventoryItemRow extends DataClass
       localPath: localPath == null && nullToAbsent
           ? const Value.absent()
           : Value(localPath),
+      barcode: barcode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(barcode),
       isSynced: Value(isSynced),
       lastModified: Value(lastModified),
     );
@@ -1841,6 +1876,7 @@ class InventoryItemRow extends DataClass
       serialNumber: serializer.fromJson<String?>(json['serialNumber']),
       notes: serializer.fromJson<String?>(json['notes']),
       localPath: serializer.fromJson<String?>(json['localPath']),
+      barcode: serializer.fromJson<String?>(json['barcode']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
@@ -1859,6 +1895,7 @@ class InventoryItemRow extends DataClass
       'serialNumber': serializer.toJson<String?>(serialNumber),
       'notes': serializer.toJson<String?>(notes),
       'localPath': serializer.toJson<String?>(localPath),
+      'barcode': serializer.toJson<String?>(barcode),
       'isSynced': serializer.toJson<bool>(isSynced),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
@@ -1875,6 +1912,7 @@ class InventoryItemRow extends DataClass
     Value<String?> serialNumber = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     Value<String?> localPath = const Value.absent(),
+    Value<String?> barcode = const Value.absent(),
     bool? isSynced,
     DateTime? lastModified,
   }) => InventoryItemRow(
@@ -1888,6 +1926,7 @@ class InventoryItemRow extends DataClass
     serialNumber: serialNumber.present ? serialNumber.value : this.serialNumber,
     notes: notes.present ? notes.value : this.notes,
     localPath: localPath.present ? localPath.value : this.localPath,
+    barcode: barcode.present ? barcode.value : this.barcode,
     isSynced: isSynced ?? this.isSynced,
     lastModified: lastModified ?? this.lastModified,
   );
@@ -1909,6 +1948,7 @@ class InventoryItemRow extends DataClass
           : this.serialNumber,
       notes: data.notes.present ? data.notes.value : this.notes,
       localPath: data.localPath.present ? data.localPath.value : this.localPath,
+      barcode: data.barcode.present ? data.barcode.value : this.barcode,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       lastModified: data.lastModified.present
           ? data.lastModified.value
@@ -1929,6 +1969,7 @@ class InventoryItemRow extends DataClass
           ..write('serialNumber: $serialNumber, ')
           ..write('notes: $notes, ')
           ..write('localPath: $localPath, ')
+          ..write('barcode: $barcode, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
@@ -1947,6 +1988,7 @@ class InventoryItemRow extends DataClass
     serialNumber,
     notes,
     localPath,
+    barcode,
     isSynced,
     lastModified,
   );
@@ -1964,6 +2006,7 @@ class InventoryItemRow extends DataClass
           other.serialNumber == this.serialNumber &&
           other.notes == this.notes &&
           other.localPath == this.localPath &&
+          other.barcode == this.barcode &&
           other.isSynced == this.isSynced &&
           other.lastModified == this.lastModified);
 }
@@ -1979,6 +2022,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
   final Value<String?> serialNumber;
   final Value<String?> notes;
   final Value<String?> localPath;
+  final Value<String?> barcode;
   final Value<bool> isSynced;
   final Value<DateTime> lastModified;
   const InventoryItemsCompanion({
@@ -1992,6 +2036,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     this.serialNumber = const Value.absent(),
     this.notes = const Value.absent(),
     this.localPath = const Value.absent(),
+    this.barcode = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
@@ -2006,6 +2051,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     this.serialNumber = const Value.absent(),
     this.notes = const Value.absent(),
     this.localPath = const Value.absent(),
+    this.barcode = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
@@ -2020,6 +2066,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     Expression<String>? serialNumber,
     Expression<String>? notes,
     Expression<String>? localPath,
+    Expression<String>? barcode,
     Expression<bool>? isSynced,
     Expression<DateTime>? lastModified,
   }) {
@@ -2034,6 +2081,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
       if (serialNumber != null) 'serial_number': serialNumber,
       if (notes != null) 'notes': notes,
       if (localPath != null) 'local_path': localPath,
+      if (barcode != null) 'barcode': barcode,
       if (isSynced != null) 'is_synced': isSynced,
       if (lastModified != null) 'last_modified': lastModified,
     });
@@ -2050,6 +2098,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     Value<String?>? serialNumber,
     Value<String?>? notes,
     Value<String?>? localPath,
+    Value<String?>? barcode,
     Value<bool>? isSynced,
     Value<DateTime>? lastModified,
   }) {
@@ -2064,6 +2113,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
       serialNumber: serialNumber ?? this.serialNumber,
       notes: notes ?? this.notes,
       localPath: localPath ?? this.localPath,
+      barcode: barcode ?? this.barcode,
       isSynced: isSynced ?? this.isSynced,
       lastModified: lastModified ?? this.lastModified,
     );
@@ -2102,6 +2152,9 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     if (localPath.present) {
       map['local_path'] = Variable<String>(localPath.value);
     }
+    if (barcode.present) {
+      map['barcode'] = Variable<String>(barcode.value);
+    }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
     }
@@ -2124,6 +2177,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
           ..write('serialNumber: $serialNumber, ')
           ..write('notes: $notes, ')
           ..write('localPath: $localPath, ')
+          ..write('barcode: $barcode, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
@@ -24169,6 +24223,7 @@ typedef $$InventoryItemsTableCreateCompanionBuilder =
       Value<String?> serialNumber,
       Value<String?> notes,
       Value<String?> localPath,
+      Value<String?> barcode,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
     });
@@ -24184,6 +24239,7 @@ typedef $$InventoryItemsTableUpdateCompanionBuilder =
       Value<String?> serialNumber,
       Value<String?> notes,
       Value<String?> localPath,
+      Value<String?> barcode,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
     });
@@ -24244,6 +24300,11 @@ class $$InventoryItemsTableFilterComposer
 
   ColumnFilters<String> get localPath => $composableBuilder(
     column: $table.localPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get barcode => $composableBuilder(
+    column: $table.barcode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -24317,6 +24378,11 @@ class $$InventoryItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get barcode => $composableBuilder(
+    column: $table.barcode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isSynced => $composableBuilder(
     column: $table.isSynced,
     builder: (column) => ColumnOrderings(column),
@@ -24372,6 +24438,9 @@ class $$InventoryItemsTableAnnotationComposer
 
   GeneratedColumn<String> get localPath =>
       $composableBuilder(column: $table.localPath, builder: (column) => column);
+
+  GeneratedColumn<String> get barcode =>
+      $composableBuilder(column: $table.barcode, builder: (column) => column);
 
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
@@ -24429,6 +24498,7 @@ class $$InventoryItemsTableTableManager
                 Value<String?> serialNumber = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String?> localPath = const Value.absent(),
+                Value<String?> barcode = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => InventoryItemsCompanion(
@@ -24442,6 +24512,7 @@ class $$InventoryItemsTableTableManager
                 serialNumber: serialNumber,
                 notes: notes,
                 localPath: localPath,
+                barcode: barcode,
                 isSynced: isSynced,
                 lastModified: lastModified,
               ),
@@ -24457,6 +24528,7 @@ class $$InventoryItemsTableTableManager
                 Value<String?> serialNumber = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String?> localPath = const Value.absent(),
+                Value<String?> barcode = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => InventoryItemsCompanion.insert(
@@ -24470,6 +24542,7 @@ class $$InventoryItemsTableTableManager
                 serialNumber: serialNumber,
                 notes: notes,
                 localPath: localPath,
+                barcode: barcode,
                 isSynced: isSynced,
                 lastModified: lastModified,
               ),

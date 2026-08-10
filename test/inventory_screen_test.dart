@@ -67,5 +67,45 @@ void main() {
       expect(saved!.name, 'Life jacket');
       expect(saved!.quantity, 4);
     });
+
+    testWidgets('#318: barcode field pre-fills and saves manual entry',
+        (tester) async {
+      final existing = InventoryItem()
+        ..supabaseId = 'inv_1'
+        ..name = 'Spare impeller'
+        ..barcode = '012345678905';
+
+      InventoryItem? saved;
+      await _pump(tester, existing: existing, onSave: (i) => saved = i);
+
+      expect(
+        tester
+            .widget<TextFormField>(
+                find.widgetWithText(TextFormField, 'Barcode'))
+            .controller!
+            .text,
+        '012345678905',
+      );
+
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Barcode'), '098765432109');
+      await tester.tap(find.text('Save'));
+      await tester.pump();
+
+      expect(saved!.barcode, '098765432109');
+    });
+
+    testWidgets('#318: empty barcode saves as null, not an empty string',
+        (tester) async {
+      InventoryItem? saved;
+      await _pump(tester, onSave: (i) => saved = i);
+
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Name'), 'New item');
+      await tester.tap(find.text('Save'));
+      await tester.pump();
+
+      expect(saved!.barcode, isNull);
+    });
   });
 }

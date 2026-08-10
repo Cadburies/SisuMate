@@ -64,6 +64,11 @@ class InventoryItems extends Table {
   TextColumn get serialNumber => text().nullable()();
   TextColumn get notes => text().nullable()();
   TextColumn get localPath => text().nullable()();
+  /// #318 — scanned/typed barcode (UPC/EAN), for quickly re-finding an item
+  /// on restock ("scan it, jump straight to its record") rather than a
+  /// product-name lookup (unlike Cocktails' bottle-barcode database, boat
+  /// spares have no equivalent curated catalog to look up against).
+  TextColumn get barcode => text().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
@@ -722,7 +727,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

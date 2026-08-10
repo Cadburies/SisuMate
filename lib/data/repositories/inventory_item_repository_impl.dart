@@ -22,6 +22,7 @@ class InventoryItemRepositoryImpl implements InventoryItemRepository {
     ..serialNumber = r.serialNumber
     ..notes = r.notes
     ..localPath = r.localPath
+    ..barcode = r.barcode
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified;
 
@@ -36,6 +37,7 @@ class InventoryItemRepositoryImpl implements InventoryItemRepository {
         serialNumber: Value(i.serialNumber),
         notes: Value(i.notes),
         localPath: Value(i.localPath),
+        barcode: Value(i.barcode),
         isSynced: Value(i.isSynced),
         lastModified: Value(i.lastModified),
       );

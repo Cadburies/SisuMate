@@ -64,6 +64,23 @@ void main() {
       expect(all.single.serialNumber, 'SN-99');
     });
 
+    test('#318: barcode round-trips through add and update', () async {
+      final item = InventoryItem()
+        ..supabaseId = 'inv_1'
+        ..name = 'Raw water impeller'
+        ..barcode = '012345678905';
+      await repo.addInventoryItem(item);
+
+      var all = await repo.watchInventoryItems().first;
+      expect(all.single.barcode, '012345678905');
+
+      item.barcode = '098765432109';
+      await repo.updateInventoryItem(item);
+
+      all = await repo.watchInventoryItems().first;
+      expect(all.single.barcode, '098765432109');
+    });
+
     test('Delete: deleteInventoryItem removes it', () async {
       final item = InventoryItem()
         ..supabaseId = 'inv_1'

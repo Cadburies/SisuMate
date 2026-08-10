@@ -5,8 +5,7 @@
 
 ## NEXT
 
-- **Last (grok):** #317 shopping AI — per-item offline guide + optional LLM; list customs on title bar.
-- **Open:** backlog empty; live “nearest shops” needs Places follow-up if desired.
+- **Last (claudevc):** reviewed the 4 thinnest-covered modules (Inventory/Community/Crew/Documents — everything else already has an offline-AI + competitor-research pass via epic #286); filed #318–#326. Shipped **#318**: `InventoryItem.barcode` (schemaVersion 22, Supabase migration applied) + a "Scan barcode" entry point (reuses Cocktails' `AppRoutes.barcodeScanner`) with a duplicate-item prompt on collision (`InventoryReorderService.findByBarcode`), plus the location-tree filter chip row that #298 had left unwired. #319/#320 (Inventory), #321–#323 (Community), #324–#326 (Crew/Documents) still open, P2/P3.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 
