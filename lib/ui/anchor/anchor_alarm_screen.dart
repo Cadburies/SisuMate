@@ -1195,11 +1195,20 @@ class _HubStatusCard extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Two full-size (48x48) IconButtons plus the leading icon left
+            // too little width for the title on a real phone screen,
+            // wrapping mid-word across 3 lines. Compact density + tight
+            // constraints shrink both buttons here (~36x36) without
+            // shrinking their icons, freeing enough width for the title.
             IconButton(
               icon: const Icon(Icons.settings_ethernet),
               tooltip: 'Gateway setup',
               onPressed: onConfigure,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
             ),
+            const SizedBox(width: 4),
             if (isRefreshing)
               const Padding(
                 padding: EdgeInsets.all(12),
@@ -1214,6 +1223,9 @@ class _HubStatusCard extends StatelessWidget {
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Refresh',
                 onPressed: onRefresh,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
           ],
         ),
