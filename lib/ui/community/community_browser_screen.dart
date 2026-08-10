@@ -160,6 +160,30 @@ class _CommunityBrowserScreenState
     );
   }
 
+  Future<void> _reportTemplate(
+      CommunityTemplate template, String reason, String? note) async {
+    final ok = await ref
+        .read(communityRepositoryProvider)
+        .reportTemplate(template.supabaseId, reason: reason, note: note);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Reported — thanks, this will be reviewed.'
+            : 'Report failed — try again'),
+      ),
+    );
+  }
+
+  void _showReportDialog(CommunityTemplate template) {
+    showDialog<({String reason, String? note})>(
+      context: context,
+      builder: (_) => _ReportDialog(templateTitle: template.title),
+    ).then((result) {
+      if (result != null) _reportTemplate(template, result.reason, result.note);
+    });
+  }
+
   /// Diffs [localGroup]'s current items against [template]'s newer content
   /// and, after an explicit confirm showing exactly what will change, applies
   /// a non-destructive merge: new items added, matched items' text refreshed
@@ -414,6 +438,7 @@ class _CommunityBrowserScreenState
             template: template,
             onImport: () => _importTemplate(template),
             onRate: () => _showRateDialog(template),
+            onReport: () => _showReportDialog(template),
             updateAvailable: updateAvailable,
             onUpdate: updateAvailable
                 ? () => _showUpdateDialog(importedGroup, template)
@@ -663,10 +688,87 @@ class _CommunityBrowserScreenState
   }
 }
 
+/// #321 — reason + optional note for flagging a template, returned via
+/// `Navigator.pop(context, (reason: ..., note: ...))` on submit, `null` on
+/// cancel. A dedicated [StatefulWidget] (not an inline `StatefulBuilder` +
+/// externally-owned controller) so the [TextEditingController] is disposed
+/// by this widget's own `dispose()` — tied to the dialog route's actual
+/// unmount, after any exit transition finishes, rather than racing a
+/// `Future.then` callback against a still-rendering frame.
+class _ReportDialog extends StatefulWidget {
+  final String templateTitle;
+  const _ReportDialog({required this.templateTitle});
+
+  @override
+  State<_ReportDialog> createState() => _ReportDialogState();
+}
+
+class _ReportDialogState extends State<_ReportDialog> {
+  /// Kept short and generic; there's no in-app moderation queue yet, a
+  /// human reviews reported rows directly for now.
+  static const _reasons = [
+    'Incorrect or unsafe content',
+    'Inappropriate',
+    'Duplicate of another template',
+    'Other',
+  ];
+
+  String _reason = _reasons.first;
+  final _noteCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Report "${widget.templateTitle}"'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonFormField<String>(
+            initialValue: _reason,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Reason'),
+            items: [
+              for (final r in _reasons) DropdownMenuItem(value: r, child: Text(r)),
+            ],
+            onChanged: (v) => setState(() => _reason = v ?? _reasons.first),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _noteCtrl,
+            decoration: const InputDecoration(labelText: 'Note (optional)'),
+            maxLines: 2,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.of(context).pop((
+            reason: _reason,
+            note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+          )),
+          child: const Text('Report'),
+        ),
+      ],
+    );
+  }
+}
+
 class _TemplateCard extends StatelessWidget {
   final CommunityTemplate template;
   final VoidCallback onImport;
   final VoidCallback onRate;
+  final VoidCallback onReport;
   final bool updateAvailable;
   final VoidCallback? onUpdate;
 
@@ -674,6 +776,7 @@ class _TemplateCard extends StatelessWidget {
     required this.template,
     required this.onImport,
     required this.onRate,
+    required this.onReport,
     required this.updateAvailable,
     required this.onUpdate,
   });
@@ -773,6 +876,14 @@ class _TemplateCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                // #321 — low-emphasis, doesn't compete with Update/Import.
+                IconButton(
+                  onPressed: onReport,
+                  icon: const Icon(Icons.flag_outlined, size: 18),
+                  tooltip: 'Report this template',
+                  visualDensity: VisualDensity.compact,
+                ),
+                const Spacer(),
                 if (updateAvailable) ...[
                   OutlinedButton.icon(
                     onPressed: onUpdate,

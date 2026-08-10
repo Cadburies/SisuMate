@@ -19,6 +19,10 @@ class FakeSupabaseRemote implements SupabaseRemote {
   /// Ratings keyed by `$templateId|$userId`.
   final Map<String, int> ratings = {};
 
+  /// #321 — every report submitted, in order, for assertions.
+  final List<({String templateId, String userId, String reason, String? note})>
+      reports = [];
+
   /// Download counts keyed by template id.
   final Map<String, int> downloadCounts = {};
 
@@ -129,6 +133,17 @@ class FakeSupabaseRemote implements SupabaseRemote {
   }) async {
     _throwIfFailing();
     return ratings['$templateId|$userId'];
+  }
+
+  @override
+  Future<void> communityReport({
+    required String templateId,
+    required String userId,
+    required String reason,
+    String? note,
+  }) async {
+    _throwIfFailing();
+    reports.add((templateId: templateId, userId: userId, reason: reason, note: note));
   }
 
   @override

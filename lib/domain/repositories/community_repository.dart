@@ -25,6 +25,15 @@ abstract class CommunityRepository {
   /// The current user's own rating for a template, or null if unrated.
   Future<int?> getMyRating(String templateId);
 
+  /// #321 — flag a template for human review. Returns false on failure
+  /// (unauthenticated, network) so the UI can show "try again" without
+  /// pretending the report landed.
+  Future<bool> reportTemplate(
+    String templateId, {
+    required String reason,
+    String? note,
+  });
+
   /// Merges a newer version of [localGroup]'s source template into it in
   /// place: new items are added, matched items get their title/description
   /// updated but keep local state (isCompleted/history/notes/photos), and

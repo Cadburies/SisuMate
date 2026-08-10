@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last (claudevc):** reviewed the 4 thinnest-covered modules (Inventory/Community/Crew/Documents — everything else already has an offline-AI + competitor-research pass via epic #286); filed #318–#326. Shipped **#318**: `InventoryItem.barcode` (schemaVersion 22, Supabase migration applied) + a "Scan barcode" entry point (reuses Cocktails' `AppRoutes.barcodeScanner`) with a duplicate-item prompt on collision (`InventoryReorderService.findByBarcode`), plus the location-tree filter chip row that #298 had left unwired. #319/#320 (Inventory), #321–#323 (Community), #324–#326 (Crew/Documents) still open, P2/P3.
+- **Last (claudevc):** reviewed the 4 thinnest-covered modules (Inventory/Community/Crew/Documents — everything else already has an offline-AI + competitor-research pass via epic #286); filed #318–#326, working the P2s in order. Shipped **#318** (Inventory barcode scan + location filter, schemaVersion 22) and **#321** (Community: `community_template_reports` table/RLS, `reportTemplate`/`communityReport` through the `SupabaseRemote` TEST2 seam, Report action on `_TemplateCard` via a dedicated `_ReportDialog` StatefulWidget — inline `StatefulBuilder` + externally-owned `TextEditingController` disposed via `Future.then` raced a still-rendering exit-transition frame; own-`dispose()` pattern fixed it). #319/#320 (Inventory), #322/#323 (Community), #324–#326 (Crew/Documents) still open.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

@@ -39,6 +39,17 @@ abstract class SupabaseRemote {
     required String userId,
   });
 
+  /// #321 — flag a template for human review (wrong/unsafe content,
+  /// duplicate, etc.). Insert-only: a user can report the same template
+  /// more than once (e.g. for a different reason later), unlike rating
+  /// which is one-per-user-per-template.
+  Future<void> communityReport({
+    required String templateId,
+    required String userId,
+    required String reason,
+    String? note,
+  });
+
   Future<Map<String, dynamic>> communityFetchTemplate(String id);
 
   Future<void> communityRecordDownload(String templateId);
@@ -145,6 +156,21 @@ class LiveSupabaseRemote implements SupabaseRemote {
         .eq('user_id', userId)
         .maybeSingle();
     return row?['rating'] as int?;
+  }
+
+  @override
+  Future<void> communityReport({
+    required String templateId,
+    required String userId,
+    required String reason,
+    String? note,
+  }) async {
+    await _c.from('community_template_reports').insert({
+      'template_id': templateId,
+      'reporter_id': userId,
+      'reason': reason,
+      'note': note,
+    });
   }
 
   @override

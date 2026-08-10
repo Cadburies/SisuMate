@@ -165,6 +165,29 @@ class CommunityRepositoryImpl implements CommunityRepository {
   }
 
   @override
+  Future<bool> reportTemplate(
+    String templateId, {
+    required String reason,
+    String? note,
+  }) async {
+    try {
+      final uid = remote.currentUserId;
+      if (uid == null || uid.isEmpty) return false;
+      await remote.communityReport(
+        templateId: templateId,
+        userId: uid,
+        reason: reason,
+        note: note,
+      );
+      return true;
+    } catch (e, st) {
+      unawaited(ErrorLogService()
+          .logException(e, st, context: 'community_repository: reportTemplate'));
+      return false;
+    }
+  }
+
+  @override
   Future<bool> applyCommunityUpdate({
     required ChecklistGroup localGroup,
     required String boatId,

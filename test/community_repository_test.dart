@@ -83,6 +83,13 @@ void main() {
       expect(rating, isNull);
     });
 
+    test('#321: reportTemplate returns false when network is unavailable',
+        () async {
+      final ok = await repository
+          .reportTemplate('template-id', reason: 'Inappropriate');
+      expect(ok, isFalse);
+    });
+
     test('applyCommunityUpdate returns false when network is unavailable',
         () async {
       final group = ChecklistGroup()
@@ -194,6 +201,41 @@ void main() {
       final ok = await liveRepo.rateTemplate('tmpl-abc', 5);
       expect(ok, isFalse);
       expect(remote.ratings, isEmpty);
+    });
+
+    test('#321: reportTemplate records a report with reason and note when '
+        'signed in', () async {
+      final ok = await liveRepo.reportTemplate(
+        'tmpl-abc',
+        reason: 'Incorrect or unsafe content',
+        note: 'Missing a critical safety step',
+      );
+      expect(ok, isTrue);
+      expect(remote.reports, hasLength(1));
+      expect(remote.reports.single.templateId, 'tmpl-abc');
+      expect(remote.reports.single.userId, 'auth-uid-1');
+      expect(remote.reports.single.reason, 'Incorrect or unsafe content');
+      expect(remote.reports.single.note, 'Missing a critical safety step');
+    });
+
+    test('#321: reportTemplate works without a note (optional)', () async {
+      final ok = await liveRepo.reportTemplate('tmpl-abc', reason: 'Other');
+      expect(ok, isTrue);
+      expect(remote.reports.single.note, isNull);
+    });
+
+    test('#321: reportTemplate returns false when signed out', () async {
+      remote.userId = null;
+      final ok = await liveRepo.reportTemplate('tmpl-abc', reason: 'Other');
+      expect(ok, isFalse);
+      expect(remote.reports, isEmpty);
+    });
+
+    test('#321: reportTemplate allows more than one report per user '
+        '(unlike rating, not a one-per-user upsert)', () async {
+      await liveRepo.reportTemplate('tmpl-abc', reason: 'Duplicate of another template');
+      await liveRepo.reportTemplate('tmpl-abc', reason: 'Other', note: 'follow-up');
+      expect(remote.reports, hasLength(2));
     });
 
     test('browseCommunity returns remote templates when available', () async {
