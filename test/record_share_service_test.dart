@@ -52,6 +52,21 @@ void main() {
       expect(_isPdf(bytes), isTrue);
     });
 
+    test('#326: buildCrewPdf includes port-entry fields without throwing',
+        () async {
+      final members = [
+        CrewMember()
+          ..name = 'Skipper Ada'
+          ..role = 'Captain'
+          ..dateOfBirth = DateTime(1985, 6, 15)
+          ..nationality = 'Finnish'
+          ..passportNumber = 'FI1234567',
+      ];
+
+      final bytes = await RecordShareService.buildCrewPdf(members);
+      expect(_isPdf(bytes), isTrue);
+    });
+
     test('buildInventoryPdf produces a valid PDF for selected items',
         () async {
       final items = [

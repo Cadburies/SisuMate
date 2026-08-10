@@ -31,6 +31,20 @@ const _crewRoles = [
   'Guest',
 ];
 
+// #324 — must match guest_profiles_screen.dart's `_allergens`/`_dietaryTags`
+// vocabulary exactly, since "Copy to Guest Profile" carries these tags
+// straight across.
+const _crewAllergens = [
+  'gluten', 'dairy', 'eggs', 'nuts', 'peanuts', 'shellfish',
+  'fish', 'soy', 'sesame', 'sulphites', 'mustard', 'celery',
+  'lupin', 'molluscs',
+];
+
+const _crewDietaryTags = [
+  'vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'egg-free',
+  'nut-free', 'keto', 'paleo', 'halal', 'kosher', 'low-carb', 'low-sodium',
+];
+
 class CrewScreen extends ConsumerStatefulWidget {
   const CrewScreen({super.key});
 
@@ -388,6 +402,20 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
                   label: 'Certifications',
                   value: m.certifications ?? '',
                   multiline: true),
+              // #326 — port-entry/customs fields, all optional.
+              RecordField(
+                  key: 'dateOfBirth',
+                  label: 'Date of birth',
+                  value: m.dateOfBirth?.toIso8601String() ?? '',
+                  isDate: true),
+              RecordField(
+                  key: 'nationality',
+                  label: 'Nationality',
+                  value: m.nationality ?? ''),
+              RecordField(
+                  key: 'passportNumber',
+                  label: 'Passport number',
+                  value: m.passportNumber ?? ''),
               RecordField(
                   key: 'lastModified',
                   label: 'Last modified',
@@ -406,7 +434,16 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
                   : values['iceContact']
               ..certifications = (values['certifications'] ?? '').isEmpty
                   ? null
-                  : values['certifications'];
+                  : values['certifications']
+              ..dateOfBirth = (values['dateOfBirth'] ?? '').isEmpty
+                  ? null
+                  : DateTime.tryParse(values['dateOfBirth']!)
+              ..nationality = (values['nationality'] ?? '').isEmpty
+                  ? null
+                  : values['nationality']
+              ..passportNumber = (values['passportNumber'] ?? '').isEmpty
+                  ? null
+                  : values['passportNumber'];
             await ref.read(crewMemberRepositoryProvider).updateCrewMember(m);
           },
           onDelete: isPro
@@ -445,6 +482,19 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
           messenger.showSnackBar(
               SnackBar(content: Text('${member.name} saved')));
         },
+        // #324 — one-time copy, not a live link (GuestProfile is
+        // local-only, no supabaseId, so a stored link would break on
+        // any other device sharing this boat — see the model's doc).
+        onCopyToGuestProfile: (member) async {
+          final profile = GuestProfile()
+            ..name = member.name
+            ..allergenRestrictions = List.of(member.allergenRestrictions)
+            ..dietaryRequirements = List.of(member.dietaryRequirements);
+          await ref.read(guestProfileRepositoryProvider).addProfile(profile);
+          messenger.showSnackBar(SnackBar(
+              content:
+                  Text('Guest profile created for ${member.name}')));
+        },
       ),
     );
   }
@@ -453,8 +503,15 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
 class AddEditCrewMemberDialog extends StatefulWidget {
   final CrewMember? existing;
   final void Function(CrewMember) onSave;
-  const AddEditCrewMemberDialog(
-      {super.key, this.existing, required this.onSave});
+  /// #324 — only offered when editing (an existing member with tags set is
+  /// worth copying); null hides the action entirely.
+  final void Function(CrewMember)? onCopyToGuestProfile;
+  const AddEditCrewMemberDialog({
+    super.key,
+    this.existing,
+    required this.onSave,
+    this.onCopyToGuestProfile,
+  });
 
   @override
   State<AddEditCrewMemberDialog> createState() =>
@@ -468,8 +525,13 @@ class AddEditCrewMemberDialogState extends State<AddEditCrewMemberDialog> {
   final _emailCtrl = TextEditingController();
   final _iceCtrl = TextEditingController();
   final _certsCtrl = TextEditingController();
+  final _nationalityCtrl = TextEditingController();
+  final _passportCtrl = TextEditingController();
   String _role = 'Crew';
   String? _localPath;
+  DateTime? _dateOfBirth;
+  final Set<String> _allergens = {};
+  final Set<String> _dietaryTags = {};
 
   @override
   void initState() {
@@ -481,8 +543,13 @@ class AddEditCrewMemberDialogState extends State<AddEditCrewMemberDialog> {
       _emailCtrl.text = existing.email ?? '';
       _iceCtrl.text = existing.iceContact ?? '';
       _certsCtrl.text = existing.certifications ?? '';
+      _nationalityCtrl.text = existing.nationality ?? '';
+      _passportCtrl.text = existing.passportNumber ?? '';
       _role = _crewRoles.contains(existing.role) ? existing.role : 'Crew';
       _localPath = existing.localPath;
+      _dateOfBirth = existing.dateOfBirth;
+      _allergens.addAll(existing.allergenRestrictions);
+      _dietaryTags.addAll(existing.dietaryRequirements);
     }
   }
 
@@ -493,7 +560,19 @@ class AddEditCrewMemberDialogState extends State<AddEditCrewMemberDialog> {
     _emailCtrl.dispose();
     _iceCtrl.dispose();
     _certsCtrl.dispose();
+    _nationalityCtrl.dispose();
+    _passportCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(1990),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _dateOfBirth = picked);
   }
 
   Future<void> _attachPhoto() async {
@@ -554,6 +633,94 @@ class AddEditCrewMemberDialogState extends State<AddEditCrewMemberDialog> {
                   maxLines: 2,
                 ),
                 const SizedBox(height: 8),
+                // #326 — optional; only needed for an international
+                // passage, but this is what a real port-entry crew list
+                // needs (name, DOB, nationality, passport #, role).
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _pickDateOfBirth,
+                        icon: const Icon(Icons.cake_outlined),
+                        label: Text(_dateOfBirth == null
+                            ? 'Date of birth'
+                            : '${_dateOfBirth!.toLocal()}'.split(' ').first),
+                      ),
+                    ),
+                    if (_dateOfBirth != null)
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => setState(() => _dateOfBirth = null),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _nationalityCtrl,
+                  decoration: const InputDecoration(labelText: 'Nationality'),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _passportCtrl,
+                  decoration:
+                      const InputDecoration(labelText: 'Passport number'),
+                ),
+                const SizedBox(height: 12),
+                // #324 — same tag vocabulary as Chef's Guest Profiles.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Allergens', style: Theme.of(context).textTheme.labelLarge),
+                ),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    for (final a in _crewAllergens)
+                      FilterChip(
+                        label: Text(a),
+                        selected: _allergens.contains(a),
+                        onSelected: (v) => setState(
+                            () => v ? _allergens.add(a) : _allergens.remove(a)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Dietary', style: Theme.of(context).textTheme.labelLarge),
+                ),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    for (final d in _crewDietaryTags)
+                      FilterChip(
+                        label: Text(d),
+                        selected: _dietaryTags.contains(d),
+                        onSelected: (v) => setState(
+                            () => v ? _dietaryTags.add(d) : _dietaryTags.remove(d)),
+                      ),
+                  ],
+                ),
+                if (widget.existing != null &&
+                    widget.onCopyToGuestProfile != null &&
+                    (_allergens.isNotEmpty || _dietaryTags.isNotEmpty))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => widget.onCopyToGuestProfile!(
+                        // Current on-screen state (name/tags the user may
+                        // have just checked), not the last-saved record.
+                        CrewMember()
+                          ..name = _nameCtrl.text
+                          ..allergenRestrictions = _allergens.toList()
+                          ..dietaryRequirements = _dietaryTags.toList(),
+                      ),
+                      icon: const Icon(Icons.content_copy),
+                      label: const Text('Copy to Guest Profile'),
+                    ),
+                  ),
+                const SizedBox(height: 8),
                 if (_localPath != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -606,7 +773,14 @@ class AddEditCrewMemberDialogState extends State<AddEditCrewMemberDialog> {
       ..email = _emailCtrl.text.isEmpty ? null : _emailCtrl.text
       ..iceContact = _iceCtrl.text.isEmpty ? null : _iceCtrl.text
       ..certifications = _certsCtrl.text.isEmpty ? null : _certsCtrl.text
-      ..localPath = _localPath;
+      ..localPath = _localPath
+      ..dateOfBirth = _dateOfBirth
+      ..nationality =
+          _nationalityCtrl.text.isEmpty ? null : _nationalityCtrl.text
+      ..passportNumber =
+          _passportCtrl.text.isEmpty ? null : _passportCtrl.text
+      ..allergenRestrictions = _allergens.toList()
+      ..dietaryRequirements = _dietaryTags.toList();
     widget.onSave(member);
   }
 }

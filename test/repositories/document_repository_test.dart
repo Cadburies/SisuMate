@@ -59,6 +59,35 @@ void main() {
       expect(all.single.notes, 'Renewed 2026');
     });
 
+    test('#325: crewMemberSupabaseId round-trips through add and update',
+        () async {
+      final document = Document()
+        ..supabaseId = 'doc_1'
+        ..title = "Ada's Passport"
+        ..type = 'Passport'
+        ..crewMemberSupabaseId = 'crew_ada';
+      await repo.addDocument(document);
+
+      var all = await repo.watchDocuments().first;
+      expect(all.single.crewMemberSupabaseId, 'crew_ada');
+
+      document.crewMemberSupabaseId = null;
+      await repo.updateDocument(document);
+      all = await repo.watchDocuments().first;
+      expect(all.single.crewMemberSupabaseId, isNull,
+          reason: 'unlinking (e.g. crew member removed) must clear, not error');
+    });
+
+    test('boat-level documents default to no crew link', () async {
+      await repo.addDocument(Document()
+        ..supabaseId = 'doc_1'
+        ..title = 'Boat Registration'
+        ..type = 'Registration');
+
+      final all = await repo.watchDocuments().first;
+      expect(all.single.crewMemberSupabaseId, isNull);
+    });
+
     test('Delete: deleteDocument removes it', () async {
       final document = Document()
         ..supabaseId = 'doc_1'

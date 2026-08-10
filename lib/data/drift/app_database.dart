@@ -46,6 +46,15 @@ class CrewMembers extends Table {
   TextColumn get iceContact => text().nullable()();
   TextColumn get certifications => text().nullable()();
   TextColumn get localPath => text().nullable()();
+  /// #326 — optional port-entry/customs fields.
+  DateTimeColumn get dateOfBirth => dateTime().nullable()();
+  TextColumn get nationality => text().nullable()();
+  TextColumn get passportNumber => text().nullable()();
+  /// #324 — JSON `List<String>`, same tag vocabularies as GuestProfile's.
+  TextColumn get allergenRestrictions =>
+      text().withDefault(const Constant('[]'))();
+  TextColumn get dietaryRequirements =>
+      text().withDefault(const Constant('[]'))();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
@@ -103,6 +112,9 @@ class Documents extends Table {
   TextColumn get localPath => text().nullable()();
   TextColumn get notes => text().nullable()();
   DateTimeColumn get expiry => dateTime().nullable()();
+  /// #325 — CrewMembers.supabaseId this document belongs to, or null for
+  /// boat-level documents.
+  TextColumn get crewMemberSupabaseId => text().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
@@ -727,7 +739,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

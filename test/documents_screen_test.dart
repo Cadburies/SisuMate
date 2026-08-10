@@ -7,13 +7,21 @@ Future<void> _pump(
   WidgetTester tester, {
   Document? existing,
   required void Function(Document) onSave,
+  List<CrewMember> crewMembers = const [],
 }) {
   return tester.pumpWidget(MaterialApp(
     home: Scaffold(
-      body: AddEditDocumentDialog(existing: existing, onSave: onSave),
+      body: AddEditDocumentDialog(
+        existing: existing,
+        onSave: onSave,
+        crewMembers: crewMembers,
+      ),
     ),
   ));
 }
+
+Future<void> _reveal(WidgetTester tester, Finder finder) =>
+    tester.ensureVisible(finder);
 
 void main() {
   group('AddEditDocumentDialog (F15)', () {
@@ -64,6 +72,73 @@ void main() {
       // Editing keeps the same identity rather than minting a new document.
       expect(saved!.supabaseId, 'doc_1');
       expect(saved!.title, 'Insurance Policy');
+    });
+
+    testWidgets('#325: crew picker is hidden with no crew members on the boat',
+        (tester) async {
+      await _pump(tester, onSave: (_) {});
+      expect(find.text('Belongs to'), findsNothing);
+    });
+
+    testWidgets('#325: linking a document to a crew member saves its supabaseId',
+        (tester) async {
+      final ada = CrewMember()
+        ..supabaseId = 'crew_ada'
+        ..name = 'Ada';
+      final bo = CrewMember()
+        ..supabaseId = 'crew_bo'
+        ..name = 'Bo';
+
+      Document? saved;
+      await _pump(tester,
+          onSave: (d) => saved = d, crewMembers: [ada, bo]);
+
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Title'), "Ada's Passport");
+
+      final picker = find.widgetWithText(DropdownButtonFormField<String?>, 'Belongs to');
+      await _reveal(tester, picker);
+      await tester.tap(picker);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ada').last);
+      await tester.pumpAndSettle();
+
+      final saveButton = find.text('Save');
+      await _reveal(tester, saveButton);
+      await tester.tap(saveButton);
+      await tester.pump();
+
+      expect(saved!.crewMemberSupabaseId, 'crew_ada');
+    });
+
+    testWidgets('#325: editing an already-linked document pre-selects that '
+        'crew member, "None" clears the link', (tester) async {
+      final ada = CrewMember()
+        ..supabaseId = 'crew_ada'
+        ..name = 'Ada';
+      final existing = Document()
+        ..supabaseId = 'doc_1'
+        ..title = "Ada's Passport"
+        ..type = 'Passport'
+        ..crewMemberSupabaseId = 'crew_ada';
+
+      Document? saved;
+      await _pump(tester,
+          existing: existing, onSave: (d) => saved = d, crewMembers: [ada]);
+
+      final picker = find.widgetWithText(DropdownButtonFormField<String?>, 'Belongs to');
+      await _reveal(tester, picker);
+      await tester.tap(picker);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('None').last);
+      await tester.pumpAndSettle();
+
+      final saveButton = find.text('Save');
+      await _reveal(tester, saveButton);
+      await tester.tap(saveButton);
+      await tester.pump();
+
+      expect(saved!.crewMemberSupabaseId, isNull);
     });
   });
 }

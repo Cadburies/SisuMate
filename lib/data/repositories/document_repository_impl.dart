@@ -21,6 +21,7 @@ class DocumentRepositoryImpl implements DocumentRepository {
     ..localPath = r.localPath
     ..notes = r.notes
     ..expiry = r.expiry
+    ..crewMemberSupabaseId = r.crewMemberSupabaseId
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified;
 
@@ -33,6 +34,7 @@ class DocumentRepositoryImpl implements DocumentRepository {
         localPath: Value(d.localPath),
         notes: Value(d.notes),
         expiry: Value(d.expiry),
+        crewMemberSupabaseId: Value(d.crewMemberSupabaseId),
         isSynced: Value(d.isSynced),
         lastModified: Value(d.lastModified),
       );

@@ -559,7 +559,12 @@ class ImportService {
       ..phone = _optString(j, 'phone', i)
       ..email = _optString(j, 'email', i)
       ..iceContact = _optString(j, 'iceContact', i)
-      ..certifications = _optString(j, 'certifications', i);
+      ..certifications = _optString(j, 'certifications', i)
+      ..dateOfBirth = _optDate(j, 'dateOfBirth', i)
+      ..nationality = _optString(j, 'nationality', i)
+      ..passportNumber = _optString(j, 'passportNumber', i)
+      ..allergenRestrictions = _optStringList(j, 'allergenRestrictions', i)
+      ..dietaryRequirements = _optStringList(j, 'dietaryRequirements', i);
   }
 
   static Document _parseDocument(Map<String, dynamic> j, int i) {
@@ -569,7 +574,8 @@ class ImportService {
       ..title = _requireString(j, 'title', i)
       ..type = _optString(j, 'type', i) ?? 'Other'
       ..notes = _optString(j, 'notes', i)
-      ..expiry = _optDate(j, 'expiry', i);
+      ..expiry = _optDate(j, 'expiry', i)
+      ..crewMemberSupabaseId = _optString(j, 'crewMemberSupabaseId', i);
   }
 
   static MaintenanceTask _parseMaintenance(Map<String, dynamic> j, int i) {
@@ -851,6 +857,17 @@ class ImportService {
                   if (m.iceContact != null) 'iceContact': m.iceContact,
                   if (m.certifications != null)
                     'certifications': m.certifications,
+                  // #326
+                  if (m.dateOfBirth != null)
+                    'dateOfBirth': _dateOnly(m.dateOfBirth!),
+                  if (m.nationality != null) 'nationality': m.nationality,
+                  if (m.passportNumber != null)
+                    'passportNumber': m.passportNumber,
+                  // #324
+                  if (m.allergenRestrictions.isNotEmpty)
+                    'allergenRestrictions': m.allergenRestrictions,
+                  if (m.dietaryRequirements.isNotEmpty)
+                    'dietaryRequirements': m.dietaryRequirements,
                 })
             .toList(),
       );
@@ -864,6 +881,9 @@ class ImportService {
                   'type': d.type,
                   if (d.notes != null) 'notes': d.notes,
                   if (d.expiry != null) 'expiry': _dateOnly(d.expiry!),
+                  // #325
+                  if (d.crewMemberSupabaseId != null)
+                    'crewMemberSupabaseId': d.crewMemberSupabaseId,
                 })
             .toList(),
       );

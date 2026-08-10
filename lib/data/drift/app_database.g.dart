@@ -840,6 +840,63 @@ class $CrewMembersTable extends CrewMembers
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _dateOfBirthMeta = const VerificationMeta(
+    'dateOfBirth',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dateOfBirth = GeneratedColumn<DateTime>(
+    'date_of_birth',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nationalityMeta = const VerificationMeta(
+    'nationality',
+  );
+  @override
+  late final GeneratedColumn<String> nationality = GeneratedColumn<String>(
+    'nationality',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _passportNumberMeta = const VerificationMeta(
+    'passportNumber',
+  );
+  @override
+  late final GeneratedColumn<String> passportNumber = GeneratedColumn<String>(
+    'passport_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _allergenRestrictionsMeta =
+      const VerificationMeta('allergenRestrictions');
+  @override
+  late final GeneratedColumn<String> allergenRestrictions =
+      GeneratedColumn<String>(
+        'allergen_restrictions',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
+  static const VerificationMeta _dietaryRequirementsMeta =
+      const VerificationMeta('dietaryRequirements');
+  @override
+  late final GeneratedColumn<String> dietaryRequirements =
+      GeneratedColumn<String>(
+        'dietary_requirements',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _isSyncedMeta = const VerificationMeta(
     'isSynced',
   );
@@ -879,6 +936,11 @@ class $CrewMembersTable extends CrewMembers
     iceContact,
     certifications,
     localPath,
+    dateOfBirth,
+    nationality,
+    passportNumber,
+    allergenRestrictions,
+    dietaryRequirements,
     isSynced,
     lastModified,
   ];
@@ -957,6 +1019,51 @@ class $CrewMembersTable extends CrewMembers
         localPath.isAcceptableOrUnknown(data['local_path']!, _localPathMeta),
       );
     }
+    if (data.containsKey('date_of_birth')) {
+      context.handle(
+        _dateOfBirthMeta,
+        dateOfBirth.isAcceptableOrUnknown(
+          data['date_of_birth']!,
+          _dateOfBirthMeta,
+        ),
+      );
+    }
+    if (data.containsKey('nationality')) {
+      context.handle(
+        _nationalityMeta,
+        nationality.isAcceptableOrUnknown(
+          data['nationality']!,
+          _nationalityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('passport_number')) {
+      context.handle(
+        _passportNumberMeta,
+        passportNumber.isAcceptableOrUnknown(
+          data['passport_number']!,
+          _passportNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('allergen_restrictions')) {
+      context.handle(
+        _allergenRestrictionsMeta,
+        allergenRestrictions.isAcceptableOrUnknown(
+          data['allergen_restrictions']!,
+          _allergenRestrictionsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dietary_requirements')) {
+      context.handle(
+        _dietaryRequirementsMeta,
+        dietaryRequirements.isAcceptableOrUnknown(
+          data['dietary_requirements']!,
+          _dietaryRequirementsMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_synced')) {
       context.handle(
         _isSyncedMeta,
@@ -1021,6 +1128,26 @@ class $CrewMembersTable extends CrewMembers
         DriftSqlType.string,
         data['${effectivePrefix}local_path'],
       ),
+      dateOfBirth: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_of_birth'],
+      ),
+      nationality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nationality'],
+      ),
+      passportNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}passport_number'],
+      ),
+      allergenRestrictions: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allergen_restrictions'],
+      )!,
+      dietaryRequirements: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dietary_requirements'],
+      )!,
       isSynced: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_synced'],
@@ -1049,6 +1176,15 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
   final String? iceContact;
   final String? certifications;
   final String? localPath;
+
+  /// #326 — optional port-entry/customs fields.
+  final DateTime? dateOfBirth;
+  final String? nationality;
+  final String? passportNumber;
+
+  /// #324 — JSON `List<String>`, same tag vocabularies as GuestProfile's.
+  final String allergenRestrictions;
+  final String dietaryRequirements;
   final bool isSynced;
   final DateTime lastModified;
   const CrewMemberRow({
@@ -1062,6 +1198,11 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
     this.iceContact,
     this.certifications,
     this.localPath,
+    this.dateOfBirth,
+    this.nationality,
+    this.passportNumber,
+    required this.allergenRestrictions,
+    required this.dietaryRequirements,
     required this.isSynced,
     required this.lastModified,
   });
@@ -1088,6 +1229,17 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
     if (!nullToAbsent || localPath != null) {
       map['local_path'] = Variable<String>(localPath);
     }
+    if (!nullToAbsent || dateOfBirth != null) {
+      map['date_of_birth'] = Variable<DateTime>(dateOfBirth);
+    }
+    if (!nullToAbsent || nationality != null) {
+      map['nationality'] = Variable<String>(nationality);
+    }
+    if (!nullToAbsent || passportNumber != null) {
+      map['passport_number'] = Variable<String>(passportNumber);
+    }
+    map['allergen_restrictions'] = Variable<String>(allergenRestrictions);
+    map['dietary_requirements'] = Variable<String>(dietaryRequirements);
     map['is_synced'] = Variable<bool>(isSynced);
     map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
@@ -1115,6 +1267,17 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
       localPath: localPath == null && nullToAbsent
           ? const Value.absent()
           : Value(localPath),
+      dateOfBirth: dateOfBirth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateOfBirth),
+      nationality: nationality == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nationality),
+      passportNumber: passportNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(passportNumber),
+      allergenRestrictions: Value(allergenRestrictions),
+      dietaryRequirements: Value(dietaryRequirements),
       isSynced: Value(isSynced),
       lastModified: Value(lastModified),
     );
@@ -1136,6 +1299,15 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
       iceContact: serializer.fromJson<String?>(json['iceContact']),
       certifications: serializer.fromJson<String?>(json['certifications']),
       localPath: serializer.fromJson<String?>(json['localPath']),
+      dateOfBirth: serializer.fromJson<DateTime?>(json['dateOfBirth']),
+      nationality: serializer.fromJson<String?>(json['nationality']),
+      passportNumber: serializer.fromJson<String?>(json['passportNumber']),
+      allergenRestrictions: serializer.fromJson<String>(
+        json['allergenRestrictions'],
+      ),
+      dietaryRequirements: serializer.fromJson<String>(
+        json['dietaryRequirements'],
+      ),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
@@ -1154,6 +1326,11 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
       'iceContact': serializer.toJson<String?>(iceContact),
       'certifications': serializer.toJson<String?>(certifications),
       'localPath': serializer.toJson<String?>(localPath),
+      'dateOfBirth': serializer.toJson<DateTime?>(dateOfBirth),
+      'nationality': serializer.toJson<String?>(nationality),
+      'passportNumber': serializer.toJson<String?>(passportNumber),
+      'allergenRestrictions': serializer.toJson<String>(allergenRestrictions),
+      'dietaryRequirements': serializer.toJson<String>(dietaryRequirements),
       'isSynced': serializer.toJson<bool>(isSynced),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
@@ -1170,6 +1347,11 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
     Value<String?> iceContact = const Value.absent(),
     Value<String?> certifications = const Value.absent(),
     Value<String?> localPath = const Value.absent(),
+    Value<DateTime?> dateOfBirth = const Value.absent(),
+    Value<String?> nationality = const Value.absent(),
+    Value<String?> passportNumber = const Value.absent(),
+    String? allergenRestrictions,
+    String? dietaryRequirements,
     bool? isSynced,
     DateTime? lastModified,
   }) => CrewMemberRow(
@@ -1185,6 +1367,13 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
         ? certifications.value
         : this.certifications,
     localPath: localPath.present ? localPath.value : this.localPath,
+    dateOfBirth: dateOfBirth.present ? dateOfBirth.value : this.dateOfBirth,
+    nationality: nationality.present ? nationality.value : this.nationality,
+    passportNumber: passportNumber.present
+        ? passportNumber.value
+        : this.passportNumber,
+    allergenRestrictions: allergenRestrictions ?? this.allergenRestrictions,
+    dietaryRequirements: dietaryRequirements ?? this.dietaryRequirements,
     isSynced: isSynced ?? this.isSynced,
     lastModified: lastModified ?? this.lastModified,
   );
@@ -1208,6 +1397,21 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
           ? data.certifications.value
           : this.certifications,
       localPath: data.localPath.present ? data.localPath.value : this.localPath,
+      dateOfBirth: data.dateOfBirth.present
+          ? data.dateOfBirth.value
+          : this.dateOfBirth,
+      nationality: data.nationality.present
+          ? data.nationality.value
+          : this.nationality,
+      passportNumber: data.passportNumber.present
+          ? data.passportNumber.value
+          : this.passportNumber,
+      allergenRestrictions: data.allergenRestrictions.present
+          ? data.allergenRestrictions.value
+          : this.allergenRestrictions,
+      dietaryRequirements: data.dietaryRequirements.present
+          ? data.dietaryRequirements.value
+          : this.dietaryRequirements,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       lastModified: data.lastModified.present
           ? data.lastModified.value
@@ -1228,6 +1432,11 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
           ..write('iceContact: $iceContact, ')
           ..write('certifications: $certifications, ')
           ..write('localPath: $localPath, ')
+          ..write('dateOfBirth: $dateOfBirth, ')
+          ..write('nationality: $nationality, ')
+          ..write('passportNumber: $passportNumber, ')
+          ..write('allergenRestrictions: $allergenRestrictions, ')
+          ..write('dietaryRequirements: $dietaryRequirements, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
@@ -1246,6 +1455,11 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
     iceContact,
     certifications,
     localPath,
+    dateOfBirth,
+    nationality,
+    passportNumber,
+    allergenRestrictions,
+    dietaryRequirements,
     isSynced,
     lastModified,
   );
@@ -1263,6 +1477,11 @@ class CrewMemberRow extends DataClass implements Insertable<CrewMemberRow> {
           other.iceContact == this.iceContact &&
           other.certifications == this.certifications &&
           other.localPath == this.localPath &&
+          other.dateOfBirth == this.dateOfBirth &&
+          other.nationality == this.nationality &&
+          other.passportNumber == this.passportNumber &&
+          other.allergenRestrictions == this.allergenRestrictions &&
+          other.dietaryRequirements == this.dietaryRequirements &&
           other.isSynced == this.isSynced &&
           other.lastModified == this.lastModified);
 }
@@ -1278,6 +1497,11 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
   final Value<String?> iceContact;
   final Value<String?> certifications;
   final Value<String?> localPath;
+  final Value<DateTime?> dateOfBirth;
+  final Value<String?> nationality;
+  final Value<String?> passportNumber;
+  final Value<String> allergenRestrictions;
+  final Value<String> dietaryRequirements;
   final Value<bool> isSynced;
   final Value<DateTime> lastModified;
   const CrewMembersCompanion({
@@ -1291,6 +1515,11 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
     this.iceContact = const Value.absent(),
     this.certifications = const Value.absent(),
     this.localPath = const Value.absent(),
+    this.dateOfBirth = const Value.absent(),
+    this.nationality = const Value.absent(),
+    this.passportNumber = const Value.absent(),
+    this.allergenRestrictions = const Value.absent(),
+    this.dietaryRequirements = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
@@ -1305,6 +1534,11 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
     this.iceContact = const Value.absent(),
     this.certifications = const Value.absent(),
     this.localPath = const Value.absent(),
+    this.dateOfBirth = const Value.absent(),
+    this.nationality = const Value.absent(),
+    this.passportNumber = const Value.absent(),
+    this.allergenRestrictions = const Value.absent(),
+    this.dietaryRequirements = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
@@ -1319,6 +1553,11 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
     Expression<String>? iceContact,
     Expression<String>? certifications,
     Expression<String>? localPath,
+    Expression<DateTime>? dateOfBirth,
+    Expression<String>? nationality,
+    Expression<String>? passportNumber,
+    Expression<String>? allergenRestrictions,
+    Expression<String>? dietaryRequirements,
     Expression<bool>? isSynced,
     Expression<DateTime>? lastModified,
   }) {
@@ -1333,6 +1572,13 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
       if (iceContact != null) 'ice_contact': iceContact,
       if (certifications != null) 'certifications': certifications,
       if (localPath != null) 'local_path': localPath,
+      if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
+      if (nationality != null) 'nationality': nationality,
+      if (passportNumber != null) 'passport_number': passportNumber,
+      if (allergenRestrictions != null)
+        'allergen_restrictions': allergenRestrictions,
+      if (dietaryRequirements != null)
+        'dietary_requirements': dietaryRequirements,
       if (isSynced != null) 'is_synced': isSynced,
       if (lastModified != null) 'last_modified': lastModified,
     });
@@ -1349,6 +1595,11 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
     Value<String?>? iceContact,
     Value<String?>? certifications,
     Value<String?>? localPath,
+    Value<DateTime?>? dateOfBirth,
+    Value<String?>? nationality,
+    Value<String?>? passportNumber,
+    Value<String>? allergenRestrictions,
+    Value<String>? dietaryRequirements,
     Value<bool>? isSynced,
     Value<DateTime>? lastModified,
   }) {
@@ -1363,6 +1614,11 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
       iceContact: iceContact ?? this.iceContact,
       certifications: certifications ?? this.certifications,
       localPath: localPath ?? this.localPath,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      nationality: nationality ?? this.nationality,
+      passportNumber: passportNumber ?? this.passportNumber,
+      allergenRestrictions: allergenRestrictions ?? this.allergenRestrictions,
+      dietaryRequirements: dietaryRequirements ?? this.dietaryRequirements,
       isSynced: isSynced ?? this.isSynced,
       lastModified: lastModified ?? this.lastModified,
     );
@@ -1401,6 +1657,23 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
     if (localPath.present) {
       map['local_path'] = Variable<String>(localPath.value);
     }
+    if (dateOfBirth.present) {
+      map['date_of_birth'] = Variable<DateTime>(dateOfBirth.value);
+    }
+    if (nationality.present) {
+      map['nationality'] = Variable<String>(nationality.value);
+    }
+    if (passportNumber.present) {
+      map['passport_number'] = Variable<String>(passportNumber.value);
+    }
+    if (allergenRestrictions.present) {
+      map['allergen_restrictions'] = Variable<String>(
+        allergenRestrictions.value,
+      );
+    }
+    if (dietaryRequirements.present) {
+      map['dietary_requirements'] = Variable<String>(dietaryRequirements.value);
+    }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
     }
@@ -1423,6 +1696,11 @@ class CrewMembersCompanion extends UpdateCompanion<CrewMemberRow> {
           ..write('iceContact: $iceContact, ')
           ..write('certifications: $certifications, ')
           ..write('localPath: $localPath, ')
+          ..write('dateOfBirth: $dateOfBirth, ')
+          ..write('nationality: $nationality, ')
+          ..write('passportNumber: $passportNumber, ')
+          ..write('allergenRestrictions: $allergenRestrictions, ')
+          ..write('dietaryRequirements: $dietaryRequirements, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
@@ -2930,6 +3208,17 @@ class $DocumentsTable extends Documents
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _crewMemberSupabaseIdMeta =
+      const VerificationMeta('crewMemberSupabaseId');
+  @override
+  late final GeneratedColumn<String> crewMemberSupabaseId =
+      GeneratedColumn<String>(
+        'crew_member_supabase_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _isSyncedMeta = const VerificationMeta(
     'isSynced',
   );
@@ -2968,6 +3257,7 @@ class $DocumentsTable extends Documents
     localPath,
     notes,
     expiry,
+    crewMemberSupabaseId,
     isSynced,
     lastModified,
   ];
@@ -3037,6 +3327,15 @@ class $DocumentsTable extends Documents
         expiry.isAcceptableOrUnknown(data['expiry']!, _expiryMeta),
       );
     }
+    if (data.containsKey('crew_member_supabase_id')) {
+      context.handle(
+        _crewMemberSupabaseIdMeta,
+        crewMemberSupabaseId.isAcceptableOrUnknown(
+          data['crew_member_supabase_id']!,
+          _crewMemberSupabaseIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_synced')) {
       context.handle(
         _isSyncedMeta,
@@ -3097,6 +3396,10 @@ class $DocumentsTable extends Documents
         DriftSqlType.dateTime,
         data['${effectivePrefix}expiry'],
       ),
+      crewMemberSupabaseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}crew_member_supabase_id'],
+      ),
       isSynced: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_synced'],
@@ -3124,6 +3427,10 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
   final String? localPath;
   final String? notes;
   final DateTime? expiry;
+
+  /// #325 — CrewMembers.supabaseId this document belongs to, or null for
+  /// boat-level documents.
+  final String? crewMemberSupabaseId;
   final bool isSynced;
   final DateTime lastModified;
   const DocumentRow({
@@ -3136,6 +3443,7 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
     this.localPath,
     this.notes,
     this.expiry,
+    this.crewMemberSupabaseId,
     required this.isSynced,
     required this.lastModified,
   });
@@ -3158,6 +3466,9 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
     }
     if (!nullToAbsent || expiry != null) {
       map['expiry'] = Variable<DateTime>(expiry);
+    }
+    if (!nullToAbsent || crewMemberSupabaseId != null) {
+      map['crew_member_supabase_id'] = Variable<String>(crewMemberSupabaseId);
     }
     map['is_synced'] = Variable<bool>(isSynced);
     map['last_modified'] = Variable<DateTime>(lastModified);
@@ -3183,6 +3494,9 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
       expiry: expiry == null && nullToAbsent
           ? const Value.absent()
           : Value(expiry),
+      crewMemberSupabaseId: crewMemberSupabaseId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(crewMemberSupabaseId),
       isSynced: Value(isSynced),
       lastModified: Value(lastModified),
     );
@@ -3203,6 +3517,9 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
       localPath: serializer.fromJson<String?>(json['localPath']),
       notes: serializer.fromJson<String?>(json['notes']),
       expiry: serializer.fromJson<DateTime?>(json['expiry']),
+      crewMemberSupabaseId: serializer.fromJson<String?>(
+        json['crewMemberSupabaseId'],
+      ),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
@@ -3220,6 +3537,7 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
       'localPath': serializer.toJson<String?>(localPath),
       'notes': serializer.toJson<String?>(notes),
       'expiry': serializer.toJson<DateTime?>(expiry),
+      'crewMemberSupabaseId': serializer.toJson<String?>(crewMemberSupabaseId),
       'isSynced': serializer.toJson<bool>(isSynced),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
@@ -3235,6 +3553,7 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
     Value<String?> localPath = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     Value<DateTime?> expiry = const Value.absent(),
+    Value<String?> crewMemberSupabaseId = const Value.absent(),
     bool? isSynced,
     DateTime? lastModified,
   }) => DocumentRow(
@@ -3247,6 +3566,9 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
     localPath: localPath.present ? localPath.value : this.localPath,
     notes: notes.present ? notes.value : this.notes,
     expiry: expiry.present ? expiry.value : this.expiry,
+    crewMemberSupabaseId: crewMemberSupabaseId.present
+        ? crewMemberSupabaseId.value
+        : this.crewMemberSupabaseId,
     isSynced: isSynced ?? this.isSynced,
     lastModified: lastModified ?? this.lastModified,
   );
@@ -3265,6 +3587,9 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
       localPath: data.localPath.present ? data.localPath.value : this.localPath,
       notes: data.notes.present ? data.notes.value : this.notes,
       expiry: data.expiry.present ? data.expiry.value : this.expiry,
+      crewMemberSupabaseId: data.crewMemberSupabaseId.present
+          ? data.crewMemberSupabaseId.value
+          : this.crewMemberSupabaseId,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       lastModified: data.lastModified.present
           ? data.lastModified.value
@@ -3284,6 +3609,7 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
           ..write('localPath: $localPath, ')
           ..write('notes: $notes, ')
           ..write('expiry: $expiry, ')
+          ..write('crewMemberSupabaseId: $crewMemberSupabaseId, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
@@ -3301,6 +3627,7 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
     localPath,
     notes,
     expiry,
+    crewMemberSupabaseId,
     isSynced,
     lastModified,
   );
@@ -3317,6 +3644,7 @@ class DocumentRow extends DataClass implements Insertable<DocumentRow> {
           other.localPath == this.localPath &&
           other.notes == this.notes &&
           other.expiry == this.expiry &&
+          other.crewMemberSupabaseId == this.crewMemberSupabaseId &&
           other.isSynced == this.isSynced &&
           other.lastModified == this.lastModified);
 }
@@ -3331,6 +3659,7 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
   final Value<String?> localPath;
   final Value<String?> notes;
   final Value<DateTime?> expiry;
+  final Value<String?> crewMemberSupabaseId;
   final Value<bool> isSynced;
   final Value<DateTime> lastModified;
   const DocumentsCompanion({
@@ -3343,6 +3672,7 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
     this.localPath = const Value.absent(),
     this.notes = const Value.absent(),
     this.expiry = const Value.absent(),
+    this.crewMemberSupabaseId = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
@@ -3356,6 +3686,7 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
     this.localPath = const Value.absent(),
     this.notes = const Value.absent(),
     this.expiry = const Value.absent(),
+    this.crewMemberSupabaseId = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
@@ -3369,6 +3700,7 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
     Expression<String>? localPath,
     Expression<String>? notes,
     Expression<DateTime>? expiry,
+    Expression<String>? crewMemberSupabaseId,
     Expression<bool>? isSynced,
     Expression<DateTime>? lastModified,
   }) {
@@ -3382,6 +3714,8 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
       if (localPath != null) 'local_path': localPath,
       if (notes != null) 'notes': notes,
       if (expiry != null) 'expiry': expiry,
+      if (crewMemberSupabaseId != null)
+        'crew_member_supabase_id': crewMemberSupabaseId,
       if (isSynced != null) 'is_synced': isSynced,
       if (lastModified != null) 'last_modified': lastModified,
     });
@@ -3397,6 +3731,7 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
     Value<String?>? localPath,
     Value<String?>? notes,
     Value<DateTime?>? expiry,
+    Value<String?>? crewMemberSupabaseId,
     Value<bool>? isSynced,
     Value<DateTime>? lastModified,
   }) {
@@ -3410,6 +3745,7 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
       localPath: localPath ?? this.localPath,
       notes: notes ?? this.notes,
       expiry: expiry ?? this.expiry,
+      crewMemberSupabaseId: crewMemberSupabaseId ?? this.crewMemberSupabaseId,
       isSynced: isSynced ?? this.isSynced,
       lastModified: lastModified ?? this.lastModified,
     );
@@ -3445,6 +3781,11 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
     if (expiry.present) {
       map['expiry'] = Variable<DateTime>(expiry.value);
     }
+    if (crewMemberSupabaseId.present) {
+      map['crew_member_supabase_id'] = Variable<String>(
+        crewMemberSupabaseId.value,
+      );
+    }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
     }
@@ -3466,6 +3807,7 @@ class DocumentsCompanion extends UpdateCompanion<DocumentRow> {
           ..write('localPath: $localPath, ')
           ..write('notes: $notes, ')
           ..write('expiry: $expiry, ')
+          ..write('crewMemberSupabaseId: $crewMemberSupabaseId, ')
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
@@ -23886,6 +24228,11 @@ typedef $$CrewMembersTableCreateCompanionBuilder =
       Value<String?> iceContact,
       Value<String?> certifications,
       Value<String?> localPath,
+      Value<DateTime?> dateOfBirth,
+      Value<String?> nationality,
+      Value<String?> passportNumber,
+      Value<String> allergenRestrictions,
+      Value<String> dietaryRequirements,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
     });
@@ -23901,6 +24248,11 @@ typedef $$CrewMembersTableUpdateCompanionBuilder =
       Value<String?> iceContact,
       Value<String?> certifications,
       Value<String?> localPath,
+      Value<DateTime?> dateOfBirth,
+      Value<String?> nationality,
+      Value<String?> passportNumber,
+      Value<String> allergenRestrictions,
+      Value<String> dietaryRequirements,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
     });
@@ -23961,6 +24313,31 @@ class $$CrewMembersTableFilterComposer
 
   ColumnFilters<String> get localPath => $composableBuilder(
     column: $table.localPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nationality => $composableBuilder(
+    column: $table.nationality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get passportNumber => $composableBuilder(
+    column: $table.passportNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get allergenRestrictions => $composableBuilder(
+    column: $table.allergenRestrictions,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dietaryRequirements => $composableBuilder(
+    column: $table.dietaryRequirements,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -24034,6 +24411,31 @@ class $$CrewMembersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nationality => $composableBuilder(
+    column: $table.nationality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get passportNumber => $composableBuilder(
+    column: $table.passportNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get allergenRestrictions => $composableBuilder(
+    column: $table.allergenRestrictions,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dietaryRequirements => $composableBuilder(
+    column: $table.dietaryRequirements,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isSynced => $composableBuilder(
     column: $table.isSynced,
     builder: (column) => ColumnOrderings(column),
@@ -24092,6 +24494,31 @@ class $$CrewMembersTableAnnotationComposer
   GeneratedColumn<String> get localPath =>
       $composableBuilder(column: $table.localPath, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get dateOfBirth => $composableBuilder(
+    column: $table.dateOfBirth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get nationality => $composableBuilder(
+    column: $table.nationality,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get passportNumber => $composableBuilder(
+    column: $table.passportNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get allergenRestrictions => $composableBuilder(
+    column: $table.allergenRestrictions,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dietaryRequirements => $composableBuilder(
+    column: $table.dietaryRequirements,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
 
@@ -24142,6 +24569,11 @@ class $$CrewMembersTableTableManager
                 Value<String?> iceContact = const Value.absent(),
                 Value<String?> certifications = const Value.absent(),
                 Value<String?> localPath = const Value.absent(),
+                Value<DateTime?> dateOfBirth = const Value.absent(),
+                Value<String?> nationality = const Value.absent(),
+                Value<String?> passportNumber = const Value.absent(),
+                Value<String> allergenRestrictions = const Value.absent(),
+                Value<String> dietaryRequirements = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => CrewMembersCompanion(
@@ -24155,6 +24587,11 @@ class $$CrewMembersTableTableManager
                 iceContact: iceContact,
                 certifications: certifications,
                 localPath: localPath,
+                dateOfBirth: dateOfBirth,
+                nationality: nationality,
+                passportNumber: passportNumber,
+                allergenRestrictions: allergenRestrictions,
+                dietaryRequirements: dietaryRequirements,
                 isSynced: isSynced,
                 lastModified: lastModified,
               ),
@@ -24170,6 +24607,11 @@ class $$CrewMembersTableTableManager
                 Value<String?> iceContact = const Value.absent(),
                 Value<String?> certifications = const Value.absent(),
                 Value<String?> localPath = const Value.absent(),
+                Value<DateTime?> dateOfBirth = const Value.absent(),
+                Value<String?> nationality = const Value.absent(),
+                Value<String?> passportNumber = const Value.absent(),
+                Value<String> allergenRestrictions = const Value.absent(),
+                Value<String> dietaryRequirements = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => CrewMembersCompanion.insert(
@@ -24183,6 +24625,11 @@ class $$CrewMembersTableTableManager
                 iceContact: iceContact,
                 certifications: certifications,
                 localPath: localPath,
+                dateOfBirth: dateOfBirth,
+                nationality: nationality,
+                passportNumber: passportNumber,
+                allergenRestrictions: allergenRestrictions,
+                dietaryRequirements: dietaryRequirements,
                 isSynced: isSynced,
                 lastModified: lastModified,
               ),
@@ -24904,6 +25351,7 @@ typedef $$DocumentsTableCreateCompanionBuilder =
       Value<String?> localPath,
       Value<String?> notes,
       Value<DateTime?> expiry,
+      Value<String?> crewMemberSupabaseId,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
     });
@@ -24918,6 +25366,7 @@ typedef $$DocumentsTableUpdateCompanionBuilder =
       Value<String?> localPath,
       Value<String?> notes,
       Value<DateTime?> expiry,
+      Value<String?> crewMemberSupabaseId,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
     });
@@ -24973,6 +25422,11 @@ class $$DocumentsTableFilterComposer
 
   ColumnFilters<DateTime> get expiry => $composableBuilder(
     column: $table.expiry,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get crewMemberSupabaseId => $composableBuilder(
+    column: $table.crewMemberSupabaseId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -25041,6 +25495,11 @@ class $$DocumentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get crewMemberSupabaseId => $composableBuilder(
+    column: $table.crewMemberSupabaseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isSynced => $composableBuilder(
     column: $table.isSynced,
     builder: (column) => ColumnOrderings(column),
@@ -25092,6 +25551,11 @@ class $$DocumentsTableAnnotationComposer
   GeneratedColumn<DateTime> get expiry =>
       $composableBuilder(column: $table.expiry, builder: (column) => column);
 
+  GeneratedColumn<String> get crewMemberSupabaseId => $composableBuilder(
+    column: $table.crewMemberSupabaseId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
 
@@ -25141,6 +25605,7 @@ class $$DocumentsTableTableManager
                 Value<String?> localPath = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<DateTime?> expiry = const Value.absent(),
+                Value<String?> crewMemberSupabaseId = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => DocumentsCompanion(
@@ -25153,6 +25618,7 @@ class $$DocumentsTableTableManager
                 localPath: localPath,
                 notes: notes,
                 expiry: expiry,
+                crewMemberSupabaseId: crewMemberSupabaseId,
                 isSynced: isSynced,
                 lastModified: lastModified,
               ),
@@ -25167,6 +25633,7 @@ class $$DocumentsTableTableManager
                 Value<String?> localPath = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<DateTime?> expiry = const Value.absent(),
+                Value<String?> crewMemberSupabaseId = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => DocumentsCompanion.insert(
@@ -25179,6 +25646,7 @@ class $$DocumentsTableTableManager
                 localPath: localPath,
                 notes: notes,
                 expiry: expiry,
+                crewMemberSupabaseId: crewMemberSupabaseId,
                 isSynced: isSynced,
                 lastModified: lastModified,
               ),

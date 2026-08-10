@@ -12,6 +12,12 @@ class Document {
   String? localPath;
   String? notes;
   DateTime? expiry;
+  /// #325 — CrewMember.supabaseId this document belongs to (passport/visa/
+  /// certification), or null for boat-level documents (registration,
+  /// insurance, …). Keyed by supabaseId, not the local int id, since both
+  /// tables sync — a local id would only be valid on the device that
+  /// created it.
+  String? crewMemberSupabaseId;
   bool isSynced = false;
   DateTime lastModified = DateTime.now().toUtc();
 
@@ -25,6 +31,7 @@ class Document {
       ..localPath = json['localPath']
       ..notes = json['notes']
       ..expiry = json['expiry'] != null ? DateTime.parse(json['expiry']) : null
+      ..crewMemberSupabaseId = json['crewMemberSupabaseId']
       ..isSynced = json['isSynced'] ?? false
       ..lastModified = DateTime.parse(json['lastModified']);
   }
@@ -38,6 +45,7 @@ class Document {
     'localPath': localPath,
     'notes': notes,
     'expiry': expiry?.toIso8601String(),
+    'crewMemberSupabaseId': crewMemberSupabaseId,
     'isSynced': isSynced,
     'lastModified': lastModified.toIso8601String(),
   };
@@ -56,6 +64,7 @@ class Document {
           localPath == other.localPath &&
           notes == other.notes &&
           expiry == other.expiry &&
+          crewMemberSupabaseId == other.crewMemberSupabaseId &&
           isSynced == other.isSynced &&
           lastModified == other.lastModified;
 
@@ -70,6 +79,7 @@ class Document {
         localPath,
         notes,
         expiry,
+        crewMemberSupabaseId,
         isSynced,
         lastModified,
       ]);
@@ -78,5 +88,6 @@ class Document {
   String toString() => 'Document(id: $id, supabaseId: $supabaseId, '
       'boatSupabaseId: $boatSupabaseId, title: $title, type: $type, '
       'fileUrl: $fileUrl, localPath: $localPath, notes: $notes, '
-      'expiry: $expiry, isSynced: $isSynced, lastModified: $lastModified)';
+      'expiry: $expiry, crewMemberSupabaseId: $crewMemberSupabaseId, '
+      'isSynced: $isSynced, lastModified: $lastModified)';
 }

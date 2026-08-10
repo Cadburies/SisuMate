@@ -61,6 +61,46 @@ void main() {
       expect(all.single.phone, '+358 40 123 4567');
     });
 
+    test('#324/#326: dietary/allergen tags and port-entry fields round-trip',
+        () async {
+      final member = CrewMember()
+        ..supabaseId = 'crew_1'
+        ..name = 'Skipper Ada'
+        ..dateOfBirth = DateTime.utc(1985, 6, 15)
+        ..nationality = 'Finnish'
+        ..passportNumber = 'FI1234567'
+        ..allergenRestrictions = ['nuts', 'shellfish']
+        ..dietaryRequirements = ['vegan'];
+      await repo.addCrewMember(member);
+
+      var all = await repo.watchCrewMembers().first;
+      // Drift's DateTimeColumn round-trips through local time (no
+      // preserved UTC-ness), so compare the instant, not the offset.
+      expect(all.single.dateOfBirth!.isAtSameMomentAs(DateTime.utc(1985, 6, 15)),
+          isTrue);
+      expect(all.single.nationality, 'Finnish');
+      expect(all.single.passportNumber, 'FI1234567');
+      expect(all.single.allergenRestrictions, ['nuts', 'shellfish']);
+      expect(all.single.dietaryRequirements, ['vegan']);
+
+      member.allergenRestrictions = ['dairy'];
+      await repo.updateCrewMember(member);
+      all = await repo.watchCrewMembers().first;
+      expect(all.single.allergenRestrictions, ['dairy']);
+    });
+
+    test('new crew members default to empty tag lists, not a crash',
+        () async {
+      await repo.addCrewMember(CrewMember()
+        ..supabaseId = 'crew_1'
+        ..name = 'No tags set');
+
+      final all = await repo.watchCrewMembers().first;
+      expect(all.single.allergenRestrictions, isEmpty);
+      expect(all.single.dietaryRequirements, isEmpty);
+      expect(all.single.dateOfBirth, isNull);
+    });
+
     test('Delete: deleteCrewMember removes it from the database', () async {
       final member = CrewMember()
         ..supabaseId = 'crew_1'

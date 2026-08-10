@@ -16,6 +16,7 @@ import '../../models/models.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/record_share_service.dart';
 import '../../services/import_service.dart';
+import '../crew/crew_screen.dart' show crewMembersProvider;
 import 'insurance_claim_check_dialog.dart';
 
 final documentsProvider = StreamProvider<List<Document>>((ref) {
@@ -28,8 +29,16 @@ const _documentTypes = [
   'License',
   'Manual',
   'Warranty',
+  // #325 — person-specific document types, meant to be linked to a crew
+  // member rather than the boat itself.
+  'Passport',
+  'Visa',
   'Other',
 ];
+
+/// #325 — sentinel for "no linked crew member" in the RecordField dropdown
+/// (RecordField's options are plain strings, no null option).
+const _noCrewLink = 'None';
 
 IconData _iconForType(String type) {
   switch (type) {
@@ -43,6 +52,9 @@ IconData _iconForType(String type) {
       return Icons.menu_book_outlined;
     case 'Warranty':
       return Icons.receipt_long_outlined;
+    case 'Passport':
+    case 'Visa':
+      return Icons.badge;
     default:
       return Icons.description_outlined;
   }
@@ -95,8 +107,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   Widget build(BuildContext context) {
     final isProAsync = ref.watch(isProProvider);
     final documentsAsync = ref.watch(documentsProvider);
+    final crewAsync = ref.watch(crewMembersProvider);
     final isPro = isProAsync.value ?? false;
     final documents = documentsAsync.value ?? const <Document>[];
+    final crewMembers = crewAsync.value ?? const <CrewMember>[];
 
     return Scaffold(
       body: SafeArea(
@@ -245,9 +259,21 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                             attention = 'Expires in $daysLeft days';
                           }
                         }
+                        // #325 — best-effort name lookup; a dangling link
+                        // (crew member deleted) just shows no badge rather
+                        // than an error.
+                        final linkedCrewName = document.crewMemberSupabaseId ==
+                                null
+                            ? null
+                            : crewMembers
+                                .where((m) =>
+                                    m.supabaseId ==
+                                    document.crewMemberSupabaseId)
+                                .firstOrNull
+                                ?.name;
                         final tile = MainListTile(
-                          onTap: () =>
-                              _showDetail(context, ref, document, isPro),
+                          onTap: () => _showDetail(
+                              context, ref, document, isPro, crewMembers),
                           header: MainListTile.iconHeader(
                             icon: _iconForType(document.type),
                             iconColor: Colors.indigo,
@@ -259,6 +285,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                               ? 'Expires ${_formatDate(expiry)}'
                               : null,
                           attentionLine: attention,
+                          badges: [?linkedCrewName],
                         );
                         // #227/#208: AI claim-check badge, Insurance
                         // documents only — a visually distinct entry point,
@@ -310,7 +337,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           ? null
           : FloatingActionButton(
               onPressed: () => isPro
-                  ? _showAddEditDialog(context, ref)
+                  ? _showAddEditDialog(context, ref, crewMembers)
                   : _showProRequiredDialog(context),
               child: const Icon(Icons.add),
             ),
@@ -372,12 +399,23 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     );
   }
 
-  void _showDetail(
-      BuildContext context, WidgetRef ref, Document document, bool isPro) {
+  void _showDetail(BuildContext context, WidgetRef ref, Document document,
+      bool isPro, List<CrewMember> crewMembers) {
     final docs = ref.read(documentsProvider).asData?.value ?? [document];
     final index = docs.indexWhere((d) => d.supabaseId == document.supabaseId);
     final list = index < 0 ? [document] : docs;
     final start = index < 0 ? 0 : index;
+    // #325 — RecordField options are plain strings; map crew name <-> the
+    // supabaseId actually stored on the document.
+    final crewNames = [_noCrewLink, ...crewMembers.map((m) => m.name)];
+    String crewNameFor(Document d) {
+      if (d.crewMemberSupabaseId == null) return _noCrewLink;
+      return crewMembers
+              .where((m) => m.supabaseId == d.crewMemberSupabaseId)
+              .firstOrNull
+              ?.name ??
+          _noCrewLink;
+    }
 
     context.push(
       AppRoutes.documentsDetail,
@@ -416,6 +454,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   label: 'Notes',
                   value: d.notes ?? '',
                   multiline: true),
+              // #325 — link this document to whose it is (passport, visa,
+              // certification); "None" for boat-level documents.
+              RecordField(
+                  key: 'crewMember',
+                  label: 'Belongs to',
+                  value: crewNameFor(d),
+                  options: crewNames),
               RecordField(
                   key: 'lastModified',
                   label: 'Last modified',
@@ -424,13 +469,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           },
           onSave: (i, values) async {
             final d = list[i];
+            final crewName = values['crewMember'];
             d
               ..title = values['title'] ?? d.title
               ..type = values['type'] ?? d.type
               ..notes = (values['notes'] ?? '').isEmpty ? null : values['notes']
               ..expiry = (values['expiry'] ?? '').isEmpty
                   ? null
-                  : DateTime.tryParse(values['expiry']!);
+                  : DateTime.tryParse(values['expiry']!)
+              ..crewMemberSupabaseId = (crewName == null || crewName == _noCrewLink)
+                  ? null
+                  : crewMembers
+                      .where((m) => m.name == crewName)
+                      .firstOrNull
+                      ?.supabaseId;
             await ref.read(documentRepositoryProvider).updateDocument(d);
           },
           onDelete: isPro
@@ -450,6 +502,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }
 
   void _showAddEditDialog(BuildContext context, WidgetRef ref,
+      List<CrewMember> crewMembers,
       {Document? existing}) {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -457,6 +510,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       context: context,
       builder: (_) => AddEditDocumentDialog(
         existing: existing,
+        crewMembers: crewMembers,
         onSave: (document) async {
           final repo = ref.read(documentRepositoryProvider);
           if (existing == null) {
@@ -476,7 +530,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
 class AddEditDocumentDialog extends StatefulWidget {
   final Document? existing;
   final void Function(Document) onSave;
-  const AddEditDocumentDialog({super.key, this.existing, required this.onSave});
+  /// #325 — who this document can be linked to; empty means the picker is
+  /// hidden (nothing to pick from) rather than showing a useless dropdown.
+  final List<CrewMember> crewMembers;
+  const AddEditDocumentDialog({
+    super.key,
+    this.existing,
+    required this.onSave,
+    this.crewMembers = const [],
+  });
 
   @override
   State<AddEditDocumentDialog> createState() =>
@@ -490,6 +552,7 @@ class AddEditDocumentDialogState extends State<AddEditDocumentDialog> {
   String _type = _documentTypes.first;
   DateTime? _expiry;
   String? _localPath;
+  String? _crewMemberSupabaseId;
 
   @override
   void initState() {
@@ -502,6 +565,7 @@ class AddEditDocumentDialogState extends State<AddEditDocumentDialog> {
           _documentTypes.contains(existing.type) ? existing.type : 'Other';
       _expiry = existing.expiry;
       _localPath = existing.localPath;
+      _crewMemberSupabaseId = existing.crewMemberSupabaseId;
     }
   }
 
@@ -569,6 +633,21 @@ class AddEditDocumentDialogState extends State<AddEditDocumentDialog> {
                   trailing: TextButton(
                       onPressed: _pickExpiry, child: const Text('Set')),
                 ),
+                // #325 — hidden with no crew members to link to.
+                if (widget.crewMembers.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String?>(
+                    initialValue: _crewMemberSupabaseId,
+                    decoration:
+                        const InputDecoration(labelText: 'Belongs to'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text(_noCrewLink)),
+                      for (final m in widget.crewMembers)
+                        DropdownMenuItem(value: m.supabaseId, child: Text(m.name)),
+                    ],
+                    onChanged: (v) => setState(() => _crewMemberSupabaseId = v),
+                  ),
+                ],
                 if (_localPath != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -619,7 +698,8 @@ class AddEditDocumentDialogState extends State<AddEditDocumentDialog> {
       ..type = _type
       ..notes = _notesCtrl.text.isEmpty ? null : _notesCtrl.text
       ..expiry = _expiry
-      ..localPath = _localPath;
+      ..localPath = _localPath
+      ..crewMemberSupabaseId = _crewMemberSupabaseId;
     widget.onSave(document);
   }
 }

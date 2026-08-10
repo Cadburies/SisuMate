@@ -104,7 +104,19 @@ class RecordShareService {
           _sectionTitle('Crew List'),
           pw.SizedBox(height: 16),
           ...members.map((m) {
+            // #326 — DOB/nationality/passport # first: the fields a port
+            // authority's crew list actually asks for, ahead of contact
+            // details.
             final lines = <String>['Role: ${m.role}'];
+            if (m.dateOfBirth != null) {
+              lines.add('Date of birth: ${_formatDate(m.dateOfBirth!)}');
+            }
+            if (m.nationality != null && m.nationality!.isNotEmpty) {
+              lines.add('Nationality: ${m.nationality}');
+            }
+            if (m.passportNumber != null && m.passportNumber!.isNotEmpty) {
+              lines.add('Passport #: ${m.passportNumber}');
+            }
             if (m.phone != null && m.phone!.isNotEmpty) {
               lines.add('Phone: ${m.phone}');
             }

@@ -484,6 +484,51 @@ void main() {
       expect(batch.crewMembers.single.name, 'Alex');
     });
 
+    test('#324/#326: export -> re-parse round-trips port-entry fields and '
+        'dietary/allergen tags', () {
+      final member = CrewMember()
+        ..supabaseId = 'crew-abc'
+        ..name = 'Alex'
+        ..dateOfBirth = DateTime(1990, 3, 20)
+        ..nationality = 'Finnish'
+        ..passportNumber = 'FI1234567'
+        ..allergenRestrictions = ['nuts', 'shellfish']
+        ..dietaryRequirements = ['vegan'];
+
+      final json = ImportService.exportCrew([member]);
+      final batch = ImportService.parse(json);
+      final reparsed = batch.crewMembers.single;
+
+      expect(reparsed.dateOfBirth, DateTime(1990, 3, 20));
+      expect(reparsed.nationality, 'Finnish');
+      expect(reparsed.passportNumber, 'FI1234567');
+      expect(reparsed.allergenRestrictions, ['nuts', 'shellfish']);
+      expect(reparsed.dietaryRequirements, ['vegan']);
+    });
+
+    test('#324/#326: fields omitted from export when unset, not written as '
+        'null/empty noise', () {
+      final json = ImportService.exportCrew(
+          [CrewMember()..name = 'Alex']);
+      expect(json.contains('dateOfBirth'), isFalse);
+      expect(json.contains('nationality'), isFalse);
+      expect(json.contains('passportNumber'), isFalse);
+      expect(json.contains('allergenRestrictions'), isFalse);
+      expect(json.contains('dietaryRequirements'), isFalse);
+    });
+
+    test('#325: export -> re-parse round-trips a document\'s crew link', () {
+      final document = Document()
+        ..supabaseId = 'doc-abc'
+        ..title = "Alex's Passport"
+        ..type = 'Passport'
+        ..crewMemberSupabaseId = 'crew-abc';
+
+      final json = ImportService.exportDocuments([document]);
+      final batch = ImportService.parse(json);
+      expect(batch.documents.single.crewMemberSupabaseId, 'crew-abc');
+    });
+
     test('matchExisting prefers id then content key', () {
       final a = CrewMember()
         ..supabaseId = 'id-1'

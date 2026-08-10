@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:drift/drift.dart';
 import '../../domain/repositories/crew_member_repository.dart';
 import '../../models/models.dart';
@@ -22,6 +23,13 @@ class CrewMemberRepositoryImpl implements CrewMemberRepository {
     ..iceContact = r.iceContact
     ..certifications = r.certifications
     ..localPath = r.localPath
+    ..dateOfBirth = r.dateOfBirth
+    ..nationality = r.nationality
+    ..passportNumber = r.passportNumber
+    ..allergenRestrictions =
+        (jsonDecode(r.allergenRestrictions) as List).cast<String>()
+    ..dietaryRequirements =
+        (jsonDecode(r.dietaryRequirements) as List).cast<String>()
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified;
 
@@ -35,6 +43,11 @@ class CrewMemberRepositoryImpl implements CrewMemberRepository {
         iceContact: Value(m.iceContact),
         certifications: Value(m.certifications),
         localPath: Value(m.localPath),
+        dateOfBirth: Value(m.dateOfBirth),
+        nationality: Value(m.nationality),
+        passportNumber: Value(m.passportNumber),
+        allergenRestrictions: Value(jsonEncode(m.allergenRestrictions)),
+        dietaryRequirements: Value(jsonEncode(m.dietaryRequirements)),
         isSynced: Value(m.isSynced),
         lastModified: Value(m.lastModified),
       );

@@ -13,6 +13,19 @@ class CrewMember {
   String? iceContact;
   String? certifications;
   String? localPath;
+  /// #326 — optional; only needed for international passages, but a real,
+  /// common cruiser requirement: the crew-list PDF port authorities expect
+  /// (name, DOB, nationality, passport #, role) can't be built without them.
+  DateTime? dateOfBirth;
+  String? nationality;
+  String? passportNumber;
+  /// #324 — same tag vocabularies as [GuestProfile]. Kept directly on
+  /// CrewMember (which syncs) rather than linked to a GuestProfile (which
+  /// is local-only, no supabaseId — a link would silently break on any
+  /// other device sharing this boat). Chef's Guest Profiles screen can
+  /// still offer "copy from crew" as a one-time prefill.
+  List<String> allergenRestrictions = [];
+  List<String> dietaryRequirements = [];
   bool isSynced = false;
   DateTime lastModified = DateTime.now().toUtc();
 
@@ -27,6 +40,15 @@ class CrewMember {
       ..iceContact = json['iceContact']
       ..certifications = json['certifications']
       ..localPath = json['localPath']
+      ..dateOfBirth = json['dateOfBirth'] != null
+          ? DateTime.parse(json['dateOfBirth'])
+          : null
+      ..nationality = json['nationality']
+      ..passportNumber = json['passportNumber']
+      ..allergenRestrictions =
+          List<String>.from(json['allergenRestrictions'] as List? ?? [])
+      ..dietaryRequirements =
+          List<String>.from(json['dietaryRequirements'] as List? ?? [])
       ..isSynced = json['isSynced'] ?? false
       ..lastModified = DateTime.parse(json['lastModified']);
   }
@@ -41,6 +63,11 @@ class CrewMember {
     'iceContact': iceContact,
     'certifications': certifications,
     'localPath': localPath,
+    'dateOfBirth': dateOfBirth?.toIso8601String(),
+    'nationality': nationality,
+    'passportNumber': passportNumber,
+    'allergenRestrictions': allergenRestrictions,
+    'dietaryRequirements': dietaryRequirements,
     'isSynced': isSynced,
     'lastModified': lastModified.toIso8601String(),
   };
@@ -60,6 +87,11 @@ class CrewMember {
           iceContact == other.iceContact &&
           certifications == other.certifications &&
           localPath == other.localPath &&
+          dateOfBirth == other.dateOfBirth &&
+          nationality == other.nationality &&
+          passportNumber == other.passportNumber &&
+          listEquals(allergenRestrictions, other.allergenRestrictions) &&
+          listEquals(dietaryRequirements, other.dietaryRequirements) &&
           isSynced == other.isSynced &&
           lastModified == other.lastModified;
 
@@ -75,6 +107,11 @@ class CrewMember {
         iceContact,
         certifications,
         localPath,
+        dateOfBirth,
+        nationality,
+        passportNumber,
+        Object.hashAll(allergenRestrictions),
+        Object.hashAll(dietaryRequirements),
         isSynced,
         lastModified,
       ]);
@@ -84,5 +121,9 @@ class CrewMember {
       'boatSupabaseId: $boatSupabaseId, name: $name, role: $role, '
       'phone: $phone, email: $email, iceContact: $iceContact, '
       'certifications: $certifications, localPath: $localPath, '
+      'dateOfBirth: $dateOfBirth, nationality: $nationality, '
+      'passportNumber: $passportNumber, '
+      'allergenRestrictions: $allergenRestrictions, '
+      'dietaryRequirements: $dietaryRequirements, '
       'isSynced: $isSynced, lastModified: $lastModified)';
 }
