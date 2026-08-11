@@ -17,6 +17,10 @@ class NmeaFix {
   /// Engine shaft RPM by engine instance (1 → port, 2 → stbd) when RPM/ERRPM seen.
   double? enginePortRpm;
   double? engineStbdRpm;
+  /// Air temperature (°C) from MTA.
+  double? airTempC;
+  /// Water/sea temperature (°C) from MTW.
+  double? waterTempC;
   DateTime? observedAt;
 
   bool get hasPosition => latitude != null && longitude != null;
@@ -60,6 +64,10 @@ class NmeaSentenceParser {
         _parseVhw(parts);
       case 'VBW':
         _parseVbw(parts);
+      case 'MTA':
+        _parseMta(parts);
+      case 'MTW':
+        _parseMtw(parts);
     }
   }
 
@@ -196,6 +204,23 @@ class NmeaSentenceParser {
     if (status == 'V') return;
     final kn = double.tryParse(p[1]);
     if (kn != null) fix.stwKt = kn.abs();
+  }
+
+  void _parseMta(List<String> p) {
+    // MTA,temp,C — air temperature. Unit field is always 'C' per spec, but
+    // parse the value regardless of what's actually there rather than
+    // gating on it (a sender that omits/misformats the unit still gives a
+    // usable number).
+    if (p.length < 2) return;
+    final c = double.tryParse(p[1]);
+    if (c != null) fix.airTempC = c;
+  }
+
+  void _parseMtw(List<String> p) {
+    // MTW,temp,C — water temperature.
+    if (p.length < 2) return;
+    final c = double.tryParse(p[1]);
+    if (c != null) fix.waterTempC = c;
   }
 
   /// NMEA lat/lon: `ddmm.mmm` + hemisphere.

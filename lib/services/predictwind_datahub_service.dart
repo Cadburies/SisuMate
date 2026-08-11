@@ -160,6 +160,13 @@ class PredictWindBoatData {
   /// not reported ("engines not showing revs").
   final double? enginePortRpm;
   final double? engineStbdRpm;
+  /// Air temperature (°C) — NMEA MTA (YDWG), a best-guess DataHub
+  /// `nmead_status` field (unverified — see the service's parsing note),
+  /// or a user-configured Home Assistant entity.
+  final double? airTempC;
+  /// Water/sea temperature (°C) — NMEA MTW (YDWG), a best-guess DataHub
+  /// field (unverified), or a user-configured Home Assistant entity.
+  final double? waterTempC;
   final DateTime observedAt;
   const PredictWindBoatData({
     this.latitude,
@@ -176,6 +183,8 @@ class PredictWindBoatData {
     this.sourceLabel,
     this.enginePortRpm,
     this.engineStbdRpm,
+    this.airTempC,
+    this.waterTempC,
     required this.observedAt,
   });
 
@@ -194,6 +203,8 @@ class PredictWindBoatData {
     String? sourceLabel,
     double? enginePortRpm,
     double? engineStbdRpm,
+    double? airTempC,
+    double? waterTempC,
     DateTime? observedAt,
   }) =>
       PredictWindBoatData(
@@ -212,6 +223,8 @@ class PredictWindBoatData {
         sourceLabel: sourceLabel ?? this.sourceLabel,
         enginePortRpm: enginePortRpm ?? this.enginePortRpm,
         engineStbdRpm: engineStbdRpm ?? this.engineStbdRpm,
+        airTempC: airTempC ?? this.airTempC,
+        waterTempC: waterTempC ?? this.waterTempC,
         observedAt: observedAt ?? this.observedAt,
       );
 
@@ -471,6 +484,18 @@ class PredictWindDatahubService {
             engineStbdRpm: _asDouble(json['rpm2']) ??
                 _asDouble(json['erpm2']) ??
                 _asDouble(json['engine2_rpm']),
+            // Unverified — no live device access to confirm nmead_status'
+            // actual key names for temperature (this Hub's JSON schema is
+            // undocumented; see the class doc's #263 note on prior
+            // unverified fields). Tries several plausible names; a wrong
+            // guess just means a key never matches and this stays null, not
+            // wrong data. Confirm against a live response and correct.
+            airTempC: _asDouble(json['attemp']) ??
+                _asDouble(json['airtemp']) ??
+                _asDouble(json['atemp']),
+            waterTempC: _asDouble(json['wtemp']) ??
+                _asDouble(json['watertemp']) ??
+                _asDouble(json['stemp']),
             viaLocalNetwork: candidate.isLocal,
             sourceLabel: candidate.isLocal
                 ? 'DataHub (local)'

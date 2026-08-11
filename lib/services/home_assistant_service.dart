@@ -27,6 +27,8 @@ class HomeAssistantService {
     this.windSpeedEntity,
     this.windDirEntity,
     this.depthEntity,
+    this.airTempEntity,
+    this.waterTempEntity,
   });
 
   final String? baseUrl;
@@ -37,6 +39,8 @@ class HomeAssistantService {
   final String? windSpeedEntity;
   final String? windDirEntity;
   final String? depthEntity;
+  final String? airTempEntity;
+  final String? waterTempEntity;
 
   static const _localTimeout = Duration(seconds: 4);
   static const _remoteTimeout = Duration(seconds: 8);
@@ -57,6 +61,10 @@ class HomeAssistantService {
       String.fromEnvironment('HA_WIND_DIR_ENTITY');
   static const defaultDepthEntity =
       String.fromEnvironment('HA_DEPTH_ENTITY');
+  static const defaultAirTempEntity =
+      String.fromEnvironment('HA_AIR_TEMP_ENTITY');
+  static const defaultWaterTempEntity =
+      String.fromEnvironment('HA_WATER_TEMP_ENTITY');
 
   static String _asHttpBase(String raw) {
     final t = raw.trim();
@@ -232,12 +240,25 @@ class HomeAssistantService {
         }
       }
 
+      double? airTempC;
+      final airTempE = airTempEntity?.trim() ?? '';
+      if (airTempE.isNotEmpty) {
+        airTempC = await _fetchTempC(c, base, airTempE);
+      }
+      double? waterTempC;
+      final waterTempE = waterTempEntity?.trim() ?? '';
+      if (waterTempE.isNotEmpty) {
+        waterTempC = await _fetchTempC(c, base, waterTempE);
+      }
+
       return PredictWindBoatData(
         latitude: lat,
         longitude: lon,
         windSpeedKt: windKt,
         windDirectionDeg: windDir,
         depthMeters: depthM,
+        airTempC: airTempC,
+        waterTempC: waterTempC,
         viaLocalNetwork: viaLocalNetwork,
         sourceLabel: sourceLabel ??
             (viaLocalNetwork
@@ -250,6 +271,20 @@ class HomeAssistantService {
     } finally {
       if (client == null) c.close();
     }
+  }
+
+  /// Reads a temperature entity, converting °F to °C when the entity's
+  /// `unit_of_measurement` says so (a US-configured HA instance is common
+  /// even on a boat cruising Celsius-labeled charts).
+  Future<double?> _fetchTempC(http.Client c, String base, String entityId) async {
+    final s = await _getState(c, base, entityId);
+    var value = _asDouble(s?['state']);
+    final unit =
+        (s?['attributes'] as Map?)?['unit_of_measurement']?.toString();
+    if (value != null && unit != null && unit.contains('F')) {
+      value = (value - 32) * 5 / 9;
+    }
+    return value;
   }
 
   Future<Map<String, dynamic>?> _getState(
@@ -301,6 +336,8 @@ class HomeAssistantService {
     required String? windSpeedEntity,
     required String? windDirEntity,
     required String? depthEntity,
+    String? airTempEntity,
+    String? waterTempEntity,
   }) {
     final url = (settingsUrl != null && settingsUrl.trim().isNotEmpty)
         ? settingsUrl
@@ -317,6 +354,8 @@ class HomeAssistantService {
       windSpeedEntity: _pick(windSpeedEntity, defaultWindSpeedEntity),
       windDirEntity: _pick(windDirEntity, defaultWindDirEntity),
       depthEntity: _pick(depthEntity, defaultDepthEntity),
+      airTempEntity: _pick(airTempEntity, defaultAirTempEntity),
+      waterTempEntity: _pick(waterTempEntity, defaultWaterTempEntity),
     );
   }
 
@@ -329,6 +368,8 @@ class HomeAssistantService {
     required String? windSpeedEntity,
     required String? windDirEntity,
     required String? depthEntity,
+    String? airTempEntity,
+    String? waterTempEntity,
   }) {
     final url =
         (settingsRemoteUrl != null && settingsRemoteUrl.trim().isNotEmpty)
@@ -346,6 +387,8 @@ class HomeAssistantService {
       windSpeedEntity: _pick(windSpeedEntity, defaultWindSpeedEntity),
       windDirEntity: _pick(windDirEntity, defaultWindDirEntity),
       depthEntity: _pick(depthEntity, defaultDepthEntity),
+      airTempEntity: _pick(airTempEntity, defaultAirTempEntity),
+      waterTempEntity: _pick(waterTempEntity, defaultWaterTempEntity),
     );
   }
 

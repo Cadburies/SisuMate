@@ -16606,6 +16606,30 @@ class $UserSettingsTableTable extends UserSettingsTable
         requiredDuringInsert: false,
         defaultValue: const Constant(''),
       );
+  static const VerificationMeta _homeAssistantAirTempEntityMeta =
+      const VerificationMeta('homeAssistantAirTempEntity');
+  @override
+  late final GeneratedColumn<String> homeAssistantAirTempEntity =
+      GeneratedColumn<String>(
+        'home_assistant_air_temp_entity',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _homeAssistantWaterTempEntityMeta =
+      const VerificationMeta('homeAssistantWaterTempEntity');
+  @override
+  late final GeneratedColumn<String> homeAssistantWaterTempEntity =
+      GeneratedColumn<String>(
+        'home_assistant_water_temp_entity',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -16644,6 +16668,8 @@ class $UserSettingsTableTable extends UserSettingsTable
     homeAssistantWindSpeedEntity,
     homeAssistantWindDirEntity,
     homeAssistantDepthEntity,
+    homeAssistantAirTempEntity,
+    homeAssistantWaterTempEntity,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -16957,6 +16983,24 @@ class $UserSettingsTableTable extends UserSettingsTable
         ),
       );
     }
+    if (data.containsKey('home_assistant_air_temp_entity')) {
+      context.handle(
+        _homeAssistantAirTempEntityMeta,
+        homeAssistantAirTempEntity.isAcceptableOrUnknown(
+          data['home_assistant_air_temp_entity']!,
+          _homeAssistantAirTempEntityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('home_assistant_water_temp_entity')) {
+      context.handle(
+        _homeAssistantWaterTempEntityMeta,
+        homeAssistantWaterTempEntity.isAcceptableOrUnknown(
+          data['home_assistant_water_temp_entity']!,
+          _homeAssistantWaterTempEntityMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -17110,6 +17154,14 @@ class $UserSettingsTableTable extends UserSettingsTable
         DriftSqlType.string,
         data['${effectivePrefix}home_assistant_depth_entity'],
       )!,
+      homeAssistantAirTempEntity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_air_temp_entity'],
+      )!,
+      homeAssistantWaterTempEntity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}home_assistant_water_temp_entity'],
+      )!,
     );
   }
 
@@ -17181,6 +17233,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
   final String homeAssistantWindSpeedEntity;
   final String homeAssistantWindDirEntity;
   final String homeAssistantDepthEntity;
+  final String homeAssistantAirTempEntity;
+  final String homeAssistantWaterTempEntity;
   const UserSettingsRow({
     required this.id,
     this.activeBoatSupabaseId,
@@ -17218,6 +17272,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     required this.homeAssistantWindSpeedEntity,
     required this.homeAssistantWindDirEntity,
     required this.homeAssistantDepthEntity,
+    required this.homeAssistantAirTempEntity,
+    required this.homeAssistantWaterTempEntity,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -17282,6 +17338,12 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     map['home_assistant_depth_entity'] = Variable<String>(
       homeAssistantDepthEntity,
     );
+    map['home_assistant_air_temp_entity'] = Variable<String>(
+      homeAssistantAirTempEntity,
+    );
+    map['home_assistant_water_temp_entity'] = Variable<String>(
+      homeAssistantWaterTempEntity,
+    );
     return map;
   }
 
@@ -17337,6 +17399,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       homeAssistantWindSpeedEntity: Value(homeAssistantWindSpeedEntity),
       homeAssistantWindDirEntity: Value(homeAssistantWindDirEntity),
       homeAssistantDepthEntity: Value(homeAssistantDepthEntity),
+      homeAssistantAirTempEntity: Value(homeAssistantAirTempEntity),
+      homeAssistantWaterTempEntity: Value(homeAssistantWaterTempEntity),
     );
   }
 
@@ -17414,6 +17478,12 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       homeAssistantDepthEntity: serializer.fromJson<String>(
         json['homeAssistantDepthEntity'],
       ),
+      homeAssistantAirTempEntity: serializer.fromJson<String>(
+        json['homeAssistantAirTempEntity'],
+      ),
+      homeAssistantWaterTempEntity: serializer.fromJson<String>(
+        json['homeAssistantWaterTempEntity'],
+      ),
     );
   }
   @override
@@ -17480,6 +17550,12 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       'homeAssistantDepthEntity': serializer.toJson<String>(
         homeAssistantDepthEntity,
       ),
+      'homeAssistantAirTempEntity': serializer.toJson<String>(
+        homeAssistantAirTempEntity,
+      ),
+      'homeAssistantWaterTempEntity': serializer.toJson<String>(
+        homeAssistantWaterTempEntity,
+      ),
     };
   }
 
@@ -17520,6 +17596,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     String? homeAssistantWindSpeedEntity,
     String? homeAssistantWindDirEntity,
     String? homeAssistantDepthEntity,
+    String? homeAssistantAirTempEntity,
+    String? homeAssistantWaterTempEntity,
   }) => UserSettingsRow(
     id: id ?? this.id,
     activeBoatSupabaseId: activeBoatSupabaseId.present
@@ -17573,6 +17651,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
         homeAssistantWindDirEntity ?? this.homeAssistantWindDirEntity,
     homeAssistantDepthEntity:
         homeAssistantDepthEntity ?? this.homeAssistantDepthEntity,
+    homeAssistantAirTempEntity:
+        homeAssistantAirTempEntity ?? this.homeAssistantAirTempEntity,
+    homeAssistantWaterTempEntity:
+        homeAssistantWaterTempEntity ?? this.homeAssistantWaterTempEntity,
   );
   UserSettingsRow copyWithCompanion(UserSettingsTableCompanion data) {
     return UserSettingsRow(
@@ -17670,6 +17752,12 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
       homeAssistantDepthEntity: data.homeAssistantDepthEntity.present
           ? data.homeAssistantDepthEntity.value
           : this.homeAssistantDepthEntity,
+      homeAssistantAirTempEntity: data.homeAssistantAirTempEntity.present
+          ? data.homeAssistantAirTempEntity.value
+          : this.homeAssistantAirTempEntity,
+      homeAssistantWaterTempEntity: data.homeAssistantWaterTempEntity.present
+          ? data.homeAssistantWaterTempEntity.value
+          : this.homeAssistantWaterTempEntity,
     );
   }
 
@@ -17713,7 +17801,9 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
             'homeAssistantWindSpeedEntity: $homeAssistantWindSpeedEntity, ',
           )
           ..write('homeAssistantWindDirEntity: $homeAssistantWindDirEntity, ')
-          ..write('homeAssistantDepthEntity: $homeAssistantDepthEntity')
+          ..write('homeAssistantDepthEntity: $homeAssistantDepthEntity, ')
+          ..write('homeAssistantAirTempEntity: $homeAssistantAirTempEntity, ')
+          ..write('homeAssistantWaterTempEntity: $homeAssistantWaterTempEntity')
           ..write(')'))
         .toString();
   }
@@ -17756,6 +17846,8 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
     homeAssistantWindSpeedEntity,
     homeAssistantWindDirEntity,
     homeAssistantDepthEntity,
+    homeAssistantAirTempEntity,
+    homeAssistantWaterTempEntity,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -17797,7 +17889,10 @@ class UserSettingsRow extends DataClass implements Insertable<UserSettingsRow> {
           other.homeAssistantWindSpeedEntity ==
               this.homeAssistantWindSpeedEntity &&
           other.homeAssistantWindDirEntity == this.homeAssistantWindDirEntity &&
-          other.homeAssistantDepthEntity == this.homeAssistantDepthEntity);
+          other.homeAssistantDepthEntity == this.homeAssistantDepthEntity &&
+          other.homeAssistantAirTempEntity == this.homeAssistantAirTempEntity &&
+          other.homeAssistantWaterTempEntity ==
+              this.homeAssistantWaterTempEntity);
 }
 
 class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
@@ -17837,6 +17932,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
   final Value<String> homeAssistantWindSpeedEntity;
   final Value<String> homeAssistantWindDirEntity;
   final Value<String> homeAssistantDepthEntity;
+  final Value<String> homeAssistantAirTempEntity;
+  final Value<String> homeAssistantWaterTempEntity;
   const UserSettingsTableCompanion({
     this.id = const Value.absent(),
     this.activeBoatSupabaseId = const Value.absent(),
@@ -17874,6 +17971,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.homeAssistantWindSpeedEntity = const Value.absent(),
     this.homeAssistantWindDirEntity = const Value.absent(),
     this.homeAssistantDepthEntity = const Value.absent(),
+    this.homeAssistantAirTempEntity = const Value.absent(),
+    this.homeAssistantWaterTempEntity = const Value.absent(),
   });
   UserSettingsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -17912,6 +18011,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     this.homeAssistantWindSpeedEntity = const Value.absent(),
     this.homeAssistantWindDirEntity = const Value.absent(),
     this.homeAssistantDepthEntity = const Value.absent(),
+    this.homeAssistantAirTempEntity = const Value.absent(),
+    this.homeAssistantWaterTempEntity = const Value.absent(),
   });
   static Insertable<UserSettingsRow> custom({
     Expression<int>? id,
@@ -17950,6 +18051,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Expression<String>? homeAssistantWindSpeedEntity,
     Expression<String>? homeAssistantWindDirEntity,
     Expression<String>? homeAssistantDepthEntity,
+    Expression<String>? homeAssistantAirTempEntity,
+    Expression<String>? homeAssistantWaterTempEntity,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -18004,6 +18107,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
         'home_assistant_wind_dir_entity': homeAssistantWindDirEntity,
       if (homeAssistantDepthEntity != null)
         'home_assistant_depth_entity': homeAssistantDepthEntity,
+      if (homeAssistantAirTempEntity != null)
+        'home_assistant_air_temp_entity': homeAssistantAirTempEntity,
+      if (homeAssistantWaterTempEntity != null)
+        'home_assistant_water_temp_entity': homeAssistantWaterTempEntity,
     });
   }
 
@@ -18044,6 +18151,8 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
     Value<String>? homeAssistantWindSpeedEntity,
     Value<String>? homeAssistantWindDirEntity,
     Value<String>? homeAssistantDepthEntity,
+    Value<String>? homeAssistantAirTempEntity,
+    Value<String>? homeAssistantWaterTempEntity,
   }) {
     return UserSettingsTableCompanion(
       id: id ?? this.id,
@@ -18095,6 +18204,10 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
           homeAssistantWindDirEntity ?? this.homeAssistantWindDirEntity,
       homeAssistantDepthEntity:
           homeAssistantDepthEntity ?? this.homeAssistantDepthEntity,
+      homeAssistantAirTempEntity:
+          homeAssistantAirTempEntity ?? this.homeAssistantAirTempEntity,
+      homeAssistantWaterTempEntity:
+          homeAssistantWaterTempEntity ?? this.homeAssistantWaterTempEntity,
     );
   }
 
@@ -18239,6 +18352,16 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
         homeAssistantDepthEntity.value,
       );
     }
+    if (homeAssistantAirTempEntity.present) {
+      map['home_assistant_air_temp_entity'] = Variable<String>(
+        homeAssistantAirTempEntity.value,
+      );
+    }
+    if (homeAssistantWaterTempEntity.present) {
+      map['home_assistant_water_temp_entity'] = Variable<String>(
+        homeAssistantWaterTempEntity.value,
+      );
+    }
     return map;
   }
 
@@ -18282,7 +18405,9 @@ class UserSettingsTableCompanion extends UpdateCompanion<UserSettingsRow> {
             'homeAssistantWindSpeedEntity: $homeAssistantWindSpeedEntity, ',
           )
           ..write('homeAssistantWindDirEntity: $homeAssistantWindDirEntity, ')
-          ..write('homeAssistantDepthEntity: $homeAssistantDepthEntity')
+          ..write('homeAssistantDepthEntity: $homeAssistantDepthEntity, ')
+          ..write('homeAssistantAirTempEntity: $homeAssistantAirTempEntity, ')
+          ..write('homeAssistantWaterTempEntity: $homeAssistantWaterTempEntity')
           ..write(')'))
         .toString();
   }
@@ -31317,6 +31442,8 @@ typedef $$UserSettingsTableTableCreateCompanionBuilder =
       Value<String> homeAssistantWindSpeedEntity,
       Value<String> homeAssistantWindDirEntity,
       Value<String> homeAssistantDepthEntity,
+      Value<String> homeAssistantAirTempEntity,
+      Value<String> homeAssistantWaterTempEntity,
     });
 typedef $$UserSettingsTableTableUpdateCompanionBuilder =
     UserSettingsTableCompanion Function({
@@ -31356,6 +31483,8 @@ typedef $$UserSettingsTableTableUpdateCompanionBuilder =
       Value<String> homeAssistantWindSpeedEntity,
       Value<String> homeAssistantWindDirEntity,
       Value<String> homeAssistantDepthEntity,
+      Value<String> homeAssistantAirTempEntity,
+      Value<String> homeAssistantWaterTempEntity,
     });
 
 class $$UserSettingsTableTableFilterComposer
@@ -31544,6 +31673,16 @@ class $$UserSettingsTableTableFilterComposer
 
   ColumnFilters<String> get homeAssistantDepthEntity => $composableBuilder(
     column: $table.homeAssistantDepthEntity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantAirTempEntity => $composableBuilder(
+    column: $table.homeAssistantAirTempEntity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homeAssistantWaterTempEntity => $composableBuilder(
+    column: $table.homeAssistantWaterTempEntity,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -31737,6 +31876,17 @@ class $$UserSettingsTableTableOrderingComposer
     column: $table.homeAssistantDepthEntity,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get homeAssistantAirTempEntity => $composableBuilder(
+    column: $table.homeAssistantAirTempEntity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homeAssistantWaterTempEntity =>
+      $composableBuilder(
+        column: $table.homeAssistantWaterTempEntity,
+        builder: (column) => ColumnOrderings(column),
+      );
 }
 
 class $$UserSettingsTableTableAnnotationComposer
@@ -31914,6 +32064,17 @@ class $$UserSettingsTableTableAnnotationComposer
     column: $table.homeAssistantDepthEntity,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get homeAssistantAirTempEntity => $composableBuilder(
+    column: $table.homeAssistantAirTempEntity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get homeAssistantWaterTempEntity =>
+      $composableBuilder(
+        column: $table.homeAssistantWaterTempEntity,
+        builder: (column) => column,
+      );
 }
 
 class $$UserSettingsTableTableTableManager
@@ -31993,6 +32154,9 @@ class $$UserSettingsTableTableTableManager
                     const Value.absent(),
                 Value<String> homeAssistantWindDirEntity = const Value.absent(),
                 Value<String> homeAssistantDepthEntity = const Value.absent(),
+                Value<String> homeAssistantAirTempEntity = const Value.absent(),
+                Value<String> homeAssistantWaterTempEntity =
+                    const Value.absent(),
               }) => UserSettingsTableCompanion(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -32030,6 +32194,8 @@ class $$UserSettingsTableTableTableManager
                 homeAssistantWindSpeedEntity: homeAssistantWindSpeedEntity,
                 homeAssistantWindDirEntity: homeAssistantWindDirEntity,
                 homeAssistantDepthEntity: homeAssistantDepthEntity,
+                homeAssistantAirTempEntity: homeAssistantAirTempEntity,
+                homeAssistantWaterTempEntity: homeAssistantWaterTempEntity,
               ),
           createCompanionCallback:
               ({
@@ -32070,6 +32236,9 @@ class $$UserSettingsTableTableTableManager
                     const Value.absent(),
                 Value<String> homeAssistantWindDirEntity = const Value.absent(),
                 Value<String> homeAssistantDepthEntity = const Value.absent(),
+                Value<String> homeAssistantAirTempEntity = const Value.absent(),
+                Value<String> homeAssistantWaterTempEntity =
+                    const Value.absent(),
               }) => UserSettingsTableCompanion.insert(
                 id: id,
                 activeBoatSupabaseId: activeBoatSupabaseId,
@@ -32107,6 +32276,8 @@ class $$UserSettingsTableTableTableManager
                 homeAssistantWindSpeedEntity: homeAssistantWindSpeedEntity,
                 homeAssistantWindDirEntity: homeAssistantWindDirEntity,
                 homeAssistantDepthEntity: homeAssistantDepthEntity,
+                homeAssistantAirTempEntity: homeAssistantAirTempEntity,
+                homeAssistantWaterTempEntity: homeAssistantWaterTempEntity,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

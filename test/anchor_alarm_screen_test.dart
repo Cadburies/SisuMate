@@ -127,6 +127,12 @@ void main() {
     PredictWindDatahubService hubService = const PredictWindDatahubService(),
     bool allowPhoneFallback = false,
   }) async {
+    // The Info tab now renders air/water temp cards ahead of SOG/COG/wind
+    // (HA-screen follow-up); that pushes content past the default 600px
+    // test viewport and `ListView` (Sliver-backed) silently drops
+    // off-screen children from the tree. Match anchor_info_panel_test.dart.
+    await tester.binding.setSurfaceSize(const Size(400, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

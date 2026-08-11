@@ -102,6 +102,96 @@ void main() {
       expect(data.longitude, closeTo(-20.2, 0.001));
     });
 
+    test('fetchBoatData reads air/water temperature entities (°C)', () async {
+      final client = MockClient((request) async {
+        final id = request.url.pathSegments.last;
+        if (id == 'device_tracker.boat') {
+          return http.Response(
+            '{"entity_id":"device_tracker.boat","state":"home",'
+            '"last_updated":"${DateTime.now().toUtc().toIso8601String()}",'
+            '"attributes":{"latitude":12.5,"longitude":-61.4}}',
+            200,
+          );
+        }
+        if (id == 'sensor.air_temp') {
+          return http.Response(
+            '{"state":"24.5","attributes":{"unit_of_measurement":"°C"}}',
+            200,
+          );
+        }
+        if (id == 'sensor.water_temp') {
+          return http.Response(
+            '{"state":"19.0","attributes":{"unit_of_measurement":"°C"}}',
+            200,
+          );
+        }
+        return http.Response('missing', 404);
+      });
+      const svc = HomeAssistantService(
+        baseUrl: 'http://ha.local:8123',
+        token: 'tok',
+        gpsEntity: 'device_tracker.boat',
+        airTempEntity: 'sensor.air_temp',
+        waterTempEntity: 'sensor.water_temp',
+      );
+
+      final data = await svc.fetchBoatData(client: client);
+      expect(data!.airTempC, closeTo(24.5, 0.01));
+      expect(data.waterTempC, closeTo(19.0, 0.01));
+    });
+
+    test('fetchBoatData converts a °F temperature entity to °C', () async {
+      final client = MockClient((request) async {
+        final id = request.url.pathSegments.last;
+        if (id == 'device_tracker.boat') {
+          return http.Response(
+            '{"entity_id":"device_tracker.boat","state":"home",'
+            '"last_updated":"${DateTime.now().toUtc().toIso8601String()}",'
+            '"attributes":{"latitude":12.5,"longitude":-61.4}}',
+            200,
+          );
+        }
+        if (id == 'sensor.air_temp_f') {
+          return http.Response(
+            '{"state":"77.0","attributes":{"unit_of_measurement":"°F"}}',
+            200,
+          );
+        }
+        return http.Response('missing', 404);
+      });
+      const svc = HomeAssistantService(
+        baseUrl: 'http://ha.local:8123',
+        token: 'tok',
+        gpsEntity: 'device_tracker.boat',
+        airTempEntity: 'sensor.air_temp_f',
+      );
+
+      final data = await svc.fetchBoatData(client: client);
+      // 77°F == 25°C
+      expect(data!.airTempC, closeTo(25.0, 0.01));
+    });
+
+    test('fetchBoatData leaves temps null when no entity configured',
+        () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          '{"entity_id":"device_tracker.boat","state":"home",'
+          '"last_updated":"${DateTime.now().toUtc().toIso8601String()}",'
+          '"attributes":{"latitude":12.5,"longitude":-61.4}}',
+          200,
+        );
+      });
+      const svc = HomeAssistantService(
+        baseUrl: 'http://ha.local:8123',
+        token: 'tok',
+        gpsEntity: 'device_tracker.boat',
+      );
+
+      final data = await svc.fetchBoatData(client: client);
+      expect(data!.airTempC, isNull);
+      expect(data.waterTempC, isNull);
+    });
+
     test('not configured when token missing', () {
       const svc = HomeAssistantService(baseUrl: 'http://ha.local:8123');
       expect(svc.isConfigured, isFalse);

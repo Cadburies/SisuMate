@@ -69,6 +69,10 @@ class UserSettings {
   String homeAssistantWindSpeedEntity = '';
   String homeAssistantWindDirEntity = '';
   String homeAssistantDepthEntity = '';
+  /// Air/water temperature entity IDs (°C or °F, auto-converted) —
+  /// requested for the Anchor Alarm's instrument info panel.
+  String homeAssistantAirTempEntity = '';
+  String homeAssistantWaterTempEntity = '';
 
   @override
   bool operator ==(Object other) =>
@@ -110,7 +114,9 @@ class UserSettings {
           homeAssistantLonEntity == other.homeAssistantLonEntity &&
           homeAssistantWindSpeedEntity == other.homeAssistantWindSpeedEntity &&
           homeAssistantWindDirEntity == other.homeAssistantWindDirEntity &&
-          homeAssistantDepthEntity == other.homeAssistantDepthEntity;
+          homeAssistantDepthEntity == other.homeAssistantDepthEntity &&
+          homeAssistantAirTempEntity == other.homeAssistantAirTempEntity &&
+          homeAssistantWaterTempEntity == other.homeAssistantWaterTempEntity;
 
   @override
   int get hashCode => Object.hashAll([
@@ -150,6 +156,8 @@ class UserSettings {
         homeAssistantWindSpeedEntity,
         homeAssistantWindDirEntity,
         homeAssistantDepthEntity,
+        homeAssistantAirTempEntity,
+        homeAssistantWaterTempEntity,
       ]);
 
   @override

@@ -69,6 +69,8 @@ class _AnchorGatewaySetupScreenState
   late final TextEditingController _haWindSpeedCtrl;
   late final TextEditingController _haWindDirCtrl;
   late final TextEditingController _haDepthCtrl;
+  late final TextEditingController _haAirTempCtrl;
+  late final TextEditingController _haWaterTempCtrl;
 
   _Status _status = _Status.idle;
   List<String> _discovered = [];
@@ -131,6 +133,12 @@ class _AnchorGatewaySetupScreenState
     _haDepthCtrl = TextEditingController(
       text: HomeAssistantService.defaultDepthEntity,
     );
+    _haAirTempCtrl = TextEditingController(
+      text: HomeAssistantService.defaultAirTempEntity,
+    );
+    _haWaterTempCtrl = TextEditingController(
+      text: HomeAssistantService.defaultWaterTempEntity,
+    );
   }
 
   @override
@@ -150,6 +158,8 @@ class _AnchorGatewaySetupScreenState
     _haWindSpeedCtrl.dispose();
     _haWindDirCtrl.dispose();
     _haDepthCtrl.dispose();
+    _haAirTempCtrl.dispose();
+    _haWaterTempCtrl.dispose();
     super.dispose();
   }
 
@@ -197,6 +207,12 @@ class _AnchorGatewaySetupScreenState
     }
     if (settings.homeAssistantDepthEntity.isNotEmpty) {
       _haDepthCtrl.text = settings.homeAssistantDepthEntity;
+    }
+    if (settings.homeAssistantAirTempEntity.isNotEmpty) {
+      _haAirTempCtrl.text = settings.homeAssistantAirTempEntity;
+    }
+    if (settings.homeAssistantWaterTempEntity.isNotEmpty) {
+      _haWaterTempCtrl.text = settings.homeAssistantWaterTempEntity;
     }
   }
 
@@ -521,7 +537,9 @@ class _AnchorGatewaySetupScreenState
         ..homeAssistantLonEntity = _haLonEntityCtrl.text.trim()
         ..homeAssistantWindSpeedEntity = _haWindSpeedCtrl.text.trim()
         ..homeAssistantWindDirEntity = _haWindDirCtrl.text.trim()
-        ..homeAssistantDepthEntity = _haDepthCtrl.text.trim();
+        ..homeAssistantDepthEntity = _haDepthCtrl.text.trim()
+        ..homeAssistantAirTempEntity = _haAirTempCtrl.text.trim()
+        ..homeAssistantWaterTempEntity = _haWaterTempCtrl.text.trim();
       parts.add(
         'Home Assistant'
         '${haUrl != null ? ' local $haUrl' : ''}'
@@ -966,6 +984,28 @@ class _AnchorGatewaySetupScreenState
                             decoration: const InputDecoration(
                               labelText: 'Depth entity (optional)',
                               hintText: 'sensor.water_depth',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haAirTempCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Air temperature entity (optional)',
+                              hintText: 'sensor.air_temperature',
+                            ),
+                            enabled: !busy,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _haWaterTempCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Water temperature entity (optional)',
+                              hintText: 'sensor.sea_temperature',
                             ),
                             enabled: !busy,
                             autocorrect: false,

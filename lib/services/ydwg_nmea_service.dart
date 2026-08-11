@@ -101,6 +101,8 @@ class YdwgNmeaService {
         cogDeg: f.cogDeg,
         enginePortRpm: f.enginePortRpm,
         engineStbdRpm: f.engineStbdRpm,
+        airTempC: f.airTempC,
+        waterTempC: f.waterTempC,
         viaLocalNetwork: true,
         sourceLabel: 'YDWG-02 (NMEA local)',
         observedAt: f.observedAt ?? DateTime.now().toUtc(),

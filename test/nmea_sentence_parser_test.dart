@@ -58,6 +58,18 @@ void main() {
       expect(p.fix.stwKt, closeTo(5.5, 0.01));
     });
 
+    test('parses MTA air temperature', () {
+      final p = NmeaSentenceParser();
+      p.feed(r'$WIMTA,22.5,C');
+      expect(p.fix.airTempC, closeTo(22.5, 0.01));
+    });
+
+    test('parses MTW water temperature', () {
+      final p = NmeaSentenceParser();
+      p.feed(r'$YXMTW,18.3,C');
+      expect(p.fix.waterTempC, closeTo(18.3, 0.01));
+    });
+
     test('feedLines aggregates multiple sentences', () {
       final p = NmeaSentenceParser();
       p.feedLines(

@@ -46,7 +46,9 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
     ..homeAssistantLonEntity = r.homeAssistantLonEntity
     ..homeAssistantWindSpeedEntity = r.homeAssistantWindSpeedEntity
     ..homeAssistantWindDirEntity = r.homeAssistantWindDirEntity
-    ..homeAssistantDepthEntity = r.homeAssistantDepthEntity;
+    ..homeAssistantDepthEntity = r.homeAssistantDepthEntity
+    ..homeAssistantAirTempEntity = r.homeAssistantAirTempEntity
+    ..homeAssistantWaterTempEntity = r.homeAssistantWaterTempEntity;
 
   UserSettingsTableCompanion _companion(UserSettings s) =>
       UserSettingsTableCompanion(
@@ -86,6 +88,8 @@ class UserSettingsRepositoryImpl implements UserSettingsRepository {
         homeAssistantWindSpeedEntity: Value(s.homeAssistantWindSpeedEntity),
         homeAssistantWindDirEntity: Value(s.homeAssistantWindDirEntity),
         homeAssistantDepthEntity: Value(s.homeAssistantDepthEntity),
+        homeAssistantAirTempEntity: Value(s.homeAssistantAirTempEntity),
+        homeAssistantWaterTempEntity: Value(s.homeAssistantWaterTempEntity),
       );
 
   @override

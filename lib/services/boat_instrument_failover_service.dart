@@ -415,6 +415,8 @@ class BoatInstrumentFailoverService {
         windSpeedEntity: s?.homeAssistantWindSpeedEntity,
         windDirEntity: s?.homeAssistantWindDirEntity,
         depthEntity: s?.homeAssistantDepthEntity,
+        airTempEntity: s?.homeAssistantAirTempEntity,
+        waterTempEntity: s?.homeAssistantWaterTempEntity,
       );
 
   HomeAssistantService _haRemote(UserSettings? s) =>
@@ -427,6 +429,8 @@ class BoatInstrumentFailoverService {
         windSpeedEntity: s?.homeAssistantWindSpeedEntity,
         windDirEntity: s?.homeAssistantWindDirEntity,
         depthEntity: s?.homeAssistantDepthEntity,
+        airTempEntity: s?.homeAssistantAirTempEntity,
+        waterTempEntity: s?.homeAssistantWaterTempEntity,
       );
 
   /// Only when the user has saved a YDWG URL (Gateway Setup) — do not

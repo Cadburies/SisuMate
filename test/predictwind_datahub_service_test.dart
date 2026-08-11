@@ -234,6 +234,58 @@ void main() {
     expect(data.observedAt, DateTime.fromMillisecondsSinceEpoch(1785872083000, isUtc: true));
   });
 
+  test('fetchBoatData tries plausible unverified temperature field names',
+      () async {
+    final client = MockClient((request) async {
+      if (request.method == 'POST') {
+        return http.Response('', 302,
+            headers: {'set-cookie': 'sysauth=abc123; path=/cgi-bin/luci/'});
+      }
+      return http.Response(
+        '{"lat":12.0,"lon":-61.7,"unixtime":'
+        '${DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000},'
+        '"attemp":24.5,"wtemp":19.0}',
+        200,
+      );
+    });
+    const service = PredictWindDatahubService(
+      baseUrlOverride: 'https://fake-hub.test',
+      usernameOverride: 'user',
+      passwordOverride: 'pass',
+    );
+
+    final data = await service.fetchBoatData(client: client);
+
+    expect(data!.airTempC, 24.5);
+    expect(data.waterTempC, 19.0);
+  });
+
+  test('fetchBoatData leaves temps null when none of the guessed keys match '
+      '(unverified field names — degrades safely, not incorrectly)',
+      () async {
+    final client = MockClient((request) async {
+      if (request.method == 'POST') {
+        return http.Response('', 302,
+            headers: {'set-cookie': 'sysauth=abc123; path=/cgi-bin/luci/'});
+      }
+      return http.Response(
+        '{"lat":12.0,"lon":-61.7,"unixtime":'
+        '${DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000}}',
+        200,
+      );
+    });
+    const service = PredictWindDatahubService(
+      baseUrlOverride: 'https://fake-hub.test',
+      usernameOverride: 'user',
+      passwordOverride: 'pass',
+    );
+
+    final data = await service.fetchBoatData(client: client);
+
+    expect(data!.airTempC, isNull);
+    expect(data.waterTempC, isNull);
+  });
+
   test('fetchBoatData returns null when login fails', () async {
     final client = MockClient((request) async => http.Response('', 403));
     const service = PredictWindDatahubService(

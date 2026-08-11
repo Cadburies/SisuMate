@@ -521,6 +521,10 @@ class UserSettingsTable extends Table {
       text().withDefault(const Constant(''))();
   TextColumn get homeAssistantDepthEntity =>
       text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantAirTempEntity =>
+      text().withDefault(const Constant(''))();
+  TextColumn get homeAssistantWaterTempEntity =>
+      text().withDefault(const Constant(''))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -739,7 +743,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
