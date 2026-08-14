@@ -17,6 +17,10 @@ class InventoryItem {
   /// item on restock; no product-name lookup (unlike Cocktails' bottle
   /// barcode database — boat spares have no equivalent curated catalog).
   String? barcode;
+  /// #319 — ChecklistItem.supabaseId of the maintenance task that consumes
+  /// this spare. Null = unlinked. Stored as the wire/local supabaseId (not
+  /// the Drift int pk) so the link survives sync across devices.
+  String? linkedMaintenanceItemSupabaseId;
   bool isSynced = false;
   DateTime lastModified = DateTime.now().toUtc();
 
@@ -32,6 +36,7 @@ class InventoryItem {
       ..notes = json['notes']
       ..localPath = json['localPath']
       ..barcode = json['barcode']
+      ..linkedMaintenanceItemSupabaseId = json['linkedMaintenanceItemSupabaseId']
       ..isSynced = json['isSynced'] ?? false
       ..lastModified = DateTime.parse(json['lastModified']);
   }
@@ -47,6 +52,7 @@ class InventoryItem {
     'notes': notes,
     'localPath': localPath,
     'barcode': barcode,
+    'linkedMaintenanceItemSupabaseId': linkedMaintenanceItemSupabaseId,
     'isSynced': isSynced,
     'lastModified': lastModified.toIso8601String(),
   };
@@ -67,6 +73,8 @@ class InventoryItem {
           notes == other.notes &&
           localPath == other.localPath &&
           barcode == other.barcode &&
+          linkedMaintenanceItemSupabaseId ==
+              other.linkedMaintenanceItemSupabaseId &&
           isSynced == other.isSynced &&
           lastModified == other.lastModified;
 
@@ -83,6 +91,7 @@ class InventoryItem {
         notes,
         localPath,
         barcode,
+        linkedMaintenanceItemSupabaseId,
         isSynced,
         lastModified,
       ]);
@@ -92,5 +101,6 @@ class InventoryItem {
       'boatSupabaseId: $boatSupabaseId, name: $name, location: $location, '
       'quantity: $quantity, unit: $unit, serialNumber: $serialNumber, '
       'notes: $notes, localPath: $localPath, barcode: $barcode, '
+      'linkedMaintenanceItemSupabaseId: $linkedMaintenanceItemSupabaseId, '
       'isSynced: $isSynced, lastModified: $lastModified)';
 }

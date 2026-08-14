@@ -1835,6 +1835,17 @@ class $InventoryItemsTable extends InventoryItems
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _linkedMaintenanceItemSupabaseIdMeta =
+      const VerificationMeta('linkedMaintenanceItemSupabaseId');
+  @override
+  late final GeneratedColumn<String> linkedMaintenanceItemSupabaseId =
+      GeneratedColumn<String>(
+        'linked_maintenance_item_supabase_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _isSyncedMeta = const VerificationMeta(
     'isSynced',
   );
@@ -1875,6 +1886,7 @@ class $InventoryItemsTable extends InventoryItems
     notes,
     localPath,
     barcode,
+    linkedMaintenanceItemSupabaseId,
     isSynced,
     lastModified,
   ];
@@ -1959,6 +1971,15 @@ class $InventoryItemsTable extends InventoryItems
         barcode.isAcceptableOrUnknown(data['barcode']!, _barcodeMeta),
       );
     }
+    if (data.containsKey('linked_maintenance_item_supabase_id')) {
+      context.handle(
+        _linkedMaintenanceItemSupabaseIdMeta,
+        linkedMaintenanceItemSupabaseId.isAcceptableOrUnknown(
+          data['linked_maintenance_item_supabase_id']!,
+          _linkedMaintenanceItemSupabaseIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_synced')) {
       context.handle(
         _isSyncedMeta,
@@ -2027,6 +2048,10 @@ class $InventoryItemsTable extends InventoryItems
         DriftSqlType.string,
         data['${effectivePrefix}barcode'],
       ),
+      linkedMaintenanceItemSupabaseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}linked_maintenance_item_supabase_id'],
+      ),
       isSynced: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_synced'],
@@ -2062,6 +2087,10 @@ class InventoryItemRow extends DataClass
   /// product-name lookup (unlike Cocktails' bottle-barcode database, boat
   /// spares have no equivalent curated catalog to look up against).
   final String? barcode;
+
+  /// #319 — ChecklistItem.supabaseId of the maintenance task that consumes
+  /// this spare. Null = unlinked.
+  final String? linkedMaintenanceItemSupabaseId;
   final bool isSynced;
   final DateTime lastModified;
   const InventoryItemRow({
@@ -2076,6 +2105,7 @@ class InventoryItemRow extends DataClass
     this.notes,
     this.localPath,
     this.barcode,
+    this.linkedMaintenanceItemSupabaseId,
     required this.isSynced,
     required this.lastModified,
   });
@@ -2105,6 +2135,11 @@ class InventoryItemRow extends DataClass
     if (!nullToAbsent || barcode != null) {
       map['barcode'] = Variable<String>(barcode);
     }
+    if (!nullToAbsent || linkedMaintenanceItemSupabaseId != null) {
+      map['linked_maintenance_item_supabase_id'] = Variable<String>(
+        linkedMaintenanceItemSupabaseId,
+      );
+    }
     map['is_synced'] = Variable<bool>(isSynced);
     map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
@@ -2133,6 +2168,10 @@ class InventoryItemRow extends DataClass
       barcode: barcode == null && nullToAbsent
           ? const Value.absent()
           : Value(barcode),
+      linkedMaintenanceItemSupabaseId:
+          linkedMaintenanceItemSupabaseId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkedMaintenanceItemSupabaseId),
       isSynced: Value(isSynced),
       lastModified: Value(lastModified),
     );
@@ -2155,6 +2194,9 @@ class InventoryItemRow extends DataClass
       notes: serializer.fromJson<String?>(json['notes']),
       localPath: serializer.fromJson<String?>(json['localPath']),
       barcode: serializer.fromJson<String?>(json['barcode']),
+      linkedMaintenanceItemSupabaseId: serializer.fromJson<String?>(
+        json['linkedMaintenanceItemSupabaseId'],
+      ),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
@@ -2174,6 +2216,9 @@ class InventoryItemRow extends DataClass
       'notes': serializer.toJson<String?>(notes),
       'localPath': serializer.toJson<String?>(localPath),
       'barcode': serializer.toJson<String?>(barcode),
+      'linkedMaintenanceItemSupabaseId': serializer.toJson<String?>(
+        linkedMaintenanceItemSupabaseId,
+      ),
       'isSynced': serializer.toJson<bool>(isSynced),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
@@ -2191,6 +2236,7 @@ class InventoryItemRow extends DataClass
     Value<String?> notes = const Value.absent(),
     Value<String?> localPath = const Value.absent(),
     Value<String?> barcode = const Value.absent(),
+    Value<String?> linkedMaintenanceItemSupabaseId = const Value.absent(),
     bool? isSynced,
     DateTime? lastModified,
   }) => InventoryItemRow(
@@ -2205,6 +2251,9 @@ class InventoryItemRow extends DataClass
     notes: notes.present ? notes.value : this.notes,
     localPath: localPath.present ? localPath.value : this.localPath,
     barcode: barcode.present ? barcode.value : this.barcode,
+    linkedMaintenanceItemSupabaseId: linkedMaintenanceItemSupabaseId.present
+        ? linkedMaintenanceItemSupabaseId.value
+        : this.linkedMaintenanceItemSupabaseId,
     isSynced: isSynced ?? this.isSynced,
     lastModified: lastModified ?? this.lastModified,
   );
@@ -2227,6 +2276,10 @@ class InventoryItemRow extends DataClass
       notes: data.notes.present ? data.notes.value : this.notes,
       localPath: data.localPath.present ? data.localPath.value : this.localPath,
       barcode: data.barcode.present ? data.barcode.value : this.barcode,
+      linkedMaintenanceItemSupabaseId:
+          data.linkedMaintenanceItemSupabaseId.present
+          ? data.linkedMaintenanceItemSupabaseId.value
+          : this.linkedMaintenanceItemSupabaseId,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       lastModified: data.lastModified.present
           ? data.lastModified.value
@@ -2248,6 +2301,9 @@ class InventoryItemRow extends DataClass
           ..write('notes: $notes, ')
           ..write('localPath: $localPath, ')
           ..write('barcode: $barcode, ')
+          ..write(
+            'linkedMaintenanceItemSupabaseId: $linkedMaintenanceItemSupabaseId, ',
+          )
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
@@ -2267,6 +2323,7 @@ class InventoryItemRow extends DataClass
     notes,
     localPath,
     barcode,
+    linkedMaintenanceItemSupabaseId,
     isSynced,
     lastModified,
   );
@@ -2285,6 +2342,8 @@ class InventoryItemRow extends DataClass
           other.notes == this.notes &&
           other.localPath == this.localPath &&
           other.barcode == this.barcode &&
+          other.linkedMaintenanceItemSupabaseId ==
+              this.linkedMaintenanceItemSupabaseId &&
           other.isSynced == this.isSynced &&
           other.lastModified == this.lastModified);
 }
@@ -2301,6 +2360,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
   final Value<String?> notes;
   final Value<String?> localPath;
   final Value<String?> barcode;
+  final Value<String?> linkedMaintenanceItemSupabaseId;
   final Value<bool> isSynced;
   final Value<DateTime> lastModified;
   const InventoryItemsCompanion({
@@ -2315,6 +2375,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     this.notes = const Value.absent(),
     this.localPath = const Value.absent(),
     this.barcode = const Value.absent(),
+    this.linkedMaintenanceItemSupabaseId = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
@@ -2330,6 +2391,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     this.notes = const Value.absent(),
     this.localPath = const Value.absent(),
     this.barcode = const Value.absent(),
+    this.linkedMaintenanceItemSupabaseId = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
@@ -2345,6 +2407,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     Expression<String>? notes,
     Expression<String>? localPath,
     Expression<String>? barcode,
+    Expression<String>? linkedMaintenanceItemSupabaseId,
     Expression<bool>? isSynced,
     Expression<DateTime>? lastModified,
   }) {
@@ -2360,6 +2423,8 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
       if (notes != null) 'notes': notes,
       if (localPath != null) 'local_path': localPath,
       if (barcode != null) 'barcode': barcode,
+      if (linkedMaintenanceItemSupabaseId != null)
+        'linked_maintenance_item_supabase_id': linkedMaintenanceItemSupabaseId,
       if (isSynced != null) 'is_synced': isSynced,
       if (lastModified != null) 'last_modified': lastModified,
     });
@@ -2377,6 +2442,7 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     Value<String?>? notes,
     Value<String?>? localPath,
     Value<String?>? barcode,
+    Value<String?>? linkedMaintenanceItemSupabaseId,
     Value<bool>? isSynced,
     Value<DateTime>? lastModified,
   }) {
@@ -2392,6 +2458,9 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
       notes: notes ?? this.notes,
       localPath: localPath ?? this.localPath,
       barcode: barcode ?? this.barcode,
+      linkedMaintenanceItemSupabaseId:
+          linkedMaintenanceItemSupabaseId ??
+          this.linkedMaintenanceItemSupabaseId,
       isSynced: isSynced ?? this.isSynced,
       lastModified: lastModified ?? this.lastModified,
     );
@@ -2433,6 +2502,11 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
     if (barcode.present) {
       map['barcode'] = Variable<String>(barcode.value);
     }
+    if (linkedMaintenanceItemSupabaseId.present) {
+      map['linked_maintenance_item_supabase_id'] = Variable<String>(
+        linkedMaintenanceItemSupabaseId.value,
+      );
+    }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
     }
@@ -2456,6 +2530,9 @@ class InventoryItemsCompanion extends UpdateCompanion<InventoryItemRow> {
           ..write('notes: $notes, ')
           ..write('localPath: $localPath, ')
           ..write('barcode: $barcode, ')
+          ..write(
+            'linkedMaintenanceItemSupabaseId: $linkedMaintenanceItemSupabaseId, ',
+          )
           ..write('isSynced: $isSynced, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
@@ -24796,6 +24873,7 @@ typedef $$InventoryItemsTableCreateCompanionBuilder =
       Value<String?> notes,
       Value<String?> localPath,
       Value<String?> barcode,
+      Value<String?> linkedMaintenanceItemSupabaseId,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
     });
@@ -24812,6 +24890,7 @@ typedef $$InventoryItemsTableUpdateCompanionBuilder =
       Value<String?> notes,
       Value<String?> localPath,
       Value<String?> barcode,
+      Value<String?> linkedMaintenanceItemSupabaseId,
       Value<bool> isSynced,
       Value<DateTime> lastModified,
     });
@@ -24879,6 +24958,12 @@ class $$InventoryItemsTableFilterComposer
     column: $table.barcode,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get linkedMaintenanceItemSupabaseId =>
+      $composableBuilder(
+        column: $table.linkedMaintenanceItemSupabaseId,
+        builder: (column) => ColumnFilters(column),
+      );
 
   ColumnFilters<bool> get isSynced => $composableBuilder(
     column: $table.isSynced,
@@ -24955,6 +25040,12 @@ class $$InventoryItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get linkedMaintenanceItemSupabaseId =>
+      $composableBuilder(
+        column: $table.linkedMaintenanceItemSupabaseId,
+        builder: (column) => ColumnOrderings(column),
+      );
+
   ColumnOrderings<bool> get isSynced => $composableBuilder(
     column: $table.isSynced,
     builder: (column) => ColumnOrderings(column),
@@ -25014,6 +25105,12 @@ class $$InventoryItemsTableAnnotationComposer
   GeneratedColumn<String> get barcode =>
       $composableBuilder(column: $table.barcode, builder: (column) => column);
 
+  GeneratedColumn<String> get linkedMaintenanceItemSupabaseId =>
+      $composableBuilder(
+        column: $table.linkedMaintenanceItemSupabaseId,
+        builder: (column) => column,
+      );
+
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
 
@@ -25071,6 +25168,8 @@ class $$InventoryItemsTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<String?> localPath = const Value.absent(),
                 Value<String?> barcode = const Value.absent(),
+                Value<String?> linkedMaintenanceItemSupabaseId =
+                    const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => InventoryItemsCompanion(
@@ -25085,6 +25184,8 @@ class $$InventoryItemsTableTableManager
                 notes: notes,
                 localPath: localPath,
                 barcode: barcode,
+                linkedMaintenanceItemSupabaseId:
+                    linkedMaintenanceItemSupabaseId,
                 isSynced: isSynced,
                 lastModified: lastModified,
               ),
@@ -25101,6 +25202,8 @@ class $$InventoryItemsTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<String?> localPath = const Value.absent(),
                 Value<String?> barcode = const Value.absent(),
+                Value<String?> linkedMaintenanceItemSupabaseId =
+                    const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => InventoryItemsCompanion.insert(
@@ -25115,6 +25218,8 @@ class $$InventoryItemsTableTableManager
                 notes: notes,
                 localPath: localPath,
                 barcode: barcode,
+                linkedMaintenanceItemSupabaseId:
+                    linkedMaintenanceItemSupabaseId,
                 isSynced: isSynced,
                 lastModified: lastModified,
               ),

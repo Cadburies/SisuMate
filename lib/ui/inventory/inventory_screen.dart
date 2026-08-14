@@ -18,10 +18,13 @@ import '../../services/revenuecat_service.dart';
 import '../../services/record_share_service.dart';
 import '../../services/import_service.dart';
 import '../../services/inventory_reorder_service.dart';
+import '../../providers/checklist_provider.dart';
 
 final inventoryItemsProvider = StreamProvider<List<InventoryItem>>((ref) {
   return ref.watch(inventoryItemRepositoryProvider).watchInventoryItems();
 });
+
+const _noMaintLink = 'None';
 
 String _formatQuantity(InventoryItem item) {
   final qty = item.quantity == item.quantity.roundToDouble()
@@ -81,6 +84,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final itemsAsync = ref.watch(inventoryItemsProvider);
     final isPro = isProAsync.value ?? false;
     final allItems = itemsAsync.value ?? const <InventoryItem>[];
+    final maintItems = ref
+            .watch(checklistItemsForAppTypeProvider('maintenance'))
+            .asData
+            ?.value ??
+        const <ChecklistItem>[];
+    final maintGroups =
+        ref.watch(checklistGroupsProvider('maintenance')).asData?.value ??
+            const <ChecklistGroup>[];
 
     return Scaffold(
       body: SafeArea(
@@ -232,8 +243,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       itemBuilder: (context, i) {
                         final item = filtered[i];
                         return MainListTile(
-                          onTap: () =>
-                              _showDetail(context, ref, item, isPro),
+                          onTap: () => _showDetail(
+                              context, ref, item, isPro, maintItems, maintGroups),
                           header: MainListTile.iconHeader(
                             icon: Icons.inventory_2_outlined,
                             iconColor: Colors.brown,
@@ -267,7 +278,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ? null
           : FloatingActionButton(
               onPressed: () => isPro
-                  ? _showAddEditDialog(context, ref, allItems)
+                  ? _showAddEditDialog(
+                      context, ref, allItems, maintItems, maintGroups)
                   : _showProRequiredDialog(context),
               child: const Icon(Icons.add),
             ),
@@ -330,12 +342,37 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   void _showDetail(
-      BuildContext context, WidgetRef ref, InventoryItem item, bool isPro) {
+    BuildContext context,
+    WidgetRef ref,
+    InventoryItem item,
+    bool isPro,
+    List<ChecklistItem> maintItems,
+    List<ChecklistGroup> maintGroups,
+  ) {
     final items =
         ref.read(inventoryItemsProvider).asData?.value ?? [item];
     final index = items.indexWhere((m) => m.supabaseId == item.supabaseId);
     final list = index < 0 ? [item] : items;
     final start = index < 0 ? 0 : index;
+    String groupTitleOf(String groupId) =>
+        maintGroups.where((g) => g.supabaseId == groupId).firstOrNull?.title ??
+        '';
+    final usedByOptions = [
+      _noMaintLink,
+      ...maintItems.map(
+        (c) => InventoryReorderService.maintenanceItemLabel(
+          c,
+          groupTitleOf: groupTitleOf,
+        ),
+      ),
+    ];
+    String usedByLabelFor(InventoryItem m) =>
+        InventoryReorderService.usedByLabel(
+          m,
+          maintItems,
+          groupTitleOf: groupTitleOf,
+        ) ??
+        _noMaintLink;
 
     context.push(
       AppRoutes.inventoryDetail,
@@ -369,6 +406,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   label: 'Barcode',
                   value: m.barcode ?? ''),
               RecordField(
+                  key: 'usedBy',
+                  label: 'Used by',
+                  value: usedByLabelFor(m),
+                  options: usedByOptions),
+              RecordField(
                   key: 'notes',
                   label: 'Notes',
                   value: m.notes ?? '',
@@ -381,6 +423,20 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           },
           onSave: (i, values) async {
             final m = list[i];
+            final usedBy = values['usedBy'];
+            String? linkedId;
+            if (usedBy != null && usedBy != _noMaintLink) {
+              for (final c in maintItems) {
+                final label = InventoryReorderService.maintenanceItemLabel(
+                  c,
+                  groupTitleOf: groupTitleOf,
+                );
+                if (label == usedBy) {
+                  linkedId = c.supabaseId;
+                  break;
+                }
+              }
+            }
             m
               ..name = values['name'] ?? m.name
               ..quantity =
@@ -393,6 +449,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   : values['serialNumber']
               ..barcode =
                   (values['barcode'] ?? '').isEmpty ? null : values['barcode']
+              ..linkedMaintenanceItemSupabaseId = linkedId
               ..notes = (values['notes'] ?? '').isEmpty ? null : values['notes'];
             await ref
                 .read(inventoryItemRepositoryProvider)
@@ -416,8 +473,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   void _showAddEditDialog(
-      BuildContext context, WidgetRef ref, List<InventoryItem> allItems,
-      {InventoryItem? existing}) {
+    BuildContext context,
+    WidgetRef ref,
+    List<InventoryItem> allItems,
+    List<ChecklistItem> maintItems,
+    List<ChecklistGroup> maintGroups, {
+    InventoryItem? existing,
+  }) {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     showDialog<void>(
@@ -427,6 +489,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         // #318 — barcode-collision check on scan (add flow only) needs to
         // see what's already on hand.
         existingItems: allItems,
+        maintenanceItems: maintItems,
+        maintenanceGroups: maintGroups,
         onSave: (item) async {
           final repo = ref.read(inventoryItemRepositoryProvider);
           if (existing == null) {
@@ -440,7 +504,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         },
         onOpenExisting: (match) {
           navigator.pop();
-          _showAddEditDialog(context, ref, allItems, existing: match);
+          _showAddEditDialog(
+            context,
+            ref,
+            allItems,
+            maintItems,
+            maintGroups,
+            existing: match,
+          );
         },
       ),
     );
@@ -490,6 +561,9 @@ class AddEditInventoryItemDialog extends StatefulWidget {
   /// #318 — items already on hand, for the barcode-scan duplicate check
   /// (add flow only; empty/irrelevant when editing).
   final List<InventoryItem> existingItems;
+  /// #319 — maintenance checklist items this spare can be linked to.
+  final List<ChecklistItem> maintenanceItems;
+  final List<ChecklistGroup> maintenanceGroups;
   /// Called instead of [onSave] when a scanned barcode matches an existing
   /// item and the user chooses to open it rather than add a duplicate.
   final ValueChanged<InventoryItem>? onOpenExisting;
@@ -498,6 +572,8 @@ class AddEditInventoryItemDialog extends StatefulWidget {
     this.existing,
     required this.onSave,
     this.existingItems = const [],
+    this.maintenanceItems = const [],
+    this.maintenanceGroups = const [],
     this.onOpenExisting,
   });
 
@@ -517,6 +593,7 @@ class AddEditInventoryItemDialogState
   final _barcodeCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String? _localPath;
+  String? _linkedMaintenanceItemSupabaseId;
 
   @override
   void initState() {
@@ -533,6 +610,8 @@ class AddEditInventoryItemDialogState
       _barcodeCtrl.text = existing.barcode ?? '';
       _notesCtrl.text = existing.notes ?? '';
       _localPath = existing.localPath;
+      _linkedMaintenanceItemSupabaseId =
+          existing.linkedMaintenanceItemSupabaseId;
     }
   }
 
@@ -670,6 +749,44 @@ class AddEditInventoryItemDialogState
                   ],
                 ),
                 const SizedBox(height: 8),
+                if (widget.maintenanceItems.isNotEmpty ||
+                    _linkedMaintenanceItemSupabaseId != null) ...[
+                  DropdownButtonFormField<String?>(
+                    initialValue: _linkedMaintenanceItemSupabaseId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Used by'),
+                    items: [
+                      const DropdownMenuItem(
+                          value: null, child: Text(_noMaintLink)),
+                      for (final c in widget.maintenanceItems)
+                        DropdownMenuItem(
+                          value: c.supabaseId,
+                          child: Text(
+                            InventoryReorderService.maintenanceItemLabel(
+                              c,
+                              groupTitleOf: (id) => widget.maintenanceGroups
+                                      .where((g) => g.supabaseId == id)
+                                      .firstOrNull
+                                      ?.title ??
+                                  '',
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      if (_linkedMaintenanceItemSupabaseId != null &&
+                          !widget.maintenanceItems.any((c) =>
+                              c.supabaseId ==
+                              _linkedMaintenanceItemSupabaseId))
+                        DropdownMenuItem(
+                          value: _linkedMaintenanceItemSupabaseId,
+                          child: const Text('Linked task missing'),
+                        ),
+                    ],
+                    onChanged: (v) => setState(
+                        () => _linkedMaintenanceItemSupabaseId = v),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 TextFormField(
                   controller: _notesCtrl,
                   decoration: const InputDecoration(labelText: 'Notes'),
@@ -728,6 +845,7 @@ class AddEditInventoryItemDialogState
       ..unit = _unitCtrl.text.isEmpty ? null : _unitCtrl.text
       ..serialNumber = _serialCtrl.text.isEmpty ? null : _serialCtrl.text
       ..barcode = _barcodeCtrl.text.isEmpty ? null : _barcodeCtrl.text
+      ..linkedMaintenanceItemSupabaseId = _linkedMaintenanceItemSupabaseId
       ..notes = _notesCtrl.text.isEmpty ? null : _notesCtrl.text
       ..localPath = _localPath;
     widget.onSave(item);

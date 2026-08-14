@@ -10,6 +10,8 @@ import '../components/smart_image.dart';
 import '../components/item_detail_shell.dart';
 import '../components/common_drawer.dart';
 import '../components/photo_source_picker.dart';
+import '../maintenance/linked_spare_prompt.dart';
+import '../../services/inventory_reorder_service.dart';
 
 /// Swipeable checklist item detail (theme.md §7 / UX5).
 /// Used by Checklists, Maintenance, and Safety via [showCheckPageViewer].
@@ -89,6 +91,35 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
     return lines;
   }
 
+  List<Widget> _spareOnHandSection(
+      ChecklistItem item, ItemListStateColors c) {
+    final inventory = ref.watch(inventoryForSpareLinksProvider).asData?.value ??
+        const <InventoryItem>[];
+    final linked =
+        InventoryReorderService.linkedTo(inventory, item.supabaseId);
+    if (linked.isEmpty) return const [];
+    return [
+      const SizedBox(height: 12),
+      Text(
+        'Spare on hand',
+        style: TextStyle(
+          color: c.title,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
+      ),
+      const SizedBox(height: 4),
+      for (final spare in linked)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Text(
+            InventoryReorderService.spareOnHandLabel(spare),
+            style: TextStyle(color: c.desc),
+          ),
+        ),
+    ];
+  }
+
   Color _stateColor(ChecklistItem item) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = item.isHidden
@@ -145,6 +176,7 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
   Future<void> _toggleCompletion(int index) async {
     if (!await _checkFreeEditGate()) return;
     final item = _item(index);
+    final completing = !item.isCompleted;
     await ref.read(checklistRepositoryProvider).toggleComplete(item);
     if (!mounted) return;
     setState(() {});
@@ -155,6 +187,12 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
             : '${item.title} marked as incomplete'),
         duration: const Duration(seconds: 1),
       ),
+    );
+    await LinkedSparePrompt.afterCompleting(
+      context: context,
+      ref: ref,
+      checklistItemSupabaseId: item.supabaseId,
+      nowCompleted: completing,
     );
   }
 
@@ -344,6 +382,7 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
                 const SizedBox(height: 4),
                 Text(item.notes!, style: TextStyle(color: c.desc)),
               ],
+              ..._spareOnHandSection(item, c),
               const SizedBox(height: 12),
               Text(
                 item.isCompleted

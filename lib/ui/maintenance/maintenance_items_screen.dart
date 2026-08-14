@@ -11,6 +11,7 @@ import '../checklists/check_page_viewer.dart';
 import 'maintenance_ai_explainer_dialog.dart';
 import 'warranty_check_dialog.dart';
 import 'part_sourcing_dialog.dart';
+import 'linked_spare_prompt.dart';
 
 import '../../providers/checklist_provider.dart';
 import '../../providers/package_info_provider.dart';
@@ -60,6 +61,9 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
     final currentItems = asyncItems.asData?.value ?? const <ChecklistItem>[];
     final showHidden =
         ref.watch(userSettingsProvider).asData?.value?.showHiddenItems ?? false;
+    // #319 — keep the spare-link inventory watch warm so the decrement
+    // prompt after Complete doesn't wait on a fresh stream subscribe.
+    ref.watch(inventoryForSpareLinksProvider);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -300,8 +304,16 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
   }
 
   Future<void> _toggleComplete(ChecklistItem item) async {
+    final completing = !item.isCompleted;
     final repository = ref.read(checklistRepositoryProvider);
     await repository.toggleComplete(item);
+    if (!mounted) return;
+    await LinkedSparePrompt.afterCompleting(
+      context: context,
+      ref: ref,
+      checklistItemSupabaseId: item.supabaseId,
+      nowCompleted: completing,
+    );
   }
 
   Future<void> _toggleHide(ChecklistItem item) async {

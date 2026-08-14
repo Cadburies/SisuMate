@@ -10,13 +10,17 @@ void main() {
       String? notes,
       String? location,
       String? barcode,
+      String? linkedMaintenanceItemSupabaseId,
+      String? unit,
     }) =>
         InventoryItem()
           ..name = name
           ..quantity = qty
           ..notes = notes
           ..location = location
-          ..barcode = barcode;
+          ..barcode = barcode
+          ..unit = unit
+          ..linkedMaintenanceItemSupabaseId = linkedMaintenanceItemSupabaseId;
 
     test('default min 1 flags zero stock', () {
       final low = InventoryReorderService.lowStock([
@@ -76,6 +80,61 @@ void main() {
         final items = [item(name: 'No barcode item')];
         expect(InventoryReorderService.findByBarcode(items, null), isNull);
         expect(InventoryReorderService.findByBarcode(items, ''), isNull);
+      });
+    });
+
+    group('linkedTo / usedBy (#319)', () {
+      test('linkedTo returns only items pointing at that checklist id', () {
+        final items = [
+          item(name: 'Impeller', linkedMaintenanceItemSupabaseId: 'maint_1'),
+          item(name: 'Belt', linkedMaintenanceItemSupabaseId: 'maint_2'),
+          item(name: 'Unlinked'),
+        ];
+        expect(
+          InventoryReorderService.linkedTo(items, 'maint_1').map((e) => e.name),
+          ['Impeller'],
+        );
+        expect(InventoryReorderService.linkedTo(items, null), isEmpty);
+        expect(InventoryReorderService.linkedTo(items, ''), isEmpty);
+      });
+
+      test('usedByLabel prefixes the group title and reports a missing task', () {
+        final task = ChecklistItem()
+          ..supabaseId = 'maint_1'
+          ..groupSupabaseId = 'grp_eng'
+          ..title = 'Replace impeller';
+        final linked = item(
+          name: 'Impeller',
+          linkedMaintenanceItemSupabaseId: 'maint_1',
+        );
+        expect(
+          InventoryReorderService.usedByLabel(
+            linked,
+            [task],
+            groupTitleOf: (id) => id == 'grp_eng' ? 'Engine Room' : '',
+          ),
+          'Engine Room — Replace impeller',
+        );
+        expect(
+          InventoryReorderService.usedByLabel(item(name: 'Unlinked'), [task]),
+          isNull,
+        );
+        expect(
+          InventoryReorderService.usedByLabel(
+            item(name: 'Orphan', linkedMaintenanceItemSupabaseId: 'gone'),
+            [task],
+          ),
+          'Linked task missing',
+        );
+      });
+
+      test('spareOnHandLabel includes qty, unit, and min', () {
+        expect(
+          InventoryReorderService.spareOnHandLabel(
+            item(name: 'Impeller', qty: 3, unit: 'pcs'),
+          ),
+          'Impeller: 3 pcs on hand, min 1',
+        );
       });
     });
   });

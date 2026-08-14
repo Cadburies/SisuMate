@@ -467,7 +467,9 @@ class ImportService {
       ..quantity = qty ?? 1
       ..unit = unit
       ..serialNumber = _optString(j, 'serialNumber', i)
-      ..notes = _optString(j, 'notes', i);
+      ..notes = _optString(j, 'notes', i)
+      ..linkedMaintenanceItemSupabaseId =
+          _optString(j, 'linkedMaintenanceItemSupabaseId', i);
   }
 
   static ImportedRecipe _parseRecipe(Map<String, dynamic> j, int i) {
@@ -784,6 +786,9 @@ class ImportService {
               'unit': shown?.unit ?? i.unit,
             if (i.serialNumber != null) 'serialNumber': i.serialNumber,
             if (i.notes != null) 'notes': i.notes,
+            if (i.linkedMaintenanceItemSupabaseId != null)
+              'linkedMaintenanceItemSupabaseId':
+                  i.linkedMaintenanceItemSupabaseId,
           };
         }).toList(),
       );

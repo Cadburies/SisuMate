@@ -100,4 +100,58 @@ class InventoryReorderService {
     }
     return null;
   }
+
+  /// #319 — inventory rows linked to this maintenance checklist item.
+  /// Empty/null ids never match (an unlinked spare is not "used by" anything).
+  static List<InventoryItem> linkedTo(
+    Iterable<InventoryItem> items,
+    String? checklistItemSupabaseId,
+  ) {
+    if (checklistItemSupabaseId == null || checklistItemSupabaseId.isEmpty) {
+      return const [];
+    }
+    return items
+        .where((i) => i.linkedMaintenanceItemSupabaseId == checklistItemSupabaseId)
+        .toList();
+  }
+
+  /// "Engine Room — Replace impeller" (group prefix optional).
+  static String maintenanceItemLabel(
+    ChecklistItem item, {
+    String Function(String groupSupabaseId)? groupTitleOf,
+  }) {
+    final title = item.title.isNotEmpty ? item.title : item.name;
+    final group = groupTitleOf?.call(item.groupSupabaseId);
+    if (group != null && group.isNotEmpty) return '$group — $title';
+    return title;
+  }
+
+  /// Display label for the maintenance task an inventory item is used by.
+  /// [groupTitleOf] prefixes the item title with its group when provided.
+  /// Returns null when the item is unlinked.
+  static String? usedByLabel(
+    InventoryItem item,
+    Iterable<ChecklistItem> maintenanceItems, {
+    String Function(String groupSupabaseId)? groupTitleOf,
+  }) {
+    final id = item.linkedMaintenanceItemSupabaseId;
+    if (id == null || id.isEmpty) return null;
+    for (final c in maintenanceItems) {
+      if (c.supabaseId != id) continue;
+      return maintenanceItemLabel(c, groupTitleOf: groupTitleOf);
+    }
+    return 'Linked task missing';
+  }
+
+  /// "Spare impeller: 3 pcs on hand, min 1" — used on the maintenance
+  /// item detail and the decrement prompt.
+  static String spareOnHandLabel(InventoryItem item) {
+    final qty = item.quantity == item.quantity.roundToDouble()
+        ? item.quantity.toInt().toString()
+        : item.quantity.toString();
+    final unit = (item.unit != null && item.unit!.isNotEmpty) ? ' ${item.unit}' : '';
+    final min = minQtyFor(item);
+    final minStr = min == min.roundToDouble() ? min.toInt().toString() : min.toString();
+    return '${item.name}: $qty$unit on hand, min $minStr';
+  }
 }

@@ -103,6 +103,10 @@ expect_ok(
     "sailing_polar_samples.seaState",
     "/rest/v1/sailing_polar_samples?select=supabaseId,seaState&limit=1",
 )
+expect_ok(
+    "inventory_items.linkedMaintenanceItemSupabaseId",
+    "/rest/v1/inventory_items?select=supabaseId,linkedMaintenanceItemSupabaseId&limit=1",
+)
 
 failed = [(l, d) for l, s, d in checks if s == "FAIL"]
 for label, status, detail in checks:

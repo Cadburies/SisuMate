@@ -64,6 +64,24 @@ void main() {
       expect(all.single.serialNumber, 'SN-99');
     });
 
+    test('#319: linkedMaintenanceItemSupabaseId round-trips through add and update',
+        () async {
+      final item = InventoryItem()
+        ..supabaseId = 'inv_1'
+        ..name = 'Spare impeller'
+        ..linkedMaintenanceItemSupabaseId = 'maint_impeller';
+      await repo.addInventoryItem(item);
+
+      var all = await repo.watchInventoryItems().first;
+      expect(all.single.linkedMaintenanceItemSupabaseId, 'maint_impeller');
+
+      item.linkedMaintenanceItemSupabaseId = null;
+      await repo.updateInventoryItem(item);
+
+      all = await repo.watchInventoryItems().first;
+      expect(all.single.linkedMaintenanceItemSupabaseId, isNull);
+    });
+
     test('#318: barcode round-trips through add and update', () async {
       final item = InventoryItem()
         ..supabaseId = 'inv_1'

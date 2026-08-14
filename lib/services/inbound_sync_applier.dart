@@ -650,6 +650,8 @@ class InboundSyncApplier {
     ..serialNumber = r.serialNumber
     ..notes = r.notes
     ..localPath = r.localPath
+    ..barcode = r.barcode
+    ..linkedMaintenanceItemSupabaseId = r.linkedMaintenanceItemSupabaseId
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified;
 
@@ -1073,6 +1075,8 @@ class InboundSyncApplier {
       serialNumber: Value(i.serialNumber),
       notes: Value(i.notes),
       localPath: Value(i.localPath),
+      barcode: Value(i.barcode),
+      linkedMaintenanceItemSupabaseId: Value(i.linkedMaintenanceItemSupabaseId),
       isSynced: Value(i.isSynced),
       lastModified: Value(i.lastModified),
     );

@@ -78,6 +78,9 @@ class InventoryItems extends Table {
   /// product-name lookup (unlike Cocktails' bottle-barcode database, boat
   /// spares have no equivalent curated catalog to look up against).
   TextColumn get barcode => text().nullable()();
+  /// #319 — ChecklistItem.supabaseId of the maintenance task that consumes
+  /// this spare. Null = unlinked.
+  TextColumn get linkedMaintenanceItemSupabaseId => text().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
@@ -743,7 +746,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

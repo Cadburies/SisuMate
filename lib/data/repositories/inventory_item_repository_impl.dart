@@ -23,6 +23,7 @@ class InventoryItemRepositoryImpl implements InventoryItemRepository {
     ..notes = r.notes
     ..localPath = r.localPath
     ..barcode = r.barcode
+    ..linkedMaintenanceItemSupabaseId = r.linkedMaintenanceItemSupabaseId
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified;
 
@@ -38,6 +39,8 @@ class InventoryItemRepositoryImpl implements InventoryItemRepository {
         notes: Value(i.notes),
         localPath: Value(i.localPath),
         barcode: Value(i.barcode),
+        linkedMaintenanceItemSupabaseId:
+            Value(i.linkedMaintenanceItemSupabaseId),
         isSynced: Value(i.isSynced),
         lastModified: Value(i.lastModified),
       );

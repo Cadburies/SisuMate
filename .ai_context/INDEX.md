@@ -5,7 +5,8 @@
 
 ## NEXT
 
-- **Last:** direct user ask — Anchor Alarm Info panel (`anchor_info_panel.dart`) now shows air/water temp (NMEA MTA/MTW via YDWG [confident], Home Assistant entity [confident, °F auto-converts], DataHub `nmead_status` guessed keys [**unverified**, flagged in code — confirm against a live Hub response]), nearest NOAA tide station + next high/low (`TideService`, pre-existing), and a 6h hourly forecast strip (`WeatherService`, pre-existing); depth was already shown. `UserSettings` gained `homeAssistantAirTempEntity`/`WaterTempEntity` (schemaVersion 23→24, local-only table, no Supabase migration needed). No GitHub issue (direct request, not backlog).
+- **Last:** #319 — inventory spare ↔ maintenance checklist item link (`linkedMaintenanceItemSupabaseId`, schema 24→25 + remote column applied). Complete offers skippable decrement; both-direction labels on inventory detail / CheckPageViewer.
+- **Next:** #320 inventory qty-change history (same inventory model/Drift hotspot). Then #322 community offline cache. #323 research-only, skip.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

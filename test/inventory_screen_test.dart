@@ -7,13 +7,23 @@ Future<void> _pump(
   WidgetTester tester, {
   InventoryItem? existing,
   required void Function(InventoryItem) onSave,
+  List<ChecklistItem> maintenanceItems = const [],
+  List<ChecklistGroup> maintenanceGroups = const [],
 }) {
   return tester.pumpWidget(MaterialApp(
     home: Scaffold(
-      body: AddEditInventoryItemDialog(existing: existing, onSave: onSave),
+      body: AddEditInventoryItemDialog(
+        existing: existing,
+        onSave: onSave,
+        maintenanceItems: maintenanceItems,
+        maintenanceGroups: maintenanceGroups,
+      ),
     ),
   ));
 }
+
+Future<void> _reveal(WidgetTester tester, Finder finder) =>
+    tester.ensureVisible(finder);
 
 void main() {
   group('AddEditInventoryItemDialog', () {
@@ -106,6 +116,85 @@ void main() {
       await tester.pump();
 
       expect(saved!.barcode, isNull);
+    });
+
+    testWidgets('#319: used-by picker is hidden with no maintenance tasks',
+        (tester) async {
+      await _pump(tester, onSave: (_) {});
+      expect(find.text('Used by'), findsNothing);
+    });
+
+    testWidgets('#319: linking a spare to a maintenance task saves its supabaseId',
+        (tester) async {
+      final group = ChecklistGroup()
+        ..supabaseId = 'grp_eng'
+        ..title = 'Engine Room';
+      final task = ChecklistItem()
+        ..supabaseId = 'maint_impeller'
+        ..groupSupabaseId = 'grp_eng'
+        ..title = 'Replace impeller';
+
+      InventoryItem? saved;
+      await _pump(
+        tester,
+        onSave: (i) => saved = i,
+        maintenanceItems: [task],
+        maintenanceGroups: [group],
+      );
+
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Name'), 'Spare impeller');
+
+      final picker =
+          find.widgetWithText(DropdownButtonFormField<String?>, 'Used by');
+      await _reveal(tester, picker);
+      await tester.tap(picker);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Engine Room — Replace impeller').last);
+      await tester.pumpAndSettle();
+
+      final saveButton = find.text('Save');
+      await _reveal(tester, saveButton);
+      await tester.tap(saveButton);
+      await tester.pump();
+
+      expect(saved!.linkedMaintenanceItemSupabaseId, 'maint_impeller');
+    });
+
+    testWidgets(
+        '#319: editing a linked spare pre-selects the task; None clears it',
+        (tester) async {
+      final task = ChecklistItem()
+        ..supabaseId = 'maint_impeller'
+        ..groupSupabaseId = 'grp_eng'
+        ..title = 'Replace impeller';
+      final existing = InventoryItem()
+        ..supabaseId = 'inv_1'
+        ..name = 'Spare impeller'
+        ..linkedMaintenanceItemSupabaseId = 'maint_impeller';
+
+      InventoryItem? saved;
+      await _pump(
+        tester,
+        existing: existing,
+        onSave: (i) => saved = i,
+        maintenanceItems: [task],
+      );
+
+      final picker =
+          find.widgetWithText(DropdownButtonFormField<String?>, 'Used by');
+      await _reveal(tester, picker);
+      await tester.tap(picker);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('None').last);
+      await tester.pumpAndSettle();
+
+      final saveButton = find.text('Save');
+      await _reveal(tester, saveButton);
+      await tester.tap(saveButton);
+      await tester.pump();
+
+      expect(saved!.linkedMaintenanceItemSupabaseId, isNull);
     });
   });
 }
