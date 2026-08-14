@@ -308,6 +308,9 @@ void main() {
       expect(find.text('12.00000, -61.70000'), findsAtLeastNWidgets(1));
       // UI + radius label path: default 30m text field value.
       expect(find.text('30'), findsWidgets);
+      // #329 — Watch tab hands off to Weather's planner / forecast.
+      expect(find.text('Plan passage'), findsOneWidget);
+      expect(find.text('Weather at hook'), findsOneWidget);
 
       // Flush any Drift cancel timers from intermediate rebuilds, then unmount.
       await tester.pump(const Duration(milliseconds: 1));

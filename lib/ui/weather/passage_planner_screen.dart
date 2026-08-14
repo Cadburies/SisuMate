@@ -14,6 +14,7 @@ import '../../services/boat_polar_service.dart';
 import '../../services/grib_download_service.dart';
 import '../../services/weather_routing_service.dart';
 import '../../services/weather_service.dart';
+import '../passage_handoff.dart';
 import 'passage_weather_briefing_dialog.dart';
 
 class _Wp {
@@ -66,6 +67,8 @@ HourlyWeather? closestHourlyForEta(
 class PassagePlannerScreen extends ConsumerStatefulWidget {
   final double? initialLat;
   final double? initialLon;
+  /// #329 — optional start/dest from Anchor (hook or later a saved spot).
+  final PassageHandoff? handoff;
   // #237: injectable for tests — WeatherService.fetch() itself already
   // accepts a client per-call; this just threads a test's MockClient
   // through the widget boundary the same way LocationService is injected
@@ -76,6 +79,7 @@ class PassagePlannerScreen extends ConsumerStatefulWidget {
     super.key,
     this.initialLat,
     this.initialLon,
+    this.handoff,
     this.weatherClient,
   });
 
@@ -109,11 +113,23 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
   void initState() {
     super.initState();
     _mapController = MapController();
-    final lat = widget.initialLat ?? 33.45;
-    final lon = widget.initialLon ?? -112.07;
-    _wps = [
-      _Wp('Departure', lat, lon),
-      _Wp('Waypoint 1', lat + 0.3, lon + 0.4),
+    _wps = _seedWaypoints();
+  }
+
+  List<_Wp> _seedWaypoints() {
+    final h = widget.handoff;
+    final startLat = h?.startLat ?? widget.initialLat ?? 33.45;
+    final startLon = h?.startLon ?? widget.initialLon ?? -112.07;
+    final startName = h?.startName ?? 'Departure';
+    if (h != null && h.hasDest) {
+      return [
+        _Wp(startName, startLat, startLon),
+        _Wp(h.destName ?? 'Destination', h.destLat!, h.destLon!),
+      ];
+    }
+    return [
+      _Wp(startName, startLat, startLon),
+      _Wp('Waypoint 1', startLat + 0.3, startLon + 0.4),
     ];
   }
 

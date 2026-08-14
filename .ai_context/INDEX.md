@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #323 — Community share kinds beyond checklists: Chef recipes, cocktails/house mixes, collections, shopping lists. Anchorage presets deferred (coords/privacy). No Drift schema; did not take #327.
-- **Next:** #327 quantity layers (owns app_database).
+- **Last:** #329 — Anchor↔Weather hand-off (`PassageHandoff`). Planner owns routing; Anchor owns the hook. No #328 catalog yet (start=hook extras). Did not take #327.
+- **Next:** #328 saved spots can call `PassageHandoff.toDestination`. #327 quantity layers (owns app_database).
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

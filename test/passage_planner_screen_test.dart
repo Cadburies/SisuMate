@@ -14,6 +14,7 @@ import 'package:sisu_mate/core/units.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/models/models.dart';
 import 'package:sisu_mate/services/weather_service.dart';
+import 'package:sisu_mate/ui/passage_handoff.dart';
 import 'package:sisu_mate/ui/weather/passage_planner_screen.dart';
 
 /// Widget-level coverage for the passage planner (TEST1b, "weather UI pump").
@@ -37,6 +38,7 @@ void main() {
     bool imperial = false,
     http.Client? weatherClient,
     ProviderContainer? existingContainer,
+    PassageHandoff? handoff,
   }) async {
     final container = existingContainer ?? ProviderContainer();
     if (existingContainer == null) addTearDown(container.dispose);
@@ -47,13 +49,48 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          home: PassagePlannerScreen(weatherClient: weatherClient),
+          home: PassagePlannerScreen(
+            weatherClient: weatherClient,
+            handoff: handoff,
+          ),
         ),
       ),
     );
     await tester.pump();
     return container;
   }
+
+  testWidgets('#329: fromHook seeds start name; dest stays a generic waypoint',
+      (tester) async {
+    await pumpPlanner(
+      tester,
+      handoff: PassageHandoff.fromHook(lat: 26.5412, lon: -77.0634),
+    );
+
+    expect(find.widgetWithText(TextFormField, 'Hook'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Waypoint 1'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Marsh Harbour'), findsNothing);
+  });
+
+  testWidgets(
+      '#329: toDestination seeds start + named dest (saved-spot contract)',
+      (tester) async {
+    await pumpPlanner(
+      tester,
+      handoff: PassageHandoff.toDestination(
+        startName: 'Hook',
+        startLat: 26.5412,
+        startLon: -77.0634,
+        destName: 'Marsh Harbour',
+        destLat: 26.5410,
+        destLon: -77.0600,
+      ),
+    );
+
+    expect(find.widgetWithText(TextFormField, 'Hook'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Marsh Harbour'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Waypoint 1'), findsNothing);
+  });
 
   testWidgets('shows two default waypoints and a computed passage summary',
       (tester) async {

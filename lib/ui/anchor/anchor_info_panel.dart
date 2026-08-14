@@ -33,6 +33,9 @@ class AnchorInfoPanel extends StatefulWidget {
   /// `AnchorAlarmScreen.httpClient`) — real use leaves this null and each
   /// service opens its own client.
   final http.Client? httpClient;
+  /// #329 — hand off to Weather's planner / forecast (no second router).
+  final VoidCallback? onPlanPassage;
+  final VoidCallback? onOpenWeather;
 
   const AnchorInfoPanel({
     super.key,
@@ -42,6 +45,8 @@ class AnchorInfoPanel extends StatefulWidget {
     this.positionLon,
     this.positionSourceLabel,
     this.httpClient,
+    this.onPlanPassage,
+    this.onOpenWeather,
   });
 
   @override
@@ -168,6 +173,26 @@ class _AnchorInfoPanelState extends State<AnchorInfoPanel> {
             ),
           )
         else ...[
+          if (widget.onPlanPassage != null || widget.onOpenWeather != null)
+            Card(
+              child: OverflowBar(
+                alignment: MainAxisAlignment.start,
+                children: [
+                  if (widget.onPlanPassage != null)
+                    TextButton.icon(
+                      onPressed: widget.onPlanPassage,
+                      icon: const Icon(Icons.route),
+                      label: const Text('Plan passage from hook'),
+                    ),
+                  if (widget.onOpenWeather != null)
+                    TextButton.icon(
+                      onPressed: widget.onOpenWeather,
+                      icon: const Icon(Icons.wb_cloudy),
+                      label: const Text('Weather at hook'),
+                    ),
+                ],
+              ),
+            ),
           _metricCard(
             context,
             icon: Icons.radar,

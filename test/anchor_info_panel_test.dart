@@ -270,6 +270,61 @@ void main() {
     expect(find.text('21°'), findsNWidgets(6));
   });
 
+  testWidgets('#329: hand-off buttons hidden without callbacks', (tester) async {
+    final watch = AnchorWatch()
+      ..id = 1
+      ..anchorLat = 12
+      ..anchorLon = -61
+      ..radiusMeters = 30
+      ..scopeRatio = 5;
+
+    await pumpPanel(
+      tester,
+      AnchorInfoPanel(
+        activeWatch: watch,
+        boatData: boat(lat: 12, lon: -61),
+        positionLat: 12,
+        positionLon: -61,
+        httpClient: fakeNetwork(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Plan passage from hook'), findsNothing);
+    expect(find.text('Weather at hook'), findsNothing);
+  });
+
+  testWidgets('#329: hand-off buttons fire callbacks when provided',
+      (tester) async {
+    final watch = AnchorWatch()
+      ..id = 1
+      ..anchorLat = 12
+      ..anchorLon = -61
+      ..radiusMeters = 30
+      ..scopeRatio = 5;
+    var planned = 0;
+    var weather = 0;
+
+    await pumpPanel(
+      tester,
+      AnchorInfoPanel(
+        activeWatch: watch,
+        boatData: boat(lat: 12, lon: -61),
+        positionLat: 12,
+        positionLon: -61,
+        httpClient: fakeNetwork(),
+        onPlanPassage: () => planned++,
+        onOpenWeather: () => weather++,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Plan passage from hook'));
+    await tester.tap(find.text('Weather at hook'));
+    expect(planned, 1);
+    expect(weather, 1);
+  });
+
   testWidgets('no network calls at all when no position is available',
       (tester) async {
     var called = false;

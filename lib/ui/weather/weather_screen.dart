@@ -24,6 +24,7 @@ import '../../services/tide_service.dart';
 import '../../services/weather_service.dart';
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
+import '../passage_handoff.dart';
 import 'caching_tile_provider.dart';
 
 /// Weather hub — Open-Meteo forecast + map pin (S3) + device GPS (WX1).
@@ -31,8 +32,19 @@ import 'caching_tile_provider.dart';
 class WeatherScreen extends ConsumerStatefulWidget {
   final LocationService? locationService;
   final BoatPositionService? positionService;
+  /// #329 — open at the hook / a named place instead of the last saved pin.
+  final double? seedLat;
+  final double? seedLon;
+  final String? seedPlaceName;
 
-  const WeatherScreen({super.key, this.locationService, this.positionService});
+  const WeatherScreen({
+    super.key,
+    this.locationService,
+    this.positionService,
+    this.seedLat,
+    this.seedLon,
+    this.seedPlaceName,
+  });
 
   @override
   ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
@@ -138,7 +150,11 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         _cacheFolderOverride = cacheFolder;
       });
     }
-    if (lat != null && lon != null) {
+    if (widget.seedLat != null && widget.seedLon != null) {
+      _latCtrl.text = widget.seedLat!.toStringAsFixed(4);
+      _lonCtrl.text = widget.seedLon!.toStringAsFixed(4);
+      _placeName = widget.seedPlaceName;
+    } else if (lat != null && lon != null) {
       _latCtrl.text = lat.toStringAsFixed(4);
       _lonCtrl.text = lon.toStringAsFixed(4);
       // Only restore a saved name when it matches the saved pin — never apply
@@ -632,12 +648,12 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                   IconButton(
                     icon: Icon(Icons.route, color: color),
                     tooltip: 'Passage planner',
-                    onPressed: () => context.push(
-                      AppRoutes.passage,
-                      extra: {
-                        'lat': double.tryParse(_latCtrl.text),
-                        'lon': double.tryParse(_lonCtrl.text),
-                      },
+                    onPressed: () => PassageHandoff.open(
+                      context,
+                      PassageHandoff(
+                        startLat: double.tryParse(_latCtrl.text),
+                        startLon: double.tryParse(_lonCtrl.text),
+                      ),
                     ),
                   ),
                   IconButton(

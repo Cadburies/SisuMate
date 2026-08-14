@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
+import '../passage_handoff.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
@@ -450,6 +451,20 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                         _editPosition(activeWatch),
                                     onWeighAnchor: () =>
                                         _weighAnchor(activeWatch.id),
+                                    onPlanPassage: () => PassageHandoff.open(
+                                      context,
+                                      PassageHandoff.fromHook(
+                                        lat: activeWatch.anchorLat,
+                                        lon: activeWatch.anchorLon,
+                                      ),
+                                    ),
+                                    onOpenWeather: () =>
+                                        PassageHandoff.openWeatherAt(
+                                      context,
+                                      lat: activeWatch.anchorLat,
+                                      lon: activeWatch.anchorLon,
+                                      placeName: 'Hook',
+                                    ),
                                   ),
                                   if (widget.showChartMap) ...[
                                     const SizedBox(height: 12),
@@ -508,6 +523,23 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                               positionLat: _positionLat,
                               positionLon: _positionLon,
                               positionSourceLabel: _positionSourceLabel,
+                              onPlanPassage: activeWatch == null
+                                  ? null
+                                  : () => PassageHandoff.open(
+                                        context,
+                                        PassageHandoff.fromHook(
+                                          lat: activeWatch.anchorLat,
+                                          lon: activeWatch.anchorLon,
+                                        ),
+                                      ),
+                              onOpenWeather: activeWatch == null
+                                  ? null
+                                  : () => PassageHandoff.openWeatherAt(
+                                        context,
+                                        lat: activeWatch.anchorLat,
+                                        lon: activeWatch.anchorLon,
+                                        placeName: 'Hook',
+                                      ),
                             ),
                           ),
                         ],
@@ -649,12 +681,16 @@ class _AnchorStatusCard extends StatelessWidget {
   final double? boatLon;
   final VoidCallback onEditPosition;
   final VoidCallback onWeighAnchor;
+  final VoidCallback onPlanPassage;
+  final VoidCallback onOpenWeather;
   const _AnchorStatusCard({
     required this.activeWatch,
     required this.boatLat,
     required this.boatLon,
     required this.onEditPosition,
     required this.onWeighAnchor,
+    required this.onPlanPassage,
+    required this.onOpenWeather,
   });
 
   @override
@@ -688,6 +724,16 @@ class _AnchorStatusCard extends StatelessWidget {
           OverflowBar(
             alignment: MainAxisAlignment.end,
             children: [
+              TextButton.icon(
+                onPressed: onPlanPassage,
+                icon: const Icon(Icons.route),
+                label: const Text('Plan passage'),
+              ),
+              TextButton.icon(
+                onPressed: onOpenWeather,
+                icon: const Icon(Icons.wb_cloudy),
+                label: const Text('Weather at hook'),
+              ),
               TextButton.icon(
                 onPressed: onEditPosition,
                 icon: const Icon(Icons.edit_location_alt),

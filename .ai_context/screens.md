@@ -45,6 +45,7 @@
 | AI seats (GAI1/GAI5) | Lobby Skill + Style chips → `LobbyPlayer.aiDifficulty` / `aiPersona`. Dice multi-seat bots (Dudo, Liar's Dice) apply **per-seat** skill/style; board games still use max-seat skill unless they grow their own. |
 | Screen+Drift tests (TEST6) | Prefer `AppDatabase.forTesting(NativeDatabase.memory())` + real screen pump (see `test/shopping_screen_integration_test.dart`); not dialog-only. Free tier: `debugProOverrideForTests` when Sync would hit platform channels. |
 | Paywall context | Don't call `showPaywall` after async gap with a disposed `BuildContext`. |
+| Passage hand-off (#329) | Anchor owns the live hook; Weather owns routing/GRIB/departure window. Open planner with `PassageHandoff` extras (`lib/ui/passage_handoff.dart`). #328 saved spots become dest via `toDestination` — do not copy isochrones onto the alarm map. Home keeps two tiles. |
 
 ## Per-game logic
 

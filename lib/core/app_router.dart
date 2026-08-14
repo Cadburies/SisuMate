@@ -23,6 +23,7 @@ import '../ui/inventory/inventory_screen.dart';
 import '../ui/crew/crew_screen.dart';
 import '../ui/documents/documents_screen.dart';
 import '../ui/community/community_browser_screen.dart';
+import '../ui/passage_handoff.dart';
 import '../ui/weather/weather_screen.dart';
 import '../ui/weather/passage_planner_screen.dart';
 import '../ui/weather/departure_window_screen.dart';
@@ -558,16 +559,26 @@ GoRouter createAppRouter() {
       GoRoute(
         path: AppRoutes.weather,
         name: 'weather',
-        builder: (context, state) => const WeatherScreen(),
+        builder: (context, state) {
+          final extra = state.extra is Map ? state.extra as Map : null;
+          final lat = extra?['lat'];
+          final lon = extra?['lon'];
+          return WeatherScreen(
+            seedLat: lat is num ? lat.toDouble() : null,
+            seedLon: lon is num ? lon.toDouble() : null,
+            seedPlaceName: extra?['placeName'] as String?,
+          );
+        },
         routes: [
           GoRoute(
             path: 'passage',
             name: 'passage',
             builder: (context, state) {
-              final extra = state.extra as Map<String, double?>?;
+              final handoff = PassageHandoff.fromExtra(state.extra);
               return PassagePlannerScreen(
-                initialLat: extra?['lat'],
-                initialLon: extra?['lon'],
+                initialLat: handoff?.startLat,
+                initialLon: handoff?.startLon,
+                handoff: handoff,
               );
             },
           ),
