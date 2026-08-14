@@ -424,5 +424,38 @@ void main() {
       expect(items.single.name, 'Limes');
       expect(items.single.quantity, 12);
     });
+
+    test('#328: importing an anchorage template writes a local saved spot',
+        () async {
+      await seed(
+        id: 'marsh',
+        title: 'Marsh Harbour',
+        content:
+            '{"kind":"anchorage","name":"Marsh Harbour","lat":26.54,"lon":-77.06,"bottom":"sand","dangerZoneEnabled":true,"dangerZoneWidthDeg":80}',
+      );
+      expect(await liveRepo.importTemplate('marsh', 'boat-1'), isTrue);
+      final rows = await db.select(db.anchorSpots).get();
+      expect(rows.single.name, 'Marsh Harbour');
+      expect(rows.single.lat, 26.54);
+      expect(rows.single.lon, -77.06);
+      expect(rows.single.bottom, 'sand');
+      expect(rows.single.dangerZoneEnabled, isTrue);
+    });
+
+    test('#328: importing a stripped-coords anchorage has no lat/lng',
+        () async {
+      await seed(
+        id: 'shape',
+        title: 'Setup only',
+        content:
+            '{"kind":"anchorage","name":"Setup only","dangerZoneEnabled":true,"dangerZoneWidthDeg":90}',
+      );
+      expect(await liveRepo.importTemplate('shape', 'boat-1'), isTrue);
+      final rows = await db.select(db.anchorSpots).get();
+      expect(rows.single.name, 'Setup only');
+      expect(rows.single.lat, isNull);
+      expect(rows.single.lon, isNull);
+      expect(rows.single.dangerZoneEnabled, isTrue);
+    });
   });
 }

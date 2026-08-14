@@ -92,6 +92,21 @@ void main() {
     expect(find.widgetWithText(TextFormField, 'Waypoint 1'), findsNothing);
   });
 
+  testWidgets('#328: dest-only handoff still seeds the named destination',
+      (tester) async {
+    await pumpPlanner(
+      tester,
+      handoff: PassageHandoff.toDestination(
+        destName: 'Marsh Harbour',
+        destLat: 26.5410,
+        destLon: -77.0600,
+      ),
+    );
+
+    expect(find.widgetWithText(TextFormField, 'Marsh Harbour'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Departure'), findsOneWidget);
+  });
+
   testWidgets('shows two default waypoints and a computed passage summary',
       (tester) async {
     await pumpPlanner(tester);

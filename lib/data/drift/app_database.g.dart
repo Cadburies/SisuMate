@@ -22403,6 +22403,1293 @@ class AnchorWatchesCompanion extends UpdateCompanion<AnchorWatchRow> {
   }
 }
 
+class $AnchorSpotsTable extends AnchorSpots
+    with TableInfo<$AnchorSpotsTable, AnchorSpotRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnchorSpotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _commentsMeta = const VerificationMeta(
+    'comments',
+  );
+  @override
+  late final GeneratedColumn<String> comments = GeneratedColumn<String>(
+    'comments',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _latMeta = const VerificationMeta('lat');
+  @override
+  late final GeneratedColumn<double> lat = GeneratedColumn<double>(
+    'lat',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lonMeta = const VerificationMeta('lon');
+  @override
+  late final GeneratedColumn<double> lon = GeneratedColumn<double>(
+    'lon',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scopeRatioMeta = const VerificationMeta(
+    'scopeRatio',
+  );
+  @override
+  late final GeneratedColumn<double> scopeRatio = GeneratedColumn<double>(
+    'scope_ratio',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(5.0),
+  );
+  static const VerificationMeta _radiusMetersMeta = const VerificationMeta(
+    'radiusMeters',
+  );
+  @override
+  late final GeneratedColumn<double> radiusMeters = GeneratedColumn<double>(
+    'radius_meters',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(30.0),
+  );
+  static const VerificationMeta _dangerZoneEnabledMeta = const VerificationMeta(
+    'dangerZoneEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> dangerZoneEnabled = GeneratedColumn<bool>(
+    'danger_zone_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("danger_zone_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _dangerZoneCenterDegMeta =
+      const VerificationMeta('dangerZoneCenterDeg');
+  @override
+  late final GeneratedColumn<double> dangerZoneCenterDeg =
+      GeneratedColumn<double>(
+        'danger_zone_center_deg',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _dangerZoneWidthDegMeta =
+      const VerificationMeta('dangerZoneWidthDeg');
+  @override
+  late final GeneratedColumn<double> dangerZoneWidthDeg =
+      GeneratedColumn<double>(
+        'danger_zone_width_deg',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(60.0),
+      );
+  static const VerificationMeta _dangerZoneInnerRadiusMetersMeta =
+      const VerificationMeta('dangerZoneInnerRadiusMeters');
+  @override
+  late final GeneratedColumn<double> dangerZoneInnerRadiusMeters =
+      GeneratedColumn<double>(
+        'danger_zone_inner_radius_meters',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(30.0),
+      );
+  static const VerificationMeta _dangerZoneOuterRadiusMetersMeta =
+      const VerificationMeta('dangerZoneOuterRadiusMeters');
+  @override
+  late final GeneratedColumn<double> dangerZoneOuterRadiusMeters =
+      GeneratedColumn<double>(
+        'danger_zone_outer_radius_meters',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(50.0),
+      );
+  static const VerificationMeta _bottomMeta = const VerificationMeta('bottom');
+  @override
+  late final GeneratedColumn<String> bottom = GeneratedColumn<String>(
+    'bottom',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('unknown'),
+  );
+  static const VerificationMeta _holdingQualityMeta = const VerificationMeta(
+    'holdingQuality',
+  );
+  @override
+  late final GeneratedColumn<String> holdingQuality = GeneratedColumn<String>(
+    'holding_quality',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _depthMetersMeta = const VerificationMeta(
+    'depthMeters',
+  );
+  @override
+  late final GeneratedColumn<double> depthMeters = GeneratedColumn<double>(
+    'depth_meters',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _windProtectionJsonMeta =
+      const VerificationMeta('windProtectionJson');
+  @override
+  late final GeneratedColumn<String> windProtectionJson =
+      GeneratedColumn<String>(
+        'wind_protection_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
+  static const VerificationMeta _swellExposureMeta = const VerificationMeta(
+    'swellExposure',
+  );
+  @override
+  late final GeneratedColumn<String> swellExposure = GeneratedColumn<String>(
+    'swell_exposure',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _dinghyLandingMeta = const VerificationMeta(
+    'dinghyLanding',
+  );
+  @override
+  late final GeneratedColumn<String> dinghyLanding = GeneratedColumn<String>(
+    'dinghy_landing',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _dinghyNotesMeta = const VerificationMeta(
+    'dinghyNotes',
+  );
+  @override
+  late final GeneratedColumn<String> dinghyNotes = GeneratedColumn<String>(
+    'dinghy_notes',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _amenitiesMeta = const VerificationMeta(
+    'amenities',
+  );
+  @override
+  late final GeneratedColumn<String> amenities = GeneratedColumn<String>(
+    'amenities',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _photoPathMeta = const VerificationMeta(
+    'photoPath',
+  );
+  @override
+  late final GeneratedColumn<String> photoPath = GeneratedColumn<String>(
+    'photo_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _savedAtMeta = const VerificationMeta(
+    'savedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> savedAt = GeneratedColumn<DateTime>(
+    'saved_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
+    'lastModified',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastModified = GeneratedColumn<DateTime>(
+    'last_modified',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    comments,
+    lat,
+    lon,
+    scopeRatio,
+    radiusMeters,
+    dangerZoneEnabled,
+    dangerZoneCenterDeg,
+    dangerZoneWidthDeg,
+    dangerZoneInnerRadiusMeters,
+    dangerZoneOuterRadiusMeters,
+    bottom,
+    holdingQuality,
+    depthMeters,
+    windProtectionJson,
+    swellExposure,
+    dinghyLanding,
+    dinghyNotes,
+    amenities,
+    photoPath,
+    savedAt,
+    lastModified,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'anchor_spots';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AnchorSpotRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('comments')) {
+      context.handle(
+        _commentsMeta,
+        comments.isAcceptableOrUnknown(data['comments']!, _commentsMeta),
+      );
+    }
+    if (data.containsKey('lat')) {
+      context.handle(
+        _latMeta,
+        lat.isAcceptableOrUnknown(data['lat']!, _latMeta),
+      );
+    }
+    if (data.containsKey('lon')) {
+      context.handle(
+        _lonMeta,
+        lon.isAcceptableOrUnknown(data['lon']!, _lonMeta),
+      );
+    }
+    if (data.containsKey('scope_ratio')) {
+      context.handle(
+        _scopeRatioMeta,
+        scopeRatio.isAcceptableOrUnknown(data['scope_ratio']!, _scopeRatioMeta),
+      );
+    }
+    if (data.containsKey('radius_meters')) {
+      context.handle(
+        _radiusMetersMeta,
+        radiusMeters.isAcceptableOrUnknown(
+          data['radius_meters']!,
+          _radiusMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_enabled')) {
+      context.handle(
+        _dangerZoneEnabledMeta,
+        dangerZoneEnabled.isAcceptableOrUnknown(
+          data['danger_zone_enabled']!,
+          _dangerZoneEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_center_deg')) {
+      context.handle(
+        _dangerZoneCenterDegMeta,
+        dangerZoneCenterDeg.isAcceptableOrUnknown(
+          data['danger_zone_center_deg']!,
+          _dangerZoneCenterDegMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_width_deg')) {
+      context.handle(
+        _dangerZoneWidthDegMeta,
+        dangerZoneWidthDeg.isAcceptableOrUnknown(
+          data['danger_zone_width_deg']!,
+          _dangerZoneWidthDegMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_inner_radius_meters')) {
+      context.handle(
+        _dangerZoneInnerRadiusMetersMeta,
+        dangerZoneInnerRadiusMeters.isAcceptableOrUnknown(
+          data['danger_zone_inner_radius_meters']!,
+          _dangerZoneInnerRadiusMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('danger_zone_outer_radius_meters')) {
+      context.handle(
+        _dangerZoneOuterRadiusMetersMeta,
+        dangerZoneOuterRadiusMeters.isAcceptableOrUnknown(
+          data['danger_zone_outer_radius_meters']!,
+          _dangerZoneOuterRadiusMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('bottom')) {
+      context.handle(
+        _bottomMeta,
+        bottom.isAcceptableOrUnknown(data['bottom']!, _bottomMeta),
+      );
+    }
+    if (data.containsKey('holding_quality')) {
+      context.handle(
+        _holdingQualityMeta,
+        holdingQuality.isAcceptableOrUnknown(
+          data['holding_quality']!,
+          _holdingQualityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('depth_meters')) {
+      context.handle(
+        _depthMetersMeta,
+        depthMeters.isAcceptableOrUnknown(
+          data['depth_meters']!,
+          _depthMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('wind_protection_json')) {
+      context.handle(
+        _windProtectionJsonMeta,
+        windProtectionJson.isAcceptableOrUnknown(
+          data['wind_protection_json']!,
+          _windProtectionJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('swell_exposure')) {
+      context.handle(
+        _swellExposureMeta,
+        swellExposure.isAcceptableOrUnknown(
+          data['swell_exposure']!,
+          _swellExposureMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dinghy_landing')) {
+      context.handle(
+        _dinghyLandingMeta,
+        dinghyLanding.isAcceptableOrUnknown(
+          data['dinghy_landing']!,
+          _dinghyLandingMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dinghy_notes')) {
+      context.handle(
+        _dinghyNotesMeta,
+        dinghyNotes.isAcceptableOrUnknown(
+          data['dinghy_notes']!,
+          _dinghyNotesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('amenities')) {
+      context.handle(
+        _amenitiesMeta,
+        amenities.isAcceptableOrUnknown(data['amenities']!, _amenitiesMeta),
+      );
+    }
+    if (data.containsKey('photo_path')) {
+      context.handle(
+        _photoPathMeta,
+        photoPath.isAcceptableOrUnknown(data['photo_path']!, _photoPathMeta),
+      );
+    }
+    if (data.containsKey('saved_at')) {
+      context.handle(
+        _savedAtMeta,
+        savedAt.isAcceptableOrUnknown(data['saved_at']!, _savedAtMeta),
+      );
+    }
+    if (data.containsKey('last_modified')) {
+      context.handle(
+        _lastModifiedMeta,
+        lastModified.isAcceptableOrUnknown(
+          data['last_modified']!,
+          _lastModifiedMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AnchorSpotRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AnchorSpotRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      comments: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}comments'],
+      )!,
+      lat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lat'],
+      ),
+      lon: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lon'],
+      ),
+      scopeRatio: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}scope_ratio'],
+      )!,
+      radiusMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}radius_meters'],
+      )!,
+      dangerZoneEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}danger_zone_enabled'],
+      )!,
+      dangerZoneCenterDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}danger_zone_center_deg'],
+      )!,
+      dangerZoneWidthDeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}danger_zone_width_deg'],
+      )!,
+      dangerZoneInnerRadiusMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}danger_zone_inner_radius_meters'],
+      )!,
+      dangerZoneOuterRadiusMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}danger_zone_outer_radius_meters'],
+      )!,
+      bottom: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bottom'],
+      )!,
+      holdingQuality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}holding_quality'],
+      )!,
+      depthMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}depth_meters'],
+      ),
+      windProtectionJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}wind_protection_json'],
+      )!,
+      swellExposure: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}swell_exposure'],
+      )!,
+      dinghyLanding: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dinghy_landing'],
+      )!,
+      dinghyNotes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dinghy_notes'],
+      )!,
+      amenities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}amenities'],
+      )!,
+      photoPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photo_path'],
+      ),
+      savedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}saved_at'],
+      )!,
+      lastModified: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_modified'],
+      )!,
+    );
+  }
+
+  @override
+  $AnchorSpotsTable createAlias(String alias) {
+    return $AnchorSpotsTable(attachedDatabase, alias);
+  }
+}
+
+class AnchorSpotRow extends DataClass implements Insertable<AnchorSpotRow> {
+  final int id;
+  final String name;
+  final String comments;
+  final double? lat;
+  final double? lon;
+  final double scopeRatio;
+  final double radiusMeters;
+  final bool dangerZoneEnabled;
+  final double dangerZoneCenterDeg;
+  final double dangerZoneWidthDeg;
+  final double dangerZoneInnerRadiusMeters;
+  final double dangerZoneOuterRadiusMeters;
+  final String bottom;
+  final String holdingQuality;
+  final double? depthMeters;
+
+  /// JSON list of wind-protection sectors (`["N","NE"]`).
+  final String windProtectionJson;
+  final String swellExposure;
+  final String dinghyLanding;
+  final String dinghyNotes;
+  final String amenities;
+  final String? photoPath;
+  final DateTime savedAt;
+  final DateTime lastModified;
+  const AnchorSpotRow({
+    required this.id,
+    required this.name,
+    required this.comments,
+    this.lat,
+    this.lon,
+    required this.scopeRatio,
+    required this.radiusMeters,
+    required this.dangerZoneEnabled,
+    required this.dangerZoneCenterDeg,
+    required this.dangerZoneWidthDeg,
+    required this.dangerZoneInnerRadiusMeters,
+    required this.dangerZoneOuterRadiusMeters,
+    required this.bottom,
+    required this.holdingQuality,
+    this.depthMeters,
+    required this.windProtectionJson,
+    required this.swellExposure,
+    required this.dinghyLanding,
+    required this.dinghyNotes,
+    required this.amenities,
+    this.photoPath,
+    required this.savedAt,
+    required this.lastModified,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['comments'] = Variable<String>(comments);
+    if (!nullToAbsent || lat != null) {
+      map['lat'] = Variable<double>(lat);
+    }
+    if (!nullToAbsent || lon != null) {
+      map['lon'] = Variable<double>(lon);
+    }
+    map['scope_ratio'] = Variable<double>(scopeRatio);
+    map['radius_meters'] = Variable<double>(radiusMeters);
+    map['danger_zone_enabled'] = Variable<bool>(dangerZoneEnabled);
+    map['danger_zone_center_deg'] = Variable<double>(dangerZoneCenterDeg);
+    map['danger_zone_width_deg'] = Variable<double>(dangerZoneWidthDeg);
+    map['danger_zone_inner_radius_meters'] = Variable<double>(
+      dangerZoneInnerRadiusMeters,
+    );
+    map['danger_zone_outer_radius_meters'] = Variable<double>(
+      dangerZoneOuterRadiusMeters,
+    );
+    map['bottom'] = Variable<String>(bottom);
+    map['holding_quality'] = Variable<String>(holdingQuality);
+    if (!nullToAbsent || depthMeters != null) {
+      map['depth_meters'] = Variable<double>(depthMeters);
+    }
+    map['wind_protection_json'] = Variable<String>(windProtectionJson);
+    map['swell_exposure'] = Variable<String>(swellExposure);
+    map['dinghy_landing'] = Variable<String>(dinghyLanding);
+    map['dinghy_notes'] = Variable<String>(dinghyNotes);
+    map['amenities'] = Variable<String>(amenities);
+    if (!nullToAbsent || photoPath != null) {
+      map['photo_path'] = Variable<String>(photoPath);
+    }
+    map['saved_at'] = Variable<DateTime>(savedAt);
+    map['last_modified'] = Variable<DateTime>(lastModified);
+    return map;
+  }
+
+  AnchorSpotsCompanion toCompanion(bool nullToAbsent) {
+    return AnchorSpotsCompanion(
+      id: Value(id),
+      name: Value(name),
+      comments: Value(comments),
+      lat: lat == null && nullToAbsent ? const Value.absent() : Value(lat),
+      lon: lon == null && nullToAbsent ? const Value.absent() : Value(lon),
+      scopeRatio: Value(scopeRatio),
+      radiusMeters: Value(radiusMeters),
+      dangerZoneEnabled: Value(dangerZoneEnabled),
+      dangerZoneCenterDeg: Value(dangerZoneCenterDeg),
+      dangerZoneWidthDeg: Value(dangerZoneWidthDeg),
+      dangerZoneInnerRadiusMeters: Value(dangerZoneInnerRadiusMeters),
+      dangerZoneOuterRadiusMeters: Value(dangerZoneOuterRadiusMeters),
+      bottom: Value(bottom),
+      holdingQuality: Value(holdingQuality),
+      depthMeters: depthMeters == null && nullToAbsent
+          ? const Value.absent()
+          : Value(depthMeters),
+      windProtectionJson: Value(windProtectionJson),
+      swellExposure: Value(swellExposure),
+      dinghyLanding: Value(dinghyLanding),
+      dinghyNotes: Value(dinghyNotes),
+      amenities: Value(amenities),
+      photoPath: photoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoPath),
+      savedAt: Value(savedAt),
+      lastModified: Value(lastModified),
+    );
+  }
+
+  factory AnchorSpotRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AnchorSpotRow(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      comments: serializer.fromJson<String>(json['comments']),
+      lat: serializer.fromJson<double?>(json['lat']),
+      lon: serializer.fromJson<double?>(json['lon']),
+      scopeRatio: serializer.fromJson<double>(json['scopeRatio']),
+      radiusMeters: serializer.fromJson<double>(json['radiusMeters']),
+      dangerZoneEnabled: serializer.fromJson<bool>(json['dangerZoneEnabled']),
+      dangerZoneCenterDeg: serializer.fromJson<double>(
+        json['dangerZoneCenterDeg'],
+      ),
+      dangerZoneWidthDeg: serializer.fromJson<double>(
+        json['dangerZoneWidthDeg'],
+      ),
+      dangerZoneInnerRadiusMeters: serializer.fromJson<double>(
+        json['dangerZoneInnerRadiusMeters'],
+      ),
+      dangerZoneOuterRadiusMeters: serializer.fromJson<double>(
+        json['dangerZoneOuterRadiusMeters'],
+      ),
+      bottom: serializer.fromJson<String>(json['bottom']),
+      holdingQuality: serializer.fromJson<String>(json['holdingQuality']),
+      depthMeters: serializer.fromJson<double?>(json['depthMeters']),
+      windProtectionJson: serializer.fromJson<String>(
+        json['windProtectionJson'],
+      ),
+      swellExposure: serializer.fromJson<String>(json['swellExposure']),
+      dinghyLanding: serializer.fromJson<String>(json['dinghyLanding']),
+      dinghyNotes: serializer.fromJson<String>(json['dinghyNotes']),
+      amenities: serializer.fromJson<String>(json['amenities']),
+      photoPath: serializer.fromJson<String?>(json['photoPath']),
+      savedAt: serializer.fromJson<DateTime>(json['savedAt']),
+      lastModified: serializer.fromJson<DateTime>(json['lastModified']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'comments': serializer.toJson<String>(comments),
+      'lat': serializer.toJson<double?>(lat),
+      'lon': serializer.toJson<double?>(lon),
+      'scopeRatio': serializer.toJson<double>(scopeRatio),
+      'radiusMeters': serializer.toJson<double>(radiusMeters),
+      'dangerZoneEnabled': serializer.toJson<bool>(dangerZoneEnabled),
+      'dangerZoneCenterDeg': serializer.toJson<double>(dangerZoneCenterDeg),
+      'dangerZoneWidthDeg': serializer.toJson<double>(dangerZoneWidthDeg),
+      'dangerZoneInnerRadiusMeters': serializer.toJson<double>(
+        dangerZoneInnerRadiusMeters,
+      ),
+      'dangerZoneOuterRadiusMeters': serializer.toJson<double>(
+        dangerZoneOuterRadiusMeters,
+      ),
+      'bottom': serializer.toJson<String>(bottom),
+      'holdingQuality': serializer.toJson<String>(holdingQuality),
+      'depthMeters': serializer.toJson<double?>(depthMeters),
+      'windProtectionJson': serializer.toJson<String>(windProtectionJson),
+      'swellExposure': serializer.toJson<String>(swellExposure),
+      'dinghyLanding': serializer.toJson<String>(dinghyLanding),
+      'dinghyNotes': serializer.toJson<String>(dinghyNotes),
+      'amenities': serializer.toJson<String>(amenities),
+      'photoPath': serializer.toJson<String?>(photoPath),
+      'savedAt': serializer.toJson<DateTime>(savedAt),
+      'lastModified': serializer.toJson<DateTime>(lastModified),
+    };
+  }
+
+  AnchorSpotRow copyWith({
+    int? id,
+    String? name,
+    String? comments,
+    Value<double?> lat = const Value.absent(),
+    Value<double?> lon = const Value.absent(),
+    double? scopeRatio,
+    double? radiusMeters,
+    bool? dangerZoneEnabled,
+    double? dangerZoneCenterDeg,
+    double? dangerZoneWidthDeg,
+    double? dangerZoneInnerRadiusMeters,
+    double? dangerZoneOuterRadiusMeters,
+    String? bottom,
+    String? holdingQuality,
+    Value<double?> depthMeters = const Value.absent(),
+    String? windProtectionJson,
+    String? swellExposure,
+    String? dinghyLanding,
+    String? dinghyNotes,
+    String? amenities,
+    Value<String?> photoPath = const Value.absent(),
+    DateTime? savedAt,
+    DateTime? lastModified,
+  }) => AnchorSpotRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    comments: comments ?? this.comments,
+    lat: lat.present ? lat.value : this.lat,
+    lon: lon.present ? lon.value : this.lon,
+    scopeRatio: scopeRatio ?? this.scopeRatio,
+    radiusMeters: radiusMeters ?? this.radiusMeters,
+    dangerZoneEnabled: dangerZoneEnabled ?? this.dangerZoneEnabled,
+    dangerZoneCenterDeg: dangerZoneCenterDeg ?? this.dangerZoneCenterDeg,
+    dangerZoneWidthDeg: dangerZoneWidthDeg ?? this.dangerZoneWidthDeg,
+    dangerZoneInnerRadiusMeters:
+        dangerZoneInnerRadiusMeters ?? this.dangerZoneInnerRadiusMeters,
+    dangerZoneOuterRadiusMeters:
+        dangerZoneOuterRadiusMeters ?? this.dangerZoneOuterRadiusMeters,
+    bottom: bottom ?? this.bottom,
+    holdingQuality: holdingQuality ?? this.holdingQuality,
+    depthMeters: depthMeters.present ? depthMeters.value : this.depthMeters,
+    windProtectionJson: windProtectionJson ?? this.windProtectionJson,
+    swellExposure: swellExposure ?? this.swellExposure,
+    dinghyLanding: dinghyLanding ?? this.dinghyLanding,
+    dinghyNotes: dinghyNotes ?? this.dinghyNotes,
+    amenities: amenities ?? this.amenities,
+    photoPath: photoPath.present ? photoPath.value : this.photoPath,
+    savedAt: savedAt ?? this.savedAt,
+    lastModified: lastModified ?? this.lastModified,
+  );
+  AnchorSpotRow copyWithCompanion(AnchorSpotsCompanion data) {
+    return AnchorSpotRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      comments: data.comments.present ? data.comments.value : this.comments,
+      lat: data.lat.present ? data.lat.value : this.lat,
+      lon: data.lon.present ? data.lon.value : this.lon,
+      scopeRatio: data.scopeRatio.present
+          ? data.scopeRatio.value
+          : this.scopeRatio,
+      radiusMeters: data.radiusMeters.present
+          ? data.radiusMeters.value
+          : this.radiusMeters,
+      dangerZoneEnabled: data.dangerZoneEnabled.present
+          ? data.dangerZoneEnabled.value
+          : this.dangerZoneEnabled,
+      dangerZoneCenterDeg: data.dangerZoneCenterDeg.present
+          ? data.dangerZoneCenterDeg.value
+          : this.dangerZoneCenterDeg,
+      dangerZoneWidthDeg: data.dangerZoneWidthDeg.present
+          ? data.dangerZoneWidthDeg.value
+          : this.dangerZoneWidthDeg,
+      dangerZoneInnerRadiusMeters: data.dangerZoneInnerRadiusMeters.present
+          ? data.dangerZoneInnerRadiusMeters.value
+          : this.dangerZoneInnerRadiusMeters,
+      dangerZoneOuterRadiusMeters: data.dangerZoneOuterRadiusMeters.present
+          ? data.dangerZoneOuterRadiusMeters.value
+          : this.dangerZoneOuterRadiusMeters,
+      bottom: data.bottom.present ? data.bottom.value : this.bottom,
+      holdingQuality: data.holdingQuality.present
+          ? data.holdingQuality.value
+          : this.holdingQuality,
+      depthMeters: data.depthMeters.present
+          ? data.depthMeters.value
+          : this.depthMeters,
+      windProtectionJson: data.windProtectionJson.present
+          ? data.windProtectionJson.value
+          : this.windProtectionJson,
+      swellExposure: data.swellExposure.present
+          ? data.swellExposure.value
+          : this.swellExposure,
+      dinghyLanding: data.dinghyLanding.present
+          ? data.dinghyLanding.value
+          : this.dinghyLanding,
+      dinghyNotes: data.dinghyNotes.present
+          ? data.dinghyNotes.value
+          : this.dinghyNotes,
+      amenities: data.amenities.present ? data.amenities.value : this.amenities,
+      photoPath: data.photoPath.present ? data.photoPath.value : this.photoPath,
+      savedAt: data.savedAt.present ? data.savedAt.value : this.savedAt,
+      lastModified: data.lastModified.present
+          ? data.lastModified.value
+          : this.lastModified,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnchorSpotRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('comments: $comments, ')
+          ..write('lat: $lat, ')
+          ..write('lon: $lon, ')
+          ..write('scopeRatio: $scopeRatio, ')
+          ..write('radiusMeters: $radiusMeters, ')
+          ..write('dangerZoneEnabled: $dangerZoneEnabled, ')
+          ..write('dangerZoneCenterDeg: $dangerZoneCenterDeg, ')
+          ..write('dangerZoneWidthDeg: $dangerZoneWidthDeg, ')
+          ..write('dangerZoneInnerRadiusMeters: $dangerZoneInnerRadiusMeters, ')
+          ..write('dangerZoneOuterRadiusMeters: $dangerZoneOuterRadiusMeters, ')
+          ..write('bottom: $bottom, ')
+          ..write('holdingQuality: $holdingQuality, ')
+          ..write('depthMeters: $depthMeters, ')
+          ..write('windProtectionJson: $windProtectionJson, ')
+          ..write('swellExposure: $swellExposure, ')
+          ..write('dinghyLanding: $dinghyLanding, ')
+          ..write('dinghyNotes: $dinghyNotes, ')
+          ..write('amenities: $amenities, ')
+          ..write('photoPath: $photoPath, ')
+          ..write('savedAt: $savedAt, ')
+          ..write('lastModified: $lastModified')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    name,
+    comments,
+    lat,
+    lon,
+    scopeRatio,
+    radiusMeters,
+    dangerZoneEnabled,
+    dangerZoneCenterDeg,
+    dangerZoneWidthDeg,
+    dangerZoneInnerRadiusMeters,
+    dangerZoneOuterRadiusMeters,
+    bottom,
+    holdingQuality,
+    depthMeters,
+    windProtectionJson,
+    swellExposure,
+    dinghyLanding,
+    dinghyNotes,
+    amenities,
+    photoPath,
+    savedAt,
+    lastModified,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AnchorSpotRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.comments == this.comments &&
+          other.lat == this.lat &&
+          other.lon == this.lon &&
+          other.scopeRatio == this.scopeRatio &&
+          other.radiusMeters == this.radiusMeters &&
+          other.dangerZoneEnabled == this.dangerZoneEnabled &&
+          other.dangerZoneCenterDeg == this.dangerZoneCenterDeg &&
+          other.dangerZoneWidthDeg == this.dangerZoneWidthDeg &&
+          other.dangerZoneInnerRadiusMeters ==
+              this.dangerZoneInnerRadiusMeters &&
+          other.dangerZoneOuterRadiusMeters ==
+              this.dangerZoneOuterRadiusMeters &&
+          other.bottom == this.bottom &&
+          other.holdingQuality == this.holdingQuality &&
+          other.depthMeters == this.depthMeters &&
+          other.windProtectionJson == this.windProtectionJson &&
+          other.swellExposure == this.swellExposure &&
+          other.dinghyLanding == this.dinghyLanding &&
+          other.dinghyNotes == this.dinghyNotes &&
+          other.amenities == this.amenities &&
+          other.photoPath == this.photoPath &&
+          other.savedAt == this.savedAt &&
+          other.lastModified == this.lastModified);
+}
+
+class AnchorSpotsCompanion extends UpdateCompanion<AnchorSpotRow> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> comments;
+  final Value<double?> lat;
+  final Value<double?> lon;
+  final Value<double> scopeRatio;
+  final Value<double> radiusMeters;
+  final Value<bool> dangerZoneEnabled;
+  final Value<double> dangerZoneCenterDeg;
+  final Value<double> dangerZoneWidthDeg;
+  final Value<double> dangerZoneInnerRadiusMeters;
+  final Value<double> dangerZoneOuterRadiusMeters;
+  final Value<String> bottom;
+  final Value<String> holdingQuality;
+  final Value<double?> depthMeters;
+  final Value<String> windProtectionJson;
+  final Value<String> swellExposure;
+  final Value<String> dinghyLanding;
+  final Value<String> dinghyNotes;
+  final Value<String> amenities;
+  final Value<String?> photoPath;
+  final Value<DateTime> savedAt;
+  final Value<DateTime> lastModified;
+  const AnchorSpotsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.comments = const Value.absent(),
+    this.lat = const Value.absent(),
+    this.lon = const Value.absent(),
+    this.scopeRatio = const Value.absent(),
+    this.radiusMeters = const Value.absent(),
+    this.dangerZoneEnabled = const Value.absent(),
+    this.dangerZoneCenterDeg = const Value.absent(),
+    this.dangerZoneWidthDeg = const Value.absent(),
+    this.dangerZoneInnerRadiusMeters = const Value.absent(),
+    this.dangerZoneOuterRadiusMeters = const Value.absent(),
+    this.bottom = const Value.absent(),
+    this.holdingQuality = const Value.absent(),
+    this.depthMeters = const Value.absent(),
+    this.windProtectionJson = const Value.absent(),
+    this.swellExposure = const Value.absent(),
+    this.dinghyLanding = const Value.absent(),
+    this.dinghyNotes = const Value.absent(),
+    this.amenities = const Value.absent(),
+    this.photoPath = const Value.absent(),
+    this.savedAt = const Value.absent(),
+    this.lastModified = const Value.absent(),
+  });
+  AnchorSpotsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.comments = const Value.absent(),
+    this.lat = const Value.absent(),
+    this.lon = const Value.absent(),
+    this.scopeRatio = const Value.absent(),
+    this.radiusMeters = const Value.absent(),
+    this.dangerZoneEnabled = const Value.absent(),
+    this.dangerZoneCenterDeg = const Value.absent(),
+    this.dangerZoneWidthDeg = const Value.absent(),
+    this.dangerZoneInnerRadiusMeters = const Value.absent(),
+    this.dangerZoneOuterRadiusMeters = const Value.absent(),
+    this.bottom = const Value.absent(),
+    this.holdingQuality = const Value.absent(),
+    this.depthMeters = const Value.absent(),
+    this.windProtectionJson = const Value.absent(),
+    this.swellExposure = const Value.absent(),
+    this.dinghyLanding = const Value.absent(),
+    this.dinghyNotes = const Value.absent(),
+    this.amenities = const Value.absent(),
+    this.photoPath = const Value.absent(),
+    this.savedAt = const Value.absent(),
+    this.lastModified = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<AnchorSpotRow> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? comments,
+    Expression<double>? lat,
+    Expression<double>? lon,
+    Expression<double>? scopeRatio,
+    Expression<double>? radiusMeters,
+    Expression<bool>? dangerZoneEnabled,
+    Expression<double>? dangerZoneCenterDeg,
+    Expression<double>? dangerZoneWidthDeg,
+    Expression<double>? dangerZoneInnerRadiusMeters,
+    Expression<double>? dangerZoneOuterRadiusMeters,
+    Expression<String>? bottom,
+    Expression<String>? holdingQuality,
+    Expression<double>? depthMeters,
+    Expression<String>? windProtectionJson,
+    Expression<String>? swellExposure,
+    Expression<String>? dinghyLanding,
+    Expression<String>? dinghyNotes,
+    Expression<String>? amenities,
+    Expression<String>? photoPath,
+    Expression<DateTime>? savedAt,
+    Expression<DateTime>? lastModified,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (comments != null) 'comments': comments,
+      if (lat != null) 'lat': lat,
+      if (lon != null) 'lon': lon,
+      if (scopeRatio != null) 'scope_ratio': scopeRatio,
+      if (radiusMeters != null) 'radius_meters': radiusMeters,
+      if (dangerZoneEnabled != null) 'danger_zone_enabled': dangerZoneEnabled,
+      if (dangerZoneCenterDeg != null)
+        'danger_zone_center_deg': dangerZoneCenterDeg,
+      if (dangerZoneWidthDeg != null)
+        'danger_zone_width_deg': dangerZoneWidthDeg,
+      if (dangerZoneInnerRadiusMeters != null)
+        'danger_zone_inner_radius_meters': dangerZoneInnerRadiusMeters,
+      if (dangerZoneOuterRadiusMeters != null)
+        'danger_zone_outer_radius_meters': dangerZoneOuterRadiusMeters,
+      if (bottom != null) 'bottom': bottom,
+      if (holdingQuality != null) 'holding_quality': holdingQuality,
+      if (depthMeters != null) 'depth_meters': depthMeters,
+      if (windProtectionJson != null)
+        'wind_protection_json': windProtectionJson,
+      if (swellExposure != null) 'swell_exposure': swellExposure,
+      if (dinghyLanding != null) 'dinghy_landing': dinghyLanding,
+      if (dinghyNotes != null) 'dinghy_notes': dinghyNotes,
+      if (amenities != null) 'amenities': amenities,
+      if (photoPath != null) 'photo_path': photoPath,
+      if (savedAt != null) 'saved_at': savedAt,
+      if (lastModified != null) 'last_modified': lastModified,
+    });
+  }
+
+  AnchorSpotsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? comments,
+    Value<double?>? lat,
+    Value<double?>? lon,
+    Value<double>? scopeRatio,
+    Value<double>? radiusMeters,
+    Value<bool>? dangerZoneEnabled,
+    Value<double>? dangerZoneCenterDeg,
+    Value<double>? dangerZoneWidthDeg,
+    Value<double>? dangerZoneInnerRadiusMeters,
+    Value<double>? dangerZoneOuterRadiusMeters,
+    Value<String>? bottom,
+    Value<String>? holdingQuality,
+    Value<double?>? depthMeters,
+    Value<String>? windProtectionJson,
+    Value<String>? swellExposure,
+    Value<String>? dinghyLanding,
+    Value<String>? dinghyNotes,
+    Value<String>? amenities,
+    Value<String?>? photoPath,
+    Value<DateTime>? savedAt,
+    Value<DateTime>? lastModified,
+  }) {
+    return AnchorSpotsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      comments: comments ?? this.comments,
+      lat: lat ?? this.lat,
+      lon: lon ?? this.lon,
+      scopeRatio: scopeRatio ?? this.scopeRatio,
+      radiusMeters: radiusMeters ?? this.radiusMeters,
+      dangerZoneEnabled: dangerZoneEnabled ?? this.dangerZoneEnabled,
+      dangerZoneCenterDeg: dangerZoneCenterDeg ?? this.dangerZoneCenterDeg,
+      dangerZoneWidthDeg: dangerZoneWidthDeg ?? this.dangerZoneWidthDeg,
+      dangerZoneInnerRadiusMeters:
+          dangerZoneInnerRadiusMeters ?? this.dangerZoneInnerRadiusMeters,
+      dangerZoneOuterRadiusMeters:
+          dangerZoneOuterRadiusMeters ?? this.dangerZoneOuterRadiusMeters,
+      bottom: bottom ?? this.bottom,
+      holdingQuality: holdingQuality ?? this.holdingQuality,
+      depthMeters: depthMeters ?? this.depthMeters,
+      windProtectionJson: windProtectionJson ?? this.windProtectionJson,
+      swellExposure: swellExposure ?? this.swellExposure,
+      dinghyLanding: dinghyLanding ?? this.dinghyLanding,
+      dinghyNotes: dinghyNotes ?? this.dinghyNotes,
+      amenities: amenities ?? this.amenities,
+      photoPath: photoPath ?? this.photoPath,
+      savedAt: savedAt ?? this.savedAt,
+      lastModified: lastModified ?? this.lastModified,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (comments.present) {
+      map['comments'] = Variable<String>(comments.value);
+    }
+    if (lat.present) {
+      map['lat'] = Variable<double>(lat.value);
+    }
+    if (lon.present) {
+      map['lon'] = Variable<double>(lon.value);
+    }
+    if (scopeRatio.present) {
+      map['scope_ratio'] = Variable<double>(scopeRatio.value);
+    }
+    if (radiusMeters.present) {
+      map['radius_meters'] = Variable<double>(radiusMeters.value);
+    }
+    if (dangerZoneEnabled.present) {
+      map['danger_zone_enabled'] = Variable<bool>(dangerZoneEnabled.value);
+    }
+    if (dangerZoneCenterDeg.present) {
+      map['danger_zone_center_deg'] = Variable<double>(
+        dangerZoneCenterDeg.value,
+      );
+    }
+    if (dangerZoneWidthDeg.present) {
+      map['danger_zone_width_deg'] = Variable<double>(dangerZoneWidthDeg.value);
+    }
+    if (dangerZoneInnerRadiusMeters.present) {
+      map['danger_zone_inner_radius_meters'] = Variable<double>(
+        dangerZoneInnerRadiusMeters.value,
+      );
+    }
+    if (dangerZoneOuterRadiusMeters.present) {
+      map['danger_zone_outer_radius_meters'] = Variable<double>(
+        dangerZoneOuterRadiusMeters.value,
+      );
+    }
+    if (bottom.present) {
+      map['bottom'] = Variable<String>(bottom.value);
+    }
+    if (holdingQuality.present) {
+      map['holding_quality'] = Variable<String>(holdingQuality.value);
+    }
+    if (depthMeters.present) {
+      map['depth_meters'] = Variable<double>(depthMeters.value);
+    }
+    if (windProtectionJson.present) {
+      map['wind_protection_json'] = Variable<String>(windProtectionJson.value);
+    }
+    if (swellExposure.present) {
+      map['swell_exposure'] = Variable<String>(swellExposure.value);
+    }
+    if (dinghyLanding.present) {
+      map['dinghy_landing'] = Variable<String>(dinghyLanding.value);
+    }
+    if (dinghyNotes.present) {
+      map['dinghy_notes'] = Variable<String>(dinghyNotes.value);
+    }
+    if (amenities.present) {
+      map['amenities'] = Variable<String>(amenities.value);
+    }
+    if (photoPath.present) {
+      map['photo_path'] = Variable<String>(photoPath.value);
+    }
+    if (savedAt.present) {
+      map['saved_at'] = Variable<DateTime>(savedAt.value);
+    }
+    if (lastModified.present) {
+      map['last_modified'] = Variable<DateTime>(lastModified.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnchorSpotsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('comments: $comments, ')
+          ..write('lat: $lat, ')
+          ..write('lon: $lon, ')
+          ..write('scopeRatio: $scopeRatio, ')
+          ..write('radiusMeters: $radiusMeters, ')
+          ..write('dangerZoneEnabled: $dangerZoneEnabled, ')
+          ..write('dangerZoneCenterDeg: $dangerZoneCenterDeg, ')
+          ..write('dangerZoneWidthDeg: $dangerZoneWidthDeg, ')
+          ..write('dangerZoneInnerRadiusMeters: $dangerZoneInnerRadiusMeters, ')
+          ..write('dangerZoneOuterRadiusMeters: $dangerZoneOuterRadiusMeters, ')
+          ..write('bottom: $bottom, ')
+          ..write('holdingQuality: $holdingQuality, ')
+          ..write('depthMeters: $depthMeters, ')
+          ..write('windProtectionJson: $windProtectionJson, ')
+          ..write('swellExposure: $swellExposure, ')
+          ..write('dinghyLanding: $dinghyLanding, ')
+          ..write('dinghyNotes: $dinghyNotes, ')
+          ..write('amenities: $amenities, ')
+          ..write('photoPath: $photoPath, ')
+          ..write('savedAt: $savedAt, ')
+          ..write('lastModified: $lastModified')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SailingPolarSamplesTable extends SailingPolarSamples
     with TableInfo<$SailingPolarSamplesTable, SailingPolarSampleRow> {
   @override
@@ -24027,6 +25314,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ConflictLogsTable conflictLogs = $ConflictLogsTable(this);
   late final $ErrorLogsTable errorLogs = $ErrorLogsTable(this);
   late final $AnchorWatchesTable anchorWatches = $AnchorWatchesTable(this);
+  late final $AnchorSpotsTable anchorSpots = $AnchorSpotsTable(this);
   late final $SailingPolarSamplesTable sailingPolarSamples =
       $SailingPolarSamplesTable(this);
   @override
@@ -24058,6 +25346,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     conflictLogs,
     errorLogs,
     anchorWatches,
+    anchorSpots,
     sailingPolarSamples,
   ];
 }
@@ -34315,6 +35604,574 @@ typedef $$AnchorWatchesTableProcessedTableManager =
       AnchorWatchRow,
       PrefetchHooks Function()
     >;
+typedef $$AnchorSpotsTableCreateCompanionBuilder =
+    AnchorSpotsCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<String> comments,
+      Value<double?> lat,
+      Value<double?> lon,
+      Value<double> scopeRatio,
+      Value<double> radiusMeters,
+      Value<bool> dangerZoneEnabled,
+      Value<double> dangerZoneCenterDeg,
+      Value<double> dangerZoneWidthDeg,
+      Value<double> dangerZoneInnerRadiusMeters,
+      Value<double> dangerZoneOuterRadiusMeters,
+      Value<String> bottom,
+      Value<String> holdingQuality,
+      Value<double?> depthMeters,
+      Value<String> windProtectionJson,
+      Value<String> swellExposure,
+      Value<String> dinghyLanding,
+      Value<String> dinghyNotes,
+      Value<String> amenities,
+      Value<String?> photoPath,
+      Value<DateTime> savedAt,
+      Value<DateTime> lastModified,
+    });
+typedef $$AnchorSpotsTableUpdateCompanionBuilder =
+    AnchorSpotsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> comments,
+      Value<double?> lat,
+      Value<double?> lon,
+      Value<double> scopeRatio,
+      Value<double> radiusMeters,
+      Value<bool> dangerZoneEnabled,
+      Value<double> dangerZoneCenterDeg,
+      Value<double> dangerZoneWidthDeg,
+      Value<double> dangerZoneInnerRadiusMeters,
+      Value<double> dangerZoneOuterRadiusMeters,
+      Value<String> bottom,
+      Value<String> holdingQuality,
+      Value<double?> depthMeters,
+      Value<String> windProtectionJson,
+      Value<String> swellExposure,
+      Value<String> dinghyLanding,
+      Value<String> dinghyNotes,
+      Value<String> amenities,
+      Value<String?> photoPath,
+      Value<DateTime> savedAt,
+      Value<DateTime> lastModified,
+    });
+
+class $$AnchorSpotsTableFilterComposer
+    extends Composer<_$AppDatabase, $AnchorSpotsTable> {
+  $$AnchorSpotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get comments => $composableBuilder(
+    column: $table.comments,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lat => $composableBuilder(
+    column: $table.lat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lon => $composableBuilder(
+    column: $table.lon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get scopeRatio => $composableBuilder(
+    column: $table.scopeRatio,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dangerZoneEnabled => $composableBuilder(
+    column: $table.dangerZoneEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dangerZoneCenterDeg => $composableBuilder(
+    column: $table.dangerZoneCenterDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dangerZoneWidthDeg => $composableBuilder(
+    column: $table.dangerZoneWidthDeg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dangerZoneInnerRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneInnerRadiusMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dangerZoneOuterRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneOuterRadiusMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bottom => $composableBuilder(
+    column: $table.bottom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get holdingQuality => $composableBuilder(
+    column: $table.holdingQuality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get depthMeters => $composableBuilder(
+    column: $table.depthMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get windProtectionJson => $composableBuilder(
+    column: $table.windProtectionJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get swellExposure => $composableBuilder(
+    column: $table.swellExposure,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dinghyLanding => $composableBuilder(
+    column: $table.dinghyLanding,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dinghyNotes => $composableBuilder(
+    column: $table.dinghyNotes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get amenities => $composableBuilder(
+    column: $table.amenities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get photoPath => $composableBuilder(
+    column: $table.photoPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get savedAt => $composableBuilder(
+    column: $table.savedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AnchorSpotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnchorSpotsTable> {
+  $$AnchorSpotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get comments => $composableBuilder(
+    column: $table.comments,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lat => $composableBuilder(
+    column: $table.lat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lon => $composableBuilder(
+    column: $table.lon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get scopeRatio => $composableBuilder(
+    column: $table.scopeRatio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dangerZoneEnabled => $composableBuilder(
+    column: $table.dangerZoneEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dangerZoneCenterDeg => $composableBuilder(
+    column: $table.dangerZoneCenterDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dangerZoneWidthDeg => $composableBuilder(
+    column: $table.dangerZoneWidthDeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dangerZoneInnerRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneInnerRadiusMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dangerZoneOuterRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneOuterRadiusMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bottom => $composableBuilder(
+    column: $table.bottom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get holdingQuality => $composableBuilder(
+    column: $table.holdingQuality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get depthMeters => $composableBuilder(
+    column: $table.depthMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get windProtectionJson => $composableBuilder(
+    column: $table.windProtectionJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get swellExposure => $composableBuilder(
+    column: $table.swellExposure,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dinghyLanding => $composableBuilder(
+    column: $table.dinghyLanding,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dinghyNotes => $composableBuilder(
+    column: $table.dinghyNotes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get amenities => $composableBuilder(
+    column: $table.amenities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get photoPath => $composableBuilder(
+    column: $table.photoPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get savedAt => $composableBuilder(
+    column: $table.savedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AnchorSpotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnchorSpotsTable> {
+  $$AnchorSpotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get comments =>
+      $composableBuilder(column: $table.comments, builder: (column) => column);
+
+  GeneratedColumn<double> get lat =>
+      $composableBuilder(column: $table.lat, builder: (column) => column);
+
+  GeneratedColumn<double> get lon =>
+      $composableBuilder(column: $table.lon, builder: (column) => column);
+
+  GeneratedColumn<double> get scopeRatio => $composableBuilder(
+    column: $table.scopeRatio,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get dangerZoneEnabled => $composableBuilder(
+    column: $table.dangerZoneEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get dangerZoneCenterDeg => $composableBuilder(
+    column: $table.dangerZoneCenterDeg,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get dangerZoneWidthDeg => $composableBuilder(
+    column: $table.dangerZoneWidthDeg,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get dangerZoneInnerRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneInnerRadiusMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get dangerZoneOuterRadiusMeters => $composableBuilder(
+    column: $table.dangerZoneOuterRadiusMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get bottom =>
+      $composableBuilder(column: $table.bottom, builder: (column) => column);
+
+  GeneratedColumn<String> get holdingQuality => $composableBuilder(
+    column: $table.holdingQuality,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get depthMeters => $composableBuilder(
+    column: $table.depthMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get windProtectionJson => $composableBuilder(
+    column: $table.windProtectionJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get swellExposure => $composableBuilder(
+    column: $table.swellExposure,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dinghyLanding => $composableBuilder(
+    column: $table.dinghyLanding,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dinghyNotes => $composableBuilder(
+    column: $table.dinghyNotes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get amenities =>
+      $composableBuilder(column: $table.amenities, builder: (column) => column);
+
+  GeneratedColumn<String> get photoPath =>
+      $composableBuilder(column: $table.photoPath, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get savedAt =>
+      $composableBuilder(column: $table.savedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => column,
+  );
+}
+
+class $$AnchorSpotsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnchorSpotsTable,
+          AnchorSpotRow,
+          $$AnchorSpotsTableFilterComposer,
+          $$AnchorSpotsTableOrderingComposer,
+          $$AnchorSpotsTableAnnotationComposer,
+          $$AnchorSpotsTableCreateCompanionBuilder,
+          $$AnchorSpotsTableUpdateCompanionBuilder,
+          (
+            AnchorSpotRow,
+            BaseReferences<_$AppDatabase, $AnchorSpotsTable, AnchorSpotRow>,
+          ),
+          AnchorSpotRow,
+          PrefetchHooks Function()
+        > {
+  $$AnchorSpotsTableTableManager(_$AppDatabase db, $AnchorSpotsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AnchorSpotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AnchorSpotsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AnchorSpotsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> comments = const Value.absent(),
+                Value<double?> lat = const Value.absent(),
+                Value<double?> lon = const Value.absent(),
+                Value<double> scopeRatio = const Value.absent(),
+                Value<double> radiusMeters = const Value.absent(),
+                Value<bool> dangerZoneEnabled = const Value.absent(),
+                Value<double> dangerZoneCenterDeg = const Value.absent(),
+                Value<double> dangerZoneWidthDeg = const Value.absent(),
+                Value<double> dangerZoneInnerRadiusMeters =
+                    const Value.absent(),
+                Value<double> dangerZoneOuterRadiusMeters =
+                    const Value.absent(),
+                Value<String> bottom = const Value.absent(),
+                Value<String> holdingQuality = const Value.absent(),
+                Value<double?> depthMeters = const Value.absent(),
+                Value<String> windProtectionJson = const Value.absent(),
+                Value<String> swellExposure = const Value.absent(),
+                Value<String> dinghyLanding = const Value.absent(),
+                Value<String> dinghyNotes = const Value.absent(),
+                Value<String> amenities = const Value.absent(),
+                Value<String?> photoPath = const Value.absent(),
+                Value<DateTime> savedAt = const Value.absent(),
+                Value<DateTime> lastModified = const Value.absent(),
+              }) => AnchorSpotsCompanion(
+                id: id,
+                name: name,
+                comments: comments,
+                lat: lat,
+                lon: lon,
+                scopeRatio: scopeRatio,
+                radiusMeters: radiusMeters,
+                dangerZoneEnabled: dangerZoneEnabled,
+                dangerZoneCenterDeg: dangerZoneCenterDeg,
+                dangerZoneWidthDeg: dangerZoneWidthDeg,
+                dangerZoneInnerRadiusMeters: dangerZoneInnerRadiusMeters,
+                dangerZoneOuterRadiusMeters: dangerZoneOuterRadiusMeters,
+                bottom: bottom,
+                holdingQuality: holdingQuality,
+                depthMeters: depthMeters,
+                windProtectionJson: windProtectionJson,
+                swellExposure: swellExposure,
+                dinghyLanding: dinghyLanding,
+                dinghyNotes: dinghyNotes,
+                amenities: amenities,
+                photoPath: photoPath,
+                savedAt: savedAt,
+                lastModified: lastModified,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<String> comments = const Value.absent(),
+                Value<double?> lat = const Value.absent(),
+                Value<double?> lon = const Value.absent(),
+                Value<double> scopeRatio = const Value.absent(),
+                Value<double> radiusMeters = const Value.absent(),
+                Value<bool> dangerZoneEnabled = const Value.absent(),
+                Value<double> dangerZoneCenterDeg = const Value.absent(),
+                Value<double> dangerZoneWidthDeg = const Value.absent(),
+                Value<double> dangerZoneInnerRadiusMeters =
+                    const Value.absent(),
+                Value<double> dangerZoneOuterRadiusMeters =
+                    const Value.absent(),
+                Value<String> bottom = const Value.absent(),
+                Value<String> holdingQuality = const Value.absent(),
+                Value<double?> depthMeters = const Value.absent(),
+                Value<String> windProtectionJson = const Value.absent(),
+                Value<String> swellExposure = const Value.absent(),
+                Value<String> dinghyLanding = const Value.absent(),
+                Value<String> dinghyNotes = const Value.absent(),
+                Value<String> amenities = const Value.absent(),
+                Value<String?> photoPath = const Value.absent(),
+                Value<DateTime> savedAt = const Value.absent(),
+                Value<DateTime> lastModified = const Value.absent(),
+              }) => AnchorSpotsCompanion.insert(
+                id: id,
+                name: name,
+                comments: comments,
+                lat: lat,
+                lon: lon,
+                scopeRatio: scopeRatio,
+                radiusMeters: radiusMeters,
+                dangerZoneEnabled: dangerZoneEnabled,
+                dangerZoneCenterDeg: dangerZoneCenterDeg,
+                dangerZoneWidthDeg: dangerZoneWidthDeg,
+                dangerZoneInnerRadiusMeters: dangerZoneInnerRadiusMeters,
+                dangerZoneOuterRadiusMeters: dangerZoneOuterRadiusMeters,
+                bottom: bottom,
+                holdingQuality: holdingQuality,
+                depthMeters: depthMeters,
+                windProtectionJson: windProtectionJson,
+                swellExposure: swellExposure,
+                dinghyLanding: dinghyLanding,
+                dinghyNotes: dinghyNotes,
+                amenities: amenities,
+                photoPath: photoPath,
+                savedAt: savedAt,
+                lastModified: lastModified,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AnchorSpotsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnchorSpotsTable,
+      AnchorSpotRow,
+      $$AnchorSpotsTableFilterComposer,
+      $$AnchorSpotsTableOrderingComposer,
+      $$AnchorSpotsTableAnnotationComposer,
+      $$AnchorSpotsTableCreateCompanionBuilder,
+      $$AnchorSpotsTableUpdateCompanionBuilder,
+      (
+        AnchorSpotRow,
+        BaseReferences<_$AppDatabase, $AnchorSpotsTable, AnchorSpotRow>,
+      ),
+      AnchorSpotRow,
+      PrefetchHooks Function()
+    >;
 typedef $$SailingPolarSamplesTableCreateCompanionBuilder =
     SailingPolarSamplesCompanion Function({
       Value<int> id,
@@ -35063,6 +36920,8 @@ class $AppDatabaseManager {
       $$ErrorLogsTableTableManager(_db, _db.errorLogs);
   $$AnchorWatchesTableTableManager get anchorWatches =>
       $$AnchorWatchesTableTableManager(_db, _db.anchorWatches);
+  $$AnchorSpotsTableTableManager get anchorSpots =>
+      $$AnchorSpotsTableTableManager(_db, _db.anchorSpots);
   $$SailingPolarSamplesTableTableManager get sailingPolarSamples =>
       $$SailingPolarSamplesTableTableManager(_db, _db.sailingPolarSamples);
 }

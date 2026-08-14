@@ -16,9 +16,13 @@ import '../../models/models.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/anchor_alarm_service.dart';
 import '../../services/boat_position_service.dart';
+import '../../services/community_share.dart';
 import '../../services/predictwind_datahub_service.dart';
+import '../../services/revenuecat_service.dart';
 import 'anchor_chart_map.dart';
 import 'anchor_info_panel.dart';
+import 'save_anchor_spot_dialog.dart';
+import 'share_anchor_spot_dialog.dart';
 
 final activeAnchorWatchProvider = StreamProvider<AnchorWatch?>((ref) {
   return ref.watch(anchorWatchRepositoryProvider).watchActive();
@@ -388,6 +392,141 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
     await ref.read(anchorWatchRepositoryProvider).weighAnchor(id);
   }
 
+  Future<void> _saveSpotFromWatch(AnchorWatch watch) async {
+    final draft = await showSaveAnchorSpotDialog(
+      context,
+      watch: watch,
+      depthMeters: _boatData?.depthMeters,
+    );
+    if (draft == null || !mounted) return;
+    await ref.read(anchorSpotRepositoryProvider).save(draft);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Saved "${draft.name}"')),
+    );
+  }
+
+  void _routeToSpot(AnchorSpot spot, AnchorWatch? activeWatch) {
+    if (!spot.hasCoordinates) return;
+    final startLat = activeWatch?.anchorLat ?? _boatLat;
+    final startLon = activeWatch?.anchorLon ?? _boatLon;
+    PassageHandoff.open(
+      context,
+      PassageHandoff.toDestination(
+        startName: activeWatch != null ? 'Hook' : 'Boat',
+        startLat: startLat,
+        startLon: startLon,
+        destName: spot.name,
+        destLat: spot.lat!,
+        destLon: spot.lon!,
+      ),
+    );
+  }
+
+  Future<void> _shareSpot(AnchorSpot spot) async {
+    final isPro = await ref.read(revenueCatProvider).isPro();
+    if (!mounted) return;
+    if (!isPro) {
+      await RevenueCatService().showPaywall(context);
+      return;
+    }
+    final result = await showShareAnchorSpotDialog(context, spot);
+    if (result == null || !mounted) return;
+    final template = communityTemplateFromPayload(
+      title: spot.name,
+      category: CommunityShareKind.anchorage,
+      content: encodeAnchorSpotContent(
+        spot,
+        includeCoordinates: result.includeCoordinates,
+      ),
+      description: result.description,
+      subcategory: '',
+      authorId: '',
+    );
+    final settings = await ref.read(userSettingsProvider.future);
+    template.authorId = settings?.userId ?? '';
+    if (!mounted) return;
+    final saved =
+        await ref.read(communityRepositoryProvider).publishTemplate(template);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          saved.supabaseId.isNotEmpty
+              ? 'Published "${spot.name}"'
+              : 'Publish failed — try again',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editSpot(AnchorSpot spot) async {
+    final draft = await showSaveAnchorSpotDialog(
+      context,
+      existing: spot,
+      depthMeters: spot.depthMeters ?? _boatData?.depthMeters,
+    );
+    if (draft == null || !mounted) return;
+    await ref.read(anchorSpotRepositoryProvider).save(draft);
+  }
+
+  Future<void> _openSpotActions(
+    AnchorSpot spot,
+    AnchorWatch? activeWatch,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(spot.name),
+              subtitle: Text(
+                spot.hasCoordinates
+                    ? '${spot.lat!.toStringAsFixed(5)}, ${spot.lon!.toStringAsFixed(5)}'
+                    : 'Coordinates omitted',
+              ),
+            ),
+            if (spot.hasCoordinates)
+              ListTile(
+                leading: const Icon(Icons.route),
+                title: const Text('Route to this spot'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _routeToSpot(spot, activeWatch);
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.ios_share),
+              title: const Text('Share'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                unawaited(_shareSpot(spot));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Edit'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                unawaited(_editSpot(spot));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('Delete'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                unawaited(ref.read(anchorSpotRepositoryProvider).delete(spot.id));
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeWatch = ref.watch(activeAnchorWatchProvider).value;
@@ -465,6 +604,8 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                       lon: activeWatch.anchorLon,
                                       placeName: 'Hook',
                                     ),
+                                    onSaveSpot: () =>
+                                        unawaited(_saveSpotFromWatch(activeWatch)),
                                   ),
                                   if (widget.showChartMap) ...[
                                     const SizedBox(height: 12),
@@ -474,6 +615,13 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                       boatLon: _boatLon,
                                       // #304 — map radius drag can back-solve scope.
                                       depthMeters: _boatData?.depthMeters,
+                                      savedSpots: ref
+                                              .watch(anchorSpotsProvider)
+                                              .asData
+                                              ?.value ??
+                                          const [],
+                                      onSpotTap: (spot) => unawaited(
+                                          _openSpotActions(spot, activeWatch)),
                                     ),
                                   ],
                                   const SizedBox(height: 12),
@@ -490,6 +638,16 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                   const SizedBox(height: 12),
                                   _DangerZoneCard(activeWatch: activeWatch),
                                 ],
+                                const SizedBox(height: 12),
+                                _SavedSpotsCard(
+                                  spots: ref
+                                          .watch(anchorSpotsProvider)
+                                          .asData
+                                          ?.value ??
+                                      const [],
+                                  onOpen: (spot) => unawaited(
+                                      _openSpotActions(spot, activeWatch)),
+                                ),
                                 const SizedBox(height: 12),
                                 _HubStatusCard(
                                   status: _hubStatus,
@@ -683,6 +841,7 @@ class _AnchorStatusCard extends StatelessWidget {
   final VoidCallback onWeighAnchor;
   final VoidCallback onPlanPassage;
   final VoidCallback onOpenWeather;
+  final VoidCallback onSaveSpot;
   const _AnchorStatusCard({
     required this.activeWatch,
     required this.boatLat,
@@ -691,6 +850,7 @@ class _AnchorStatusCard extends StatelessWidget {
     required this.onWeighAnchor,
     required this.onPlanPassage,
     required this.onOpenWeather,
+    required this.onSaveSpot,
   });
 
   @override
@@ -725,6 +885,11 @@ class _AnchorStatusCard extends StatelessWidget {
             alignment: MainAxisAlignment.end,
             children: [
               TextButton.icon(
+                onPressed: onSaveSpot,
+                icon: const Icon(Icons.bookmark_add_outlined),
+                label: const Text('Save this spot'),
+              ),
+              TextButton.icon(
                 onPressed: onPlanPassage,
                 icon: const Icon(Icons.route),
                 label: const Text('Plan passage'),
@@ -746,6 +911,52 @@ class _AnchorStatusCard extends StatelessWidget {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SavedSpotsCard extends StatelessWidget {
+  final List<AnchorSpot> spots;
+  final ValueChanged<AnchorSpot> onOpen;
+  const _SavedSpotsCard({required this.spots, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const ListTile(
+            leading: Icon(Icons.place),
+            title: Text('Saved spots'),
+            subtitle: Text('Named places — not the live watch.'),
+          ),
+          if (spots.isEmpty)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Text('No saved spots yet. Drop the hook, then Save this spot.'),
+            )
+          else
+            for (final spot in spots)
+              ListTile(
+                leading: Icon(
+                  spot.hasCoordinates ? Icons.place : Icons.place_outlined,
+                ),
+                title: Text(spot.name),
+                subtitle: Text(
+                  [
+                    if (spot.hasCoordinates)
+                      '${spot.lat!.toStringAsFixed(4)}, ${spot.lon!.toStringAsFixed(4)}',
+                    if (spot.bottom.isNotEmpty &&
+                        spot.bottom != AnchorBottom.unknown)
+                      spot.bottom,
+                    if (spot.comments.isNotEmpty) spot.comments,
+                  ].join(' · '),
+                ),
+                onTap: () => onOpen(spot),
+              ),
         ],
       ),
     );

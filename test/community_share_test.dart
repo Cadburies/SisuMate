@@ -101,4 +101,44 @@ void main() {
       expect((items.first as Map)['name'], 'Limes');
     });
   });
+
+  group('encodeAnchorSpotContent (#328)', () {
+    AnchorSpot marsh() => AnchorSpot()
+      ..name = 'Marsh Harbour'
+      ..comments = 'Reef NE'
+      ..lat = 26.5412
+      ..lon = -77.0634
+      ..scopeRatio = 5
+      ..radiusMeters = 40
+      ..dangerZoneEnabled = true
+      ..dangerZoneWidthDeg = 80
+      ..bottom = AnchorBottom.sand;
+
+    test('default payload includes drop coordinates', () {
+      final payload = encodeAnchorSpotContent(marsh());
+      expect(payload['kind'], CommunityShareKind.anchorage);
+      expect(payload['name'], 'Marsh Harbour');
+      expect(payload['lat'], 26.5412);
+      expect(payload['lon'], -77.0634);
+      expect(payload['dangerZoneEnabled'], isTrue);
+      expect(payload['dangerZoneWidthDeg'], 80);
+    });
+
+    test('stripping coordinates keeps name + metadata + danger-zone shape', () {
+      final payload = encodeAnchorSpotContent(
+        marsh(),
+        includeCoordinates: false,
+      );
+      expect(payload.containsKey('lat'), isFalse);
+      expect(payload.containsKey('lon'), isFalse);
+      expect(payload['name'], 'Marsh Harbour');
+      expect(payload['bottom'], AnchorBottom.sand);
+      expect(payload['dangerZoneEnabled'], isTrue);
+      expect(payload['dangerZoneWidthDeg'], 80);
+      final decoded = decodeSharedAnchorSpot(payload);
+      expect(decoded.hasCoordinates, isFalse);
+      expect(decoded.name, 'Marsh Harbour');
+      expect(decoded.dangerZoneEnabled, isTrue);
+    });
+  });
 }

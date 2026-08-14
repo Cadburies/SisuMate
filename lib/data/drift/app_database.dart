@@ -660,6 +660,43 @@ class AnchorWatches extends Table {
       dateTime().withDefault(currentDateAndTime)();
 }
 
+/// #328 — named anchorage catalog. Local-only (never synced). Independent
+/// of the live [AnchorWatches] alarm row.
+@DataClassName('AnchorSpotRow')
+class AnchorSpots extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get comments => text().withDefault(const Constant(''))();
+  RealColumn get lat => real().nullable()();
+  RealColumn get lon => real().nullable()();
+  RealColumn get scopeRatio => real().withDefault(const Constant(5.0))();
+  RealColumn get radiusMeters => real().withDefault(const Constant(30.0))();
+  BoolColumn get dangerZoneEnabled =>
+      boolean().withDefault(const Constant(false))();
+  RealColumn get dangerZoneCenterDeg =>
+      real().withDefault(const Constant(0))();
+  RealColumn get dangerZoneWidthDeg =>
+      real().withDefault(const Constant(60.0))();
+  RealColumn get dangerZoneInnerRadiusMeters =>
+      real().withDefault(const Constant(30.0))();
+  RealColumn get dangerZoneOuterRadiusMeters =>
+      real().withDefault(const Constant(50.0))();
+  TextColumn get bottom => text().withDefault(const Constant('unknown'))();
+  TextColumn get holdingQuality => text().withDefault(const Constant(''))();
+  RealColumn get depthMeters => real().nullable()();
+  /// JSON list of wind-protection sectors (`["N","NE"]`).
+  TextColumn get windProtectionJson =>
+      text().withDefault(const Constant('[]'))();
+  TextColumn get swellExposure => text().withDefault(const Constant(''))();
+  TextColumn get dinghyLanding => text().withDefault(const Constant(''))();
+  TextColumn get dinghyNotes => text().withDefault(const Constant(''))();
+  TextColumn get amenities => text().withDefault(const Constant(''))();
+  TextColumn get photoPath => text().nullable()();
+  DateTimeColumn get savedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get lastModified =>
+      dateTime().withDefault(currentDateAndTime)();
+}
+
 /// #274/#275 — under-sail polar learning samples. Anonymized sync when Pro.
 @DataClassName('SailingPolarSampleRow')
 class SailingPolarSamples extends Table {
@@ -727,6 +764,7 @@ class SailingPolarSamples extends Table {
   ConflictLogs,
   ErrorLogs,
   AnchorWatches,
+  AnchorSpots,
   SailingPolarSamples,
 ])
 class AppDatabase extends _$AppDatabase {
@@ -748,7 +786,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 26;
+  int get schemaVersion => 27;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

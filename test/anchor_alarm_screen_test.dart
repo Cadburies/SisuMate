@@ -311,6 +311,9 @@ void main() {
       // #329 — Watch tab hands off to Weather's planner / forecast.
       expect(find.text('Plan passage'), findsOneWidget);
       expect(find.text('Weather at hook'), findsOneWidget);
+      // #328 — save the live drop into the catalog.
+      expect(find.text('Save this spot'), findsOneWidget);
+      expect(find.text('Saved spots'), findsOneWidget);
 
       // Flush any Drift cancel timers from intermediate rebuilds, then unmount.
       await tester.pump(const Duration(milliseconds: 1));

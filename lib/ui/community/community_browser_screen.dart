@@ -669,6 +669,9 @@ class _CommunityBrowserScreenState
             final shopCats =
                 ref.watch(shoppingCategoriesProvider).asData?.value ??
                     const <ShoppingCategory>[];
+            final spots =
+                ref.watch(anchorSpotsProvider).asData?.value ??
+                    const <AnchorSpot>[];
 
             final tiles = <Widget>[
               ...groups.map((group) {
@@ -733,6 +736,19 @@ class _CommunityBrowserScreenState
                       _confirmShoppingShare(c);
                     },
                   )),
+              ...spots.map((s) => ListTile(
+                    leading: Icon(_kindIcon(CommunityShareKind.anchorage)),
+                    title: Text(s.name),
+                    subtitle: Text(
+                      s.hasCoordinates
+                          ? '${_categoryLabel(CommunityShareKind.anchorage)} · coords included by default'
+                          : _categoryLabel(CommunityShareKind.anchorage),
+                    ),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _confirmSpotShare(s);
+                    },
+                  )),
             ];
 
             return Column(
@@ -749,7 +765,7 @@ class _CommunityBrowserScreenState
                   child: tiles.isEmpty
                       ? const Center(
                           child: Text(
-                              'Nothing to share yet — add a checklist, recipe, or shopping list.'),
+                              'Nothing to share yet — add a checklist, recipe, shopping list, or saved spot.'),
                         )
                       : ListView(
                           controller: scrollController,
@@ -771,6 +787,7 @@ class _CommunityBrowserScreenState
         CommunityShareKind.cocktail => Icons.local_bar,
         CommunityShareKind.collection => Icons.collections_bookmark,
         CommunityShareKind.shopping => Icons.shopping_cart,
+        CommunityShareKind.anchorage => Icons.anchor,
         _ => Icons.checklist,
       };
 
@@ -862,6 +879,42 @@ class _CommunityBrowserScreenState
     );
   }
 
+  Future<void> _confirmSpotShare(AnchorSpot spot) async {
+    var includeCoords = spot.hasCoordinates;
+    await _showPublishConfirmDialog(
+      title: spot.name,
+      category: CommunityShareKind.anchorage,
+      showEngineTag: false,
+      extraBuilder: (setDialogState) => SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Include drop coordinates'),
+        subtitle: const Text(
+          'Off keeps name, notes, and danger-zone shape only.',
+        ),
+        value: includeCoords,
+        onChanged: spot.hasCoordinates
+            ? (v) => setDialogState(() => includeCoords = v)
+            : null,
+      ),
+      buildTemplate: ({
+        required String description,
+        required String subcategory,
+        required String authorId,
+      }) =>
+          communityTemplateFromPayload(
+        title: spot.name,
+        category: CommunityShareKind.anchorage,
+        content: encodeAnchorSpotContent(
+          spot,
+          includeCoordinates: includeCoords,
+        ),
+        description: description,
+        subcategory: subcategory,
+        authorId: authorId,
+      ),
+    );
+  }
+
   Future<void> _confirmShoppingShare(ShoppingCategory category) async {
     final items = await ref
         .read(shoppingRepositoryProvider)
@@ -898,6 +951,7 @@ class _CommunityBrowserScreenState
       required String subcategory,
       required String authorId,
     }) buildTemplate,
+    Widget Function(void Function(VoidCallback))? extraBuilder,
   }) async {
     final isUpdate = existingTemplateId != null;
     CommunityTemplate? cached;
@@ -950,6 +1004,10 @@ class _CommunityBrowserScreenState
                     onChanged: (v) =>
                         setDialogState(() => selectedEngine = v),
                   ),
+                ],
+                if (extraBuilder != null) ...[
+                  const SizedBox(height: 8),
+                  extraBuilder(setDialogState),
                 ],
               ],
             ),

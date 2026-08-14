@@ -38,11 +38,12 @@ class PassageHandoff {
   bool get hasStart => startLat != null && startLon != null;
   bool get hasDest => destLat != null && destLon != null;
 
-  /// Route from [start] (boat or hook) to a named destination (saved spot).
+  /// Route from [start] (boat or hook, optional) to a named destination
+  /// (saved spot). Missing start is filled by the planner near the dest.
   factory PassageHandoff.toDestination({
     String startName = 'Departure',
-    required double startLat,
-    required double startLon,
+    double? startLat,
+    double? startLon,
     required String destName,
     required double destLat,
     required double destLon,

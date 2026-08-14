@@ -11,6 +11,7 @@ import '../../services/community_offline_store.dart';
 import '../../services/community_share.dart';
 import '../../services/supabase_remote.dart';
 import '../../domain/repositories/community_repository.dart';
+import 'anchor_spot_repository_impl.dart';
 import 'collection_repository_impl.dart';
 import 'recipe_repository_impl.dart';
 
@@ -410,6 +411,8 @@ class CommunityRepositoryImpl implements CommunityRepository {
             boatId: boatId,
             prefix: 'community_${templateId}_$stamp',
           );
+        case CommunityShareKind.anchorage:
+          await _importSharedAnchorage(parsed);
         default:
           await _importSharedChecklist(
             parsed,
@@ -604,6 +607,12 @@ class CommunityRepositoryImpl implements CommunityRepository {
           ));
       await syncService?.queueOutgoingChange('shopping_items', item.toJson());
     }
+  }
+
+  Future<void> _importSharedAnchorage(Map<String, dynamic> parsed) async {
+    final spot = decodeSharedAnchorSpot(parsed);
+    spot.id = 0;
+    await AnchorSpotRepositoryImpl(db).save(spot);
   }
 
   @override

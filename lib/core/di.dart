@@ -48,6 +48,8 @@ import '../domain/repositories/fuel_log_repository.dart';
 import '../data/repositories/fuel_log_repository_impl.dart';
 import '../domain/repositories/anchor_watch_repository.dart';
 import '../data/repositories/anchor_watch_repository_impl.dart';
+import '../domain/repositories/anchor_spot_repository.dart';
+import '../data/repositories/anchor_spot_repository_impl.dart';
 import '../data/repositories/sailing_polar_sample_repository.dart';
 import '../services/sailing_polar_collector.dart';
 import '../services/polar_llm_improve_service.dart';
@@ -232,6 +234,15 @@ final userSettingsRepositoryProvider = Provider<UserSettingsRepository>((ref) {
 
 final anchorWatchRepositoryProvider = Provider<AnchorWatchRepository>((ref) {
   return AnchorWatchRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+/// #328 — named anchorage catalog (local-only).
+final anchorSpotRepositoryProvider = Provider<AnchorSpotRepository>((ref) {
+  return AnchorSpotRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+final anchorSpotsProvider = StreamProvider<List<AnchorSpot>>((ref) {
+  return ref.watch(anchorSpotRepositoryProvider).watchAll();
 });
 
 final boatRepositoryProvider = Provider<BoatRepository>((ref) {

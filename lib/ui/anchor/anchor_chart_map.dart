@@ -54,12 +54,17 @@ class AnchorChartMap extends ConsumerStatefulWidget {
   final double? boatLon;
   /// #304 — when set, geofence radius drags also update [AnchorWatch.scopeRatio].
   final double? depthMeters;
+  /// #328 — catalog pins, distinct from the live hook.
+  final List<AnchorSpot> savedSpots;
+  final ValueChanged<AnchorSpot>? onSpotTap;
   const AnchorChartMap({
     super.key,
     required this.activeWatch,
     required this.boatLat,
     required this.boatLon,
     this.depthMeters,
+    this.savedSpots = const [],
+    this.onSpotTap,
   });
 
   @override
@@ -266,6 +271,28 @@ class _AnchorChartMapState extends ConsumerState<AnchorChartMap> {
                         Shadow(color: Colors.black, blurRadius: 4),
                       ]),
                     ),
+                  for (final spot in widget.savedSpots)
+                    if (spot.hasCoordinates)
+                      Marker(
+                        point: LatLng(spot.lat!, spot.lon!),
+                        width: 36,
+                        height: 36,
+                        child: GestureDetector(
+                          onTap: widget.onSpotTap == null
+                              ? null
+                              : () => widget.onSpotTap!(spot),
+                          child: Tooltip(
+                            message: spot.name,
+                            child: const Icon(
+                              Icons.place,
+                              color: Colors.amber,
+                              shadows: [
+                                Shadow(color: Colors.black, blurRadius: 4),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                 ]),
               ],
             ),

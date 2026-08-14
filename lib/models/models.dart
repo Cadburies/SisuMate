@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show listEquals;
 
 part 'boat.dart';
 part 'anchor_watch.dart';
+part 'anchor_spot.dart';
 part 'checklist_group.dart';
 part 'checklist_item.dart';
 part 'shopping_category.dart';

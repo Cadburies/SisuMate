@@ -118,15 +118,19 @@ class _PassagePlannerScreenState extends ConsumerState<PassagePlannerScreen> {
 
   List<_Wp> _seedWaypoints() {
     final h = widget.handoff;
-    final startLat = h?.startLat ?? widget.initialLat ?? 33.45;
-    final startLon = h?.startLon ?? widget.initialLon ?? -112.07;
     final startName = h?.startName ?? 'Departure';
     if (h != null && h.hasDest) {
+      final startLat =
+          h.startLat ?? widget.initialLat ?? (h.destLat! - 0.3);
+      final startLon =
+          h.startLon ?? widget.initialLon ?? (h.destLon! - 0.4);
       return [
         _Wp(startName, startLat, startLon),
         _Wp(h.destName ?? 'Destination', h.destLat!, h.destLon!),
       ];
     }
+    final startLat = h?.startLat ?? widget.initialLat ?? 33.45;
+    final startLon = h?.startLon ?? widget.initialLon ?? -112.07;
     return [
       _Wp(startName, startLat, startLon),
       _Wp('Waypoint 1', startLat + 0.3, startLon + 0.4),

@@ -10,6 +10,7 @@ abstract final class CommunityShareKind {
   static const cocktail = 'cocktail';
   static const collection = 'collection';
   static const shopping = 'shopping';
+  static const anchorage = 'anchorage';
 
   /// Browse chips — checklist kinds still use ChecklistGroup.appType as
   /// the stored [CommunityTemplate.category].
@@ -22,6 +23,7 @@ abstract final class CommunityShareKind {
     cocktail,
     collection,
     shopping,
+    anchorage,
   ];
 
   static String label(String cat) => switch (cat) {
@@ -31,6 +33,7 @@ abstract final class CommunityShareKind {
         cocktail => 'Cocktails',
         collection => 'Collections',
         shopping => 'Shopping',
+        anchorage => 'Anchorages',
         _ => cat.isEmpty ? cat : '${cat[0].toUpperCase()}${cat.substring(1)}',
       };
 
@@ -39,6 +42,7 @@ abstract final class CommunityShareKind {
         cocktail => 'Cocktails',
         collection => 'Collections',
         shopping => 'Shopping',
+        anchorage => 'Anchor Alarm',
         'maintenance' => 'Maintenance',
         'safety' => 'Safety',
         _ => 'Checklists',
@@ -143,6 +147,21 @@ Map<String, dynamic> encodeShoppingContent({
               })
           .toList(),
     };
+
+/// #328 — share a *saved* spot, never the live [AnchorWatch] GPS.
+/// [includeCoordinates] defaults on; turning it off keeps name + metadata
+/// + danger-zone *shape* only (no drop lat/lng).
+Map<String, dynamic> encodeAnchorSpotContent(
+  AnchorSpot spot, {
+  bool includeCoordinates = true,
+}) =>
+    {
+      'kind': CommunityShareKind.anchorage,
+      ...spot.toJson(includeCoordinates: includeCoordinates),
+    };
+
+AnchorSpot decodeSharedAnchorSpot(Map<String, dynamic> raw) =>
+    AnchorSpot.fromJson(raw);
 
 CommunityTemplate communityTemplateFromPayload({
   required String title,
