@@ -81,6 +81,8 @@ class InventoryItems extends Table {
   /// #319 — ChecklistItem.supabaseId of the maintenance task that consumes
   /// this spare. Null = unlinked.
   TextColumn get linkedMaintenanceItemSupabaseId => text().nullable()();
+  /// #320 — JSON list of {at, from, to} quantity changes.
+  TextColumn get quantityHistory => text().withDefault(const Constant('[]'))();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
@@ -746,7 +748,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 26;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

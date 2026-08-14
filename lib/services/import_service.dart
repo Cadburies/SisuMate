@@ -469,7 +469,8 @@ class ImportService {
       ..serialNumber = _optString(j, 'serialNumber', i)
       ..notes = _optString(j, 'notes', i)
       ..linkedMaintenanceItemSupabaseId =
-          _optString(j, 'linkedMaintenanceItemSupabaseId', i);
+          _optString(j, 'linkedMaintenanceItemSupabaseId', i)
+      ..quantityHistory = parseInventoryQtyHistory(j['quantityHistory']);
   }
 
   static ImportedRecipe _parseRecipe(Map<String, dynamic> j, int i) {
@@ -789,6 +790,9 @@ class ImportService {
             if (i.linkedMaintenanceItemSupabaseId != null)
               'linkedMaintenanceItemSupabaseId':
                   i.linkedMaintenanceItemSupabaseId,
+            if (i.quantityHistory.isNotEmpty)
+              'quantityHistory':
+                  i.quantityHistory.map((e) => e.toJson()).toList(),
           };
         }).toList(),
       );

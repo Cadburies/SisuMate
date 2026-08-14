@@ -137,5 +137,64 @@ void main() {
         );
       });
     });
+
+    group('quantity history (#320)', () {
+      test('averageDaysBetweenRestocks needs two restocks', () {
+        expect(InventoryReorderService.averageDaysBetweenRestocks([]), isNull);
+        expect(
+          InventoryReorderService.averageDaysBetweenRestocks([
+            InventoryQtyChange(
+              at: DateTime.utc(2026, 1, 1),
+              from: 1,
+              to: 4,
+            ),
+          ]),
+          isNull,
+        );
+        expect(
+          InventoryReorderService.averageDaysBetweenRestocks([
+            InventoryQtyChange(
+              at: DateTime.utc(2026, 1, 1),
+              from: 1,
+              to: 4,
+            ),
+            InventoryQtyChange(
+              at: DateTime.utc(2026, 1, 11),
+              from: 0,
+              to: 3,
+            ),
+          ]),
+          10,
+        );
+      });
+
+      test('quantityHistoryLines lists newest change first and the restock avg',
+          () {
+        final inv = item(name: 'Flares', qty: 3)
+          ..lastModified = DateTime.utc(2026, 1, 11)
+          ..quantityHistory = [
+            InventoryQtyChange(
+              at: DateTime.utc(2026, 1, 1),
+              from: 1,
+              to: 4,
+            ),
+            InventoryQtyChange(
+              at: DateTime.utc(2026, 1, 5),
+              from: 4,
+              to: 0,
+            ),
+            InventoryQtyChange(
+              at: DateTime.utc(2026, 1, 11),
+              from: 0,
+              to: 3,
+            ),
+          ];
+        final lines = InventoryReorderService.quantityHistoryLines(inv);
+        expect(lines.first, contains('Last modified:'));
+        expect(lines[1], contains('Qty 0 → 3 restock'));
+        expect(lines[2], contains('Qty 4 → 0'));
+        expect(lines.last, 'Average 10 days between restocks');
+      });
+    });
   });
 }

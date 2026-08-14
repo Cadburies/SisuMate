@@ -154,4 +154,46 @@ class InventoryReorderService {
     final minStr = min == min.roundToDouble() ? min.toInt().toString() : min.toString();
     return '${item.name}: $qty$unit on hand, min $minStr';
   }
+
+  /// #320 — mean calendar days between restock events (qty increased).
+  /// Needs at least two restocks; otherwise null.
+  static double? averageDaysBetweenRestocks(
+      Iterable<InventoryQtyChange> history) {
+    final restocks = history.where((e) => e.isRestock).toList()
+      ..sort((a, b) => a.at.compareTo(b.at));
+    if (restocks.length < 2) return null;
+    var sumMs = 0;
+    for (var i = 1; i < restocks.length; i++) {
+      sumMs += restocks[i].at.difference(restocks[i - 1].at).inMilliseconds;
+    }
+    return (sumMs / (restocks.length - 1)) / Duration.millisecondsPerDay;
+  }
+
+  /// History pane lines: last-modified, newest qty change first, then
+  /// the optional restock-interval stat.
+  static List<String> quantityHistoryLines(InventoryItem item) {
+    final lines = <String>[
+      'Last modified: ${item.lastModified.toLocal()}',
+    ];
+    final hist = List<InventoryQtyChange>.from(item.quantityHistory)
+      ..sort((a, b) => b.at.compareTo(a.at));
+    for (final c in hist) {
+      final from = _fmtQty(c.from);
+      final to = _fmtQty(c.to);
+      final when = c.at.toLocal().toString().split('.').first;
+      final tag = c.isRestock ? ' restock' : '';
+      lines.add('Qty $from → $to$tag · $when');
+    }
+    final avg = averageDaysBetweenRestocks(item.quantityHistory);
+    if (avg != null) {
+      final days = avg == avg.roundToDouble()
+          ? avg.toInt().toString()
+          : avg.toStringAsFixed(1);
+      lines.add('Average $days days between restocks');
+    }
+    return lines;
+  }
+
+  static String _fmtQty(double q) =>
+      q == q.roundToDouble() ? q.toInt().toString() : q.toString();
 }

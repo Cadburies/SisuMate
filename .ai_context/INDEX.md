@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #319 — inventory spare ↔ maintenance checklist item link (`linkedMaintenanceItemSupabaseId`, schema 24→25 + remote column applied). Complete offers skippable decrement; both-direction labels on inventory detail / CheckPageViewer.
-- **Next:** #320 inventory qty-change history (same inventory model/Drift hotspot). Then #322 community offline cache. #323 research-only, skip.
+- **Last:** #320 — inventory quantity-change history (JSON `quantityHistory`, schema 25→26). Repo appends on any qty write (edit + spare decrement). Detail history pane shows the log + average days between restocks.
+- **Next:** #322 community browse offline cache. #323 research-only, skip.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

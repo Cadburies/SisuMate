@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import '../../domain/repositories/inventory_item_repository.dart';
 import '../../models/models.dart';
@@ -24,6 +26,7 @@ class InventoryItemRepositoryImpl implements InventoryItemRepository {
     ..localPath = r.localPath
     ..barcode = r.barcode
     ..linkedMaintenanceItemSupabaseId = r.linkedMaintenanceItemSupabaseId
+    ..quantityHistory = parseInventoryQtyHistory(r.quantityHistory)
     ..isSynced = r.isSynced
     ..lastModified = r.lastModified;
 
@@ -41,6 +44,8 @@ class InventoryItemRepositoryImpl implements InventoryItemRepository {
         barcode: Value(i.barcode),
         linkedMaintenanceItemSupabaseId:
             Value(i.linkedMaintenanceItemSupabaseId),
+        quantityHistory: Value(
+            jsonEncode(i.quantityHistory.map((e) => e.toJson()).toList())),
         isSynced: Value(i.isSynced),
         lastModified: Value(i.lastModified),
       );
@@ -63,6 +68,20 @@ class InventoryItemRepositoryImpl implements InventoryItemRepository {
 
   @override
   Future<void> updateInventoryItem(InventoryItem item) async {
+    final existing = await (db.select(db.inventoryItems)
+          ..where((t) => t.supabaseId.equals(item.supabaseId)))
+        .getSingleOrNull();
+    if (existing != null && existing.quantity != item.quantity) {
+      final prior = parseInventoryQtyHistory(existing.quantityHistory);
+      item.quantityHistory = [
+        ...prior,
+        InventoryQtyChange(
+          at: DateTime.now().toUtc(),
+          from: existing.quantity,
+          to: item.quantity,
+        ),
+      ];
+    }
     item.lastModified = DateTime.now().toUtc();
     await (db.update(db.inventoryItems)
           ..where((t) => t.supabaseId.equals(item.supabaseId)))

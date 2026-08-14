@@ -1,5 +1,58 @@
 part of 'models.dart';
 
+/// #320 — one quantity change on an [InventoryItem].
+class InventoryQtyChange {
+  InventoryQtyChange({
+    required this.at,
+    required this.from,
+    required this.to,
+  });
+
+  final DateTime at;
+  final double from;
+  final double to;
+
+  bool get isRestock => to > from;
+
+  factory InventoryQtyChange.fromJson(Map<String, dynamic> json) {
+    return InventoryQtyChange(
+      at: DateTime.parse(json['at'] as String),
+      from: (json['from'] as num).toDouble(),
+      to: (json['to'] as num).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'at': at.toIso8601String(),
+        'from': from,
+        'to': to,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is InventoryQtyChange &&
+          at == other.at &&
+          from == other.from &&
+          to == other.to;
+
+  @override
+  int get hashCode => Object.hash(at, from, to);
+}
+
+List<InventoryQtyChange> parseInventoryQtyHistory(dynamic raw) {
+  if (raw == null) return [];
+  if (raw is String) {
+    if (raw.isEmpty) return [];
+    raw = jsonDecode(raw);
+  }
+  if (raw is! List) return [];
+  return raw
+      .whereType<Map>()
+      .map((e) => InventoryQtyChange.fromJson(Map<String, dynamic>.from(e)))
+      .toList();
+}
+
 class InventoryItem {
   InventoryItem();
 
@@ -21,6 +74,8 @@ class InventoryItem {
   /// this spare. Null = unlinked. Stored as the wire/local supabaseId (not
   /// the Drift int pk) so the link survives sync across devices.
   String? linkedMaintenanceItemSupabaseId;
+  /// #320 — JSON list of [InventoryQtyChange] (timestamp + old/new qty).
+  List<InventoryQtyChange> quantityHistory = [];
   bool isSynced = false;
   DateTime lastModified = DateTime.now().toUtc();
 
@@ -37,6 +92,7 @@ class InventoryItem {
       ..localPath = json['localPath']
       ..barcode = json['barcode']
       ..linkedMaintenanceItemSupabaseId = json['linkedMaintenanceItemSupabaseId']
+      ..quantityHistory = parseInventoryQtyHistory(json['quantityHistory'])
       ..isSynced = json['isSynced'] ?? false
       ..lastModified = DateTime.parse(json['lastModified']);
   }
@@ -53,6 +109,7 @@ class InventoryItem {
     'localPath': localPath,
     'barcode': barcode,
     'linkedMaintenanceItemSupabaseId': linkedMaintenanceItemSupabaseId,
+    'quantityHistory': quantityHistory.map((e) => e.toJson()).toList(),
     'isSynced': isSynced,
     'lastModified': lastModified.toIso8601String(),
   };
@@ -75,6 +132,7 @@ class InventoryItem {
           barcode == other.barcode &&
           linkedMaintenanceItemSupabaseId ==
               other.linkedMaintenanceItemSupabaseId &&
+          listEquals(quantityHistory, other.quantityHistory) &&
           isSynced == other.isSynced &&
           lastModified == other.lastModified;
 
@@ -92,6 +150,7 @@ class InventoryItem {
         localPath,
         barcode,
         linkedMaintenanceItemSupabaseId,
+        Object.hashAll(quantityHistory),
         isSynced,
         lastModified,
       ]);
@@ -102,5 +161,6 @@ class InventoryItem {
       'quantity: $quantity, unit: $unit, serialNumber: $serialNumber, '
       'notes: $notes, localPath: $localPath, barcode: $barcode, '
       'linkedMaintenanceItemSupabaseId: $linkedMaintenanceItemSupabaseId, '
+      'quantityHistory: $quantityHistory, '
       'isSynced: $isSynced, lastModified: $lastModified)';
 }

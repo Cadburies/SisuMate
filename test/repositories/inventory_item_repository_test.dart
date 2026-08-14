@@ -64,6 +64,38 @@ void main() {
       expect(all.single.serialNumber, 'SN-99');
     });
 
+    test('#320: updateInventoryItem appends quantityHistory when qty changes',
+        () async {
+      final item = InventoryItem()
+        ..supabaseId = 'inv_1'
+        ..name = 'Flares'
+        ..quantity = 6;
+      await repo.addInventoryItem(item);
+
+      item.quantity = 3;
+      await repo.updateInventoryItem(item);
+
+      var all = await repo.watchInventoryItems().first;
+      expect(all.single.quantity, 3);
+      expect(all.single.quantityHistory, hasLength(1));
+      expect(all.single.quantityHistory.single.from, 6);
+      expect(all.single.quantityHistory.single.to, 3);
+
+      item.quantity = 8;
+      await repo.updateInventoryItem(item);
+      all = await repo.watchInventoryItems().first;
+      expect(all.single.quantityHistory, hasLength(2));
+      expect(all.single.quantityHistory.last.from, 3);
+      expect(all.single.quantityHistory.last.to, 8);
+      expect(all.single.quantityHistory.last.isRestock, isTrue);
+
+      // Name-only edit must not grow the log.
+      item.name = 'Handheld flares';
+      await repo.updateInventoryItem(item);
+      all = await repo.watchInventoryItems().first;
+      expect(all.single.quantityHistory, hasLength(2));
+    });
+
     test('#319: linkedMaintenanceItemSupabaseId round-trips through add and update',
         () async {
       final item = InventoryItem()

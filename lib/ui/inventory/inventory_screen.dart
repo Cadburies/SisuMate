@@ -382,9 +382,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           canEdit: isPro,
           titleForIndex: (i) => list[i].name,
           photoPathForIndex: (i) => list[i].localPath,
-          historyForIndex: (i) => [
-            'Last modified: ${list[i].lastModified.toLocal()}',
-          ],
+          historyForIndex: (i) =>
+              InventoryReorderService.quantityHistoryLines(list[i]),
           fieldsForIndex: (i) {
             final m = list[i];
             return [
