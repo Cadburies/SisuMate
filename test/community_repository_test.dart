@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,7 @@ import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/data/repositories/community_repository_impl.dart';
 import 'package:sisu_mate/domain/repositories/community_repository.dart';
 import 'package:sisu_mate/models/models.dart';
+import 'package:sisu_mate/services/community_offline_store.dart';
 
 import 'test_helpers/fake_supabase_remote.dart';
 
@@ -38,17 +41,18 @@ void main() {
     });
 
     test('browseCommunity returns empty list when network is unavailable', () async {
-      final templates = await repository.browseCommunity(category: 'maintenance');
-      expect(templates, isEmpty);
+      final result = await repository.browseCommunity(category: 'maintenance');
+      expect(result.templates, isEmpty);
+      expect(result.fromCache, isFalse);
     });
 
     test(
         'browseCommunity with sortBy: mostDownloaded also falls back to '
         'empty when network is unavailable (S5)', () async {
-      final templates = await repository.browseCommunity(
+      final result = await repository.browseCommunity(
         sortBy: CommunitySortOrder.mostDownloaded,
       );
-      expect(templates, isEmpty);
+      expect(result.templates, isEmpty);
     });
 
     test('importTemplate returns false when network is unavailable', () async {
@@ -253,10 +257,11 @@ void main() {
         'version': 1,
       });
 
-      final list = await liveRepo.browseCommunity(category: 'maintenance');
-      expect(list, hasLength(1));
-      expect(list.single.title, 'Engine checks');
-      expect(list.single.supabaseId, 't1');
+      final result = await liveRepo.browseCommunity(category: 'maintenance');
+      expect(result.templates, hasLength(1));
+      expect(result.templates.single.title, 'Engine checks');
+      expect(result.templates.single.supabaseId, 't1');
+      expect(result.fromCache, isFalse);
     });
 
     test('updateTemplate bumps version and writes remote + local cache',
@@ -300,6 +305,92 @@ void main() {
       final cached = await liveRepo.getCachedTemplate('t-upd');
       expect(cached?.title, 'New title');
       expect(cached?.version, 3);
+    });
+  });
+
+  group('CommunityRepository — #322 offline cache + keep', () {
+    late Directory tmp;
+    late FakeSupabaseRemote remote;
+    late CommunityRepositoryImpl liveRepo;
+
+    setUp(() {
+      tmp = Directory.systemTemp.createTempSync('sisu_c322_');
+      remote = FakeSupabaseRemote(userId: 'auth-uid-1');
+      liveRepo = CommunityRepositoryImpl(
+        db,
+        null,
+        remote,
+        CommunityOfflineStore(overrideFile: File('${tmp.path}/c.json')),
+      );
+    });
+
+    tearDown(() {
+      if (tmp.existsSync()) tmp.deleteSync(recursive: true);
+    });
+
+    Future<void> seed({
+      required String id,
+      required String title,
+      String subcategory = '',
+      String content = '{"title":"x","appType":"maintenance","items":[]}',
+    }) {
+      return remote.communityInsert({
+        'id': id,
+        'title': title,
+        'name': id,
+        'description': title,
+        'category': 'maintenance',
+        'subcategory': subcategory,
+        'author_id': 'u1',
+        'content': content,
+        'is_approved': true,
+        'last_modified': '2026-07-01T00:00:00.000Z',
+        'version': 1,
+      });
+    }
+
+    test('browse filters by interests and a later offline fetch uses the snapshot',
+        () async {
+      await seed(id: 'yan', title: 'Yanmar 4HJ45 impeller', subcategory: 'Yanmar');
+      await seed(
+        id: 'vol',
+        title: 'Volvo Penta D2 impeller',
+        subcategory: 'Volvo Penta',
+      );
+
+      final live = await liveRepo.browseCommunity(
+        category: 'maintenance',
+        interests: const ['Yanmar 4HJ45'],
+      );
+      expect(live.templates.map((t) => t.supabaseId), ['yan']);
+      expect(live.fromCache, isFalse);
+
+      remote.shouldFail = true;
+      final offline = await liveRepo.browseCommunity(
+        category: 'maintenance',
+        interests: const ['Yanmar 4HJ45'],
+      );
+      expect(offline.fromCache, isTrue);
+      expect(offline.templates.map((t) => t.supabaseId), ['yan']);
+    });
+
+    test('kept template imports offline when remote is down', () async {
+      await seed(
+        id: 'gen',
+        title: 'Northern Light 4.5kW oil',
+        content:
+            '{"title":"NL oil","appType":"maintenance","items":[{"title":"Change oil"}]}',
+      );
+      final listing = CommunityTemplate()
+        ..supabaseId = 'gen'
+        ..title = 'Northern Light 4.5kW oil';
+      expect(await liveRepo.keepTemplateOffline(listing), isTrue);
+
+      remote.shouldFail = true;
+      final ok = await liveRepo.importTemplate('gen', 'boat-1');
+      expect(ok, isTrue);
+      final groups = await db.select(db.checklistGroups).get();
+      expect(groups.single.title, 'NL oil');
     });
   });
 }

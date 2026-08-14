@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #320 — inventory quantity-change history (JSON `quantityHistory`, schema 25→26). Repo appends on any qty write (edit + spare decrement). Detail history pane shows the log + average days between restocks.
-- **Next:** #322 community browse offline cache. #323 research-only, skip.
+- **Last:** #322 — Community browse last-query cache + user-selected keep-on-device + "On this boat" interest tags (Yanmar 4HJ45 vs Volvo Penta; file store, no Drift). Did not take #327.
+- **Next:** #327 quantity layers (owns app_database). #323 research-only, skip.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

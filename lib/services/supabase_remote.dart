@@ -81,7 +81,13 @@ class LiveSupabaseRemote implements SupabaseRemote {
     bool onlyApproved = true,
     required String orderColumn,
   }) async {
-    var query = _c.from('community_templates').select();
+    // Listing columns only — omit `content` so a viral catalog cannot
+    // push megabytes of checklist bodies on every browse (#322).
+    var query = _c.from('community_templates').select(
+          'id,name,title,description,category,subcategory,author_id,'
+          'is_approved,last_modified,download_count,avg_rating,'
+          'rating_count,version',
+        );
     if (onlyApproved) query = query.eq('is_approved', true);
     if (category != null && category != 'all') {
       query = query.eq('category', category);

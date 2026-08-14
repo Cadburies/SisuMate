@@ -2,6 +2,25 @@ import '../../models/models.dart';
 
 enum CommunitySortOrder { recent, mostDownloaded }
 
+/// Result of [CommunityRepository.browseCommunity].
+/// [fromCache] is true when the live fetch failed and a last-browse
+/// snapshot (or kept-on-device templates) was used instead.
+class CommunityBrowseResult {
+  final List<CommunityTemplate> templates;
+  final bool fromCache;
+  final DateTime? fetchedAt;
+  /// True when the list is the user's explicitly kept templates rather
+  /// than the last browse snapshot (cache key missed, or "on device only").
+  final bool fromKept;
+
+  const CommunityBrowseResult({
+    required this.templates,
+    this.fromCache = false,
+    this.fetchedAt,
+    this.fromKept = false,
+  });
+}
+
 abstract class CommunityRepository {
   Future<CommunityTemplate> publishTemplate(CommunityTemplate template);
 
@@ -10,11 +29,12 @@ abstract class CommunityRepository {
   /// importers can detect an update is available (S5).
   Future<CommunityTemplate> updateTemplate(CommunityTemplate template);
 
-  Future<List<CommunityTemplate>> browseCommunity({
+  Future<CommunityBrowseResult> browseCommunity({
     String? category,
     String? subcategory,
     bool onlyApproved = true,
     CommunitySortOrder sortBy = CommunitySortOrder.recent,
+    List<String> interests = const [],
   });
   Future<bool> importTemplate(String templateId, String boatId);
   Future<int> getDownloadCount(String templateId);
@@ -57,4 +77,16 @@ abstract class CommunityRepository {
   /// template from the Drift cache — used to pre-fill the republish dialog
   /// without risking wiping the description/subcategory on an empty resubmit.
   Future<CommunityTemplate?> getCachedTemplate(String templateId);
+
+  /// #322 — sailor-chosen "on this boat" phrases (Yanmar 4HJ45, …).
+  Future<List<String>> loadOfflineInterests();
+  Future<void> saveOfflineInterests(List<String> interests);
+
+  /// Persist the full template body on this device. If [template].content
+  /// is empty (listing-only browse row), fetches the body first. Returns
+  /// false if the body cannot be obtained (offline, never kept).
+  Future<bool> keepTemplateOffline(CommunityTemplate template);
+  Future<void> removeKeptTemplate(String templateId);
+  Future<Set<String>> keptTemplateIds();
+  Future<List<CommunityTemplate>> keptTemplates();
 }

@@ -19,4 +19,17 @@ abstract final class BoatEngineTaxonomy {
     'Honda',
     'Other',
   ];
+
+  /// #322 — extra brands a sailor might keep on-device that are not the
+  /// propulsion engine (generators, power). Used as interest-chip
+  /// suggestions; publish still tags [makes] into subcategory.
+  static const systems = <String>[
+    'Northern Lights',
+    'Onan',
+    'Fischer Panda',
+    'Paguro',
+    'Mastervolt',
+  ];
+
+  static List<String> get interestSuggestions => [...makes, ...systems];
 }

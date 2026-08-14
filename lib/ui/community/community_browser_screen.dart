@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/title_tile.dart';
 import '../../core/boat_engine_taxonomy.dart';
+import '../../core/colors.dart';
 import '../../core/di.dart';
 import '../../domain/repositories/community_repository.dart';
 import '../../models/models.dart';
@@ -24,9 +25,14 @@ class _CommunityBrowserScreenState
     extends ConsumerState<CommunityBrowserScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'all';
-  String? _selectedEngine;
   CommunitySortOrder _sortBy = CommunitySortOrder.recent;
   List<CommunityTemplate> _templates = [];
+  List<String> _interests = [];
+  Set<String> _keptIds = {};
+  bool _showKeptOnly = false;
+  bool _fromCache = false;
+  bool _fromKept = false;
+  DateTime? _cachedAt;
   bool _loading = false;
   String? _error;
 
@@ -48,7 +54,20 @@ class _CommunityBrowserScreenState
   @override
   void initState() {
     super.initState();
-    _loadTemplates();
+    _restoreOfflinePrefs();
+  }
+
+  Future<void> _restoreOfflinePrefs() async {
+    if (!await ref.read(revenueCatProvider).isPro()) return;
+    final repo = ref.read(communityRepositoryProvider);
+    final interests = await repo.loadOfflineInterests();
+    final kept = await repo.keptTemplateIds();
+    if (!mounted) return;
+    setState(() {
+      _interests = interests;
+      _keptIds = kept;
+    });
+    await _loadTemplates();
   }
 
   @override
@@ -68,14 +87,38 @@ class _CommunityBrowserScreenState
       _error = null;
     });
     try {
-      final templates = await ref
-          .read(communityRepositoryProvider)
-          .browseCommunity(
-            category: _selectedCategory == 'all' ? null : _selectedCategory,
-            subcategory: _selectedEngine,
-            sortBy: _sortBy,
-          );
-      if (mounted) setState(() => _templates = templates);
+      final repo = ref.read(communityRepositoryProvider);
+      if (_showKeptOnly) {
+        var kept = await repo.keptTemplates();
+        if (_selectedCategory != 'all') {
+          kept = kept.where((t) => t.category == _selectedCategory).toList();
+        }
+        if (mounted) {
+          setState(() {
+            _templates = kept;
+            _fromCache = true;
+            _fromKept = true;
+            _cachedAt = null;
+            _keptIds = kept.map((t) => t.supabaseId).toSet();
+          });
+        }
+        return;
+      }
+      final result = await repo.browseCommunity(
+        category: _selectedCategory == 'all' ? null : _selectedCategory,
+        sortBy: _sortBy,
+        interests: _interests,
+      );
+      final keptIds = await repo.keptTemplateIds();
+      if (mounted) {
+        setState(() {
+          _templates = result.templates;
+          _fromCache = result.fromCache;
+          _fromKept = result.fromKept;
+          _cachedAt = result.fetchedAt;
+          _keptIds = keptIds;
+        });
+      }
     } catch (e, st) {
       unawaited(ErrorLogService()
           .logException(e, st, context: 'community_browser_screen: load'));
@@ -83,6 +126,111 @@ class _CommunityBrowserScreenState
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _toggleKeep(CommunityTemplate template) async {
+    final repo = ref.read(communityRepositoryProvider);
+    final id = template.supabaseId;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_keptIds.contains(id)) {
+      await repo.removeKeptTemplate(id);
+      if (!mounted) return;
+      setState(() => _keptIds = {..._keptIds}..remove(id));
+      if (_showKeptOnly) await _loadTemplates();
+      return;
+    }
+    final ok = await repo.keepTemplateOffline(template);
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _keptIds = {..._keptIds, id});
+    } else {
+      messenger.showSnackBar(const SnackBar(
+        content: Text(
+            'Need a connection to download this template onto the device'),
+      ));
+    }
+  }
+
+  Future<void> _addInterest(String raw) async {
+    final tag = raw.trim();
+    if (tag.isEmpty) return;
+    if (_interests.any((i) => i.toLowerCase() == tag.toLowerCase())) return;
+    final next = [..._interests, tag];
+    setState(() => _interests = next);
+    await ref.read(communityRepositoryProvider).saveOfflineInterests(next);
+    await _loadTemplates();
+  }
+
+  Future<void> _removeInterest(String tag) async {
+    final next = _interests.where((i) => i != tag).toList();
+    setState(() => _interests = next);
+    await ref.read(communityRepositoryProvider).saveOfflineInterests(next);
+    await _loadTemplates();
+  }
+
+  void _showAddInterestDialog() {
+    final ctrl = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('On this boat'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Only templates that mention these stay in your browse '
+                'cache — e.g. Yanmar 4HJ45, not every Volvo Penta share.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                decoration: const InputDecoration(
+                  labelText: 'Make / model',
+                  hintText: 'Yanmar 4HJ45',
+                  border: OutlineInputBorder(),
+                ),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (v) {
+                  Navigator.of(ctx).pop();
+                  _addInterest(v);
+                },
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final s in BoatEngineTaxonomy.interestSuggestions)
+                    ActionChip(
+                      label: Text(s),
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        _addInterest(s);
+                      },
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final v = ctrl.text;
+              Navigator.of(ctx).pop();
+              _addInterest(v);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _importTemplate(CommunityTemplate template) async {
@@ -276,99 +424,10 @@ class _CommunityBrowserScreenState
             const TitleTile(
               title: 'Community Library',
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Search templates...',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedCategory,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _categories
-                          .map((cat) => DropdownMenuItem(
-                                value: cat,
-                                child: Text(_categoryLabel(cat)),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() => _selectedCategory = value!);
-                        _loadTemplates();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: DropdownButtonFormField<String?>(
-                      initialValue: _selectedEngine,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Engine/Boat',
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                      ),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('Any')),
-                        ...BoatEngineTaxonomy.makes.map(
-                          (make) =>
-                              DropdownMenuItem(value: make, child: Text(make)),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() => _selectedEngine = value);
-                        _loadTemplates();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: SegmentedButton<CommunitySortOrder>(
-                  segments: const [
-                    ButtonSegment(
-                      value: CommunitySortOrder.recent,
-                      label: Text('Recent'),
-                      icon: Icon(Icons.schedule, size: 16),
-                    ),
-                    ButtonSegment(
-                      value: CommunitySortOrder.mostDownloaded,
-                      label: Text('Most Downloaded'),
-                      icon: Icon(Icons.trending_up, size: 16),
-                    ),
-                  ],
-                  selected: {_sortBy},
-                  onSelectionChanged: (selection) {
-                    setState(() => _sortBy = selection.first);
-                    _loadTemplates();
-                  },
-                ),
-              ),
-            ),
             Expanded(
               child: isProAsync.when(
                 data: (isPro) => isPro
-                    ? _buildList(importedByTemplateId)
+                    ? _buildProBody(importedByTemplateId)
                     : _buildUpgradePrompt(),
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
@@ -388,6 +447,111 @@ class _CommunityBrowserScreenState
             : null,
         orElse: () => null,
       ),
+    );
+  }
+
+  Widget _buildProBody(Map<String, ChecklistGroup> importedByTemplateId) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(
+              hintText: 'Search templates...',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: DropdownButtonFormField<String>(
+            initialValue: _selectedCategory,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Category',
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+            items: _categories
+                .map((cat) => DropdownMenuItem(
+                      value: cat,
+                      child: Text(_categoryLabel(cat)),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() => _selectedCategory = value!);
+              _loadTemplates();
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                'On this boat',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              for (final tag in _interests)
+                InputChip(
+                  label: Text(tag),
+                  onDeleted: () => _removeInterest(tag),
+                ),
+              ActionChip(
+                avatar: const Icon(Icons.add, size: 16),
+                label: Text(_interests.isEmpty ? 'Add make / model' : 'Add'),
+                onPressed: _showAddInterestDialog,
+              ),
+              FilterChip(
+                label: const Text('On this device'),
+                selected: _showKeptOnly,
+                onSelected: (v) {
+                  setState(() => _showKeptOnly = v);
+                  _loadTemplates();
+                },
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: SegmentedButton<CommunitySortOrder>(
+              segments: const [
+                ButtonSegment(
+                  value: CommunitySortOrder.recent,
+                  label: Text('Recent'),
+                  icon: Icon(Icons.schedule, size: 16),
+                ),
+                ButtonSegment(
+                  value: CommunitySortOrder.mostDownloaded,
+                  label: Text('Most Downloaded'),
+                  icon: Icon(Icons.trending_up, size: 16),
+                ),
+              ],
+              selected: {_sortBy},
+              onSelectionChanged: (selection) {
+                setState(() => _sortBy = selection.first);
+                _loadTemplates();
+              },
+            ),
+          ),
+        ),
+        if (_fromCache)
+          _OfflineCacheBanner(
+            fromKept: _fromKept,
+            cachedAt: _cachedAt,
+          ),
+        Expanded(child: _buildList(importedByTemplateId)),
+      ],
     );
   }
 
@@ -436,6 +600,8 @@ class _CommunityBrowserScreenState
               (importedGroup.communityTemplateVersion ?? 1) < template.version;
           return _TemplateCard(
             template: template,
+            kept: _keptIds.contains(template.supabaseId),
+            onKeep: () => _toggleKeep(template),
             onImport: () => _importTemplate(template),
             onRate: () => _showRateDialog(template),
             onReport: () => _showReportDialog(template),
@@ -451,7 +617,7 @@ class _CommunityBrowserScreenState
 
   Widget _buildUpgradePrompt() {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -764,8 +930,49 @@ class _ReportDialogState extends State<_ReportDialog> {
   }
 }
 
+class _OfflineCacheBanner extends StatelessWidget {
+  final bool fromKept;
+  final DateTime? cachedAt;
+  const _OfflineCacheBanner({required this.fromKept, this.cachedAt});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final when = cachedAt?.toLocal().toString().split('.').first;
+    final text = fromKept
+        ? 'Offline — showing templates you kept on this device.'
+        : (when == null
+            ? 'Offline — showing saved results. Pull to refresh when back online.'
+            : 'Offline — showing saved results from $when. Pull to refresh when back online.');
+    return Material(
+      color: SisuColors.getListSurface(isDark),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        child: Row(
+          children: [
+            Icon(Icons.cloud_off,
+                size: 16, color: SisuColors.getTextSecondaryColor(isDark)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: SisuColors.getTextSecondaryColor(isDark),
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TemplateCard extends StatelessWidget {
   final CommunityTemplate template;
+  final bool kept;
+  final VoidCallback onKeep;
   final VoidCallback onImport;
   final VoidCallback onRate;
   final VoidCallback onReport;
@@ -774,6 +981,8 @@ class _TemplateCard extends StatelessWidget {
 
   const _TemplateCard({
     required this.template,
+    required this.kept,
+    required this.onKeep,
     required this.onImport,
     required this.onRate,
     required this.onReport,
@@ -877,6 +1086,17 @@ class _TemplateCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 // #321 — low-emphasis, doesn't compete with Update/Import.
+                IconButton(
+                  onPressed: onKeep,
+                  icon: Icon(
+                    kept ? Icons.bookmark : Icons.bookmark_border,
+                    size: 18,
+                  ),
+                  tooltip: kept
+                      ? 'Remove from this device'
+                      : 'Keep on this device',
+                  visualDensity: VisualDensity.compact,
+                ),
                 IconButton(
                   onPressed: onReport,
                   icon: const Icon(Icons.flag_outlined, size: 18),

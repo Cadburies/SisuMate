@@ -7,6 +7,7 @@ import '../seed/checklist_drift_seed.dart';
 import '../../services/community_merge.dart';
 import '../../services/error_log_service.dart';
 import '../../services/sync_service.dart';
+import '../../services/community_offline_store.dart';
 import '../../services/supabase_remote.dart';
 import '../../domain/repositories/community_repository.dart';
 
@@ -17,35 +18,99 @@ class CommunityRepositoryImpl implements CommunityRepository {
   final SyncService? syncService;
   /// TEST2 seam — defaults to live Supabase; tests inject a fake.
   final SupabaseRemote remote;
+  /// #322 — file-backed last-browse + keep-on-device. Defaults to the
+  /// documents-dir store; tests inject a temp file.
+  final CommunityOfflineStore offlineStore;
 
   CommunityRepositoryImpl(
     this.db, [
     this.syncService,
     SupabaseRemote? remote,
-  ]) : remote = remote ?? const LiveSupabaseRemote();
+    CommunityOfflineStore? offlineStore,
+  ])  : remote = remote ?? const LiveSupabaseRemote(),
+        offlineStore = offlineStore ?? CommunityOfflineStore();
 
   @override
-  Future<List<CommunityTemplate>> browseCommunity({
+  Future<CommunityBrowseResult> browseCommunity({
     String? category,
     String? subcategory,
     bool onlyApproved = true,
     CommunitySortOrder sortBy = CommunitySortOrder.recent,
+    List<String> interests = const [],
   }) async {
+    final key = CommunityOfflineStore.browseKey(
+      category: category,
+      sortBy: sortBy,
+      interests: interests,
+    );
     try {
       final orderColumn = sortBy == CommunitySortOrder.mostDownloaded
           ? 'download_count'
           : 'last_modified';
+      // Interests are a client-side OR-of-phrases (Yanmar 4HJ45 AND
+      // Northern Light 4.5kW). Don't also send a single subcategory —
+      // that would drop the generator while filtering for the engine.
       final rows = await remote.communityBrowse(
         category: category,
-        subcategory: subcategory,
+        subcategory: interests.isEmpty ? subcategory : null,
         onlyApproved: onlyApproved,
         orderColumn: orderColumn,
       );
-      return rows.map(CommunityTemplate.fromJson).toList();
+      var templates = rows.map(CommunityTemplate.fromJson).toList();
+      if (interests.isNotEmpty) {
+        templates = templates
+            .where((t) => communityTemplateMatchesInterests(t, interests))
+            .toList();
+      }
+      final fetchedAt = DateTime.now().toUtc();
+      try {
+        await offlineStore.saveBrowseSnapshot(
+          key: key,
+          fetchedAt: fetchedAt,
+          templates: templates,
+        );
+      } catch (e) {
+        // Cache is best-effort — a missing documents dir in tests or a
+        // full disk must not fail the live browse.
+        unawaited(ErrorLogService().logWarning(
+          'browse snapshot save failed: $e',
+          context: 'community_repository: browseCommunity',
+        ));
+      }
+      return CommunityBrowseResult(
+        templates: templates,
+        fetchedAt: fetchedAt,
+      );
     } catch (e, st) {
       unawaited(ErrorLogService()
           .logException(e, st, context: 'community_repository: browseCommunity'));
-      return [];
+      try {
+        final snap = await offlineStore.loadBrowseSnapshot(key);
+        if (snap != null) {
+          return CommunityBrowseResult(
+            templates: snap.templates,
+            fromCache: true,
+            fetchedAt: snap.fetchedAt,
+          );
+        }
+        final kept = (await offlineStore.keptTemplates())
+            .where((t) =>
+                (category == null ||
+                    category == 'all' ||
+                    t.category == category) &&
+                communityTemplateMatchesInterests(t, interests))
+            .toList();
+        if (kept.isNotEmpty) {
+          return CommunityBrowseResult(
+            templates: kept,
+            fromCache: true,
+            fromKept: true,
+          );
+        }
+      } catch (_) {
+        // Missing/unreadable cache — fall through to empty.
+      }
+      return const CommunityBrowseResult(templates: []);
     }
   }
 
@@ -304,10 +369,17 @@ class CommunityRepositoryImpl implements CommunityRepository {
   @override
   Future<bool> importTemplate(String templateId, String boatId) async {
     try {
-      // Fetch full template from Supabase
-      final row = await remote.communityFetchTemplate(templateId);
-
-      final template = CommunityTemplate.fromJson(row);
+      CommunityTemplate template;
+      try {
+        final row = await remote.communityFetchTemplate(templateId);
+        template = CommunityTemplate.fromJson(row);
+      } catch (_) {
+        // #322 — a template the user kept on this device can import
+        // offline; listing-only browse rows cannot (no body).
+        final kept = await offlineStore.keptTemplate(templateId);
+        if (kept == null || kept.content.isEmpty) rethrow;
+        template = kept;
+      }
 
       // Parse content JSON — expected shape:
       // { "title": "...", "appType": "checklist", "iconName": "...",
@@ -345,9 +417,38 @@ class CommunityRepositoryImpl implements CommunityRepository {
           ..sortOrder = idx;
       }).toList();
 
-      // ChecklistGroup/ChecklistItem moved to Drift (S1).
-      await seedChecklistGroupToDrift(group);
-      await seedChecklistItemsToDrift(items);
+      // Use this.db (not AppDatabase.instance) so test DBs see the import.
+      await db.into(db.checklistGroups).insert(ChecklistGroupsCompanion(
+            supabaseId: Value(group.supabaseId),
+            boatSupabaseId: Value(group.boatSupabaseId),
+            appType: Value(group.appType),
+            title: Value(group.title),
+            iconName: Value(group.iconName),
+            isBundled: Value(group.isBundled),
+            origin: Value(group.origin),
+            communityTemplateId: Value(group.communityTemplateId),
+            communityTemplateVersion: Value(group.communityTemplateVersion),
+            lastModified: Value(group.lastModified),
+          ));
+      await db.batch((b) {
+        for (final i in items) {
+          b.insert(
+            db.checklistItems,
+            ChecklistItemsCompanion(
+              supabaseId: Value(i.supabaseId),
+              boatSupabaseId: Value(i.boatSupabaseId),
+              groupSupabaseId: Value(i.groupSupabaseId),
+              name: Value(i.name),
+              title: Value(i.title),
+              description: Value(i.description),
+              isBundled: Value(i.isBundled),
+              createdAt: Value(i.createdAt),
+              lastModified: Value(i.lastModified),
+              sortOrder: Value(i.sortOrder),
+            ),
+          );
+        }
+      });
 
       // Queue sync for the imported items
       await syncService?.queueOutgoingChange('checklist_groups', group.toJson());
@@ -428,4 +529,43 @@ class CommunityRepositoryImpl implements CommunityRepository {
       ..ratingCount = row.ratingCount
       ..version = row.version;
   }
+
+  @override
+  Future<List<String>> loadOfflineInterests() => offlineStore.loadInterests();
+
+  @override
+  Future<void> saveOfflineInterests(List<String> interests) =>
+      offlineStore.saveInterests(interests);
+
+  @override
+  Future<bool> keepTemplateOffline(CommunityTemplate template) async {
+    try {
+      var toKeep = template;
+      if (toKeep.content.isEmpty && toKeep.supabaseId.isNotEmpty) {
+        final row = await remote.communityFetchTemplate(toKeep.supabaseId);
+        toKeep = CommunityTemplate.fromJson(row);
+      }
+      if (toKeep.content.isEmpty || toKeep.supabaseId.isEmpty) return false;
+      await offlineStore.keepTemplate(toKeep);
+      return true;
+    } catch (e, st) {
+      unawaited(ErrorLogService().logException(
+        e,
+        st,
+        context: 'community_repository: keepTemplateOffline',
+      ));
+      return false;
+    }
+  }
+
+  @override
+  Future<void> removeKeptTemplate(String templateId) =>
+      offlineStore.unkeepTemplate(templateId);
+
+  @override
+  Future<Set<String>> keptTemplateIds() => offlineStore.keptIds();
+
+  @override
+  Future<List<CommunityTemplate>> keptTemplates() =>
+      offlineStore.keptTemplates();
 }
