@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #327 quantity layers — catalog SKU vs on-hand (schema 28), pack shopping API, charter freezer bags, guest preferred drinks.
-- **Next:** pick next work from open issues.
+- **Last:** seed audit filed #330–#333 (pantry allergens, recipe name-match, pours/measures, bar allergens).
+- **Next:** #330/#333 allergen safety first, then #331 name-match, then #332 specs.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 
