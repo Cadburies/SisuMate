@@ -96,6 +96,7 @@ void main() {
     expect(find.byType(CustomsCheckDialog), findsNothing);
     expect(find.textContaining('Duty-free rum'), findsWidgets);
     expect(find.textContaining('Offline shopping guide'), findsOneWidget);
+    expect(find.text('Find nearest shop (online)'), findsOneWidget);
     expect(find.text('Improve with AI (online)'), findsOneWidget);
     // Alcohol customs pack should auto-appear offline for rum.
     expect(find.textContaining('Alcohol quantities'), findsOneWidget);

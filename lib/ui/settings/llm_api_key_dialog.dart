@@ -20,6 +20,22 @@ const _localOnlyReminder =
     'your device to the provider you choose below. Stored only on this '
     'device by default; nothing is sent to Sisu Mate\'s servers.';
 
+/// Opens the same [LlmApiKeyDialog] Settings uses, for the active boat.
+///
+/// Shared by the Settings tile, `/settings?openAiKeys=1`, and shopping's
+/// no-key reroute so the user always sees the exact **AI API Keys** copy
+/// (paste a key from the provider they already use).
+Future<void> showLlmApiKeyDialog(BuildContext context, WidgetRef ref) async {
+  final boat = await ref.read(activeBoatProvider.future);
+  if (!context.mounted || boat == null) return;
+  final currentUserId = ref.read(authStateProvider).value?.id;
+  final isOwner = boat.ownerId == null || boat.ownerId == currentUserId;
+  await showDialog<void>(
+    context: context,
+    builder: (_) => LlmApiKeyDialog(boat: boat, isOwner: isOwner),
+  );
+}
+
 /// #15: local, informational-only usage estimate — never enforced, never
 /// synced (even a shared key only reflects *this* device's own usage).
 class _UsageSummary extends StatelessWidget {

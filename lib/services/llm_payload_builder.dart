@@ -166,6 +166,45 @@ class LlmPayloadBuilder {
     };
   }
 
+  /// #334 — live nearest-shop lookup (grounded web search).
+  ///
+  /// Whitelist only: list-line fields + a **coarse** city/region label
+  /// (GPS already reverse-geocoded by the caller). Never lat/lon, boat
+  /// ids, photos, or freeform settings blobs.
+  static Map<String, dynamic> shoppingShopFinderQuery({
+    required String itemName,
+    String? origin,
+    int? quantity,
+    String? unit,
+    String? notes,
+    String? coarseLocation,
+    double? lastPurchasePrice,
+    String? lastPurchasePlace,
+  }) {
+    final notesTrim = notes?.trim();
+    final locTrim = coarseLocation?.trim();
+    final placeTrim = lastPurchasePlace?.trim();
+    return {
+      'itemName': itemName,
+      'origin': ?origin,
+      'quantity': ?quantity,
+      'unit': ?unit,
+      if (notesTrim != null && notesTrim.isNotEmpty)
+        'notes': notesTrim.length > 500
+            ? notesTrim.substring(0, 500)
+            : notesTrim,
+      if (locTrim != null && locTrim.isNotEmpty)
+        'coarseLocation': locTrim.length > 120
+            ? locTrim.substring(0, 120)
+            : locTrim,
+      'lastPurchasePrice': ?lastPurchasePrice,
+      if (placeTrim != null && placeTrim.isNotEmpty)
+        'lastPurchasePlace': placeTrim.length > 120
+            ? placeTrim.substring(0, 120)
+            : placeTrim,
+    };
+  }
+
   /// Freeform Captain's Log entry parsing (#220): **intentionally not
   /// whitelist-filtered** like every other builder in this file — the
   /// user's own freeform typed/dictated text *is* the payload; there is no

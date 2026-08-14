@@ -109,6 +109,8 @@ abstract final class AppRoutes {
   static const gameLobby = '/games/lobby/:gameId';
   static const gameHelp = '/games/help';
   static const settings = '/settings';
+  /// Settings + auto-open the **AI API Keys** dialog (paste a BYOK token).
+  static const settingsAiKeys = '/settings?openAiKeys=1';
   /// #306 — boat instruments / GPS gateway (DataHub, YDWG, HA).
   static const boatInstruments = '/settings/boat-instruments';
   static const boats = '/boats';
@@ -667,7 +669,9 @@ GoRouter createAppRouter() {
       GoRoute(
         path: AppRoutes.settings,
         name: 'settings',
-        builder: (context, state) => const SettingsScreen(),
+        builder: (context, state) => SettingsScreen(
+          openAiKeys: state.uri.queryParameters['openAiKeys'] == '1',
+        ),
         routes: [
           GoRoute(
             path: 'boat-instruments',

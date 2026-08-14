@@ -204,6 +204,37 @@ void main() {
     expect(payload.containsKey('boatSupabaseId'), isFalse);
   });
 
+  test('#334 shoppingShopFinderQuery whitelists item + coarse location, '
+      'never exact GPS', () {
+    final payload = LlmPayloadBuilder.shoppingShopFinderQuery(
+      itemName: 'Brown sugar',
+      origin: 'pantry',
+      quantity: 2,
+      unit: 'kg',
+      notes: 'for coffee',
+      coarseLocation: 'Cape Town',
+      lastPurchasePrice: 3.5,
+      lastPurchasePlace: 'Checkers',
+    );
+    final encoded = jsonEncode(payload);
+
+    expect(payload['itemName'], 'Brown sugar');
+    expect(payload['coarseLocation'], 'Cape Town');
+    expect(payload['lastPurchasePlace'], 'Checkers');
+    expect(payload.containsKey('boatSupabaseId'), isFalse);
+    expect(encoded, isNot(contains('lat')));
+    expect(encoded, isNot(contains('lon')));
+    expect(payload.keys, isNot(contains('latitude')));
+    expect(payload.keys, isNot(contains('longitude')));
+  });
+
+  test('#334 shoppingShopFinderQuery omits coarseLocation when missing', () {
+    final payload = LlmPayloadBuilder.shoppingShopFinderQuery(
+      itemName: 'Olive oil',
+    );
+    expect(payload.keys, {'itemName'});
+  });
+
   test('parseLogEntryText passes the freeform text through verbatim — '
       'intentionally not whitelist-filtered, since the text itself is the '
       'whole payload', () {

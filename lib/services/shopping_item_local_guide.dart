@@ -59,9 +59,10 @@ class ShoppingItemLocalGuide {
 
     buf.writeln();
     buf.writeln(
-      'Tip: use Maps for the nearest shops and distances — this guide does '
-      'not query live places. Optional “Improve with AI” can suggest local '
-      'product names and store types for a region when online + key set.',
+      'Tip: this guide does not query live places. Use “Find nearest shop '
+      '(online)” for a named store, expected price, and walking distance '
+      'when online + an AI API key is set. “Improve with AI” can still '
+      'suggest local product names and store types for a typed region.',
     );
     return buf.toString().trimRight();
   }

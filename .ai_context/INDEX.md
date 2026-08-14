@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** `.ips` triage add-on (`triage_ips_crashes.sh`) — collect into `crash_store/`, file app hard crashes, wipe the folder.
+- **Last:** #334 shopping “Find nearest shop (online)” — grounded BYOK lookup, or Settings → AI API Keys.
 - **Next:** pick next work from open issues.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 

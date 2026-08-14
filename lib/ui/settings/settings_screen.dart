@@ -17,13 +17,20 @@ import '../../services/error_log_service.dart';
 import '../../core/theme.dart';
 
 class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
+  /// When true (e.g. `/settings?openAiKeys=1`), open **AI API Keys** once
+  /// after the first frame so a no-key AI action can drop the user on the
+  /// exact paste-your-token dialog.
+  final bool openAiKeys;
+
+  const SettingsScreen({super.key, this.openAiKeys = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(authStateProvider);
 
-    return Scaffold(
+    return _OpenAiKeysOnLaunch(
+      enabled: openAiKeys,
+      child: Scaffold(
       body: SafeArea(
         child: Column(
           children: [
@@ -119,10 +126,6 @@ class SettingsScreen extends ConsumerWidget {
                             final activeShared = activeBoat
                                 .activeLlmApiKeyEntry?.shared ??
                                 false;
-                            final currentUserId =
-                                ref.watch(authStateProvider).value?.id;
-                            final isOwner = activeBoat.ownerId == null ||
-                                activeBoat.ownerId == currentUserId;
                             return ListTile(
                               leading: const Icon(Icons.smart_toy_outlined),
                               title: const Text('AI API Keys'),
@@ -132,13 +135,7 @@ class SettingsScreen extends ConsumerWidget {
                                       'configured'
                                       '${activeShared ? ' — active key shared with crew' : ''}'),
                               trailing: const Icon(Icons.edit),
-                              onTap: () => showDialog(
-                                context: context,
-                                builder: (_) => LlmApiKeyDialog(
-                                  boat: activeBoat,
-                                  isOwner: isOwner,
-                                ),
-                              ),
+                              onTap: () => showLlmApiKeyDialog(context, ref),
                             );
                           },
                           orElse: () => const SizedBox.shrink(),
@@ -325,6 +322,7 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -437,6 +435,36 @@ class SettingsScreen extends ConsumerWidget {
       },
     );
   }
+}
+
+/// Runs [showLlmApiKeyDialog] once after the first frame when [enabled].
+class _OpenAiKeysOnLaunch extends ConsumerStatefulWidget {
+  final bool enabled;
+  final Widget child;
+
+  const _OpenAiKeysOnLaunch({required this.enabled, required this.child});
+
+  @override
+  ConsumerState<_OpenAiKeysOnLaunch> createState() =>
+      _OpenAiKeysOnLaunchState();
+}
+
+class _OpenAiKeysOnLaunchState extends ConsumerState<_OpenAiKeysOnLaunch> {
+  var _didOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.enabled) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_didOpen || !mounted) return;
+      _didOpen = true;
+      await showLlmApiKeyDialog(context, ref);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Marine-style unit profile: presets (like Garmin) + per-category overrides.
