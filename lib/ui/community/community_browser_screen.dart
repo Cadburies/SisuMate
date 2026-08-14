@@ -9,7 +9,10 @@ import '../../core/di.dart';
 import '../../domain/repositories/community_repository.dart';
 import '../../models/models.dart';
 import '../../providers/checklist_provider.dart';
+import '../../providers/recipe_provider.dart';
+import '../../providers/shopping_provider.dart';
 import '../../services/community_merge.dart';
+import '../../services/community_share.dart';
 import '../../services/error_log_service.dart';
 import '../../services/revenuecat_service.dart';
 
@@ -36,20 +39,9 @@ class _CommunityBrowserScreenState
   bool _loading = false;
   String? _error;
 
-  // Must match ChecklistGroup.appType exactly ('safety', not 'safety_briefing')
-  // — browsing by category has to line up with what import actually creates.
-  static const _categories = [
-    'all',
-    'checklist',
-    'maintenance',
-    'safety',
-  ];
+  static const _categories = CommunityShareKind.browseCategories;
 
-  static String _categoryLabel(String cat) => switch (cat) {
-        'all' => 'All',
-        'safety' => 'Safety Briefing',
-        _ => '${cat[0].toUpperCase()}${cat.substring(1)}',
-      };
+  static String _categoryLabel(String cat) => CommunityShareKind.label(cat);
 
   @override
   void initState() {
@@ -245,7 +237,7 @@ class _CommunityBrowserScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(ok
-            ? '"${template.title}" imported to your checklists'
+            ? '"${template.title}" imported to ${CommunityShareKind.importDestination(template.category)}'
             : 'Import failed — try again'),
       ),
     );
@@ -631,7 +623,9 @@ class _CommunityBrowserScreenState
             ),
             const SizedBox(height: 12),
             const Text(
-              'Browse, import, and publish checklists shared by other sailors.\n\nUpgrade to Pro to unlock.',
+              'Browse, import, and publish checklists, recipes, cocktails, '
+              'and shopping lists shared by other sailors.\n\n'
+              'Upgrade to Pro to unlock.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -646,11 +640,8 @@ class _CommunityBrowserScreenState
     );
   }
 
-  /// Step 1 of publishing: pick one of the user's own checklist/maintenance/
-  /// safety lists to share — replaces the old blank-form dialog, which always
-  /// published an empty `items: []` template regardless of what was typed.
-  /// Picking a list already linked to a template the user authored (S5)
-  /// republishes/updates it instead of creating a duplicate.
+  /// Step 1: pick any shareable list — checklists plus #323 recipes,
+  /// cocktails, collections, and shopping categories.
   void _pickListToShare() {
     showModalBottomSheet<void>(
       context: context,
@@ -660,7 +651,90 @@ class _CommunityBrowserScreenState
         initialChildSize: 0.7,
         builder: (sheetContext, scrollController) => Consumer(
           builder: (sheetContext, ref, _) {
-            final asyncGroups = ref.watch(checklistGroupsProvider(null));
+            final groups =
+                ref.watch(checklistGroupsProvider(null)).asData?.value ??
+                    const <ChecklistGroup>[];
+            final menus =
+                ref.watch(recipesProvider('menu')).asData?.value ??
+                    const <Recipe>[];
+            final cocktails =
+                ref.watch(recipesProvider('cocktail')).asData?.value ??
+                    const <Recipe>[];
+            final syrups =
+                ref.watch(recipesProvider('syrup')).asData?.value ??
+                    const <Recipe>[];
+            final collections =
+                ref.watch(collectionsProvider).asData?.value ??
+                    const <RecipeCollection>[];
+            final shopCats =
+                ref.watch(shoppingCategoriesProvider).asData?.value ??
+                    const <ShoppingCategory>[];
+
+            final tiles = <Widget>[
+              ...groups.map((group) {
+                final alreadyPublished =
+                    group.communityTemplateId != null &&
+                        group.origin != 'community';
+                return ListTile(
+                  leading: Icon(_kindIcon(group.appType)),
+                  title: Text(group.title),
+                  subtitle: Text(alreadyPublished
+                      ? '${_categoryLabel(group.appType)} · already published — tap to update'
+                      : _categoryLabel(group.appType)),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _confirmChecklistShare(group);
+                  },
+                );
+              }),
+              ...menus.map((r) => ListTile(
+                    leading: Icon(_kindIcon(CommunityShareKind.recipe)),
+                    title: Text(r.name),
+                    subtitle: Text(_categoryLabel(CommunityShareKind.recipe)),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _confirmRecipeShare(r);
+                    },
+                  )),
+              ...cocktails.map((r) => ListTile(
+                    leading: Icon(_kindIcon(CommunityShareKind.cocktail)),
+                    title: Text(r.name),
+                    subtitle: const Text('Cocktail'),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _confirmRecipeShare(r);
+                    },
+                  )),
+              ...syrups.map((r) => ListTile(
+                    leading: Icon(_kindIcon(CommunityShareKind.cocktail)),
+                    title: Text(r.name),
+                    subtitle: const Text('House mix'),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _confirmRecipeShare(r);
+                    },
+                  )),
+              ...collections.map((c) => ListTile(
+                    leading: Icon(_kindIcon(CommunityShareKind.collection)),
+                    title: Text(c.name),
+                    subtitle: Text(
+                        '${c.recipeSupabaseIds.length} recipes · Collection'),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _confirmCollectionShare(c);
+                    },
+                  )),
+              ...shopCats.map((c) => ListTile(
+                    leading: Icon(_kindIcon(CommunityShareKind.shopping)),
+                    title: Text(c.name),
+                    subtitle: Text(_categoryLabel(CommunityShareKind.shopping)),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _confirmShoppingShare(c);
+                    },
+                  )),
+            ];
+
             return Column(
               children: [
                 const Padding(
@@ -672,39 +746,15 @@ class _CommunityBrowserScreenState
                   ),
                 ),
                 Expanded(
-                  child: asyncGroups.when(
-                    data: (groups) {
-                      if (groups.isEmpty) {
-                        return const Center(
-                          child: Text('You have no lists yet.'),
-                        );
-                      }
-                      return ListView.builder(
-                        controller: scrollController,
-                        itemCount: groups.length,
-                        itemBuilder: (context, index) {
-                          final group = groups[index];
-                          final alreadyPublished =
-                              group.communityTemplateId != null &&
-                                  group.origin != 'community';
-                          return ListTile(
-                            leading: Icon(_appTypeIcon(group.appType)),
-                            title: Text(group.title),
-                            subtitle: Text(alreadyPublished
-                                ? '${_categoryLabel(group.appType)} · already published — tap to update'
-                                : _categoryLabel(group.appType)),
-                            onTap: () {
-                              Navigator.of(sheetContext).pop();
-                              _showPublishConfirmDialog(group);
-                            },
-                          );
-                        },
-                      );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Error: $e')),
-                  ),
+                  child: tiles.isEmpty
+                      ? const Center(
+                          child: Text(
+                              'Nothing to share yet — add a checklist, recipe, or shopping list.'),
+                        )
+                      : ListView(
+                          controller: scrollController,
+                          children: tiles,
+                        ),
                 ),
               ],
             );
@@ -714,24 +764,147 @@ class _CommunityBrowserScreenState
     );
   }
 
-  static IconData _appTypeIcon(String appType) => switch (appType) {
+  static IconData _kindIcon(String kind) => switch (kind) {
         'maintenance' => Icons.build,
         'safety' => Icons.shield,
+        CommunityShareKind.recipe => Icons.restaurant,
+        CommunityShareKind.cocktail => Icons.local_bar,
+        CommunityShareKind.collection => Icons.collections_bookmark,
+        CommunityShareKind.shopping => Icons.shopping_cart,
         _ => Icons.checklist,
       };
 
-  /// Step 2: confirm description + engine/boat tag, then serialize the
-  /// group's real items ([CommunityTemplate.fromChecklistGroup]) and publish
-  /// — or, if this group was already published by this user, republish
-  /// (update) the same template row instead of creating a duplicate.
-  Future<void> _showPublishConfirmDialog(ChecklistGroup group) async {
+  Future<void> _confirmChecklistShare(ChecklistGroup group) async {
+    final items = await ref
+        .read(checklistRepositoryProvider)
+        .getItemsByGroup(group.supabaseId);
     final isUpdate =
         group.communityTemplateId != null && group.origin != 'community';
+    await _showPublishConfirmDialog(
+      title: group.title,
+      category: group.appType,
+      showEngineTag: true,
+      existingTemplateId: isUpdate ? group.communityTemplateId : null,
+      linkGroupSupabaseId: isUpdate ? group.supabaseId : null,
+      buildTemplate: ({
+        required String description,
+        required String subcategory,
+        required String authorId,
+      }) =>
+          CommunityTemplate.fromChecklistGroup(
+        group: group,
+        items: items,
+        description: description,
+        subcategory: subcategory,
+        authorId: authorId,
+      ),
+    );
+  }
+
+  Future<void> _confirmRecipeShare(Recipe recipe) async {
+    final ings = await ref
+        .read(recipeRepositoryProvider)
+        .getIngredientsOnce(recipe.supabaseId);
+    final category = (recipe.recipeType == 'cocktail' ||
+            recipe.recipeType == 'syrup')
+        ? CommunityShareKind.cocktail
+        : CommunityShareKind.recipe;
+    await _showPublishConfirmDialog(
+      title: recipe.name,
+      category: category,
+      showEngineTag: false,
+      buildTemplate: ({
+        required String description,
+        required String subcategory,
+        required String authorId,
+      }) =>
+          communityTemplateFromPayload(
+        title: recipe.name,
+        category: category,
+        content: encodeRecipeContent(recipe, ings),
+        description: description,
+        subcategory: subcategory,
+        authorId: authorId,
+      ),
+    );
+  }
+
+  Future<void> _confirmCollectionShare(RecipeCollection collection) async {
+    final recipeRepo = ref.read(recipeRepositoryProvider);
+    final all = await recipeRepo.watchRecipes().first;
+    final byId = {for (final r in all) r.supabaseId: r};
+    final packed = <(Recipe, List<RecipeIngredient>)>[];
+    for (final id in collection.recipeSupabaseIds) {
+      final r = byId[id];
+      if (r == null) continue;
+      packed.add((r, await recipeRepo.getIngredientsOnce(id)));
+    }
+    await _showPublishConfirmDialog(
+      title: collection.name,
+      category: CommunityShareKind.collection,
+      showEngineTag: false,
+      buildTemplate: ({
+        required String description,
+        required String subcategory,
+        required String authorId,
+      }) =>
+          communityTemplateFromPayload(
+        title: collection.name,
+        category: CommunityShareKind.collection,
+        content: encodeCollectionContent(
+          name: collection.name,
+          recipes: packed,
+        ),
+        description: description,
+        subcategory: subcategory,
+        authorId: authorId,
+      ),
+    );
+  }
+
+  Future<void> _confirmShoppingShare(ShoppingCategory category) async {
+    final items = await ref
+        .read(shoppingRepositoryProvider)
+        .watchItems(category.supabaseId)
+        .first;
+    await _showPublishConfirmDialog(
+      title: category.name,
+      category: CommunityShareKind.shopping,
+      showEngineTag: false,
+      buildTemplate: ({
+        required String description,
+        required String subcategory,
+        required String authorId,
+      }) =>
+          communityTemplateFromPayload(
+        title: category.name,
+        category: CommunityShareKind.shopping,
+        content: encodeShoppingContent(title: category.name, items: items),
+        description: description,
+        subcategory: subcategory,
+        authorId: authorId,
+      ),
+    );
+  }
+
+  Future<void> _showPublishConfirmDialog({
+    required String title,
+    required String category,
+    required bool showEngineTag,
+    String? existingTemplateId,
+    String? linkGroupSupabaseId,
+    required CommunityTemplate Function({
+      required String description,
+      required String subcategory,
+      required String authorId,
+    }) buildTemplate,
+  }) async {
+    final isUpdate = existingTemplateId != null;
     CommunityTemplate? cached;
     if (isUpdate) {
       cached = await ref
           .read(communityRepositoryProvider)
-          .getCachedTemplate(group.communityTemplateId!);
+          .getCachedTemplate(existingTemplateId);
     }
     if (!mounted) return;
 
@@ -743,14 +916,13 @@ class _CommunityBrowserScreenState
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(
-              isUpdate ? 'Update "${group.title}"' : 'Share "${group.title}"'),
+          title: Text(isUpdate ? 'Update "$title"' : 'Share "$title"'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Chip(label: Text(_categoryLabel(group.appType))),
+                Chip(label: Text(_categoryLabel(category))),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descCtrl,
@@ -760,23 +932,25 @@ class _CommunityBrowserScreenState
                   ),
                   maxLines: 3,
                 ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String?>(
-                  initialValue: selectedEngine,
-                  decoration: const InputDecoration(
-                    labelText: 'Engine/Boat (optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('None')),
-                    ...BoatEngineTaxonomy.makes.map(
-                      (make) =>
-                          DropdownMenuItem(value: make, child: Text(make)),
+                if (showEngineTag) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String?>(
+                    initialValue: selectedEngine,
+                    decoration: const InputDecoration(
+                      labelText: 'Engine/Boat (optional)',
+                      border: OutlineInputBorder(),
                     ),
-                  ],
-                  onChanged: (v) =>
-                      setDialogState(() => selectedEngine = v),
-                ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('None')),
+                      ...BoatEngineTaxonomy.makes.map(
+                        (make) =>
+                            DropdownMenuItem(value: make, child: Text(make)),
+                      ),
+                    ],
+                    onChanged: (v) =>
+                        setDialogState(() => selectedEngine = v),
+                  ),
+                ],
               ],
             ),
           ),
@@ -788,11 +962,14 @@ class _CommunityBrowserScreenState
             ElevatedButton(
               onPressed: () async {
                 Navigator.of(ctx).pop();
-                await _publish(
-                  group: group,
-                  description: descCtrl.text.trim(),
-                  subcategory: selectedEngine ?? '',
-                  isUpdate: isUpdate,
+                await _publishBuilt(
+                  template: buildTemplate(
+                    description: descCtrl.text.trim(),
+                    subcategory: selectedEngine ?? '',
+                    authorId: '',
+                  ),
+                  existingTemplateId: existingTemplateId,
+                  linkGroupSupabaseId: linkGroupSupabaseId,
                 );
               },
               child: Text(isUpdate ? 'Update' : 'Publish'),
@@ -803,39 +980,26 @@ class _CommunityBrowserScreenState
     );
   }
 
-  Future<void> _publish({
-    required ChecklistGroup group,
-    required String description,
-    required String subcategory,
-    required bool isUpdate,
+  Future<void> _publishBuilt({
+    required CommunityTemplate template,
+    String? existingTemplateId,
+    String? linkGroupSupabaseId,
   }) async {
-    final items = await ref
-        .read(checklistRepositoryProvider)
-        .getItemsByGroup(group.supabaseId);
     final settings = await ref.read(userSettingsProvider.future);
-
-    final template = CommunityTemplate.fromChecklistGroup(
-      group: group,
-      items: items,
-      description: description,
-      subcategory: subcategory,
-      authorId: settings?.userId ?? '',
-    );
+    template.authorId = settings?.userId ?? '';
+    final isUpdate = existingTemplateId != null;
+    if (isUpdate) template.supabaseId = existingTemplateId;
 
     final repo = ref.read(communityRepositoryProvider);
-    final CommunityTemplate saved;
-    if (isUpdate) {
-      template.supabaseId = group.communityTemplateId!;
-      saved = await repo.updateTemplate(template);
-    } else {
-      saved = await repo.publishTemplate(template);
-    }
+    final saved = isUpdate
+        ? await repo.updateTemplate(template)
+        : await repo.publishTemplate(template);
 
     if (!mounted) return;
     final ok = saved.supabaseId.isNotEmpty;
-    if (ok) {
+    if (ok && linkGroupSupabaseId != null) {
       await repo.linkGroupToTemplate(
-        groupSupabaseId: group.supabaseId,
+        groupSupabaseId: linkGroupSupabaseId,
         templateId: saved.supabaseId,
         version: saved.version,
       );

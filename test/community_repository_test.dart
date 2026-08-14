@@ -392,5 +392,37 @@ void main() {
       final groups = await db.select(db.checklistGroups).get();
       expect(groups.single.title, 'NL oil');
     });
+
+    test('#323: importing a recipe template writes a Chef recipe + ingredients',
+        () async {
+      await seed(
+        id: 'stew',
+        title: 'Conch stew',
+        content:
+            '{"kind":"recipe","recipeType":"menu","name":"Conch stew","ingredients":[{"name":"Conch","quantity":1}]}',
+      );
+      expect(await liveRepo.importTemplate('stew', 'boat-1'), isTrue);
+      final recipes = await db.select(db.recipes).get();
+      expect(recipes.single.name, 'Conch stew');
+      expect(recipes.single.recipeType, 'menu');
+      final ings = await db.select(db.recipeIngredients).get();
+      expect(ings.single.name, 'Conch');
+    });
+
+    test('#323: importing a shopping template creates a category + lines',
+        () async {
+      await seed(
+        id: 'prov',
+        title: 'Exuma provisioning',
+        content:
+            '{"kind":"shopping","title":"Exuma provisioning","items":[{"name":"Limes","quantity":12,"origin":"pantry"}]}',
+      );
+      expect(await liveRepo.importTemplate('prov', 'boat-1'), isTrue);
+      final cats = await db.select(db.shoppingCategories).get();
+      expect(cats.single.name, 'Exuma provisioning');
+      final items = await db.select(db.shoppingItems).get();
+      expect(items.single.name, 'Limes');
+      expect(items.single.quantity, 12);
+    });
   });
 }

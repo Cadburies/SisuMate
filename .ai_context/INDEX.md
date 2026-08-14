@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #322 — Community browse last-query cache + user-selected keep-on-device + "On this boat" interest tags (Yanmar 4HJ45 vs Volvo Penta; file store, no Drift). Did not take #327.
-- **Next:** #327 quantity layers (owns app_database). #323 research-only, skip.
+- **Last:** #323 — Community share kinds beyond checklists: Chef recipes, cocktails/house mixes, collections, shopping lists. Anchorage presets deferred (coords/privacy). No Drift schema; did not take #327.
+- **Next:** #327 quantity layers (owns app_database).
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

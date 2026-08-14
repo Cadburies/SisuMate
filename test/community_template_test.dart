@@ -66,6 +66,7 @@ void main() {
         authorId: 'user_1',
       );
       final parsed = jsonDecode(t.content) as Map<String, dynamic>;
+      expect(parsed['kind'], 'checklist');
       expect(parsed['title'], 'Daily Engine Checks');
       expect(parsed['appType'], 'maintenance');
       expect(parsed['iconName'], 'engine');

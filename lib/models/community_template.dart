@@ -78,6 +78,7 @@ class CommunityTemplate {
     required String authorId,
   }) {
     final content = jsonEncode({
+      'kind': 'checklist',
       'title': group.title,
       'appType': group.appType,
       'iconName': group.iconName,

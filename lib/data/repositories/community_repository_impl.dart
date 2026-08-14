@@ -8,8 +8,11 @@ import '../../services/community_merge.dart';
 import '../../services/error_log_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/community_offline_store.dart';
+import '../../services/community_share.dart';
 import '../../services/supabase_remote.dart';
 import '../../domain/repositories/community_repository.dart';
+import 'collection_repository_impl.dart';
+import 'recipe_repository_impl.dart';
 
 class CommunityRepositoryImpl implements CommunityRepository {
   final AppDatabase db;
@@ -381,79 +384,39 @@ class CommunityRepositoryImpl implements CommunityRepository {
         template = kept;
       }
 
-      // Parse content JSON — expected shape:
-      // { "title": "...", "appType": "checklist", "iconName": "...",
-      //   "items": [{ "name": "...", "title": "...", "description": "..." }, ...] }
       final Map<String, dynamic> parsed =
           jsonDecode(template.content) as Map<String, dynamic>;
+      final kind = communityShareKindOf(parsed);
+      final stamp = DateTime.now().millisecondsSinceEpoch;
 
-      final groupId = 'community_${templateId}_${DateTime.now().millisecondsSinceEpoch}';
-      final group = ChecklistGroup()
-        ..supabaseId = groupId
-        ..boatSupabaseId = boatId
-        ..title = parsed['title'] as String? ?? template.title
-        ..appType = parsed['appType'] as String? ?? 'checklist'
-        ..iconName = parsed['iconName'] as String? ?? 'checklist'
-        ..isBundled = false
-        ..origin = 'community'
-        ..communityTemplateId = template.supabaseId
-        ..communityTemplateVersion = template.version
-        ..lastModified = DateTime.now().toUtc();
-
-      final rawItems = parsed['items'] as List<dynamic>? ?? [];
-      final items = rawItems.asMap().entries.map((entry) {
-        final idx = entry.key;
-        final item = entry.value as Map<String, dynamic>;
-        return ChecklistItem()
-          ..supabaseId = '${groupId}_item_$idx'
-          ..boatSupabaseId = boatId
-          ..groupSupabaseId = groupId
-          ..name = item['name'] as String? ?? ''
-          ..title = item['title'] as String? ?? ''
-          ..description = item['description'] as String?
-          ..isBundled = false
-          ..createdAt = DateTime.now()
-          ..lastModified = DateTime.now().toUtc()
-          ..sortOrder = idx;
-      }).toList();
-
-      // Use this.db (not AppDatabase.instance) so test DBs see the import.
-      await db.into(db.checklistGroups).insert(ChecklistGroupsCompanion(
-            supabaseId: Value(group.supabaseId),
-            boatSupabaseId: Value(group.boatSupabaseId),
-            appType: Value(group.appType),
-            title: Value(group.title),
-            iconName: Value(group.iconName),
-            isBundled: Value(group.isBundled),
-            origin: Value(group.origin),
-            communityTemplateId: Value(group.communityTemplateId),
-            communityTemplateVersion: Value(group.communityTemplateVersion),
-            lastModified: Value(group.lastModified),
-          ));
-      await db.batch((b) {
-        for (final i in items) {
-          b.insert(
-            db.checklistItems,
-            ChecklistItemsCompanion(
-              supabaseId: Value(i.supabaseId),
-              boatSupabaseId: Value(i.boatSupabaseId),
-              groupSupabaseId: Value(i.groupSupabaseId),
-              name: Value(i.name),
-              title: Value(i.title),
-              description: Value(i.description),
-              isBundled: Value(i.isBundled),
-              createdAt: Value(i.createdAt),
-              lastModified: Value(i.lastModified),
-              sortOrder: Value(i.sortOrder),
-            ),
+      switch (kind) {
+        case CommunityShareKind.recipe:
+        case CommunityShareKind.cocktail:
+          await _importSharedRecipe(
+            parsed,
+            boatId: boatId,
+            recipeSupabaseId: 'community_${templateId}_$stamp',
           );
-        }
-      });
-
-      // Queue sync for the imported items
-      await syncService?.queueOutgoingChange('checklist_groups', group.toJson());
-      for (final item in items) {
-        await syncService?.queueOutgoingChange('checklist_items', item.toJson());
+        case CommunityShareKind.collection:
+          await _importSharedCollection(
+            parsed,
+            boatId: boatId,
+            prefix: 'community_${templateId}_$stamp',
+          );
+        case CommunityShareKind.shopping:
+          await _importSharedShopping(
+            parsed,
+            template: template,
+            boatId: boatId,
+            prefix: 'community_${templateId}_$stamp',
+          );
+        default:
+          await _importSharedChecklist(
+            parsed,
+            template: template,
+            boatId: boatId,
+            groupId: 'community_${templateId}_$stamp',
+          );
       }
 
       // Record the download (best-effort — table may not exist yet)
@@ -469,6 +432,177 @@ class CommunityRepositoryImpl implements CommunityRepository {
       unawaited(ErrorLogService()
           .logException(e, st, context: 'community_repository: importTemplate'));
       return false;
+    }
+  }
+
+  Future<void> _importSharedChecklist(
+    Map<String, dynamic> parsed, {
+    required CommunityTemplate template,
+    required String boatId,
+    required String groupId,
+  }) async {
+    final group = ChecklistGroup()
+      ..supabaseId = groupId
+      ..boatSupabaseId = boatId
+      ..title = parsed['title'] as String? ?? template.title
+      ..appType = parsed['appType'] as String? ?? 'checklist'
+      ..iconName = parsed['iconName'] as String? ?? 'checklist'
+      ..isBundled = false
+      ..origin = 'community'
+      ..communityTemplateId = template.supabaseId
+      ..communityTemplateVersion = template.version
+      ..lastModified = DateTime.now().toUtc();
+
+    final rawItems = parsed['items'] as List<dynamic>? ?? [];
+    final items = rawItems.asMap().entries.map((entry) {
+      final idx = entry.key;
+      final item = entry.value as Map<String, dynamic>;
+      return ChecklistItem()
+        ..supabaseId = '${groupId}_item_$idx'
+        ..boatSupabaseId = boatId
+        ..groupSupabaseId = groupId
+        ..name = item['name'] as String? ?? ''
+        ..title = item['title'] as String? ?? ''
+        ..description = item['description'] as String?
+        ..isBundled = false
+        ..createdAt = DateTime.now()
+        ..lastModified = DateTime.now().toUtc()
+        ..sortOrder = idx;
+    }).toList();
+
+    await db.into(db.checklistGroups).insert(ChecklistGroupsCompanion(
+          supabaseId: Value(group.supabaseId),
+          boatSupabaseId: Value(group.boatSupabaseId),
+          appType: Value(group.appType),
+          title: Value(group.title),
+          iconName: Value(group.iconName),
+          isBundled: Value(group.isBundled),
+          origin: Value(group.origin),
+          communityTemplateId: Value(group.communityTemplateId),
+          communityTemplateVersion: Value(group.communityTemplateVersion),
+          lastModified: Value(group.lastModified),
+        ));
+    await db.batch((b) {
+      for (final i in items) {
+        b.insert(
+          db.checklistItems,
+          ChecklistItemsCompanion(
+            supabaseId: Value(i.supabaseId),
+            boatSupabaseId: Value(i.boatSupabaseId),
+            groupSupabaseId: Value(i.groupSupabaseId),
+            name: Value(i.name),
+            title: Value(i.title),
+            description: Value(i.description),
+            isBundled: Value(i.isBundled),
+            createdAt: Value(i.createdAt),
+            lastModified: Value(i.lastModified),
+            sortOrder: Value(i.sortOrder),
+          ),
+        );
+      }
+    });
+    await syncService?.queueOutgoingChange('checklist_groups', group.toJson());
+    for (final item in items) {
+      await syncService?.queueOutgoingChange('checklist_items', item.toJson());
+    }
+  }
+
+  Future<void> _importSharedRecipe(
+    Map<String, dynamic> parsed, {
+    required String boatId,
+    required String recipeSupabaseId,
+  }) async {
+    final decoded = decodeSharedRecipe(
+      parsed,
+      recipeSupabaseId: recipeSupabaseId,
+      boatId: boatId,
+    );
+    final recipes = RecipeRepositoryImpl(db, syncService);
+    await recipes.addRecipe(decoded.recipe);
+    for (final ing in decoded.ingredients) {
+      await recipes.addIngredient(ing);
+    }
+  }
+
+  Future<void> _importSharedCollection(
+    Map<String, dynamic> parsed, {
+    required String boatId,
+    required String prefix,
+  }) async {
+    final rawRecipes = parsed['recipes'];
+    final ids = <String>[];
+    if (rawRecipes is List) {
+      for (var i = 0; i < rawRecipes.length; i++) {
+        final raw = rawRecipes[i];
+        if (raw is! Map) continue;
+        final id = '${prefix}_r$i';
+        await _importSharedRecipe(
+          Map<String, dynamic>.from(raw),
+          boatId: boatId,
+          recipeSupabaseId: id,
+        );
+        ids.add(id);
+      }
+    }
+    final collection = RecipeCollection()
+      ..name = (parsed['name'] as String?) ?? 'Community collection'
+      ..recipeSupabaseIds = ids
+      ..createdAt = DateTime.now()
+      ..lastModified = DateTime.now().toUtc();
+    await CollectionRepositoryImpl(db).addCollection(collection);
+  }
+
+  Future<void> _importSharedShopping(
+    Map<String, dynamic> parsed, {
+    required CommunityTemplate template,
+    required String boatId,
+    required String prefix,
+  }) async {
+    final catId = '${prefix}_cat';
+    final category = ShoppingCategory()
+      ..supabaseId = catId
+      ..boatSupabaseId = boatId
+      ..name = (parsed['title'] as String?) ?? template.title
+      ..sortOrder = 0
+      ..lastModified = DateTime.now().toUtc();
+    await db.into(db.shoppingCategories).insert(ShoppingCategoriesCompanion(
+          supabaseId: Value(category.supabaseId),
+          boatSupabaseId: Value(category.boatSupabaseId),
+          name: Value(category.name),
+          sortOrder: Value(category.sortOrder),
+          lastModified: Value(category.lastModified),
+        ));
+    await syncService?.queueOutgoingChange(
+        'shopping_categories', category.toJson());
+
+    final rawItems = parsed['items'];
+    if (rawItems is! List) return;
+    for (var i = 0; i < rawItems.length; i++) {
+      final raw = rawItems[i];
+      if (raw is! Map) continue;
+      final m = Map<String, dynamic>.from(raw);
+      final item = ShoppingItem()
+        ..supabaseId = '${prefix}_i$i'
+        ..boatSupabaseId = boatId
+        ..categorySupabaseId = catId
+        ..name = (m['name'] as String?) ?? ''
+        ..quantity = (m['quantity'] as num?)?.toInt() ?? 1
+        ..unit = m['unit'] as String?
+        ..origin = (m['origin'] as String?) ?? 'pantry'
+        ..notes = m['notes'] as String?
+        ..lastModified = DateTime.now().toUtc();
+      await db.into(db.shoppingItems).insert(ShoppingItemsCompanion(
+            supabaseId: Value(item.supabaseId),
+            boatSupabaseId: Value(item.boatSupabaseId),
+            categorySupabaseId: Value(item.categorySupabaseId),
+            name: Value(item.name),
+            quantity: Value(item.quantity),
+            unit: Value(item.unit),
+            origin: Value(item.origin),
+            notes: Value(item.notes),
+            lastModified: Value(item.lastModified),
+          ));
+      await syncService?.queueOutgoingChange('shopping_items', item.toJson());
     }
   }
 
