@@ -4,6 +4,7 @@ import '../drift/app_database.dart';
 import '../../services/sync_service.dart';
 import '../../domain/repositories/shopping_repository.dart';
 import '../../domain/repositories/recipe_repository.dart';
+import '../../services/quantity_model.dart';
 import 'recipe_repository_impl.dart';
 
 /// Shopping (categories + items) on Drift (S1); sync-participating.
@@ -160,24 +161,32 @@ class ShoppingRepositoryImpl implements ShoppingRepository {
     }
   }
 
-  /// Mark any Bar + Pantry rows with this name as in-stock (case-insensitive).
-  ///
-  /// #310 — first mark-bought: set on-hand to packs × catalog package size
-  /// (seed qty is package size while not stocked). Re-buys add another pack.
+  /// Mark matching Bar + Pantry rows in-stock and increment on-hand by
+  /// packs × catalog [purchaseSizeBase] (never by current on-hand).
+  /// Protein trip lines (unit `2.4kg`) add that trip weight instead.
   Future<void> _stockIngredientsMatching(String name, {ShoppingItem? item}) async {
     final lower = name.toLowerCase().trim();
     if (lower.isEmpty) return;
 
+    const model = QuantityModel();
     final packs = item == null ? 1 : (item.quantity < 1 ? 1 : item.quantity);
+    final tripFromUnit = model.measureFromLabel(item?.unit);
 
     final barRows = await db.select(db.barIngredients).get();
     var barChanged = false;
     for (final row in barRows) {
-      if (row.name.toLowerCase().trim() != lower || row.inMyBar) continue;
+      if (row.name.toLowerCase().trim() != lower) continue;
+      final packSize = row.purchaseSizeBase;
+      final add = tripFromUnit ??
+          ((packSize != null && packSize > 0) ? packSize * packs : null);
+      final current = row.inMyBar ? (row.onHandBase ?? 0) : 0.0;
+      final onHand = add == null ? row.onHandBase : current + add;
       await (db.update(db.barIngredients)
             ..where((t) => t.supabaseId.equals(row.supabaseId)))
           .write(BarIngredientsCompanion(
             inMyBar: const Value(true),
+            onHandBase: onHand == null ? const Value.absent() : Value(onHand),
+            onHandUnit: Value(row.onHandUnit ?? row.purchaseBaseUnit),
             lastModified: Value(DateTime.now().toUtc()),
           ));
       barChanged = true;
@@ -187,23 +196,17 @@ class ShoppingRepositoryImpl implements ShoppingRepository {
     var pantryChanged = false;
     for (final row in pantryRows) {
       if (row.name.toLowerCase().trim() != lower) continue;
-      final packageSize = row.quantity;
-      final double? onHand;
-      if (!row.inMyPantry) {
-        // First stock: N full packages.
-        onHand = packageSize == null ? null : packageSize * packs;
-      } else if (packageSize != null) {
-        // Already stocked: quantity is on-hand; add N packages of same size.
-        // (Best-effort when package size ≈ previous on-hand unit.)
-        onHand = (row.quantity ?? 0) + packageSize * packs;
-      } else {
-        onHand = row.quantity;
-      }
+      final packSize = row.purchaseSizeBase;
+      final add = tripFromUnit ??
+          ((packSize != null && packSize > 0) ? packSize * packs : null);
+      final current = row.inMyPantry ? (row.quantity ?? 0) : 0.0;
+      final onHand = add == null ? row.quantity : current + add;
       await (db.update(db.pantryIngredients)
             ..where((t) => t.supabaseId.equals(row.supabaseId)))
           .write(PantryIngredientsCompanion(
             inMyPantry: const Value(true),
             quantity: onHand == null ? const Value.absent() : Value(onHand),
+            unit: Value(row.unit ?? row.purchaseBaseUnit),
             lastModified: Value(DateTime.now().toUtc()),
           ));
       pantryChanged = true;
@@ -248,6 +251,103 @@ class ShoppingRepositoryImpl implements ShoppingRepository {
       ..unit = unit
       ..origin = origin
       ..lastPurchasePrice = catalog.price
+      ..lastPurchasePlace = catalog.place
+      ..isBundled = false;
+    await addItem(item);
+    return true;
+  }
+
+  @override
+  Future<bool> ensurePacksInShopping({
+    required String name,
+    required String origin,
+    int packs = 1,
+    ShopPackMerge merge = ShopPackMerge.setMin,
+    String? note,
+    String? unitOverride,
+    double? priceOverride,
+  }) async {
+    final lower = name.toLowerCase().trim();
+    if (lower.isEmpty) return false;
+    final requested = packs < 1 ? 1 : packs;
+
+    PurchaseSpec spec = const PurchaseSpec(noun: 'pack');
+    final bar = await db.select(db.barIngredients).get();
+    for (final r in bar) {
+      if (r.name.toLowerCase().trim() == lower) {
+        spec = PurchaseSpec.fromFields(
+          purchaseSizeBase: r.purchaseSizeBase,
+          purchaseBaseUnit: r.purchaseBaseUnit,
+          purchaseNoun: r.purchaseNoun,
+          unitsPerPurchase: r.unitsPerPurchase,
+          innerSizeBase: r.innerSizeBase,
+          price: r.lastKnownPrice,
+        );
+        break;
+      }
+    }
+    if (!spec.hasSize) {
+      final pantry = await db.select(db.pantryIngredients).get();
+      for (final r in pantry) {
+        if (r.name.toLowerCase().trim() == lower) {
+          spec = PurchaseSpec.fromFields(
+            purchaseSizeBase: r.purchaseSizeBase,
+            purchaseBaseUnit: r.purchaseBaseUnit,
+            purchaseNoun: r.purchaseNoun,
+            unitsPerPurchase: r.unitsPerPurchase,
+            innerSizeBase: r.innerSizeBase,
+            price: r.lastKnownPrice,
+          );
+          break;
+        }
+      }
+    }
+
+    final unit = (unitOverride != null && unitOverride.trim().isNotEmpty)
+        ? unitOverride.trim()
+        : spec.unitLabel;
+    final price = priceOverride ?? spec.pricePerUnit;
+    final catalog = await _catalogPricePlace(name);
+
+    final existing = await db.select(db.shoppingItems).get();
+    final pending = existing
+        .map(_itemToDomain)
+        .where((i) =>
+            !i.isHidden &&
+            !i.isBought &&
+            i.name.toLowerCase().trim() == lower)
+        .toList();
+    if (pending.isNotEmpty) {
+      final line = pending.first;
+      final next = merge == ShopPackMerge.increment
+          ? line.quantity + requested
+          : (line.quantity > requested ? line.quantity : requested);
+      if (next == line.quantity &&
+          (note == null || note == line.notes) &&
+          (line.unit == unit)) {
+        return false;
+      }
+      line
+        ..quantity = next
+        ..unit = unit
+        ..lastPurchasePrice = price ?? line.lastPurchasePrice
+        ..notes = note ?? line.notes
+        ..lastModified = DateTime.now().toUtc();
+      await updateItem(line);
+      return true;
+    }
+
+    final slug = lower.replaceAll(RegExp(r'[^a-z0-9]'), '_');
+    final item = ShoppingItem()
+      ..supabaseId =
+          'shop_${origin}_${slug}_${DateTime.now().millisecondsSinceEpoch}'
+      ..categorySupabaseId = 'cat-misc'
+      ..name = name.trim()
+      ..quantity = requested
+      ..unit = unit
+      ..origin = origin
+      ..notes = note
+      ..lastPurchasePrice = price ?? catalog.price
       ..lastPurchasePlace = catalog.place
       ..isBundled = false;
     await addItem(item);

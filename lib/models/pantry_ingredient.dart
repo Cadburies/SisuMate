@@ -8,6 +8,7 @@ class PantryIngredient {
   String boatSupabaseId = ''; // SHARE4: per-boat scope
   String name = '';
   bool inMyPantry = false;
+  /// On-hand stock only (metric). Catalog size lives in [purchaseSizeBase].
   double? quantity;
   String? unit;
   int sortOrder = 0;
@@ -43,6 +44,13 @@ class PantryIngredient {
   String? lastKnownPriceUnit;
   String? lastPurchasePlace;
   List<PurchaseRecord> purchaseHistory = [];
+
+  /// Catalog SKU — how it is sold. Independent of [quantity].
+  double? purchaseSizeBase;
+  String? purchaseBaseUnit;
+  String? purchaseNoun;
+  int unitsPerPurchase = 1;
+  double? innerSizeBase;
 
   // Nutrition — per 100g of this ingredient
   double? caloriesPer100g;
@@ -80,6 +88,11 @@ class PantryIngredient {
       ..purchaseHistory = ((json['purchaseHistory'] as List?) ?? const [])
           .map((e) => PurchaseRecord.fromJson(e as Map<String, dynamic>))
           .toList()
+      ..purchaseSizeBase = (json['purchaseSizeBase'] as num?)?.toDouble()
+      ..purchaseBaseUnit = json['purchaseBaseUnit'] as String?
+      ..purchaseNoun = json['purchaseNoun'] as String?
+      ..unitsPerPurchase = (json['unitsPerPurchase'] as num?)?.toInt() ?? 1
+      ..innerSizeBase = (json['innerSizeBase'] as num?)?.toDouble()
       ..caloriesPer100g = (json['caloriesPer100g'] as num?)?.toDouble()
       ..proteinPer100g = (json['proteinPer100g'] as num?)?.toDouble()
       ..fatPer100g = (json['fatPer100g'] as num?)?.toDouble()
@@ -113,6 +126,11 @@ class PantryIngredient {
         'lastKnownPriceUnit': lastKnownPriceUnit,
         'lastPurchasePlace': lastPurchasePlace,
         'purchaseHistory': purchaseHistory.map((p) => p.toJson()).toList(),
+        'purchaseSizeBase': purchaseSizeBase,
+        'purchaseBaseUnit': purchaseBaseUnit,
+        'purchaseNoun': purchaseNoun,
+        'unitsPerPurchase': unitsPerPurchase,
+        'innerSizeBase': innerSizeBase,
         'caloriesPer100g': caloriesPer100g,
         'proteinPer100g': proteinPer100g,
         'fatPer100g': fatPer100g,
@@ -151,6 +169,11 @@ class PantryIngredient {
           lastKnownPriceUnit == other.lastKnownPriceUnit &&
           lastPurchasePlace == other.lastPurchasePlace &&
           listEquals(purchaseHistory, other.purchaseHistory) &&
+          purchaseSizeBase == other.purchaseSizeBase &&
+          purchaseBaseUnit == other.purchaseBaseUnit &&
+          purchaseNoun == other.purchaseNoun &&
+          unitsPerPurchase == other.unitsPerPurchase &&
+          innerSizeBase == other.innerSizeBase &&
           caloriesPer100g == other.caloriesPer100g &&
           proteinPer100g == other.proteinPer100g &&
           fatPer100g == other.fatPer100g &&
@@ -184,6 +207,11 @@ class PantryIngredient {
         lastKnownPriceUnit,
         lastPurchasePlace,
         Object.hashAll(purchaseHistory),
+        purchaseSizeBase,
+        purchaseBaseUnit,
+        purchaseNoun,
+        unitsPerPurchase,
+        innerSizeBase,
         caloriesPer100g,
         proteinPer100g,
         fatPer100g,
@@ -204,7 +232,10 @@ class PantryIngredient {
       'priceCurrency: $priceCurrency, '
       'lastKnownPriceUnit: $lastKnownPriceUnit, '
       'lastPurchasePlace: $lastPurchasePlace, '
-      'purchaseHistory: $purchaseHistory, caloriesPer100g: $caloriesPer100g, '
+      'purchaseHistory: $purchaseHistory, purchaseSizeBase: $purchaseSizeBase, '
+      'purchaseBaseUnit: $purchaseBaseUnit, purchaseNoun: $purchaseNoun, '
+      'unitsPerPurchase: $unitsPerPurchase, innerSizeBase: $innerSizeBase, '
+      'caloriesPer100g: $caloriesPer100g, '
       'proteinPer100g: $proteinPer100g, fatPer100g: $fatPer100g, '
       'carbsPer100g: $carbsPer100g)';
 }

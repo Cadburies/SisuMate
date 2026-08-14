@@ -1,16 +1,23 @@
 import '../core/units.dart';
 import '../models/models.dart';
 
-/// #310 — catalog purchase package (how the item is sold at the shop).
+/// #327 — catalog purchase package (how the item is sold at the shop).
 ///
 /// Distinct from recipe **need** (g/ml) and boat **stock** (on-hand base).
+/// Built from structured purchase columns — never from on-hand quantity.
 class PurchaseSpec {
-  /// Measure inside one SKU in a metric base unit (`ml` or `g`), when known.
+  /// Measure inside one SKU in a metric base unit (`ml`, `g`, or `each`).
   final double? sizeBase;
   final String? sizeUnit;
 
-  /// Human purchase noun for UI / shopping unit field (bottle, bag, pack…).
-  final String unitLabel;
+  /// Shop noun (bottle, bag, pack, case, …).
+  final String noun;
+
+  /// Inner units in the SKU (1 for a bottle, 12 for a case).
+  final int unitsPerPurchase;
+
+  /// Size of one inner unit when [unitsPerPurchase] > 1 (200 for 12×200 ml).
+  final double? innerSizeBase;
 
   /// Shelf price for **one** purchase unit (not per ml/g).
   final double? pricePerUnit;
@@ -18,64 +25,286 @@ class PurchaseSpec {
   const PurchaseSpec({
     this.sizeBase,
     this.sizeUnit,
-    required this.unitLabel,
+    this.noun = 'pack',
+    this.unitsPerPurchase = 1,
+    this.innerSizeBase,
     this.pricePerUnit,
   });
 
   bool get hasSize =>
       sizeBase != null && sizeBase! > 0 && sizeUnit != null && sizeUnit!.isNotEmpty;
 
-  /// Build from pantry/bar catalog fields (seed + user edits).
-  ///
-  /// - [packageQty]/[packageUnit]: seed package size (e.g. 250 + `ml`)
-  /// - [priceUnit]: human pack label (`250ml bottle`, `500g pack`, `750ml`)
-  /// - [price]: price of one pack
-  factory PurchaseSpec.fromCatalog({
+  /// Derived display label (`250ml bottle`, `12×200ml case`). Persist into
+  /// [PantryIngredient.lastKnownPriceUnit] / bar equivalent — do not parse
+  /// that string back as the source of truth.
+  String get unitLabel {
+    if (unitsPerPurchase > 1 &&
+        innerSizeBase != null &&
+        sizeUnit != null &&
+        sizeUnit!.isNotEmpty) {
+      return '$unitsPerPurchase×${_fmtSize(innerSizeBase!, sizeUnit!)} $noun';
+    }
+    if (sizeBase != null && sizeUnit != null && sizeUnit!.isNotEmpty) {
+      return '${_fmtSize(sizeBase!, sizeUnit!)} $noun';
+    }
+    return noun.isEmpty ? 'pack' : noun;
+  }
+
+  static String _fmtSize(double v, String unit) {
+    if (unit == 'ml' && v >= 1000 && v % 1000 == 0) {
+      return '${(v / 1000).round()}L';
+    }
+    if (unit == 'g' && v >= 1000 && v % 1000 == 0) {
+      return '${(v / 1000).round()}kg';
+    }
+    final n = v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1);
+    return '$n$unit';
+  }
+
+  factory PurchaseSpec.fromFields({
+    double? purchaseSizeBase,
+    String? purchaseBaseUnit,
+    String? purchaseNoun,
+    int unitsPerPurchase = 1,
+    double? innerSizeBase,
+    double? price,
+  }) {
+    final noun = (purchaseNoun != null && purchaseNoun.trim().isNotEmpty)
+        ? purchaseNoun.trim()
+        : 'pack';
+    return PurchaseSpec(
+      sizeBase: purchaseSizeBase,
+      sizeUnit: purchaseBaseUnit,
+      noun: noun,
+      unitsPerPurchase: unitsPerPurchase < 1 ? 1 : unitsPerPurchase,
+      innerSizeBase: innerSizeBase,
+      pricePerUnit: price,
+    );
+  }
+
+  factory PurchaseSpec.fromPantry(PantryIngredient p) => PurchaseSpec.fromFields(
+        purchaseSizeBase: p.purchaseSizeBase,
+        purchaseBaseUnit: p.purchaseBaseUnit,
+        purchaseNoun: p.purchaseNoun,
+        unitsPerPurchase: p.unitsPerPurchase,
+        innerSizeBase: p.innerSizeBase,
+        price: p.lastKnownPrice,
+      );
+
+  factory PurchaseSpec.fromBar(BarIngredient b) => PurchaseSpec.fromFields(
+        purchaseSizeBase: b.purchaseSizeBase,
+        purchaseBaseUnit: b.purchaseBaseUnit,
+        purchaseNoun: b.purchaseNoun,
+        unitsPerPurchase: b.unitsPerPurchase,
+        innerSizeBase: b.innerSizeBase,
+        price: b.lastKnownPrice,
+      );
+
+  /// Seed / import only: lift a human price-unit string + optional qty into
+  /// structured fields. Not used for live shortfall math.
+  factory PurchaseSpec.fromSeedLabel({
     double? packageQty,
     String? packageUnit,
     String? priceUnit,
     double? price,
+    String defaultNoun = 'pack',
   }) {
-    final label = _purchaseLabel(priceUnit, packageQty, packageUnit);
-    final fromPrice = _parseSizeFromPriceUnit(priceUnit);
-    if (fromPrice != null) {
+    final parsed = _parsePurchaseLabel(priceUnit);
+    if (parsed != null) {
       return PurchaseSpec(
-        sizeBase: fromPrice.$1,
-        sizeUnit: fromPrice.$2,
-        unitLabel: label,
+        sizeBase: parsed.sizeBase,
+        sizeUnit: parsed.sizeUnit,
+        noun: parsed.noun ?? defaultNoun,
+        unitsPerPurchase: parsed.unitsPerPurchase,
+        innerSizeBase: parsed.innerSizeBase,
+        pricePerUnit: price,
+      );
+    }
+    final countable = _countableUnit(packageUnit);
+    if (countable != null) {
+      return PurchaseSpec(
+        sizeBase: packageQty != null && packageQty > 0 ? packageQty : 1,
+        sizeUnit: 'each',
+        noun: countable,
+        unitsPerPurchase: 1,
         pricePerUnit: price,
       );
     }
     final metric = UnitConverter.toMetric(packageQty, packageUnit);
-    if (metric != null &&
-        packageQty != null &&
-        packageQty > 0 &&
-        (metric.unit == 'ml' || metric.unit == 'g' || metric.unit == 'kg')) {
-      final size = metric.unit == 'kg' ? metric.quantity * 1000 : metric.quantity;
-      final unit = metric.unit == 'kg' ? 'g' : metric.unit;
-      return PurchaseSpec(
-        sizeBase: size,
-        sizeUnit: unit,
-        unitLabel: label,
-        pricePerUnit: price,
-      );
+    if (metric != null && packageQty != null && packageQty > 0) {
+      final size = metric.unit == 'kg'
+          ? metric.quantity * 1000
+          : metric.unit == 'L' || metric.unit == 'l'
+              ? metric.quantity * 1000
+              : metric.quantity;
+      final unit = (metric.unit == 'kg')
+          ? 'g'
+          : (metric.unit == 'L' || metric.unit == 'l')
+              ? 'ml'
+              : (metric.unit == 'ml' || metric.unit == 'g')
+                  ? metric.unit
+                  : null;
+      if (unit != null) {
+        return PurchaseSpec(
+          sizeBase: size,
+          sizeUnit: unit,
+          noun: defaultNoun,
+          pricePerUnit: price,
+        );
+      }
     }
-    return PurchaseSpec(unitLabel: label, pricePerUnit: price);
+    return PurchaseSpec(noun: defaultNoun, pricePerUnit: price);
   }
 
-  factory PurchaseSpec.fromPantry(PantryIngredient p) => PurchaseSpec.fromCatalog(
-        packageQty: p.quantity,
-        packageUnit: p.unit,
-        priceUnit: p.lastKnownPriceUnit,
-        price: p.lastKnownPrice,
-      );
+  void applyToPantry(PantryIngredient p) {
+    p
+      ..purchaseSizeBase = sizeBase
+      ..purchaseBaseUnit = sizeUnit
+      ..purchaseNoun = noun
+      ..unitsPerPurchase = unitsPerPurchase
+      ..innerSizeBase = innerSizeBase
+      ..lastKnownPriceUnit = unitLabel;
+    if (pricePerUnit != null) p.lastKnownPrice = pricePerUnit;
+  }
 
-  factory PurchaseSpec.fromBar(BarIngredient b) => PurchaseSpec.fromCatalog(
-        packageQty: null,
-        packageUnit: null,
-        priceUnit: b.lastKnownPriceUnit,
-        price: b.lastKnownPrice,
-      );
+  void applyToBar(BarIngredient b) {
+    b
+      ..purchaseSizeBase = sizeBase
+      ..purchaseBaseUnit = sizeUnit
+      ..purchaseNoun = noun
+      ..unitsPerPurchase = unitsPerPurchase
+      ..innerSizeBase = innerSizeBase
+      ..lastKnownPriceUnit = unitLabel
+      ..onHandUnit = sizeUnit;
+    if (pricePerUnit != null) b.lastKnownPrice = pricePerUnit;
+  }
+}
+
+class _ParsedLabel {
+  final double? sizeBase;
+  final String? sizeUnit;
+  final String? noun;
+  final int unitsPerPurchase;
+  final double? innerSizeBase;
+  const _ParsedLabel({
+    this.sizeBase,
+    this.sizeUnit,
+    this.noun,
+    this.unitsPerPurchase = 1,
+    this.innerSizeBase,
+  });
+}
+
+final _nouns = {
+  'bottle',
+  'bag',
+  'pack',
+  'case',
+  'jar',
+  'block',
+  'can',
+  'carton',
+  'loaf',
+  'bunch',
+  'each',
+  'bulb',
+};
+
+/// Parse labels like `250ml bottle`, `1L bottle`, `12x200ml case`, `4-pack`.
+_ParsedLabel? _parsePurchaseLabel(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return null;
+  final s = raw.trim().toLowerCase();
+  final compact = s.replaceAll(' ', '');
+
+  final caseMatch =
+      RegExp(r'^(\d+)x(\d+(?:\.\d+)?)(ml|l|g|kg)([a-z]+)?$').firstMatch(compact);
+  if (caseMatch != null) {
+    final n = int.parse(caseMatch.group(1)!);
+    final each = double.parse(caseMatch.group(2)!);
+    final u = caseMatch.group(3)!;
+    final noun = _nounWord(caseMatch.group(4)) ?? 'case';
+    final norm = _normalizeSize(each, u);
+    if (norm == null) return null;
+    return _ParsedLabel(
+      sizeBase: norm.$1 * n,
+      sizeUnit: norm.$2,
+      noun: noun,
+      unitsPerPurchase: n,
+      innerSizeBase: norm.$1,
+    );
+  }
+
+  final nPack = RegExp(r'^(\d+)-?pack$').firstMatch(compact);
+  if (nPack != null) {
+    return _ParsedLabel(
+      noun: 'pack',
+      unitsPerPurchase: int.parse(nPack.group(1)!),
+    );
+  }
+
+  final sizeNoun =
+      RegExp(r'^(\d+(?:\.\d+)?)(ml|l|g|kg)([a-z]+)?$').firstMatch(compact);
+  if (sizeNoun != null) {
+    final norm = _normalizeSize(double.parse(sizeNoun.group(1)!), sizeNoun.group(2)!);
+    if (norm == null) return null;
+    return _ParsedLabel(
+      sizeBase: norm.$1,
+      sizeUnit: norm.$2,
+      noun: _nounWord(sizeNoun.group(3)),
+    );
+  }
+
+  if (_nouns.contains(compact)) {
+    return _ParsedLabel(noun: compact);
+  }
+  return null;
+}
+
+String? _nounWord(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  return _nouns.contains(raw) ? raw : null;
+}
+
+String? _countableUnit(String? unit) {
+  if (unit == null) return null;
+  switch (unit.trim().toLowerCase()) {
+    case 'piece':
+    case 'pieces':
+    case 'count':
+    case 'each':
+      return 'each';
+    case 'bulb':
+      return 'bulb';
+    case 'bunch':
+      return 'bunch';
+    case 'loaf':
+      return 'loaf';
+    case 'whole':
+      return 'each';
+    case 'stalk':
+    case 'stalks':
+      return 'each';
+    case 'clove':
+    case 'cloves':
+      return 'each';
+    default:
+      return null;
+  }
+}
+
+(double, String)? _normalizeSize(double qty, String unit) {
+  switch (unit) {
+    case 'ml':
+      return (qty, 'ml');
+    case 'l':
+      return (qty * 1000, 'ml');
+    case 'g':
+      return (qty, 'g');
+    case 'kg':
+      return (qty * 1000, 'g');
+    default:
+      return null;
+  }
 }
 
 /// One shopping line in **purchase counts**, never raw measure as multiplier.
@@ -107,9 +336,7 @@ class ShopPackLine {
   }
 
   String get formatted {
-    final pack = packages <= 1
-        ? '1 × $unitLabel'
-        : '$packages × $unitLabel';
+    final pack = packages <= 1 ? '1 × $unitLabel' : '$packages × $unitLabel';
     final needPart = needBase != null && needUnit != null
         ? ' (need ${_fmt(needBase!)} $needUnit'
             '${haveBase != null ? ', have ${_fmt(haveBase!)} $needUnit' : ''})'
@@ -121,7 +348,7 @@ class ShopPackLine {
       v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1);
 }
 
-/// #310 — pure conversion between need / stock / purchase packs.
+/// #327 — pure conversion between need / stock / purchase packs.
 class QuantityModel {
   const QuantityModel();
 
@@ -140,33 +367,51 @@ class QuantityModel {
   /// Convert [qty]+[unit] to a metric base shared with [targetUnit] if possible.
   double? toCompatibleBase(double? qty, String? unit, String? targetUnit) {
     if (qty == null) return null;
+    final countable = _countableUnit(unit);
+    if (countable != null) {
+      if (targetUnit == null ||
+          targetUnit == 'each' ||
+          _countableUnit(targetUnit) != null) {
+        return qty;
+      }
+      return null;
+    }
     final m = UnitConverter.toMetric(qty, unit);
     if (m == null) return null;
-    final t = UnitConverter.toMetric(1, targetUnit ?? m.unit);
-    if (t == null) return m.quantity;
-    // Align kg→g, L→ml when factors known
-    if (m.unit == t.unit) return m.quantity;
-    if (m.unit == 'kg' && t.unit == 'g') return m.quantity * 1000;
-    if (m.unit == 'g' && t.unit == 'kg') return m.quantity / 1000;
-    if (m.unit == 'l' && t.unit == 'ml') return m.quantity * 1000;
-    if (m.unit == 'ml' && t.unit == 'l') return m.quantity / 1000;
-    // tbsp/tsp already to ml via toMetric
-    if (m.unit == 'ml' && (t.unit == 'ml' || targetUnit == null)) return m.quantity;
-    if (m.unit == 'g' && (t.unit == 'g' || targetUnit == null)) return m.quantity;
+    var mq = m.quantity;
+    var mu = m.unit;
+    if (mu == 'kg') {
+      mq *= 1000;
+      mu = 'g';
+    }
+    if (mu == 'L' || mu == 'l') {
+      mq *= 1000;
+      mu = 'ml';
+    }
+    final t = targetUnit;
+    if (t == null || t.isEmpty) return mq;
+    if (mu == t) return mq;
+    if (mu == 'kg' && t == 'g') return mq * 1000;
+    if (mu == 'g' && t == 'kg') return mq / 1000;
+    if (mu == 'l' && t == 'ml') return mq * 1000;
+    if (mu == 'ml' && t == 'l') return mq / 1000;
+    if (mu == 'ml' && t == 'ml') return mq;
+    if (mu == 'g' && t == 'g') return mq;
     return null;
   }
 
-  /// On-hand stock for pantry: 0 if not stocked; else convertible quantity.
-  ///
-  /// Seeded [PantryIngredient.quantity] is catalog **package size** when the
-  /// item is not in My Pantry. Once [inMyPantry] is true, the same field is
-  /// treated as **on-hand** measure (user can edit). If stocked with no
-  /// convertible amount, returns null (unknown — not treated as full cover).
+  /// On-hand stock for pantry. Not tracked → 0. Tracked + amount → that
+  /// amount. Tracked + null → unknown (null), never treated as covered.
   double? pantryOnHandBase(PantryIngredient p, {String? needUnit}) {
     if (!p.inMyPantry) return 0;
     if (p.quantity == null) return null;
-    final base = toCompatibleBase(p.quantity, p.unit, needUnit);
-    return base;
+    return toCompatibleBase(p.quantity, p.unit ?? p.purchaseBaseUnit, needUnit);
+  }
+
+  double? barOnHandBase(BarIngredient b, {String? needUnit}) {
+    if (!b.inMyBar) return 0;
+    if (b.onHandBase == null) return null;
+    return toCompatibleBase(b.onHandBase, b.onHandUnit ?? b.purchaseBaseUnit, needUnit);
   }
 
   /// Cocktail / bar: pour total → bottles.
@@ -193,14 +438,16 @@ class QuantityModel {
     required PurchaseSpec purchase,
     String? note,
     int minPackagesIfUnknown = 1,
+    int extraSafetyPacks = 0,
   }) {
     final needBase = toCompatibleBase(needQty, needUnit, purchase.sizeUnit);
     if (purchase.hasSize && needBase != null) {
-      final packs = packagesToBuy(
+      var packs = packagesToBuy(
         needBase: needBase,
         haveBase: haveBase,
         packageSizeBase: purchase.sizeBase!,
       );
+      packs += extraSafetyPacks;
       if (packs <= 0) return null;
       return ShopPackLine(
         name: name,
@@ -213,9 +460,11 @@ class QuantityModel {
         note: note,
       );
     }
-    // No package size: buy at least one pack if need unknown or have is zero.
-    if (haveBase > 0 && needBase != null && needBase <= haveBase) return null;
-    final packs = minPackagesIfUnknown < 1 ? 1 : minPackagesIfUnknown;
+    if (haveBase > 0 && needBase != null && needBase <= haveBase && extraSafetyPacks <= 0) {
+      return null;
+    }
+    final packs = (minPackagesIfUnknown < 1 ? 1 : minPackagesIfUnknown) + extraSafetyPacks;
+    if (packs <= 0) return null;
     return ShopPackLine(
       name: name,
       packages: packs,
@@ -227,53 +476,121 @@ class QuantityModel {
       note: note,
     );
   }
-}
 
-// ── parsing helpers ─────────────────────────────────────────────────────────
+  /// Recipe-ingredient need × servings → pack line (dry goods).
+  ShopPackLine? lineForRecipeIngredient({
+    required RecipeIngredient ingredient,
+    required int servings,
+    PantryIngredient? pantry,
+  }) {
+    if (ingredient.isGarnish || ingredient.isOptional) return null;
+    final purchase = pantry != null
+        ? PurchaseSpec.fromPantry(pantry)
+        : const PurchaseSpec(noun: 'pack');
+    final have = pantry == null
+        ? 0.0
+        : (pantryOnHandBase(pantry, needUnit: ingredient.unit) ?? 0);
+    final needQty = ingredient.quantity == null
+        ? null
+        : ingredient.quantity! * servings;
+    return shopLine(
+      name: ingredient.name,
+      needQty: needQty,
+      needUnit: ingredient.unit,
+      haveBase: have,
+      purchase: purchase,
+    );
+  }
 
-String _purchaseLabel(String? priceUnit, double? qty, String? unit) {
-  final pu = priceUnit?.trim() ?? '';
-  if (pu.isNotEmpty) {
-    // Prefer the human pack string as the shopping unit label.
-    return pu;
+  /// Pack-based recipe cost (never pack-price × servings).
+  double? recipePackCost({
+    required List<RecipeIngredient> ingredients,
+    required List<PantryIngredient> pantry,
+    required int servings,
+  }) {
+    final byName = {
+      for (final p in pantry) p.name.toLowerCase().trim(): p,
+    };
+    double sum = 0;
+    var any = false;
+    for (final i in ingredients) {
+      if (i.isGarnish || i.isOptional) continue;
+      final line = lineForRecipeIngredient(
+        ingredient: i,
+        servings: servings,
+        pantry: byName[i.name.toLowerCase().trim()],
+      );
+      final est = line?.lineEstimate;
+      if (est != null) {
+        sum += est;
+        any = true;
+      }
+    }
+    return any ? sum : null;
   }
-  if (qty != null && unit != null && unit.isNotEmpty) {
-    final q = qty == qty.roundToDouble() ? qty.round().toString() : qty.toString();
-    return '$q $unit pack';
-  }
-  return 'pack';
-}
 
-/// Parse sizes like `250ml bottle`, `500g pack`, `750ml`, `1L bottle`.
-(double, String)? _parseSizeFromPriceUnit(String? raw) {
-  if (raw == null || raw.trim().isEmpty) return null;
-  final s = raw.trim().toLowerCase().replaceAll(' ', '');
-  // 12x200ml case → total 2400 ml
-  final caseMatch = RegExp(r'^(\d+)x(\d+(?:\.\d+)?)(ml|l|g|kg)').firstMatch(s);
-  if (caseMatch != null) {
-    final n = double.parse(caseMatch.group(1)!);
-    final each = double.parse(caseMatch.group(2)!);
-    final u = caseMatch.group(3)!;
-    return _normalizeSize(n * each, u);
+  /// Trip-weight label for a protein order (`2.4kg`, `900g`).
+  String tripWeightLabel(double? qty, String? unit) {
+    final base = toCompatibleBase(qty, unit, 'g');
+    if (base == null) return unit ?? 'kg';
+    if (base >= 1000) {
+      final kg = base / 1000;
+      return kg == kg.roundToDouble()
+          ? '${kg.round()}kg'
+          : '${kg.toStringAsFixed(1)}kg';
+    }
+    return '${base == base.roundToDouble() ? base.round() : base.toStringAsFixed(0)}g';
   }
-  final m = RegExp(r'^(\d+(?:\.\d+)?)(ml|l|g|kg)\b').firstMatch(s);
-  if (m != null) {
-    return _normalizeSize(double.parse(m.group(1)!), m.group(2)!);
-  }
-  return null;
-}
 
-(double, String)? _normalizeSize(double qty, String unit) {
-  switch (unit) {
-    case 'ml':
-      return (qty, 'ml');
-    case 'l':
-      return (qty * 1000, 'ml');
-    case 'g':
-      return (qty, 'g');
-    case 'kg':
-      return (qty * 1000, 'g');
-    default:
-      return null;
+  /// Parse a shopping unit that is actually a trip weight (`2.4kg`) so
+  /// mark-bought can increment on-hand by the ordered amount, not one SKU.
+  double? measureFromLabel(String? raw, {String? targetUnit}) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final parsed = _parsePurchaseLabel(raw);
+    if (parsed?.sizeBase == null) return null;
+    return toCompatibleBase(parsed!.sizeBase, parsed.sizeUnit, targetUnit);
+  }
+
+  /// Preferred drinks → pack lines (need one SKU unless already on hand).
+  List<ShopPackLine> preferredDrinkPacks({
+    required List<String> preferredNames,
+    required List<BarIngredient> bar,
+    Map<String, int> safetyByName = const {},
+  }) {
+    final lines = <ShopPackLine>[];
+    final seen = <String>{};
+    for (final raw in preferredNames) {
+      final match = _matchBar(raw, bar);
+      if (match == null) continue;
+      final key = match.name.toLowerCase().trim();
+      if (!seen.add(key)) continue;
+      final purchase = PurchaseSpec.fromBar(match);
+      final have = barOnHandBase(match, needUnit: purchase.sizeUnit) ?? 0;
+      final need = purchase.sizeBase ?? 1;
+      final safety = safetyByName[key] ?? 0;
+      final line = shopLine(
+        name: match.name,
+        needQty: need,
+        needUnit: purchase.sizeUnit ?? 'ml',
+        haveBase: have,
+        purchase: purchase,
+        extraSafetyPacks: safety,
+      );
+      if (line != null) lines.add(line);
+    }
+    return lines;
+  }
+
+  BarIngredient? _matchBar(String name, List<BarIngredient> bar) {
+    final n = name.toLowerCase().trim();
+    if (n.isEmpty) return null;
+    for (final b in bar) {
+      if (b.name.toLowerCase().trim() == n) return b;
+    }
+    for (final b in bar) {
+      final bn = b.name.toLowerCase().trim();
+      if (n.contains(bn) || bn.contains(n)) return b;
+    }
+    return null;
   }
 }

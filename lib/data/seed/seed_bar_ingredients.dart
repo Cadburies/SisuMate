@@ -1,5 +1,6 @@
 import 'ingredient_drift_seed.dart';
 import '../../models/models.dart';
+import '../../services/quantity_model.dart';
 
 // (name, category, flavorProfiles, abv, lastKnownPrice, priceUnit, imageUrl)
 // Prices: approximate US retail USD (2025). imageUrl: stable Wikimedia Commons.
@@ -179,6 +180,8 @@ const _barData =
     ['bitter', 'fresh', 'fizzy', 'light', 'quinine'], null, 3.0, '1L', null),
   ('Coconut Water', 'mixer',
     ['tropical', 'light', 'fresh', 'sweet', 'natural'], null, 3.0, '330ml', null),
+  ('Ting', 'mixer',
+    ['citrus', 'sweet', 'fizzy', 'tropical', 'grapefruit'], null, 15.0, '12x200ml case', null),
 
   // -- Juices ----------------------------------------------------------------
   ('Fresh Lime Juice', 'juice',
@@ -341,24 +344,29 @@ List<BarIngredient> _buildBarIngredients() {
   for (var i = 0; i < _barData.length; i++) {
     final (name, cat, flavors, abv, price, priceUnit, imgUrl) = _barData[i];
     final subs = _barSubstitutes[name];
-    ingredients.add(
-      BarIngredient()
-        ..supabaseId =
-            'bar_${name.toLowerCase().replaceAll(RegExp(r"[^a-z0-9]"), '_')}'
-        ..name = name
-        ..category = cat
-        ..flavorProfiles = List<String>.from(flavors)
-        ..alcoholByVolume = abv
-        ..lastKnownPrice = price
-        ..lastKnownPriceUnit = priceUnit
-        ..priceCurrency = 'USD'
-        ..imageUrl = imgUrl
-        ..inMyBar = false
-        ..sortOrder = i
-        ..isBundled = true
-        ..substitute1 = subs?.$1
-        ..substitute2 = subs?.$2,
+    final spec = PurchaseSpec.fromSeedLabel(
+      priceUnit: priceUnit,
+      price: price,
+      defaultNoun: cat == 'mixer' || cat == 'juice' ? 'pack' : 'bottle',
     );
+    final row = BarIngredient()
+      ..supabaseId =
+          'bar_${name.toLowerCase().replaceAll(RegExp(r"[^a-z0-9]"), '_')}'
+      ..name = name
+      ..category = cat
+      ..flavorProfiles = List<String>.from(flavors)
+      ..alcoholByVolume = abv
+      ..lastKnownPrice = price
+      ..priceCurrency = 'USD'
+      ..imageUrl = imgUrl
+      ..inMyBar = false
+      ..onHandBase = null
+      ..sortOrder = i
+      ..isBundled = true
+      ..substitute1 = subs?.$1
+      ..substitute2 = subs?.$2;
+    spec.applyToBar(row);
+    ingredients.add(row);
   }
   return ingredients;
 }

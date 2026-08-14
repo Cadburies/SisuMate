@@ -321,7 +321,7 @@ void main() {
       expect(gaps.map((g) => g.name), isNot(contains('Olive Oil')));
     });
 
-    test('#310 shoppingPackGaps couscous bags and empty stock', () {
+    test('#327 shoppingPackGaps couscous bags and empty stock', () {
       // 3 dinners × 6 guests × 50 g = 900 g couscous.
       final plan = MealPlan()
         ..guestCount = 6
@@ -346,8 +346,11 @@ void main() {
 
       final catalog = PantryIngredient()
         ..name = 'Couscous'
-        ..quantity = 500
+        ..quantity = null
         ..unit = 'g'
+        ..purchaseSizeBase = 500
+        ..purchaseBaseUnit = 'g'
+        ..purchaseNoun = 'pack'
         ..lastKnownPrice = 4
         ..lastKnownPriceUnit = '500g pack'
         ..inMyPantry = false;
@@ -370,9 +373,67 @@ void main() {
         pantry: [catalog],
       );
       expect(packs2.single.packages, 1);
+
+      // Scenario 5 — tracked but empty still shorts 2 packs.
+      catalog.quantity = 0;
+      final packs3 = ProvisionCalculator.shoppingPackGaps(
+        provision: result,
+        pantry: [catalog],
+      );
+      expect(packs3.single.packages, 2);
     });
 
-    test('#310 freezer pack plan for protein meals', () {
+    test('#327 freezer steaks — one bag per meal, not one 2.4 kg lump', () {
+      final plan = MealPlan()
+        ..guestCount = 4
+        ..numberOfDays = 7
+        ..startDate = DateTime.utc(2026, 8, 3) // Monday
+        ..slots = [
+          _slot(0, 'dinner', 'r1', 'Steak'),
+          _slot(4, 'dinner', 'r1', 'Steak'),
+        ];
+      final result = ProvisionCalculator.compute(
+        plan: plan,
+        ingredientsByRecipe: {
+          'r1': [_ingredient('Steak', quantity: 300, unit: 'g')],
+        },
+        pantry: const [],
+        profiles: const [],
+      );
+      expect(result.portionedItems, hasLength(1));
+      final g = result.portionedItems.first;
+      expect(g.count, 2);
+      expect(g.portions, 4);
+      expect(g.portionSizeBase, 300);
+      expect(g.tripTotalQuantity, 2400);
+      expect(g.freezerBagLines, hasLength(2));
+      expect(g.freezerBagLines.first, contains('4 × 300 g'));
+      expect(g.freezerBagLines.first.toLowerCase(), contains('mon'));
+      expect(g.freezerBagLines.last.toLowerCase(), contains('fri'));
+      expect(g.packingNotes, contains('4×300 g'));
+      expect(g.packingNotes.toLowerCase(), contains('do not freeze as one piece'));
+
+      final catalog = PantryIngredient()
+        ..name = 'Steak'
+        ..purchaseSizeBase = 400
+        ..purchaseBaseUnit = 'g'
+        ..purchaseNoun = 'pack'
+        ..lastKnownPrice = 16 // $40/kg
+        ..inMyPantry = false;
+      final packs = ProvisionCalculator.shoppingPackGaps(
+        provision: result,
+        pantry: [catalog],
+      );
+      expect(packs, hasLength(1));
+      expect(packs.single.packages, 1);
+      expect(packs.single.unitLabel.toLowerCase(), contains('kg'));
+      expect(packs.single.note, contains('Mon'));
+      expect(packs.single.note, contains('Fri'));
+      // 2400 g / 400 g × $16 = $96, not 6 supermarket packs.
+      expect(packs.single.lineEstimate, 96);
+    });
+
+    test('#327 freezer pack plan for protein meals keeps portions', () {
       final plan = MealPlan()
         ..guestCount = 6
         ..numberOfDays = 7
@@ -397,7 +458,9 @@ void main() {
       expect(g.count, 3);
       expect(g.tripTotalQuantity, 9000); // 500×6×3
       expect(g.freezerPackPlan, contains('3 bag'));
+      expect(g.freezerPackPlan, contains('6 × 500 g'));
       expect(g.freezerPackPlan.toLowerCase(), contains('trip total'));
+      expect(g.freezerBagLines, hasLength(3));
     });
   });
 }

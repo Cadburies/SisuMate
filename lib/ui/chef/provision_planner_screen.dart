@@ -5,8 +5,11 @@ import '../../core/di.dart';
 import '../../core/colors.dart';
 import '../../models/models.dart';
 import '../../services/provision_calculator.dart';
+import '../../services/quantity_model.dart';
 import '../../services/email_service.dart';
+import '../../domain/repositories/shopping_repository.dart';
 import '../../providers/pantry_ingredient_provider.dart';
+import '../../providers/bar_ingredient_provider.dart';
 import 'meal_planner_screen.dart' show formatShortDate;
 
 class ProvisionPlannerScreen extends ConsumerStatefulWidget {
@@ -156,22 +159,32 @@ class _ProvisionPlannerScreenState
           const SizedBox(height: 16),
         ],
         if (result.portionedItems.isNotEmpty) ...[
-          Text('Freezer / butcher packs',
+          Text('Freezer packs (thaw one bag per meal)',
               style: Theme.of(context).textTheme.titleSmall),
           Text(
-            'One bag per meal — bag contents are already guest-scaled.',
+            'Each bag is one meal. Friday stays frozen while you cook Monday.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.outline),
           ),
           const SizedBox(height: 6),
-          ...result.portionedItems.map((r) => ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.set_meal_outlined,
-                    color: SisuColors.completedBackground),
-                title: Text(r.freezerPackPlan),
-                subtitle: Text(r.formatted),
-              )),
+          ...result.portionedItems.expand((r) => [
+                ...r.freezerBagLines.map((line) => ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.ac_unit_outlined,
+                          color: SisuColors.completedBackground),
+                      title: Text(line),
+                    )),
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'Trip total: ${const QuantityModel().tripWeightLabel(r.tripTotalQuantity, r.unit)} ${r.name}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  subtitle: Text(r.packingNotes),
+                ),
+              ]),
           const SizedBox(height: 16),
         ],
         Text('Consolidated Provisions',
@@ -191,6 +204,7 @@ class _ProvisionPlannerScreenState
               )),
         // #310 — pack-aware shortfall for shopping.
         ..._shopGapSection(context, result, pantry),
+        ..._preferredDrinksSection(context, profiles),
       ],
     );
   }
@@ -238,6 +252,69 @@ class _ProvisionPlannerScreenState
     ];
   }
 
+  List<Widget> _preferredDrinksSection(
+    BuildContext context,
+    List<GuestProfile> profiles,
+  ) {
+    final names = profiles
+        .where((p) =>
+            widget.plan.guestProfileIds.isEmpty ||
+            widget.plan.guestProfileIds.contains(p.id))
+        .expand((p) => p.preferredDrinks)
+        .toList();
+    if (names.isEmpty) return const [];
+    final bar = ref.watch(barIngredientsProvider).asData?.value ?? [];
+    final lines = const QuantityModel().preferredDrinkPacks(
+      preferredNames: names,
+      bar: bar,
+    );
+    return [
+      const SizedBox(height: 16),
+      Text('Guest drinks', style: Theme.of(context).textTheme.titleSmall),
+      Text(
+        'From guest preferred drinks. Add to shopping as bottles/cases.',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.outline),
+      ),
+      if (lines.isEmpty)
+        Text('All preferred drinks are already on board.',
+            style: Theme.of(context).textTheme.bodySmall)
+      else
+        ...lines.map((line) => ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.local_bar_outlined),
+              title: Text(line.formatted),
+              trailing: line.lineEstimate != null
+                  ? Text('\$${line.lineEstimate!.toStringAsFixed(2)}')
+                  : IconButton(
+                      icon: const Icon(Icons.add_shopping_cart_outlined),
+                      tooltip: 'Add to shopping',
+                      onPressed: () => _addDrinkLine(context, line),
+                    ),
+              onTap: () => _addDrinkLine(context, line),
+            )),
+    ];
+  }
+
+  Future<void> _addDrinkLine(BuildContext context, ShopPackLine line) async {
+    final ok = await ref.read(shoppingRepositoryProvider).ensurePacksInShopping(
+          name: line.name,
+          origin: 'bar',
+          packs: line.packages,
+          merge: ShopPackMerge.setMin,
+          unitOverride: line.unitLabel,
+          priceOverride: line.pricePerPackage,
+        );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(ok
+            ? '${line.name} added to shopping'
+            : '${line.name} is already on the shopping list'),
+      ));
+    }
+  }
+
   Future<void> _addPackGapsToShopping(BuildContext context) async {
     final ingredientsByRecipe = await _ingredientsByRecipe;
     final pantry = ref.read(pantryIngredientsProvider).asData?.value ?? [];
@@ -258,11 +335,14 @@ class _ProvisionPlannerScreenState
     final repo = ref.read(shoppingRepositoryProvider);
     var added = 0;
     for (final line in packs) {
-      final ok = await repo.ensureInShopping(
+      final ok = await repo.ensurePacksInShopping(
         name: line.name,
         origin: 'pantry',
-        quantity: line.packages,
-        unit: line.unitLabel,
+        packs: line.packages,
+        merge: ShopPackMerge.setMin,
+        unitOverride: line.unitLabel,
+        priceOverride: line.pricePerPackage,
+        note: line.note,
       );
       if (ok) added++;
     }
@@ -287,9 +367,13 @@ class _ProvisionPlannerScreenState
       ..writeln('${plan.guestCount} guests')
       ..writeln();
     if (result.portionedItems.isNotEmpty) {
-      buffer.writeln('Freezer / butcher packs:');
+      buffer.writeln('Freezer packs (one bag per meal):');
       for (final r in result.portionedItems) {
-        buffer.writeln('- ${r.freezerPackPlan}');
+        for (final line in r.freezerBagLines) {
+          buffer.writeln('- $line');
+        }
+        buffer.writeln('  Trip total: ${const QuantityModel().tripWeightLabel(r.tripTotalQuantity, r.unit)}');
+        buffer.writeln('  ${r.packingNotes}');
       }
       buffer.writeln();
     }

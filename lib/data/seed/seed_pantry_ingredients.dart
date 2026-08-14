@@ -1,5 +1,6 @@
 import 'ingredient_drift_seed.dart';
 import '../../models/models.dart';
+import '../../services/quantity_model.dart';
 
 // (name, qty, unit, cat, flavors, cuisines, price, priceUnit, imageUrl, allergens, dietary)
 // allergens: gluten | dairy | eggs | nuts | peanuts | shellfish | fish | soy | sesame | sulphites | mustard | celery | lupin | molluscs
@@ -1526,30 +1527,36 @@ List<PantryIngredient> _buildPantryIngredients() {
     final (name, qty, unit, cat, flavors, cuisines, price, priceUnit, imgUrl,
         allergens, dietary) = _pantryData[i];
     final macros = _macrosPer100g[name];
-    ingredients.add(
-      PantryIngredient()
-        ..supabaseId =
-            'pantry_${name.toLowerCase().replaceAll(RegExp(r"[^a-z0-9]"), '_')}'
-        ..name = name
-        ..quantity = qty
-        ..unit = unit
-        ..category = cat
-        ..flavorProfiles = List<String>.from(flavors)
-        ..cuisineTypes = List<String>.from(cuisines)
-        ..lastKnownPrice = price
-        ..lastKnownPriceUnit = priceUnit
-        ..priceCurrency = 'USD'
-        ..imageUrl = imgUrl
-        ..allergenTags = List<String>.from(allergens)
-        ..dietaryTags = List<String>.from(dietary)
-        ..inMyPantry = false
-        ..sortOrder = i
-        ..isBundled = true
-        ..caloriesPer100g = macros?.$1
-        ..proteinPer100g = macros?.$2
-        ..fatPer100g = macros?.$3
-        ..carbsPer100g = macros?.$4,
+    final spec = PurchaseSpec.fromSeedLabel(
+      packageQty: qty,
+      packageUnit: unit,
+      priceUnit: priceUnit,
+      price: price,
     );
+    final row = PantryIngredient()
+      ..supabaseId =
+          'pantry_${name.toLowerCase().replaceAll(RegExp(r"[^a-z0-9]"), '_')}'
+      ..name = name
+      // On-hand starts empty; seed qty/unit are catalog package size.
+      ..quantity = null
+      ..unit = spec.sizeUnit
+      ..category = cat
+      ..flavorProfiles = List<String>.from(flavors)
+      ..cuisineTypes = List<String>.from(cuisines)
+      ..lastKnownPrice = price
+      ..priceCurrency = 'USD'
+      ..imageUrl = imgUrl
+      ..allergenTags = List<String>.from(allergens)
+      ..dietaryTags = List<String>.from(dietary)
+      ..inMyPantry = false
+      ..sortOrder = i
+      ..isBundled = true
+      ..caloriesPer100g = macros?.$1
+      ..proteinPer100g = macros?.$2
+      ..fatPer100g = macros?.$3
+      ..carbsPer100g = macros?.$4;
+    spec.applyToPantry(row);
+    ingredients.add(row);
   }
   return ingredients;
 }

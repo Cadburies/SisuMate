@@ -61,6 +61,8 @@ void main() {
       expect(local, isNotNull);
       expect(local!.json['name'], 'Gin');
       expect(local.json['inMyBar'], isTrue);
+      expect(local.json.containsKey('onHandBase'), isTrue);
+      expect(local.json.containsKey('purchaseSizeBase'), isTrue);
     });
 
     test('applies remote recipe into Drift', () async {

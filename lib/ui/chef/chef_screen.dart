@@ -28,6 +28,7 @@ import '../../services/calorie_calculator.dart';
 import '../../services/recipe_share_service.dart';
 import '../../services/recipe_import_service.dart';
 import '../../services/quantity_model.dart';
+import '../../domain/repositories/shopping_repository.dart';
 import '../../models/models.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
@@ -1106,20 +1107,11 @@ class ChefRecipeDetailScreenState extends ConsumerState<ChefRecipeDetailScreen> 
                         double? totalCost;
                         RecipeCalorieSummary? calorieSummary;
                         pantryAsync.whenData((pantryList) {
-                          final byName = {
-                            for (final p in pantryList)
-                              p.name.toLowerCase().trim(): p
-                          };
-                          double sum = 0;
-                          bool hasAny = false;
-                          for (final i in ingredients) {
-                            final p = byName[i.name.toLowerCase().trim()];
-                            if (p?.lastKnownPrice != null) {
-                              sum += p!.lastKnownPrice! * _servings;
-                              hasAny = true;
-                            }
-                          }
-                          if (hasAny) totalCost = sum;
+                          totalCost = const QuantityModel().recipePackCost(
+                            ingredients: ingredients,
+                            pantry: pantryList,
+                            servings: _servings,
+                          );
                           calorieSummary =
                               CalorieCalculator.compute(ingredients, pantryList);
                         });
@@ -1605,49 +1597,26 @@ class ChefRecipeDetailScreenState extends ConsumerState<ChefRecipeDetailScreen> 
     List<RecipeIngredient> ingredients,
     List<PantryIngredient> pantryIngredients,
   ) async {
-    // #310 — scale by servings and convert to purchase packs when catalog
-    // package size is known (not raw recipe grams as buy qty).
-    final model = const QuantityModel();
+    const model = QuantityModel();
     final byName = {
       for (final p in pantryIngredients) p.name.toLowerCase().trim(): p,
     };
     final repo = ref.read(shoppingRepositoryProvider);
     var addedCount = 0;
     for (final ingredient in ingredients) {
-      if (ingredient.isGarnish || ingredient.isOptional) continue;
-      final key = ingredient.name.toLowerCase().trim();
-      final pantry = byName[key];
-      // Boolean stocked (no amount) → covered (legacy).
-      if (pantry?.inMyPantry == true && pantry!.quantity == null) {
-        continue;
-      }
-      final needQty = ingredient.quantity == null
-          ? null
-          : ingredient.quantity! * _servings;
-      final purchase = pantry != null
-          ? PurchaseSpec.fromCatalog(
-              packageQty: pantry.quantity,
-              packageUnit: pantry.unit,
-              priceUnit: pantry.lastKnownPriceUnit,
-              price: pantry.lastKnownPrice,
-            )
-          : const PurchaseSpec(unitLabel: 'pack');
-      final have = pantry == null || !pantry.inMyPantry
-          ? 0.0
-          : (model.pantryOnHandBase(pantry, needUnit: ingredient.unit) ?? 0);
-      final line = model.shopLine(
-        name: ingredient.name,
-        needQty: needQty,
-        needUnit: ingredient.unit,
-        haveBase: have,
-        purchase: purchase,
+      final line = model.lineForRecipeIngredient(
+        ingredient: ingredient,
+        servings: _servings,
+        pantry: byName[ingredient.name.toLowerCase().trim()],
       );
       if (line == null) continue;
-      final added = await repo.ensureInShopping(
+      final added = await repo.ensurePacksInShopping(
         name: line.name,
         origin: 'pantry',
-        quantity: line.packages,
-        unit: line.unitLabel,
+        packs: line.packages,
+        merge: ShopPackMerge.setMin,
+        unitOverride: line.unitLabel,
+        priceOverride: line.pricePerPackage,
       );
       if (added) addedCount++;
     }
@@ -2023,19 +1992,30 @@ class _PantryIngredientAvailabilityTile extends ConsumerWidget {
             children: [
               SlidableAction(
                 onPressed: (ctx) async {
-                  final baseQty = ingredient.quantity;
-                  final qty = baseQty != null
-                      ? (baseQty * servingsMultiplier).round().clamp(1, 9999)
-                      : 1;
-                  final metricUnit =
-                      UnitConverter.normalizePair(baseQty, ingredient.unit).$2;
-                  final added =
-                      await ref.read(shoppingRepositoryProvider).ensureInShopping(
-                            name: ingredient.name,
-                            origin: 'pantry',
-                            quantity: qty,
-                            unit: metricUnit,
-                          );
+                  final pantryList = pantryIngredients;
+                  PantryIngredient? match;
+                  for (final p in pantryList) {
+                    if (p.name.toLowerCase().trim() ==
+                        ingredient.name.toLowerCase().trim()) {
+                      match = p;
+                      break;
+                    }
+                  }
+                  final line = const QuantityModel().lineForRecipeIngredient(
+                    ingredient: ingredient,
+                    servings: servingsMultiplier,
+                    pantry: match,
+                  );
+                  final added = await ref
+                      .read(shoppingRepositoryProvider)
+                      .ensurePacksInShopping(
+                        name: ingredient.name,
+                        origin: 'pantry',
+                        packs: line?.packages ?? 1,
+                        merge: ShopPackMerge.setMin,
+                        unitOverride: line?.unitLabel,
+                        priceOverride: line?.pricePerPackage,
+                      );
                   if (ctx.mounted) {
                     ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                       content: Text(added
@@ -2384,13 +2364,13 @@ class _PantryIngredientTile extends ConsumerWidget {
   }
 
   Future<void> _addToShopping(BuildContext context, WidgetRef ref) async {
-    final added = await ref.read(shoppingRepositoryProvider).ensureInShopping(
-          name: ingredient.name,
-          origin: 'pantry',
-          quantity:
-              ingredient.quantity != null ? ingredient.quantity!.round() : 1,
-          unit: ingredient.unit,
-        );
+    final added =
+        await ref.read(shoppingRepositoryProvider).ensurePacksInShopping(
+              name: ingredient.name,
+              origin: 'pantry',
+              packs: 1,
+              merge: ShopPackMerge.increment,
+            );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(added

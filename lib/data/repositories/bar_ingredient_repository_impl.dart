@@ -38,6 +38,13 @@ class BarIngredientRepositoryImpl implements BarIngredientRepository {
     ..purchaseHistory = (jsonDecode(r.purchaseHistory) as List)
         .map((e) => PurchaseRecord.fromJson(e as Map<String, dynamic>))
         .toList()
+    ..purchaseSizeBase = r.purchaseSizeBase
+    ..purchaseBaseUnit = r.purchaseBaseUnit
+    ..purchaseNoun = r.purchaseNoun
+    ..unitsPerPurchase = r.unitsPerPurchase
+    ..innerSizeBase = r.innerSizeBase
+    ..onHandBase = r.onHandBase
+    ..onHandUnit = r.onHandUnit
     ..lastModified = r.lastModified;
 
   BarIngredientsCompanion _companion(BarIngredient i) => BarIngredientsCompanion(
@@ -61,6 +68,13 @@ class BarIngredientRepositoryImpl implements BarIngredientRepository {
         lastPurchasePlace: Value(i.lastPurchasePlace),
         purchaseHistory:
             Value(jsonEncode(i.purchaseHistory.map((p) => p.toJson()).toList())),
+        purchaseSizeBase: Value(i.purchaseSizeBase),
+        purchaseBaseUnit: Value(i.purchaseBaseUnit),
+        purchaseNoun: Value(i.purchaseNoun),
+        unitsPerPurchase: Value(i.unitsPerPurchase),
+        innerSizeBase: Value(i.innerSizeBase),
+        onHandBase: Value(i.onHandBase),
+        onHandUnit: Value(i.onHandUnit),
         lastModified: Value(i.lastModified),
       );
 

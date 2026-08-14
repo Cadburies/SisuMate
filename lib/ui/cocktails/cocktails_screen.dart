@@ -27,6 +27,8 @@ import '../../core/di.dart';
 import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../services/tag_library_service.dart';
+import '../../services/quantity_model.dart';
+import '../../domain/repositories/shopping_repository.dart';
 import '../components/tag_combobox.dart';
 import '../components/native_ad_widget.dart';
 import '../components/ad_slots.dart';
@@ -1645,10 +1647,47 @@ class CocktailRecipeDetailScreenState
     if (missing.isEmpty) return;
     final repo = ref.read(shoppingRepositoryProvider);
     var addedCount = 0;
+    const model = QuantityModel();
     for (final ingredient in missing) {
-      final added = await repo.ensureInShopping(
+      BarIngredient? bar;
+      for (final b in barIngredients) {
+        if (b.name.toLowerCase().trim() ==
+            ingredient.name.toLowerCase().trim()) {
+          bar = b;
+          break;
+        }
+      }
+      var packs = 1;
+      String? unit;
+      double? price;
+      if (bar != null) {
+        final spec = PurchaseSpec.fromBar(bar);
+        unit = spec.unitLabel;
+        price = spec.pricePerUnit;
+        final pour = model.toCompatibleBase(
+              ingredient.quantity,
+              ingredient.unit,
+              'ml',
+            ) ??
+            0;
+        if (spec.hasSize && spec.sizeUnit == 'ml' && pour > 0) {
+          final have = model.barOnHandBase(bar, needUnit: 'ml') ?? 0;
+          packs = model.bottlesFromPours(
+            pourMlEach: pour,
+            drinkCount: _servings,
+            bottleMl: spec.sizeBase!,
+            onHandMl: have,
+          );
+          if (packs < 1) packs = 1;
+        }
+      }
+      final added = await repo.ensurePacksInShopping(
         name: ingredient.name,
         origin: 'bar',
+        packs: packs,
+        merge: ShopPackMerge.setMin,
+        unitOverride: unit,
+        priceOverride: price,
       );
       if (added) addedCount++;
     }
@@ -1919,7 +1958,12 @@ class _IngredientAvailabilityTile extends ConsumerWidget {
   Future<void> _addSingleToShopping(BuildContext context, WidgetRef ref) async {
     final added = await ref
         .read(shoppingRepositoryProvider)
-        .ensureInShopping(name: ingredient.name, origin: 'bar');
+        .ensurePacksInShopping(
+          name: ingredient.name,
+          origin: 'bar',
+          packs: 1,
+          merge: ShopPackMerge.increment,
+        );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -2243,7 +2287,12 @@ class _BarIngredientTile extends ConsumerWidget {
   Future<void> _addToShopping(BuildContext context, WidgetRef ref) async {
     final added = await ref
         .read(shoppingRepositoryProvider)
-        .ensureInShopping(name: ingredient.name, origin: 'bar');
+        .ensurePacksInShopping(
+          name: ingredient.name,
+          origin: 'bar',
+          packs: 1,
+          merge: ShopPackMerge.increment,
+        );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

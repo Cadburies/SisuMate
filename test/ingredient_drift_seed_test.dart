@@ -3,6 +3,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/data/seed/ingredient_drift_seed.dart';
+import 'package:sisu_mate/data/seed/seed_bar_ingredients.dart';
+import 'package:sisu_mate/data/seed/seed_pantry_ingredients.dart';
 import 'package:sisu_mate/models/models.dart';
 
 // Well before any real seed/test run, but not tied to a specific timezone's
@@ -83,5 +85,36 @@ void main() {
     final row = await db.select(db.pantryIngredients).getSingle();
     expect(row.lastModified.isBefore(_wayInThePast), isTrue);
     expect(row.isSynced, isTrue);
+  });
+
+  test('#327 catalog seed splits purchase size from empty on-hand', () async {
+    await seedPantryIngredients();
+    await seedBarIngredients();
+    final pantry = await db.select(db.pantryIngredients).get();
+    final balsamic =
+        pantry.singleWhere((p) => p.name == 'Aged Balsamic Vinegar');
+    expect(balsamic.purchaseSizeBase, 250);
+    expect(balsamic.purchaseBaseUnit, 'ml');
+    expect(balsamic.purchaseNoun, 'bottle');
+    expect(balsamic.quantity, isNull);
+    expect(balsamic.inMyPantry, isFalse);
+
+    final couscous = pantry.singleWhere((p) => p.name == 'Couscous');
+    expect(couscous.purchaseSizeBase, 500);
+    expect(couscous.purchaseBaseUnit, 'g');
+    expect(couscous.quantity, isNull);
+
+    final oil =
+        pantry.singleWhere((p) => p.name == 'Extra Virgin Olive Oil');
+    expect(oil.purchaseSizeBase, 1000);
+
+    final bar = await db.select(db.barIngredients).get();
+    final vodka = bar.singleWhere((b) => b.name == 'Vodka');
+    expect(vodka.purchaseSizeBase, 750);
+    expect(vodka.onHandBase, isNull);
+    final ting = bar.singleWhere((b) => b.name == 'Ting');
+    expect(ting.purchaseSizeBase, 2400);
+    expect(ting.unitsPerPurchase, 12);
+    expect(ting.innerSizeBase, 200);
   });
 }

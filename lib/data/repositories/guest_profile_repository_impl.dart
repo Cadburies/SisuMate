@@ -18,6 +18,8 @@ class GuestProfileRepositoryImpl implements GuestProfileRepository {
         (jsonDecode(r.allergenRestrictions) as List).cast<String>()
     ..dietaryRequirements =
         (jsonDecode(r.dietaryRequirements) as List).cast<String>()
+    ..preferredDrinks =
+        (jsonDecode(r.preferredDrinks) as List).cast<String>()
     ..createdAt = r.createdAt;
 
   @override
@@ -36,6 +38,7 @@ class GuestProfileRepositoryImpl implements GuestProfileRepository {
           name: Value(profile.name),
           allergenRestrictions: Value(jsonEncode(profile.allergenRestrictions)),
           dietaryRequirements: Value(jsonEncode(profile.dietaryRequirements)),
+          preferredDrinks: Value(jsonEncode(profile.preferredDrinks)),
           createdAt: Value(profile.createdAt),
         ));
   }
@@ -47,6 +50,7 @@ class GuestProfileRepositoryImpl implements GuestProfileRepository {
       name: Value(profile.name),
       allergenRestrictions: Value(jsonEncode(profile.allergenRestrictions)),
       dietaryRequirements: Value(jsonEncode(profile.dietaryRequirements)),
+      preferredDrinks: Value(jsonEncode(profile.preferredDrinks)),
     ));
   }
 

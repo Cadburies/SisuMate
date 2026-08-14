@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #328 — named anchor spots catalog (`AnchorSpot`, local-only). Route via `PassageHandoff.toDestination`. Community kind `anchorage` (coords optional). Did not take #327.
-- **Next:** #327 quantity layers (owns app_database).
+- **Last:** #327 quantity layers — catalog SKU vs on-hand (schema 28), pack shopping API, charter freezer bags, guest preferred drinks.
+- **Next:** pick next work from open issues.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

@@ -111,6 +111,14 @@ expect_ok(
     "inventory_items.quantityHistory",
     "/rest/v1/inventory_items?select=supabaseId,quantityHistory&limit=1",
 )
+expect_ok(
+    "pantry_ingredients.purchaseSizeBase",
+    "/rest/v1/pantry_ingredients?select=supabaseId,purchaseSizeBase&limit=1",
+)
+expect_ok(
+    "bar_ingredients.onHandBase",
+    "/rest/v1/bar_ingredients?select=supabaseId,onHandBase&limit=1",
+)
 
 failed = [(l, d) for l, s, d in checks if s == "FAIL"]
 for label, status, detail in checks:

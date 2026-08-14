@@ -1209,6 +1209,13 @@ class InboundSyncApplier {
       lastPurchasePlace: Value(i.lastPurchasePlace),
       purchaseHistory: Value(
           jsonEncode(i.purchaseHistory.map((p) => p.toJson()).toList())),
+      purchaseSizeBase: Value(i.purchaseSizeBase),
+      purchaseBaseUnit: Value(i.purchaseBaseUnit),
+      purchaseNoun: Value(i.purchaseNoun),
+      unitsPerPurchase: Value(i.unitsPerPurchase),
+      innerSizeBase: Value(i.innerSizeBase),
+      onHandBase: Value(i.onHandBase),
+      onHandUnit: Value(i.onHandUnit),
       lastModified: Value(i.lastModified),
     );
     if (existing == null) {
@@ -1254,6 +1261,11 @@ class InboundSyncApplier {
       proteinPer100g: Value(i.proteinPer100g),
       fatPer100g: Value(i.fatPer100g),
       carbsPer100g: Value(i.carbsPer100g),
+      purchaseSizeBase: Value(i.purchaseSizeBase),
+      purchaseBaseUnit: Value(i.purchaseBaseUnit),
+      purchaseNoun: Value(i.purchaseNoun),
+      unitsPerPurchase: Value(i.unitsPerPurchase),
+      innerSizeBase: Value(i.innerSizeBase),
       lastModified: Value(i.lastModified),
     );
     if (existing == null) {

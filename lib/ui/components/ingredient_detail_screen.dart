@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
 import '../../core/di.dart';
+import '../../domain/repositories/shopping_repository.dart';
 import '../../models/models.dart';
+import '../../services/quantity_model.dart';
 import '../../providers/bar_ingredient_provider.dart';
 import '../../providers/pantry_ingredient_provider.dart';
 import 'item_detail_shell.dart';
@@ -51,11 +53,32 @@ class _IngredientDetailScreenState
   final _priceCtrl = TextEditingController();
   final _placeCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
+  final _onHandCtrl = TextEditingController();
 
   bool get _isBar => widget.kind == IngredientStockKind.bar;
   int get _count => _isBar ? _bar.length : _pantry.length;
 
   String _name(int i) => _isBar ? _bar[i].name : _pantry[i].name;
+
+  String _soldAsLine(int i) {
+    final spec = _isBar
+        ? PurchaseSpec.fromBar(_bar[i])
+        : PurchaseSpec.fromPantry(_pantry[i]);
+    return 'Sold as ${spec.unitLabel}';
+  }
+
+  String _onBoardLine(int i) {
+    if (_isBar) {
+      final v = _bar[i].onHandBase;
+      if (v == null) return 'On board: —';
+      final u = _bar[i].onHandUnit ?? _bar[i].purchaseBaseUnit ?? 'ml';
+      return 'On board: $v $u';
+    }
+    final v = _pantry[i].quantity;
+    if (v == null) return 'On board: —';
+    final u = _pantry[i].unit ?? _pantry[i].purchaseBaseUnit ?? '';
+    return 'On board: $v $u'.trim();
+  }
   bool _inStock(int i) =>
       _isBar ? _bar[i].inMyBar : _pantry[i].inMyPantry;
   String? _photo(int i) =>
@@ -74,6 +97,7 @@ class _IngredientDetailScreenState
     _priceCtrl.dispose();
     _placeCtrl.dispose();
     _notesCtrl.dispose();
+    _onHandCtrl.dispose();
     super.dispose();
   }
 
@@ -83,13 +107,15 @@ class _IngredientDetailScreenState
       _nameCtrl.text = b.name;
       _priceCtrl.text = b.lastKnownPrice?.toString() ?? '';
       _placeCtrl.text = b.lastPurchasePlace ?? '';
-      _notesCtrl.text = '';
+      _notesCtrl.text = PurchaseSpec.fromBar(b).unitLabel;
+      _onHandCtrl.text = b.onHandBase?.toString() ?? '';
     } else {
       final p = _pantry[i];
       _nameCtrl.text = p.name;
       _priceCtrl.text = p.lastKnownPrice?.toString() ?? '';
       _placeCtrl.text = p.lastPurchasePlace ?? '';
-      _notesCtrl.text = p.unit ?? '';
+      _notesCtrl.text = PurchaseSpec.fromPantry(p).unitLabel;
+      _onHandCtrl.text = p.quantity?.toString() ?? '';
     }
   }
 
@@ -107,26 +133,11 @@ class _IngredientDetailScreenState
   Future<void> _addToShopping(int i) async {
     final name = _name(i);
     final origin = _isBar ? 'bar' : 'pantry';
-    // #309 — catalog price is per purchase pack (bottle/bag), not per ml/g.
-    // Seeded pantry `quantity` is package size (e.g. 250 ml), not buy count.
-    // Always start shopping at 1 pack; label the pack when we have one.
-    const qty = 1;
-    String? unit;
-    if (_isBar) {
-      final priceUnit = _bar[i].lastKnownPriceUnit?.trim();
-      if (priceUnit != null && priceUnit.isNotEmpty) unit = priceUnit;
-    } else {
-      final p = _pantry[i];
-      final priceUnit = p.lastKnownPriceUnit?.trim();
-      if (priceUnit != null && priceUnit.isNotEmpty) {
-        unit = priceUnit;
-      }
-    }
-    final added = await ref.read(shoppingRepositoryProvider).ensureInShopping(
+    final added = await ref.read(shoppingRepositoryProvider).ensurePacksInShopping(
           name: name,
           origin: origin,
-          quantity: qty,
-          unit: unit,
+          packs: 1,
+          merge: ShopPackMerge.increment,
         );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -178,7 +189,8 @@ class _IngredientDetailScreenState
       b
         ..name = name
         ..lastKnownPrice = price
-        ..lastPurchasePlace = place;
+        ..lastPurchasePlace = place
+        ..onHandBase = double.tryParse(_onHandCtrl.text.trim());
       await ref.read(barIngredientRepositoryProvider).updateBarIngredient(b);
     } else {
       final p = _pantry[i];
@@ -186,7 +198,7 @@ class _IngredientDetailScreenState
         ..name = name
         ..lastKnownPrice = price
         ..lastPurchasePlace = place
-        ..unit = _notesCtrl.text.trim().isEmpty ? p.unit : _notesCtrl.text.trim();
+        ..quantity = double.tryParse(_onHandCtrl.text.trim());
       await ref
           .read(pantryIngredientRepositoryProvider)
           .updatePantryIngredient(p);
@@ -326,10 +338,20 @@ class _IngredientDetailScreenState
                     controller: _placeCtrl,
                     decoration:
                         const InputDecoration(labelText: 'Purchase place')),
-                if (!_isBar)
-                  TextField(
-                      controller: _notesCtrl,
-                      decoration: const InputDecoration(labelText: 'Unit')),
+                TextField(
+                    controller: _onHandCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                        labelText: _isBar
+                            ? 'On board (ml)'
+                            : 'On board (g / ml)')),
+                if (_notesCtrl.text.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text('Sold as ${_notesCtrl.text}',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ),
               ],
             ),
           );
@@ -353,6 +375,9 @@ class _IngredientDetailScreenState
                         : (_isBar ? 'Not in bar' : 'Not in pantry'),
                 style: TextStyle(color: c.desc),
               ),
+              const SizedBox(height: 6),
+              Text(_soldAsLine(index), style: TextStyle(color: c.desc)),
+              Text(_onBoardLine(index), style: TextStyle(color: c.desc)),
               if (_isBar) ...[
                 if (_bar[index].category.isNotEmpty) ...[
                   const SizedBox(height: 8),

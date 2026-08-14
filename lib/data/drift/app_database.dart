@@ -16,6 +16,9 @@ class GuestProfiles extends Table {
       text().withDefault(const Constant('[]'))();
   TextColumn get dietaryRequirements =>
       text().withDefault(const Constant('[]'))();
+  /// #327 — liked bar products (catalog names or free text), JSON list.
+  TextColumn get preferredDrinks =>
+      text().withDefault(const Constant('[]'))();
   DateTimeColumn get createdAt =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -381,7 +384,7 @@ class RecipeIngredients extends Table {
 }
 
 /// Bar ingredients (My Bar). `flavorProfiles` and
-/// `purchaseHistory` are JSON text columns. Local-only (not synced).
+/// `purchaseHistory` are JSON text columns. Sync-participating (SYN2).
 @DataClassName('BarIngredientRow')
 class BarIngredients extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -404,6 +407,16 @@ class BarIngredients extends Table {
   TextColumn get lastKnownPriceUnit => text().nullable()();
   TextColumn get lastPurchasePlace => text().nullable()();
   TextColumn get purchaseHistory => text().withDefault(const Constant('[]'))();
+  /// #327 — catalog SKU (how it is sold). Independent of [onHandBase].
+  RealColumn get purchaseSizeBase => real().nullable()();
+  TextColumn get purchaseBaseUnit => text().nullable()();
+  TextColumn get purchaseNoun => text().nullable()();
+  IntColumn get unitsPerPurchase =>
+      integer().withDefault(const Constant(1))();
+  RealColumn get innerSizeBase => real().nullable()();
+  /// #327 — on-hand stock in metric (`ml` / `each`). Null = unknown.
+  RealColumn get onHandBase => real().nullable()();
+  TextColumn get onHandUnit => text().nullable()();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -417,6 +430,7 @@ class PantryIngredients extends Table {
   TextColumn get boatSupabaseId => text().withDefault(const Constant(''))();
   TextColumn get name => text().withDefault(const Constant(''))();
   BoolColumn get inMyPantry => boolean().withDefault(const Constant(false))();
+  /// #327 — on-hand stock only (metric `ml` / `g` / `each`). Not package size.
   RealColumn get quantity => real().nullable()();
   TextColumn get unit => text().nullable()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
@@ -441,6 +455,13 @@ class PantryIngredients extends Table {
   RealColumn get proteinPer100g => real().nullable()();
   RealColumn get fatPer100g => real().nullable()();
   RealColumn get carbsPer100g => real().nullable()();
+  /// #327 — catalog SKU (how it is sold). Independent of [quantity] on-hand.
+  RealColumn get purchaseSizeBase => real().nullable()();
+  TextColumn get purchaseBaseUnit => text().nullable()();
+  TextColumn get purchaseNoun => text().nullable()();
+  IntColumn get unitsPerPurchase =>
+      integer().withDefault(const Constant(1))();
+  RealColumn get innerSizeBase => real().nullable()();
   DateTimeColumn get lastModified =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -786,7 +807,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 27;
+  int get schemaVersion => 28;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

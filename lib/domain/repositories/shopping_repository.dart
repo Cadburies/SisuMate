@@ -1,5 +1,13 @@
 import '../../models/models.dart';
 
+/// How [ShoppingRepository.ensurePacksInShopping] merges into an existing line.
+enum ShopPackMerge {
+  /// Pending qty becomes max(existing, requested). Provision / add-missing.
+  setMin,
+  /// Pending qty += packs. Explicit "add another pack".
+  increment,
+}
+
 abstract class ShoppingRepository {
   Stream<List<ShoppingCategory>> watchCategories();
   Stream<List<ShoppingItem>> watchItems(String categoryId);
@@ -24,6 +32,18 @@ abstract class ShoppingRepository {
     int quantity = 1,
     String? unit,
     String categorySupabaseId = 'cat-misc',
+  });
+
+  /// Catalog-aware add. Looks up pantry/bar purchase spec for [name].
+  /// [packs] is the buy count. See [ShopPackMerge] for existing-line behaviour.
+  Future<bool> ensurePacksInShopping({
+    required String name,
+    required String origin,
+    int packs = 1,
+    ShopPackMerge merge = ShopPackMerge.setMin,
+    String? note,
+    String? unitOverride,
+    double? priceOverride,
   });
 
   /// Mark all **pending** shopping lines with this name as bought (and stock

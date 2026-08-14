@@ -157,6 +157,9 @@ class _ProfileSummary extends StatelessWidget {
     if (profile.dietaryRequirements.isNotEmpty) {
       parts.add(profile.dietaryRequirements.take(3).join(', '));
     }
+    if (profile.preferredDrinks.isNotEmpty) {
+      parts.add('Drinks: ${profile.preferredDrinks.take(3).join(", ")}');
+    }
     if (parts.isEmpty) {
       return Text('No restrictions set',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -194,6 +197,7 @@ class AddEditGuestProfileDialog extends StatefulWidget {
 
 class AddEditGuestProfileDialogState extends State<AddEditGuestProfileDialog> {
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _drinksCtrl;
   late Set<String> _selectedAllergens;
   late Set<String> _selectedDietary;
 
@@ -202,6 +206,8 @@ class AddEditGuestProfileDialogState extends State<AddEditGuestProfileDialog> {
     super.initState();
     final e = widget.existing;
     _nameCtrl = TextEditingController(text: e?.name ?? '');
+    _drinksCtrl = TextEditingController(
+        text: e?.preferredDrinks.join(', ') ?? '');
     _selectedAllergens = Set.from(e?.allergenRestrictions ?? []);
     _selectedDietary = Set.from(e?.dietaryRequirements ?? []);
   }
@@ -209,6 +215,7 @@ class AddEditGuestProfileDialogState extends State<AddEditGuestProfileDialog> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _drinksCtrl.dispose();
     super.dispose();
   }
 
@@ -258,6 +265,15 @@ class AddEditGuestProfileDialogState extends State<AddEditGuestProfileDialog> {
                   .toList(),
             ),
             const SizedBox(height: 16),
+            TextField(
+              controller: _drinksCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Preferred drinks',
+                hintText: 'Vodka, Ting',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
             Text('Dietary requirements:',
                 style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 6),
@@ -294,7 +310,12 @@ class AddEditGuestProfileDialogState extends State<AddEditGuestProfileDialog> {
                   profile
                     ..name = _nameCtrl.text.trim()
                     ..allergenRestrictions = _selectedAllergens.toList()
-                    ..dietaryRequirements = _selectedDietary.toList();
+                    ..dietaryRequirements = _selectedDietary.toList()
+                    ..preferredDrinks = _drinksCtrl.text
+                        .split(',')
+                        .map((s) => s.trim())
+                        .where((s) => s.isNotEmpty)
+                        .toList();
                   await widget.onSave(profile);
                   if (mounted) navigator.pop();
                 },

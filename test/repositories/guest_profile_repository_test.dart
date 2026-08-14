@@ -53,6 +53,18 @@ void main() {
       expect(all.single.dietaryRequirements, ['keto']);
     });
 
+    test('#327 preferredDrinks persist on create and update', () async {
+      await repo.addProfile(GuestProfile()
+        ..name = 'Sam'
+        ..preferredDrinks = ['Vodka', 'Ting']);
+      var saved = (await repo.watchProfiles().first).single;
+      expect(saved.preferredDrinks, ['Vodka', 'Ting']);
+      saved.preferredDrinks = ['Ting'];
+      await repo.updateProfile(saved);
+      saved = (await repo.watchProfiles().first).single;
+      expect(saved.preferredDrinks, ['Ting']);
+    });
+
     test('Delete: deleteProfile removes it from the database', () async {
       await repo.addProfile(GuestProfile()..name = 'To remove');
 

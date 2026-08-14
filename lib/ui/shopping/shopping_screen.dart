@@ -981,16 +981,10 @@ class ShoppingItemTile extends ConsumerWidget {
             : ItemListState.shopping;
     final c = SisuColors.itemStateColors(isDark, state);
 
-    // #309 — quantity is buy count (packs); unit is optional pack label
-    // (e.g. "250ml bottle"), not a measure multiplier for price.
-    final qtyParts = <String>[];
-    if (item.quantity > 1) {
-      qtyParts.add('×${item.quantity}');
-    }
-    if (item.unit != null && item.unit!.isNotEmpty) {
-      qtyParts.add(item.unit!);
-    }
-    final qtyLine = qtyParts.isEmpty ? null : qtyParts.join(' ');
+    // #327 — quantity is a count (packs or one protein trip order).
+    final qty = item.quantity < 1 ? 1 : item.quantity;
+    final unit = (item.unit != null && item.unit!.isNotEmpty) ? item.unit! : 'pack';
+    final qtyLine = '$qty × $unit';
 
     final packPrice = item.lastPurchasePrice;
     final line = item.lineEstimate;

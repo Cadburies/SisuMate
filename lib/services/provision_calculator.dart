@@ -44,11 +44,17 @@ class PortionedGroup {
   final String? unit;
   final List<double?> quantities; // one per occurrence, same order as [notes]
   final List<String> notes; // day/meal label per occurrence
+  /// Recipe qty before guest scale (300 g steak). Required for bag labels.
+  final double? portionSizeBase;
+  /// Guests for this plan (4 steaks in the Monday bag).
+  final int portions;
   const PortionedGroup({
     required this.name,
     required this.unit,
     required this.quantities,
     required this.notes,
+    this.portionSizeBase,
+    this.portions = 0,
   });
 
   int get count => quantities.length;
@@ -77,21 +83,44 @@ class PortionedGroup {
     return '$name — ${entries.join(', ')}';
   }
 
-  /// #310 — freezer / butcher bag plan: one bag per meal occurrence.
-  /// e.g. "3 bags × (6 × 500 g) — Mon Dinner, Wed Dinner, Fri Dinner"
+  /// One labeled bag per meal: "Mon Dinner — 1 bag: 4 × 300 g steak".
+  List<String> get freezerBagLines {
+    if (count == 0) return const [];
+    return List.generate(count, (i) {
+      final portion = _qtyLabel(portionSizeBase, unit);
+      final contents = portion.isEmpty
+          ? _qtyLabel(quantities[i], unit)
+          : '$portions × $portion';
+      final inside = contents.isEmpty ? name : '$contents $name';
+      return '${notes[i]} — 1 bag: $inside';
+    });
+  }
+
+  /// Compact summary plus trip total. Never the only freezer UI string.
   String get freezerPackPlan {
     if (count == 0) return name;
-    if (_isUniform) {
-      final perMeal = _qtyLabel(quantities.first, unit);
-      if (perMeal.isEmpty) {
-        return '$count freezer bag${count == 1 ? '' : 's'} (${notes.join(', ')})';
-      }
-      // quantities already guest-scaled, so "6 × 500 g" style is per-meal total.
-      return '$count bag${count == 1 ? '' : 's'} × $perMeal '
-          '(${notes.join(', ')}) · trip total '
-          '${_qtyLabel((quantities.first ?? 0) * count, unit)}';
-    }
-    return formatted;
+    final portion = _qtyLabel(portionSizeBase, unit);
+    final bagBits = portion.isEmpty
+        ? _qtyLabel(quantities.isEmpty ? null : quantities.first, unit)
+        : '$portions × $portion';
+    final bags = bagBits.isEmpty
+        ? '$count freezer bag${count == 1 ? '' : 's'}'
+        : '$count bag${count == 1 ? '' : 's'} × ($bagBits $name)';
+    return '$bags — ${notes.join(', ')} · trip total '
+        '${_qtyLabel(tripTotalQuantity, unit)}';
+  }
+
+  /// Hand to a butcher / bag-it-yourself note.
+  String get packingNotes {
+    if (count == 0) return name;
+    final portion = _qtyLabel(portionSizeBase, unit);
+    final perBag = portion.isEmpty ? '' : '$portions×$portion';
+    final parts = List.generate(count, (i) {
+      final inside = perBag.isEmpty ? name : '$perBag $name';
+      return '${notes[i]} $inside';
+    });
+    return 'Pack as $count bag${count == 1 ? '' : 's'}: ${parts.join('; ')}. '
+        'Do not freeze as one piece.';
   }
 
   double? get tripTotalQuantity {
@@ -193,12 +222,20 @@ class ProvisionCalculator {
                   name: ing.name,
                   unit: ing.unit,
                   quantities: [scaledQty],
-                  notes: [note])
+                  notes: [note],
+                  portionSizeBase: ing.quantity,
+                  portions: plan.guestCount,
+                )
               : PortionedGroup(
                   name: existing.name,
                   unit: existing.unit,
                   quantities: [...existing.quantities, scaledQty],
-                  notes: [...existing.notes, note]);
+                  notes: [...existing.notes, note],
+                  portionSizeBase: existing.portionSizeBase ?? ing.quantity,
+                  portions: existing.portions == 0
+                      ? plan.guestCount
+                      : existing.portions,
+                );
         } else {
           final key = '${ing.name.toLowerCase().trim()}|${ing.unit ?? ''}';
           final existing = consolidated[key];
@@ -262,16 +299,11 @@ class ProvisionCalculator {
     return gaps;
   }
 
-  /// #310 — amount-aware shortfall as **purchase pack** shopping lines.
+  /// #327 — amount-aware shortfall as purchase packs (dry goods) or one
+  /// trip-weight order with freezer-bag notes (proteins).
   ///
-  /// Uses catalog package size + price from matching pantry rows when present;
-  /// `ceil((need − have) / packSize)`.
-  ///
-  /// Stock rules:
-  /// - not in My Pantry → have = 0
-  /// - in My Pantry with convertible [quantity] → that on-hand amount
-  /// - in My Pantry with null quantity → treated as covered (legacy boolean)
-  /// - in My Pantry with quantity 0 → have = 0 (still short)
+  /// Stock: not tracked → 0; tracked + 0 → still short; tracked + null amount
+  /// → unknown (buy at least 1), never treated as covered.
   static List<ShopPackLine> shoppingPackGaps({
     required ProvisionResult provision,
     required List<PantryIngredient> pantry,
@@ -292,30 +324,16 @@ class ProvisionCalculator {
 
     final lines = <ShopPackLine>[];
 
-    void addNeed(String name, double? qty, String? unit, {String? note}) {
+    void addDry(String name, double? qty, String? unit) {
       final p = match(name);
-      // Seed quantity/unit are catalog package size; price unit is pack label.
       final purchase = p != null
-          ? PurchaseSpec.fromCatalog(
-              packageQty: p.quantity,
-              packageUnit: p.unit,
-              priceUnit: p.lastKnownPriceUnit,
-              price: p.lastKnownPrice,
-            )
-          : const PurchaseSpec(unitLabel: 'pack');
+          ? PurchaseSpec.fromPantry(p)
+          : const PurchaseSpec(noun: 'pack');
 
-      double haveBase = 0;
-      if (p != null && p.inMyPantry) {
-        if (p.quantity == null) {
-          // Boolean stocked, no amount — legacy covered.
-          return;
-        }
-        final oh = model.pantryOnHandBase(p, needUnit: unit ?? purchase.sizeUnit);
-        // When stocked, seed qty is often "one full package" as on-hand.
-        haveBase = oh ?? 0;
-        // If stocked amount equals catalog package and we only know package
-        // via same fields, on-hand is one pack of that measure — OK.
-      }
+      final oh = p == null
+          ? 0.0
+          : model.pantryOnHandBase(p, needUnit: unit ?? purchase.sizeUnit);
+      final haveBase = oh ?? 0;
 
       final line = model.shopLine(
         name: name,
@@ -323,21 +341,37 @@ class ProvisionCalculator {
         needUnit: unit,
         haveBase: haveBase,
         purchase: purchase,
-        note: note,
       );
       if (line != null) lines.add(line);
     }
 
     for (final p in provision.consolidatedItems) {
-      addNeed(p.name, p.quantity, p.unit);
+      addDry(p.name, p.quantity, p.unit);
     }
     for (final g in provision.portionedItems) {
-      addNeed(
-        g.name,
-        g.tripTotalQuantity,
-        g.unit,
-        note: g.freezerPackPlan,
-      );
+      final p = match(g.name);
+      final purchase = p != null
+          ? PurchaseSpec.fromPantry(p)
+          : const PurchaseSpec(noun: 'kg');
+      final trip = g.tripTotalQuantity;
+      final tripBase =
+          model.toCompatibleBase(trip, g.unit, purchase.sizeUnit ?? 'g');
+      double? tripPrice;
+      if (purchase.pricePerUnit != null &&
+          purchase.sizeBase != null &&
+          purchase.sizeBase! > 0 &&
+          tripBase != null) {
+        tripPrice = purchase.pricePerUnit! * (tripBase / purchase.sizeBase!);
+      }
+      lines.add(ShopPackLine(
+        name: g.name,
+        packages: 1,
+        unitLabel: model.tripWeightLabel(trip, g.unit),
+        pricePerPackage: tripPrice,
+        needBase: trip,
+        needUnit: g.unit,
+        note: g.packingNotes,
+      ));
     }
 
     lines.sort(

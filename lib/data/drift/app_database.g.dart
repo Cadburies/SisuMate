@@ -56,6 +56,18 @@ class $GuestProfilesTable extends GuestProfiles
         requiredDuringInsert: false,
         defaultValue: const Constant('[]'),
       );
+  static const VerificationMeta _preferredDrinksMeta = const VerificationMeta(
+    'preferredDrinks',
+  );
+  @override
+  late final GeneratedColumn<String> preferredDrinks = GeneratedColumn<String>(
+    'preferred_drinks',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -74,6 +86,7 @@ class $GuestProfilesTable extends GuestProfiles
     name,
     allergenRestrictions,
     dietaryRequirements,
+    preferredDrinks,
     createdAt,
   ];
   @override
@@ -115,6 +128,15 @@ class $GuestProfilesTable extends GuestProfiles
         ),
       );
     }
+    if (data.containsKey('preferred_drinks')) {
+      context.handle(
+        _preferredDrinksMeta,
+        preferredDrinks.isAcceptableOrUnknown(
+          data['preferred_drinks']!,
+          _preferredDrinksMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -146,6 +168,10 @@ class $GuestProfilesTable extends GuestProfiles
         DriftSqlType.string,
         data['${effectivePrefix}dietary_requirements'],
       )!,
+      preferredDrinks: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferred_drinks'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -164,12 +190,16 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
   final String name;
   final String allergenRestrictions;
   final String dietaryRequirements;
+
+  /// #327 — liked bar products (catalog names or free text), JSON list.
+  final String preferredDrinks;
   final DateTime createdAt;
   const GuestProfileRow({
     required this.id,
     required this.name,
     required this.allergenRestrictions,
     required this.dietaryRequirements,
+    required this.preferredDrinks,
     required this.createdAt,
   });
   @override
@@ -179,6 +209,7 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
     map['name'] = Variable<String>(name);
     map['allergen_restrictions'] = Variable<String>(allergenRestrictions);
     map['dietary_requirements'] = Variable<String>(dietaryRequirements);
+    map['preferred_drinks'] = Variable<String>(preferredDrinks);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -189,6 +220,7 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
       name: Value(name),
       allergenRestrictions: Value(allergenRestrictions),
       dietaryRequirements: Value(dietaryRequirements),
+      preferredDrinks: Value(preferredDrinks),
       createdAt: Value(createdAt),
     );
   }
@@ -207,6 +239,7 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
       dietaryRequirements: serializer.fromJson<String>(
         json['dietaryRequirements'],
       ),
+      preferredDrinks: serializer.fromJson<String>(json['preferredDrinks']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -218,6 +251,7 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
       'name': serializer.toJson<String>(name),
       'allergenRestrictions': serializer.toJson<String>(allergenRestrictions),
       'dietaryRequirements': serializer.toJson<String>(dietaryRequirements),
+      'preferredDrinks': serializer.toJson<String>(preferredDrinks),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -227,12 +261,14 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
     String? name,
     String? allergenRestrictions,
     String? dietaryRequirements,
+    String? preferredDrinks,
     DateTime? createdAt,
   }) => GuestProfileRow(
     id: id ?? this.id,
     name: name ?? this.name,
     allergenRestrictions: allergenRestrictions ?? this.allergenRestrictions,
     dietaryRequirements: dietaryRequirements ?? this.dietaryRequirements,
+    preferredDrinks: preferredDrinks ?? this.preferredDrinks,
     createdAt: createdAt ?? this.createdAt,
   );
   GuestProfileRow copyWithCompanion(GuestProfilesCompanion data) {
@@ -245,6 +281,9 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
       dietaryRequirements: data.dietaryRequirements.present
           ? data.dietaryRequirements.value
           : this.dietaryRequirements,
+      preferredDrinks: data.preferredDrinks.present
+          ? data.preferredDrinks.value
+          : this.preferredDrinks,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -256,6 +295,7 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
           ..write('name: $name, ')
           ..write('allergenRestrictions: $allergenRestrictions, ')
           ..write('dietaryRequirements: $dietaryRequirements, ')
+          ..write('preferredDrinks: $preferredDrinks, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -267,6 +307,7 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
     name,
     allergenRestrictions,
     dietaryRequirements,
+    preferredDrinks,
     createdAt,
   );
   @override
@@ -277,6 +318,7 @@ class GuestProfileRow extends DataClass implements Insertable<GuestProfileRow> {
           other.name == this.name &&
           other.allergenRestrictions == this.allergenRestrictions &&
           other.dietaryRequirements == this.dietaryRequirements &&
+          other.preferredDrinks == this.preferredDrinks &&
           other.createdAt == this.createdAt);
 }
 
@@ -285,12 +327,14 @@ class GuestProfilesCompanion extends UpdateCompanion<GuestProfileRow> {
   final Value<String> name;
   final Value<String> allergenRestrictions;
   final Value<String> dietaryRequirements;
+  final Value<String> preferredDrinks;
   final Value<DateTime> createdAt;
   const GuestProfilesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.allergenRestrictions = const Value.absent(),
     this.dietaryRequirements = const Value.absent(),
+    this.preferredDrinks = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   GuestProfilesCompanion.insert({
@@ -298,6 +342,7 @@ class GuestProfilesCompanion extends UpdateCompanion<GuestProfileRow> {
     this.name = const Value.absent(),
     this.allergenRestrictions = const Value.absent(),
     this.dietaryRequirements = const Value.absent(),
+    this.preferredDrinks = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   static Insertable<GuestProfileRow> custom({
@@ -305,6 +350,7 @@ class GuestProfilesCompanion extends UpdateCompanion<GuestProfileRow> {
     Expression<String>? name,
     Expression<String>? allergenRestrictions,
     Expression<String>? dietaryRequirements,
+    Expression<String>? preferredDrinks,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -314,6 +360,7 @@ class GuestProfilesCompanion extends UpdateCompanion<GuestProfileRow> {
         'allergen_restrictions': allergenRestrictions,
       if (dietaryRequirements != null)
         'dietary_requirements': dietaryRequirements,
+      if (preferredDrinks != null) 'preferred_drinks': preferredDrinks,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -323,6 +370,7 @@ class GuestProfilesCompanion extends UpdateCompanion<GuestProfileRow> {
     Value<String>? name,
     Value<String>? allergenRestrictions,
     Value<String>? dietaryRequirements,
+    Value<String>? preferredDrinks,
     Value<DateTime>? createdAt,
   }) {
     return GuestProfilesCompanion(
@@ -330,6 +378,7 @@ class GuestProfilesCompanion extends UpdateCompanion<GuestProfileRow> {
       name: name ?? this.name,
       allergenRestrictions: allergenRestrictions ?? this.allergenRestrictions,
       dietaryRequirements: dietaryRequirements ?? this.dietaryRequirements,
+      preferredDrinks: preferredDrinks ?? this.preferredDrinks,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -351,6 +400,9 @@ class GuestProfilesCompanion extends UpdateCompanion<GuestProfileRow> {
     if (dietaryRequirements.present) {
       map['dietary_requirements'] = Variable<String>(dietaryRequirements.value);
     }
+    if (preferredDrinks.present) {
+      map['preferred_drinks'] = Variable<String>(preferredDrinks.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -364,6 +416,7 @@ class GuestProfilesCompanion extends UpdateCompanion<GuestProfileRow> {
           ..write('name: $name, ')
           ..write('allergenRestrictions: $allergenRestrictions, ')
           ..write('dietaryRequirements: $dietaryRequirements, ')
+          ..write('preferredDrinks: $preferredDrinks, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -13685,6 +13738,84 @@ class $BarIngredientsTable extends BarIngredients
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _purchaseSizeBaseMeta = const VerificationMeta(
+    'purchaseSizeBase',
+  );
+  @override
+  late final GeneratedColumn<double> purchaseSizeBase = GeneratedColumn<double>(
+    'purchase_size_base',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _purchaseBaseUnitMeta = const VerificationMeta(
+    'purchaseBaseUnit',
+  );
+  @override
+  late final GeneratedColumn<String> purchaseBaseUnit = GeneratedColumn<String>(
+    'purchase_base_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _purchaseNounMeta = const VerificationMeta(
+    'purchaseNoun',
+  );
+  @override
+  late final GeneratedColumn<String> purchaseNoun = GeneratedColumn<String>(
+    'purchase_noun',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _unitsPerPurchaseMeta = const VerificationMeta(
+    'unitsPerPurchase',
+  );
+  @override
+  late final GeneratedColumn<int> unitsPerPurchase = GeneratedColumn<int>(
+    'units_per_purchase',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _innerSizeBaseMeta = const VerificationMeta(
+    'innerSizeBase',
+  );
+  @override
+  late final GeneratedColumn<double> innerSizeBase = GeneratedColumn<double>(
+    'inner_size_base',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _onHandBaseMeta = const VerificationMeta(
+    'onHandBase',
+  );
+  @override
+  late final GeneratedColumn<double> onHandBase = GeneratedColumn<double>(
+    'on_hand_base',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _onHandUnitMeta = const VerificationMeta(
+    'onHandUnit',
+  );
+  @override
+  late final GeneratedColumn<String> onHandUnit = GeneratedColumn<String>(
+    'on_hand_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
     'lastModified',
   );
@@ -13719,6 +13850,13 @@ class $BarIngredientsTable extends BarIngredients
     lastKnownPriceUnit,
     lastPurchasePlace,
     purchaseHistory,
+    purchaseSizeBase,
+    purchaseBaseUnit,
+    purchaseNoun,
+    unitsPerPurchase,
+    innerSizeBase,
+    onHandBase,
+    onHandUnit,
     lastModified,
   ];
   @override
@@ -13883,6 +14021,69 @@ class $BarIngredientsTable extends BarIngredients
         ),
       );
     }
+    if (data.containsKey('purchase_size_base')) {
+      context.handle(
+        _purchaseSizeBaseMeta,
+        purchaseSizeBase.isAcceptableOrUnknown(
+          data['purchase_size_base']!,
+          _purchaseSizeBaseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('purchase_base_unit')) {
+      context.handle(
+        _purchaseBaseUnitMeta,
+        purchaseBaseUnit.isAcceptableOrUnknown(
+          data['purchase_base_unit']!,
+          _purchaseBaseUnitMeta,
+        ),
+      );
+    }
+    if (data.containsKey('purchase_noun')) {
+      context.handle(
+        _purchaseNounMeta,
+        purchaseNoun.isAcceptableOrUnknown(
+          data['purchase_noun']!,
+          _purchaseNounMeta,
+        ),
+      );
+    }
+    if (data.containsKey('units_per_purchase')) {
+      context.handle(
+        _unitsPerPurchaseMeta,
+        unitsPerPurchase.isAcceptableOrUnknown(
+          data['units_per_purchase']!,
+          _unitsPerPurchaseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('inner_size_base')) {
+      context.handle(
+        _innerSizeBaseMeta,
+        innerSizeBase.isAcceptableOrUnknown(
+          data['inner_size_base']!,
+          _innerSizeBaseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('on_hand_base')) {
+      context.handle(
+        _onHandBaseMeta,
+        onHandBase.isAcceptableOrUnknown(
+          data['on_hand_base']!,
+          _onHandBaseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('on_hand_unit')) {
+      context.handle(
+        _onHandUnitMeta,
+        onHandUnit.isAcceptableOrUnknown(
+          data['on_hand_unit']!,
+          _onHandUnitMeta,
+        ),
+      );
+    }
     if (data.containsKey('last_modified')) {
       context.handle(
         _lastModifiedMeta,
@@ -13981,6 +14182,34 @@ class $BarIngredientsTable extends BarIngredients
         DriftSqlType.string,
         data['${effectivePrefix}purchase_history'],
       )!,
+      purchaseSizeBase: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}purchase_size_base'],
+      ),
+      purchaseBaseUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purchase_base_unit'],
+      ),
+      purchaseNoun: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purchase_noun'],
+      ),
+      unitsPerPurchase: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}units_per_purchase'],
+      )!,
+      innerSizeBase: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}inner_size_base'],
+      ),
+      onHandBase: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}on_hand_base'],
+      ),
+      onHandUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}on_hand_unit'],
+      ),
       lastModified: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_modified'],
@@ -14016,6 +14245,17 @@ class BarIngredientRow extends DataClass
   final String? lastKnownPriceUnit;
   final String? lastPurchasePlace;
   final String purchaseHistory;
+
+  /// #327 — catalog SKU (how it is sold). Independent of [onHandBase].
+  final double? purchaseSizeBase;
+  final String? purchaseBaseUnit;
+  final String? purchaseNoun;
+  final int unitsPerPurchase;
+  final double? innerSizeBase;
+
+  /// #327 — on-hand stock in metric (`ml` / `each`). Null = unknown.
+  final double? onHandBase;
+  final String? onHandUnit;
   final DateTime lastModified;
   const BarIngredientRow({
     required this.id,
@@ -14038,6 +14278,13 @@ class BarIngredientRow extends DataClass
     this.lastKnownPriceUnit,
     this.lastPurchasePlace,
     required this.purchaseHistory,
+    this.purchaseSizeBase,
+    this.purchaseBaseUnit,
+    this.purchaseNoun,
+    required this.unitsPerPurchase,
+    this.innerSizeBase,
+    this.onHandBase,
+    this.onHandUnit,
     required this.lastModified,
   });
   @override
@@ -14079,6 +14326,25 @@ class BarIngredientRow extends DataClass
       map['last_purchase_place'] = Variable<String>(lastPurchasePlace);
     }
     map['purchase_history'] = Variable<String>(purchaseHistory);
+    if (!nullToAbsent || purchaseSizeBase != null) {
+      map['purchase_size_base'] = Variable<double>(purchaseSizeBase);
+    }
+    if (!nullToAbsent || purchaseBaseUnit != null) {
+      map['purchase_base_unit'] = Variable<String>(purchaseBaseUnit);
+    }
+    if (!nullToAbsent || purchaseNoun != null) {
+      map['purchase_noun'] = Variable<String>(purchaseNoun);
+    }
+    map['units_per_purchase'] = Variable<int>(unitsPerPurchase);
+    if (!nullToAbsent || innerSizeBase != null) {
+      map['inner_size_base'] = Variable<double>(innerSizeBase);
+    }
+    if (!nullToAbsent || onHandBase != null) {
+      map['on_hand_base'] = Variable<double>(onHandBase);
+    }
+    if (!nullToAbsent || onHandUnit != null) {
+      map['on_hand_unit'] = Variable<String>(onHandUnit);
+    }
     map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
   }
@@ -14121,6 +14387,25 @@ class BarIngredientRow extends DataClass
           ? const Value.absent()
           : Value(lastPurchasePlace),
       purchaseHistory: Value(purchaseHistory),
+      purchaseSizeBase: purchaseSizeBase == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchaseSizeBase),
+      purchaseBaseUnit: purchaseBaseUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchaseBaseUnit),
+      purchaseNoun: purchaseNoun == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchaseNoun),
+      unitsPerPurchase: Value(unitsPerPurchase),
+      innerSizeBase: innerSizeBase == null && nullToAbsent
+          ? const Value.absent()
+          : Value(innerSizeBase),
+      onHandBase: onHandBase == null && nullToAbsent
+          ? const Value.absent()
+          : Value(onHandBase),
+      onHandUnit: onHandUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(onHandUnit),
       lastModified: Value(lastModified),
     );
   }
@@ -14155,6 +14440,13 @@ class BarIngredientRow extends DataClass
         json['lastPurchasePlace'],
       ),
       purchaseHistory: serializer.fromJson<String>(json['purchaseHistory']),
+      purchaseSizeBase: serializer.fromJson<double?>(json['purchaseSizeBase']),
+      purchaseBaseUnit: serializer.fromJson<String?>(json['purchaseBaseUnit']),
+      purchaseNoun: serializer.fromJson<String?>(json['purchaseNoun']),
+      unitsPerPurchase: serializer.fromJson<int>(json['unitsPerPurchase']),
+      innerSizeBase: serializer.fromJson<double?>(json['innerSizeBase']),
+      onHandBase: serializer.fromJson<double?>(json['onHandBase']),
+      onHandUnit: serializer.fromJson<String?>(json['onHandUnit']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
   }
@@ -14182,6 +14474,13 @@ class BarIngredientRow extends DataClass
       'lastKnownPriceUnit': serializer.toJson<String?>(lastKnownPriceUnit),
       'lastPurchasePlace': serializer.toJson<String?>(lastPurchasePlace),
       'purchaseHistory': serializer.toJson<String>(purchaseHistory),
+      'purchaseSizeBase': serializer.toJson<double?>(purchaseSizeBase),
+      'purchaseBaseUnit': serializer.toJson<String?>(purchaseBaseUnit),
+      'purchaseNoun': serializer.toJson<String?>(purchaseNoun),
+      'unitsPerPurchase': serializer.toJson<int>(unitsPerPurchase),
+      'innerSizeBase': serializer.toJson<double?>(innerSizeBase),
+      'onHandBase': serializer.toJson<double?>(onHandBase),
+      'onHandUnit': serializer.toJson<String?>(onHandUnit),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
   }
@@ -14207,6 +14506,13 @@ class BarIngredientRow extends DataClass
     Value<String?> lastKnownPriceUnit = const Value.absent(),
     Value<String?> lastPurchasePlace = const Value.absent(),
     String? purchaseHistory,
+    Value<double?> purchaseSizeBase = const Value.absent(),
+    Value<String?> purchaseBaseUnit = const Value.absent(),
+    Value<String?> purchaseNoun = const Value.absent(),
+    int? unitsPerPurchase,
+    Value<double?> innerSizeBase = const Value.absent(),
+    Value<double?> onHandBase = const Value.absent(),
+    Value<String?> onHandUnit = const Value.absent(),
     DateTime? lastModified,
   }) => BarIngredientRow(
     id: id ?? this.id,
@@ -14239,6 +14545,19 @@ class BarIngredientRow extends DataClass
         ? lastPurchasePlace.value
         : this.lastPurchasePlace,
     purchaseHistory: purchaseHistory ?? this.purchaseHistory,
+    purchaseSizeBase: purchaseSizeBase.present
+        ? purchaseSizeBase.value
+        : this.purchaseSizeBase,
+    purchaseBaseUnit: purchaseBaseUnit.present
+        ? purchaseBaseUnit.value
+        : this.purchaseBaseUnit,
+    purchaseNoun: purchaseNoun.present ? purchaseNoun.value : this.purchaseNoun,
+    unitsPerPurchase: unitsPerPurchase ?? this.unitsPerPurchase,
+    innerSizeBase: innerSizeBase.present
+        ? innerSizeBase.value
+        : this.innerSizeBase,
+    onHandBase: onHandBase.present ? onHandBase.value : this.onHandBase,
+    onHandUnit: onHandUnit.present ? onHandUnit.value : this.onHandUnit,
     lastModified: lastModified ?? this.lastModified,
   );
   BarIngredientRow copyWithCompanion(BarIngredientsCompanion data) {
@@ -14287,6 +14606,27 @@ class BarIngredientRow extends DataClass
       purchaseHistory: data.purchaseHistory.present
           ? data.purchaseHistory.value
           : this.purchaseHistory,
+      purchaseSizeBase: data.purchaseSizeBase.present
+          ? data.purchaseSizeBase.value
+          : this.purchaseSizeBase,
+      purchaseBaseUnit: data.purchaseBaseUnit.present
+          ? data.purchaseBaseUnit.value
+          : this.purchaseBaseUnit,
+      purchaseNoun: data.purchaseNoun.present
+          ? data.purchaseNoun.value
+          : this.purchaseNoun,
+      unitsPerPurchase: data.unitsPerPurchase.present
+          ? data.unitsPerPurchase.value
+          : this.unitsPerPurchase,
+      innerSizeBase: data.innerSizeBase.present
+          ? data.innerSizeBase.value
+          : this.innerSizeBase,
+      onHandBase: data.onHandBase.present
+          ? data.onHandBase.value
+          : this.onHandBase,
+      onHandUnit: data.onHandUnit.present
+          ? data.onHandUnit.value
+          : this.onHandUnit,
       lastModified: data.lastModified.present
           ? data.lastModified.value
           : this.lastModified,
@@ -14316,6 +14656,13 @@ class BarIngredientRow extends DataClass
           ..write('lastKnownPriceUnit: $lastKnownPriceUnit, ')
           ..write('lastPurchasePlace: $lastPurchasePlace, ')
           ..write('purchaseHistory: $purchaseHistory, ')
+          ..write('purchaseSizeBase: $purchaseSizeBase, ')
+          ..write('purchaseBaseUnit: $purchaseBaseUnit, ')
+          ..write('purchaseNoun: $purchaseNoun, ')
+          ..write('unitsPerPurchase: $unitsPerPurchase, ')
+          ..write('innerSizeBase: $innerSizeBase, ')
+          ..write('onHandBase: $onHandBase, ')
+          ..write('onHandUnit: $onHandUnit, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -14343,6 +14690,13 @@ class BarIngredientRow extends DataClass
     lastKnownPriceUnit,
     lastPurchasePlace,
     purchaseHistory,
+    purchaseSizeBase,
+    purchaseBaseUnit,
+    purchaseNoun,
+    unitsPerPurchase,
+    innerSizeBase,
+    onHandBase,
+    onHandUnit,
     lastModified,
   ]);
   @override
@@ -14369,6 +14723,13 @@ class BarIngredientRow extends DataClass
           other.lastKnownPriceUnit == this.lastKnownPriceUnit &&
           other.lastPurchasePlace == this.lastPurchasePlace &&
           other.purchaseHistory == this.purchaseHistory &&
+          other.purchaseSizeBase == this.purchaseSizeBase &&
+          other.purchaseBaseUnit == this.purchaseBaseUnit &&
+          other.purchaseNoun == this.purchaseNoun &&
+          other.unitsPerPurchase == this.unitsPerPurchase &&
+          other.innerSizeBase == this.innerSizeBase &&
+          other.onHandBase == this.onHandBase &&
+          other.onHandUnit == this.onHandUnit &&
           other.lastModified == this.lastModified);
 }
 
@@ -14393,6 +14754,13 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
   final Value<String?> lastKnownPriceUnit;
   final Value<String?> lastPurchasePlace;
   final Value<String> purchaseHistory;
+  final Value<double?> purchaseSizeBase;
+  final Value<String?> purchaseBaseUnit;
+  final Value<String?> purchaseNoun;
+  final Value<int> unitsPerPurchase;
+  final Value<double?> innerSizeBase;
+  final Value<double?> onHandBase;
+  final Value<String?> onHandUnit;
   final Value<DateTime> lastModified;
   const BarIngredientsCompanion({
     this.id = const Value.absent(),
@@ -14415,6 +14783,13 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     this.lastKnownPriceUnit = const Value.absent(),
     this.lastPurchasePlace = const Value.absent(),
     this.purchaseHistory = const Value.absent(),
+    this.purchaseSizeBase = const Value.absent(),
+    this.purchaseBaseUnit = const Value.absent(),
+    this.purchaseNoun = const Value.absent(),
+    this.unitsPerPurchase = const Value.absent(),
+    this.innerSizeBase = const Value.absent(),
+    this.onHandBase = const Value.absent(),
+    this.onHandUnit = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   BarIngredientsCompanion.insert({
@@ -14438,6 +14813,13 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     this.lastKnownPriceUnit = const Value.absent(),
     this.lastPurchasePlace = const Value.absent(),
     this.purchaseHistory = const Value.absent(),
+    this.purchaseSizeBase = const Value.absent(),
+    this.purchaseBaseUnit = const Value.absent(),
+    this.purchaseNoun = const Value.absent(),
+    this.unitsPerPurchase = const Value.absent(),
+    this.innerSizeBase = const Value.absent(),
+    this.onHandBase = const Value.absent(),
+    this.onHandUnit = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   static Insertable<BarIngredientRow> custom({
@@ -14461,6 +14843,13 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     Expression<String>? lastKnownPriceUnit,
     Expression<String>? lastPurchasePlace,
     Expression<String>? purchaseHistory,
+    Expression<double>? purchaseSizeBase,
+    Expression<String>? purchaseBaseUnit,
+    Expression<String>? purchaseNoun,
+    Expression<int>? unitsPerPurchase,
+    Expression<double>? innerSizeBase,
+    Expression<double>? onHandBase,
+    Expression<String>? onHandUnit,
     Expression<DateTime>? lastModified,
   }) {
     return RawValuesInsertable({
@@ -14485,6 +14874,13 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
         'last_known_price_unit': lastKnownPriceUnit,
       if (lastPurchasePlace != null) 'last_purchase_place': lastPurchasePlace,
       if (purchaseHistory != null) 'purchase_history': purchaseHistory,
+      if (purchaseSizeBase != null) 'purchase_size_base': purchaseSizeBase,
+      if (purchaseBaseUnit != null) 'purchase_base_unit': purchaseBaseUnit,
+      if (purchaseNoun != null) 'purchase_noun': purchaseNoun,
+      if (unitsPerPurchase != null) 'units_per_purchase': unitsPerPurchase,
+      if (innerSizeBase != null) 'inner_size_base': innerSizeBase,
+      if (onHandBase != null) 'on_hand_base': onHandBase,
+      if (onHandUnit != null) 'on_hand_unit': onHandUnit,
       if (lastModified != null) 'last_modified': lastModified,
     });
   }
@@ -14510,6 +14906,13 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     Value<String?>? lastKnownPriceUnit,
     Value<String?>? lastPurchasePlace,
     Value<String>? purchaseHistory,
+    Value<double?>? purchaseSizeBase,
+    Value<String?>? purchaseBaseUnit,
+    Value<String?>? purchaseNoun,
+    Value<int>? unitsPerPurchase,
+    Value<double?>? innerSizeBase,
+    Value<double?>? onHandBase,
+    Value<String?>? onHandUnit,
     Value<DateTime>? lastModified,
   }) {
     return BarIngredientsCompanion(
@@ -14533,6 +14936,13 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
       lastKnownPriceUnit: lastKnownPriceUnit ?? this.lastKnownPriceUnit,
       lastPurchasePlace: lastPurchasePlace ?? this.lastPurchasePlace,
       purchaseHistory: purchaseHistory ?? this.purchaseHistory,
+      purchaseSizeBase: purchaseSizeBase ?? this.purchaseSizeBase,
+      purchaseBaseUnit: purchaseBaseUnit ?? this.purchaseBaseUnit,
+      purchaseNoun: purchaseNoun ?? this.purchaseNoun,
+      unitsPerPurchase: unitsPerPurchase ?? this.unitsPerPurchase,
+      innerSizeBase: innerSizeBase ?? this.innerSizeBase,
+      onHandBase: onHandBase ?? this.onHandBase,
+      onHandUnit: onHandUnit ?? this.onHandUnit,
       lastModified: lastModified ?? this.lastModified,
     );
   }
@@ -14600,6 +15010,27 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     if (purchaseHistory.present) {
       map['purchase_history'] = Variable<String>(purchaseHistory.value);
     }
+    if (purchaseSizeBase.present) {
+      map['purchase_size_base'] = Variable<double>(purchaseSizeBase.value);
+    }
+    if (purchaseBaseUnit.present) {
+      map['purchase_base_unit'] = Variable<String>(purchaseBaseUnit.value);
+    }
+    if (purchaseNoun.present) {
+      map['purchase_noun'] = Variable<String>(purchaseNoun.value);
+    }
+    if (unitsPerPurchase.present) {
+      map['units_per_purchase'] = Variable<int>(unitsPerPurchase.value);
+    }
+    if (innerSizeBase.present) {
+      map['inner_size_base'] = Variable<double>(innerSizeBase.value);
+    }
+    if (onHandBase.present) {
+      map['on_hand_base'] = Variable<double>(onHandBase.value);
+    }
+    if (onHandUnit.present) {
+      map['on_hand_unit'] = Variable<String>(onHandUnit.value);
+    }
     if (lastModified.present) {
       map['last_modified'] = Variable<DateTime>(lastModified.value);
     }
@@ -14629,6 +15060,13 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
           ..write('lastKnownPriceUnit: $lastKnownPriceUnit, ')
           ..write('lastPurchasePlace: $lastPurchasePlace, ')
           ..write('purchaseHistory: $purchaseHistory, ')
+          ..write('purchaseSizeBase: $purchaseSizeBase, ')
+          ..write('purchaseBaseUnit: $purchaseBaseUnit, ')
+          ..write('purchaseNoun: $purchaseNoun, ')
+          ..write('unitsPerPurchase: $unitsPerPurchase, ')
+          ..write('innerSizeBase: $innerSizeBase, ')
+          ..write('onHandBase: $onHandBase, ')
+          ..write('onHandUnit: $onHandUnit, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -14982,6 +15420,62 @@ class $PantryIngredientsTable extends PantryIngredients
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _purchaseSizeBaseMeta = const VerificationMeta(
+    'purchaseSizeBase',
+  );
+  @override
+  late final GeneratedColumn<double> purchaseSizeBase = GeneratedColumn<double>(
+    'purchase_size_base',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _purchaseBaseUnitMeta = const VerificationMeta(
+    'purchaseBaseUnit',
+  );
+  @override
+  late final GeneratedColumn<String> purchaseBaseUnit = GeneratedColumn<String>(
+    'purchase_base_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _purchaseNounMeta = const VerificationMeta(
+    'purchaseNoun',
+  );
+  @override
+  late final GeneratedColumn<String> purchaseNoun = GeneratedColumn<String>(
+    'purchase_noun',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _unitsPerPurchaseMeta = const VerificationMeta(
+    'unitsPerPurchase',
+  );
+  @override
+  late final GeneratedColumn<int> unitsPerPurchase = GeneratedColumn<int>(
+    'units_per_purchase',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _innerSizeBaseMeta = const VerificationMeta(
+    'innerSizeBase',
+  );
+  @override
+  late final GeneratedColumn<double> innerSizeBase = GeneratedColumn<double>(
+    'inner_size_base',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
     'lastModified',
   );
@@ -15025,6 +15519,11 @@ class $PantryIngredientsTable extends PantryIngredients
     proteinPer100g,
     fatPer100g,
     carbsPer100g,
+    purchaseSizeBase,
+    purchaseBaseUnit,
+    purchaseNoun,
+    unitsPerPurchase,
+    innerSizeBase,
     lastModified,
   ];
   @override
@@ -15261,6 +15760,51 @@ class $PantryIngredientsTable extends PantryIngredients
         ),
       );
     }
+    if (data.containsKey('purchase_size_base')) {
+      context.handle(
+        _purchaseSizeBaseMeta,
+        purchaseSizeBase.isAcceptableOrUnknown(
+          data['purchase_size_base']!,
+          _purchaseSizeBaseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('purchase_base_unit')) {
+      context.handle(
+        _purchaseBaseUnitMeta,
+        purchaseBaseUnit.isAcceptableOrUnknown(
+          data['purchase_base_unit']!,
+          _purchaseBaseUnitMeta,
+        ),
+      );
+    }
+    if (data.containsKey('purchase_noun')) {
+      context.handle(
+        _purchaseNounMeta,
+        purchaseNoun.isAcceptableOrUnknown(
+          data['purchase_noun']!,
+          _purchaseNounMeta,
+        ),
+      );
+    }
+    if (data.containsKey('units_per_purchase')) {
+      context.handle(
+        _unitsPerPurchaseMeta,
+        unitsPerPurchase.isAcceptableOrUnknown(
+          data['units_per_purchase']!,
+          _unitsPerPurchaseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('inner_size_base')) {
+      context.handle(
+        _innerSizeBaseMeta,
+        innerSizeBase.isAcceptableOrUnknown(
+          data['inner_size_base']!,
+          _innerSizeBaseMeta,
+        ),
+      );
+    }
     if (data.containsKey('last_modified')) {
       context.handle(
         _lastModifiedMeta,
@@ -15395,6 +15939,26 @@ class $PantryIngredientsTable extends PantryIngredients
         DriftSqlType.double,
         data['${effectivePrefix}carbs_per100g'],
       ),
+      purchaseSizeBase: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}purchase_size_base'],
+      ),
+      purchaseBaseUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purchase_base_unit'],
+      ),
+      purchaseNoun: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purchase_noun'],
+      ),
+      unitsPerPurchase: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}units_per_purchase'],
+      )!,
+      innerSizeBase: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}inner_size_base'],
+      ),
       lastModified: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_modified'],
@@ -15415,6 +15979,8 @@ class PantryIngredientRow extends DataClass
   final String boatSupabaseId;
   final String name;
   final bool inMyPantry;
+
+  /// #327 — on-hand stock only (metric `ml` / `g` / `each`). Not package size.
   final double? quantity;
   final String? unit;
   final int sortOrder;
@@ -15439,6 +16005,13 @@ class PantryIngredientRow extends DataClass
   final double? proteinPer100g;
   final double? fatPer100g;
   final double? carbsPer100g;
+
+  /// #327 — catalog SKU (how it is sold). Independent of [quantity] on-hand.
+  final double? purchaseSizeBase;
+  final String? purchaseBaseUnit;
+  final String? purchaseNoun;
+  final int unitsPerPurchase;
+  final double? innerSizeBase;
   final DateTime lastModified;
   const PantryIngredientRow({
     required this.id,
@@ -15470,6 +16043,11 @@ class PantryIngredientRow extends DataClass
     this.proteinPer100g,
     this.fatPer100g,
     this.carbsPer100g,
+    this.purchaseSizeBase,
+    this.purchaseBaseUnit,
+    this.purchaseNoun,
+    required this.unitsPerPurchase,
+    this.innerSizeBase,
     required this.lastModified,
   });
   @override
@@ -15532,6 +16110,19 @@ class PantryIngredientRow extends DataClass
     if (!nullToAbsent || carbsPer100g != null) {
       map['carbs_per100g'] = Variable<double>(carbsPer100g);
     }
+    if (!nullToAbsent || purchaseSizeBase != null) {
+      map['purchase_size_base'] = Variable<double>(purchaseSizeBase);
+    }
+    if (!nullToAbsent || purchaseBaseUnit != null) {
+      map['purchase_base_unit'] = Variable<String>(purchaseBaseUnit);
+    }
+    if (!nullToAbsent || purchaseNoun != null) {
+      map['purchase_noun'] = Variable<String>(purchaseNoun);
+    }
+    map['units_per_purchase'] = Variable<int>(unitsPerPurchase);
+    if (!nullToAbsent || innerSizeBase != null) {
+      map['inner_size_base'] = Variable<double>(innerSizeBase);
+    }
     map['last_modified'] = Variable<DateTime>(lastModified);
     return map;
   }
@@ -15593,6 +16184,19 @@ class PantryIngredientRow extends DataClass
       carbsPer100g: carbsPer100g == null && nullToAbsent
           ? const Value.absent()
           : Value(carbsPer100g),
+      purchaseSizeBase: purchaseSizeBase == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchaseSizeBase),
+      purchaseBaseUnit: purchaseBaseUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchaseBaseUnit),
+      purchaseNoun: purchaseNoun == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchaseNoun),
+      unitsPerPurchase: Value(unitsPerPurchase),
+      innerSizeBase: innerSizeBase == null && nullToAbsent
+          ? const Value.absent()
+          : Value(innerSizeBase),
       lastModified: Value(lastModified),
     );
   }
@@ -15636,6 +16240,11 @@ class PantryIngredientRow extends DataClass
       proteinPer100g: serializer.fromJson<double?>(json['proteinPer100g']),
       fatPer100g: serializer.fromJson<double?>(json['fatPer100g']),
       carbsPer100g: serializer.fromJson<double?>(json['carbsPer100g']),
+      purchaseSizeBase: serializer.fromJson<double?>(json['purchaseSizeBase']),
+      purchaseBaseUnit: serializer.fromJson<String?>(json['purchaseBaseUnit']),
+      purchaseNoun: serializer.fromJson<String?>(json['purchaseNoun']),
+      unitsPerPurchase: serializer.fromJson<int>(json['unitsPerPurchase']),
+      innerSizeBase: serializer.fromJson<double?>(json['innerSizeBase']),
       lastModified: serializer.fromJson<DateTime>(json['lastModified']),
     );
   }
@@ -15672,6 +16281,11 @@ class PantryIngredientRow extends DataClass
       'proteinPer100g': serializer.toJson<double?>(proteinPer100g),
       'fatPer100g': serializer.toJson<double?>(fatPer100g),
       'carbsPer100g': serializer.toJson<double?>(carbsPer100g),
+      'purchaseSizeBase': serializer.toJson<double?>(purchaseSizeBase),
+      'purchaseBaseUnit': serializer.toJson<String?>(purchaseBaseUnit),
+      'purchaseNoun': serializer.toJson<String?>(purchaseNoun),
+      'unitsPerPurchase': serializer.toJson<int>(unitsPerPurchase),
+      'innerSizeBase': serializer.toJson<double?>(innerSizeBase),
       'lastModified': serializer.toJson<DateTime>(lastModified),
     };
   }
@@ -15706,6 +16320,11 @@ class PantryIngredientRow extends DataClass
     Value<double?> proteinPer100g = const Value.absent(),
     Value<double?> fatPer100g = const Value.absent(),
     Value<double?> carbsPer100g = const Value.absent(),
+    Value<double?> purchaseSizeBase = const Value.absent(),
+    Value<String?> purchaseBaseUnit = const Value.absent(),
+    Value<String?> purchaseNoun = const Value.absent(),
+    int? unitsPerPurchase,
+    Value<double?> innerSizeBase = const Value.absent(),
     DateTime? lastModified,
   }) => PantryIngredientRow(
     id: id ?? this.id,
@@ -15749,6 +16368,17 @@ class PantryIngredientRow extends DataClass
         : this.proteinPer100g,
     fatPer100g: fatPer100g.present ? fatPer100g.value : this.fatPer100g,
     carbsPer100g: carbsPer100g.present ? carbsPer100g.value : this.carbsPer100g,
+    purchaseSizeBase: purchaseSizeBase.present
+        ? purchaseSizeBase.value
+        : this.purchaseSizeBase,
+    purchaseBaseUnit: purchaseBaseUnit.present
+        ? purchaseBaseUnit.value
+        : this.purchaseBaseUnit,
+    purchaseNoun: purchaseNoun.present ? purchaseNoun.value : this.purchaseNoun,
+    unitsPerPurchase: unitsPerPurchase ?? this.unitsPerPurchase,
+    innerSizeBase: innerSizeBase.present
+        ? innerSizeBase.value
+        : this.innerSizeBase,
     lastModified: lastModified ?? this.lastModified,
   );
   PantryIngredientRow copyWithCompanion(PantryIngredientsCompanion data) {
@@ -15822,6 +16452,21 @@ class PantryIngredientRow extends DataClass
       carbsPer100g: data.carbsPer100g.present
           ? data.carbsPer100g.value
           : this.carbsPer100g,
+      purchaseSizeBase: data.purchaseSizeBase.present
+          ? data.purchaseSizeBase.value
+          : this.purchaseSizeBase,
+      purchaseBaseUnit: data.purchaseBaseUnit.present
+          ? data.purchaseBaseUnit.value
+          : this.purchaseBaseUnit,
+      purchaseNoun: data.purchaseNoun.present
+          ? data.purchaseNoun.value
+          : this.purchaseNoun,
+      unitsPerPurchase: data.unitsPerPurchase.present
+          ? data.unitsPerPurchase.value
+          : this.unitsPerPurchase,
+      innerSizeBase: data.innerSizeBase.present
+          ? data.innerSizeBase.value
+          : this.innerSizeBase,
       lastModified: data.lastModified.present
           ? data.lastModified.value
           : this.lastModified,
@@ -15860,6 +16505,11 @@ class PantryIngredientRow extends DataClass
           ..write('proteinPer100g: $proteinPer100g, ')
           ..write('fatPer100g: $fatPer100g, ')
           ..write('carbsPer100g: $carbsPer100g, ')
+          ..write('purchaseSizeBase: $purchaseSizeBase, ')
+          ..write('purchaseBaseUnit: $purchaseBaseUnit, ')
+          ..write('purchaseNoun: $purchaseNoun, ')
+          ..write('unitsPerPurchase: $unitsPerPurchase, ')
+          ..write('innerSizeBase: $innerSizeBase, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -15896,6 +16546,11 @@ class PantryIngredientRow extends DataClass
     proteinPer100g,
     fatPer100g,
     carbsPer100g,
+    purchaseSizeBase,
+    purchaseBaseUnit,
+    purchaseNoun,
+    unitsPerPurchase,
+    innerSizeBase,
     lastModified,
   ]);
   @override
@@ -15931,6 +16586,11 @@ class PantryIngredientRow extends DataClass
           other.proteinPer100g == this.proteinPer100g &&
           other.fatPer100g == this.fatPer100g &&
           other.carbsPer100g == this.carbsPer100g &&
+          other.purchaseSizeBase == this.purchaseSizeBase &&
+          other.purchaseBaseUnit == this.purchaseBaseUnit &&
+          other.purchaseNoun == this.purchaseNoun &&
+          other.unitsPerPurchase == this.unitsPerPurchase &&
+          other.innerSizeBase == this.innerSizeBase &&
           other.lastModified == this.lastModified);
 }
 
@@ -15964,6 +16624,11 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
   final Value<double?> proteinPer100g;
   final Value<double?> fatPer100g;
   final Value<double?> carbsPer100g;
+  final Value<double?> purchaseSizeBase;
+  final Value<String?> purchaseBaseUnit;
+  final Value<String?> purchaseNoun;
+  final Value<int> unitsPerPurchase;
+  final Value<double?> innerSizeBase;
   final Value<DateTime> lastModified;
   const PantryIngredientsCompanion({
     this.id = const Value.absent(),
@@ -15995,6 +16660,11 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
     this.proteinPer100g = const Value.absent(),
     this.fatPer100g = const Value.absent(),
     this.carbsPer100g = const Value.absent(),
+    this.purchaseSizeBase = const Value.absent(),
+    this.purchaseBaseUnit = const Value.absent(),
+    this.purchaseNoun = const Value.absent(),
+    this.unitsPerPurchase = const Value.absent(),
+    this.innerSizeBase = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   PantryIngredientsCompanion.insert({
@@ -16027,6 +16697,11 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
     this.proteinPer100g = const Value.absent(),
     this.fatPer100g = const Value.absent(),
     this.carbsPer100g = const Value.absent(),
+    this.purchaseSizeBase = const Value.absent(),
+    this.purchaseBaseUnit = const Value.absent(),
+    this.purchaseNoun = const Value.absent(),
+    this.unitsPerPurchase = const Value.absent(),
+    this.innerSizeBase = const Value.absent(),
     this.lastModified = const Value.absent(),
   });
   static Insertable<PantryIngredientRow> custom({
@@ -16059,6 +16734,11 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
     Expression<double>? proteinPer100g,
     Expression<double>? fatPer100g,
     Expression<double>? carbsPer100g,
+    Expression<double>? purchaseSizeBase,
+    Expression<String>? purchaseBaseUnit,
+    Expression<String>? purchaseNoun,
+    Expression<int>? unitsPerPurchase,
+    Expression<double>? innerSizeBase,
     Expression<DateTime>? lastModified,
   }) {
     return RawValuesInsertable({
@@ -16092,6 +16772,11 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
       if (proteinPer100g != null) 'protein_per100g': proteinPer100g,
       if (fatPer100g != null) 'fat_per100g': fatPer100g,
       if (carbsPer100g != null) 'carbs_per100g': carbsPer100g,
+      if (purchaseSizeBase != null) 'purchase_size_base': purchaseSizeBase,
+      if (purchaseBaseUnit != null) 'purchase_base_unit': purchaseBaseUnit,
+      if (purchaseNoun != null) 'purchase_noun': purchaseNoun,
+      if (unitsPerPurchase != null) 'units_per_purchase': unitsPerPurchase,
+      if (innerSizeBase != null) 'inner_size_base': innerSizeBase,
       if (lastModified != null) 'last_modified': lastModified,
     });
   }
@@ -16126,6 +16811,11 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
     Value<double?>? proteinPer100g,
     Value<double?>? fatPer100g,
     Value<double?>? carbsPer100g,
+    Value<double?>? purchaseSizeBase,
+    Value<String?>? purchaseBaseUnit,
+    Value<String?>? purchaseNoun,
+    Value<int>? unitsPerPurchase,
+    Value<double?>? innerSizeBase,
     Value<DateTime>? lastModified,
   }) {
     return PantryIngredientsCompanion(
@@ -16158,6 +16848,11 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
       proteinPer100g: proteinPer100g ?? this.proteinPer100g,
       fatPer100g: fatPer100g ?? this.fatPer100g,
       carbsPer100g: carbsPer100g ?? this.carbsPer100g,
+      purchaseSizeBase: purchaseSizeBase ?? this.purchaseSizeBase,
+      purchaseBaseUnit: purchaseBaseUnit ?? this.purchaseBaseUnit,
+      purchaseNoun: purchaseNoun ?? this.purchaseNoun,
+      unitsPerPurchase: unitsPerPurchase ?? this.unitsPerPurchase,
+      innerSizeBase: innerSizeBase ?? this.innerSizeBase,
       lastModified: lastModified ?? this.lastModified,
     );
   }
@@ -16252,6 +16947,21 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
     if (carbsPer100g.present) {
       map['carbs_per100g'] = Variable<double>(carbsPer100g.value);
     }
+    if (purchaseSizeBase.present) {
+      map['purchase_size_base'] = Variable<double>(purchaseSizeBase.value);
+    }
+    if (purchaseBaseUnit.present) {
+      map['purchase_base_unit'] = Variable<String>(purchaseBaseUnit.value);
+    }
+    if (purchaseNoun.present) {
+      map['purchase_noun'] = Variable<String>(purchaseNoun.value);
+    }
+    if (unitsPerPurchase.present) {
+      map['units_per_purchase'] = Variable<int>(unitsPerPurchase.value);
+    }
+    if (innerSizeBase.present) {
+      map['inner_size_base'] = Variable<double>(innerSizeBase.value);
+    }
     if (lastModified.present) {
       map['last_modified'] = Variable<DateTime>(lastModified.value);
     }
@@ -16290,6 +17000,11 @@ class PantryIngredientsCompanion extends UpdateCompanion<PantryIngredientRow> {
           ..write('proteinPer100g: $proteinPer100g, ')
           ..write('fatPer100g: $fatPer100g, ')
           ..write('carbsPer100g: $carbsPer100g, ')
+          ..write('purchaseSizeBase: $purchaseSizeBase, ')
+          ..write('purchaseBaseUnit: $purchaseBaseUnit, ')
+          ..write('purchaseNoun: $purchaseNoun, ')
+          ..write('unitsPerPurchase: $unitsPerPurchase, ')
+          ..write('innerSizeBase: $innerSizeBase, ')
           ..write('lastModified: $lastModified')
           ..write(')'))
         .toString();
@@ -25357,6 +26072,7 @@ typedef $$GuestProfilesTableCreateCompanionBuilder =
       Value<String> name,
       Value<String> allergenRestrictions,
       Value<String> dietaryRequirements,
+      Value<String> preferredDrinks,
       Value<DateTime> createdAt,
     });
 typedef $$GuestProfilesTableUpdateCompanionBuilder =
@@ -25365,6 +26081,7 @@ typedef $$GuestProfilesTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String> allergenRestrictions,
       Value<String> dietaryRequirements,
+      Value<String> preferredDrinks,
       Value<DateTime> createdAt,
     });
 
@@ -25394,6 +26111,11 @@ class $$GuestProfilesTableFilterComposer
 
   ColumnFilters<String> get dietaryRequirements => $composableBuilder(
     column: $table.dietaryRequirements,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferredDrinks => $composableBuilder(
+    column: $table.preferredDrinks,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -25432,6 +26154,11 @@ class $$GuestProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get preferredDrinks => $composableBuilder(
+    column: $table.preferredDrinks,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -25460,6 +26187,11 @@ class $$GuestProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get dietaryRequirements => $composableBuilder(
     column: $table.dietaryRequirements,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get preferredDrinks => $composableBuilder(
+    column: $table.preferredDrinks,
     builder: (column) => column,
   );
 
@@ -25502,12 +26234,14 @@ class $$GuestProfilesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> allergenRestrictions = const Value.absent(),
                 Value<String> dietaryRequirements = const Value.absent(),
+                Value<String> preferredDrinks = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => GuestProfilesCompanion(
                 id: id,
                 name: name,
                 allergenRestrictions: allergenRestrictions,
                 dietaryRequirements: dietaryRequirements,
+                preferredDrinks: preferredDrinks,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -25516,12 +26250,14 @@ class $$GuestProfilesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> allergenRestrictions = const Value.absent(),
                 Value<String> dietaryRequirements = const Value.absent(),
+                Value<String> preferredDrinks = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => GuestProfilesCompanion.insert(
                 id: id,
                 name: name,
                 allergenRestrictions: allergenRestrictions,
                 dietaryRequirements: dietaryRequirements,
+                preferredDrinks: preferredDrinks,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -31640,6 +32376,13 @@ typedef $$BarIngredientsTableCreateCompanionBuilder =
       Value<String?> lastKnownPriceUnit,
       Value<String?> lastPurchasePlace,
       Value<String> purchaseHistory,
+      Value<double?> purchaseSizeBase,
+      Value<String?> purchaseBaseUnit,
+      Value<String?> purchaseNoun,
+      Value<int> unitsPerPurchase,
+      Value<double?> innerSizeBase,
+      Value<double?> onHandBase,
+      Value<String?> onHandUnit,
       Value<DateTime> lastModified,
     });
 typedef $$BarIngredientsTableUpdateCompanionBuilder =
@@ -31664,6 +32407,13 @@ typedef $$BarIngredientsTableUpdateCompanionBuilder =
       Value<String?> lastKnownPriceUnit,
       Value<String?> lastPurchasePlace,
       Value<String> purchaseHistory,
+      Value<double?> purchaseSizeBase,
+      Value<String?> purchaseBaseUnit,
+      Value<String?> purchaseNoun,
+      Value<int> unitsPerPurchase,
+      Value<double?> innerSizeBase,
+      Value<double?> onHandBase,
+      Value<String?> onHandUnit,
       Value<DateTime> lastModified,
     });
 
@@ -31773,6 +32523,41 @@ class $$BarIngredientsTableFilterComposer
 
   ColumnFilters<String> get purchaseHistory => $composableBuilder(
     column: $table.purchaseHistory,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get purchaseSizeBase => $composableBuilder(
+    column: $table.purchaseSizeBase,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get purchaseBaseUnit => $composableBuilder(
+    column: $table.purchaseBaseUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get purchaseNoun => $composableBuilder(
+    column: $table.purchaseNoun,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get unitsPerPurchase => $composableBuilder(
+    column: $table.unitsPerPurchase,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get innerSizeBase => $composableBuilder(
+    column: $table.innerSizeBase,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get onHandBase => $composableBuilder(
+    column: $table.onHandBase,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get onHandUnit => $composableBuilder(
+    column: $table.onHandUnit,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -31891,6 +32676,41 @@ class $$BarIngredientsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get purchaseSizeBase => $composableBuilder(
+    column: $table.purchaseSizeBase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get purchaseBaseUnit => $composableBuilder(
+    column: $table.purchaseBaseUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get purchaseNoun => $composableBuilder(
+    column: $table.purchaseNoun,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get unitsPerPurchase => $composableBuilder(
+    column: $table.unitsPerPurchase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get innerSizeBase => $composableBuilder(
+    column: $table.innerSizeBase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get onHandBase => $composableBuilder(
+    column: $table.onHandBase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get onHandUnit => $composableBuilder(
+    column: $table.onHandUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => ColumnOrderings(column),
@@ -31990,6 +32810,41 @@ class $$BarIngredientsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get purchaseSizeBase => $composableBuilder(
+    column: $table.purchaseSizeBase,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get purchaseBaseUnit => $composableBuilder(
+    column: $table.purchaseBaseUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get purchaseNoun => $composableBuilder(
+    column: $table.purchaseNoun,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get unitsPerPurchase => $composableBuilder(
+    column: $table.unitsPerPurchase,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get innerSizeBase => $composableBuilder(
+    column: $table.innerSizeBase,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get onHandBase => $composableBuilder(
+    column: $table.onHandBase,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get onHandUnit => $composableBuilder(
+    column: $table.onHandUnit,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => column,
@@ -32053,6 +32908,13 @@ class $$BarIngredientsTableTableManager
                 Value<String?> lastKnownPriceUnit = const Value.absent(),
                 Value<String?> lastPurchasePlace = const Value.absent(),
                 Value<String> purchaseHistory = const Value.absent(),
+                Value<double?> purchaseSizeBase = const Value.absent(),
+                Value<String?> purchaseBaseUnit = const Value.absent(),
+                Value<String?> purchaseNoun = const Value.absent(),
+                Value<int> unitsPerPurchase = const Value.absent(),
+                Value<double?> innerSizeBase = const Value.absent(),
+                Value<double?> onHandBase = const Value.absent(),
+                Value<String?> onHandUnit = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => BarIngredientsCompanion(
                 id: id,
@@ -32075,6 +32937,13 @@ class $$BarIngredientsTableTableManager
                 lastKnownPriceUnit: lastKnownPriceUnit,
                 lastPurchasePlace: lastPurchasePlace,
                 purchaseHistory: purchaseHistory,
+                purchaseSizeBase: purchaseSizeBase,
+                purchaseBaseUnit: purchaseBaseUnit,
+                purchaseNoun: purchaseNoun,
+                unitsPerPurchase: unitsPerPurchase,
+                innerSizeBase: innerSizeBase,
+                onHandBase: onHandBase,
+                onHandUnit: onHandUnit,
                 lastModified: lastModified,
               ),
           createCompanionCallback:
@@ -32099,6 +32968,13 @@ class $$BarIngredientsTableTableManager
                 Value<String?> lastKnownPriceUnit = const Value.absent(),
                 Value<String?> lastPurchasePlace = const Value.absent(),
                 Value<String> purchaseHistory = const Value.absent(),
+                Value<double?> purchaseSizeBase = const Value.absent(),
+                Value<String?> purchaseBaseUnit = const Value.absent(),
+                Value<String?> purchaseNoun = const Value.absent(),
+                Value<int> unitsPerPurchase = const Value.absent(),
+                Value<double?> innerSizeBase = const Value.absent(),
+                Value<double?> onHandBase = const Value.absent(),
+                Value<String?> onHandUnit = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => BarIngredientsCompanion.insert(
                 id: id,
@@ -32121,6 +32997,13 @@ class $$BarIngredientsTableTableManager
                 lastKnownPriceUnit: lastKnownPriceUnit,
                 lastPurchasePlace: lastPurchasePlace,
                 purchaseHistory: purchaseHistory,
+                purchaseSizeBase: purchaseSizeBase,
+                purchaseBaseUnit: purchaseBaseUnit,
+                purchaseNoun: purchaseNoun,
+                unitsPerPurchase: unitsPerPurchase,
+                innerSizeBase: innerSizeBase,
+                onHandBase: onHandBase,
+                onHandUnit: onHandUnit,
                 lastModified: lastModified,
               ),
           withReferenceMapper: (p0) => p0
@@ -32179,6 +33062,11 @@ typedef $$PantryIngredientsTableCreateCompanionBuilder =
       Value<double?> proteinPer100g,
       Value<double?> fatPer100g,
       Value<double?> carbsPer100g,
+      Value<double?> purchaseSizeBase,
+      Value<String?> purchaseBaseUnit,
+      Value<String?> purchaseNoun,
+      Value<int> unitsPerPurchase,
+      Value<double?> innerSizeBase,
       Value<DateTime> lastModified,
     });
 typedef $$PantryIngredientsTableUpdateCompanionBuilder =
@@ -32212,6 +33100,11 @@ typedef $$PantryIngredientsTableUpdateCompanionBuilder =
       Value<double?> proteinPer100g,
       Value<double?> fatPer100g,
       Value<double?> carbsPer100g,
+      Value<double?> purchaseSizeBase,
+      Value<String?> purchaseBaseUnit,
+      Value<String?> purchaseNoun,
+      Value<int> unitsPerPurchase,
+      Value<double?> innerSizeBase,
       Value<DateTime> lastModified,
     });
 
@@ -32366,6 +33259,31 @@ class $$PantryIngredientsTableFilterComposer
 
   ColumnFilters<double> get carbsPer100g => $composableBuilder(
     column: $table.carbsPer100g,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get purchaseSizeBase => $composableBuilder(
+    column: $table.purchaseSizeBase,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get purchaseBaseUnit => $composableBuilder(
+    column: $table.purchaseBaseUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get purchaseNoun => $composableBuilder(
+    column: $table.purchaseNoun,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get unitsPerPurchase => $composableBuilder(
+    column: $table.unitsPerPurchase,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get innerSizeBase => $composableBuilder(
+    column: $table.innerSizeBase,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -32529,6 +33447,31 @@ class $$PantryIngredientsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get purchaseSizeBase => $composableBuilder(
+    column: $table.purchaseSizeBase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get purchaseBaseUnit => $composableBuilder(
+    column: $table.purchaseBaseUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get purchaseNoun => $composableBuilder(
+    column: $table.purchaseNoun,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get unitsPerPurchase => $composableBuilder(
+    column: $table.unitsPerPurchase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get innerSizeBase => $composableBuilder(
+    column: $table.innerSizeBase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => ColumnOrderings(column),
@@ -32671,6 +33614,31 @@ class $$PantryIngredientsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get purchaseSizeBase => $composableBuilder(
+    column: $table.purchaseSizeBase,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get purchaseBaseUnit => $composableBuilder(
+    column: $table.purchaseBaseUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get purchaseNoun => $composableBuilder(
+    column: $table.purchaseNoun,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get unitsPerPurchase => $composableBuilder(
+    column: $table.unitsPerPurchase,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get innerSizeBase => $composableBuilder(
+    column: $table.innerSizeBase,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get lastModified => $composableBuilder(
     column: $table.lastModified,
     builder: (column) => column,
@@ -32746,6 +33714,11 @@ class $$PantryIngredientsTableTableManager
                 Value<double?> proteinPer100g = const Value.absent(),
                 Value<double?> fatPer100g = const Value.absent(),
                 Value<double?> carbsPer100g = const Value.absent(),
+                Value<double?> purchaseSizeBase = const Value.absent(),
+                Value<String?> purchaseBaseUnit = const Value.absent(),
+                Value<String?> purchaseNoun = const Value.absent(),
+                Value<int> unitsPerPurchase = const Value.absent(),
+                Value<double?> innerSizeBase = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => PantryIngredientsCompanion(
                 id: id,
@@ -32777,6 +33750,11 @@ class $$PantryIngredientsTableTableManager
                 proteinPer100g: proteinPer100g,
                 fatPer100g: fatPer100g,
                 carbsPer100g: carbsPer100g,
+                purchaseSizeBase: purchaseSizeBase,
+                purchaseBaseUnit: purchaseBaseUnit,
+                purchaseNoun: purchaseNoun,
+                unitsPerPurchase: unitsPerPurchase,
+                innerSizeBase: innerSizeBase,
                 lastModified: lastModified,
               ),
           createCompanionCallback:
@@ -32810,6 +33788,11 @@ class $$PantryIngredientsTableTableManager
                 Value<double?> proteinPer100g = const Value.absent(),
                 Value<double?> fatPer100g = const Value.absent(),
                 Value<double?> carbsPer100g = const Value.absent(),
+                Value<double?> purchaseSizeBase = const Value.absent(),
+                Value<String?> purchaseBaseUnit = const Value.absent(),
+                Value<String?> purchaseNoun = const Value.absent(),
+                Value<int> unitsPerPurchase = const Value.absent(),
+                Value<double?> innerSizeBase = const Value.absent(),
                 Value<DateTime> lastModified = const Value.absent(),
               }) => PantryIngredientsCompanion.insert(
                 id: id,
@@ -32841,6 +33824,11 @@ class $$PantryIngredientsTableTableManager
                 proteinPer100g: proteinPer100g,
                 fatPer100g: fatPer100g,
                 carbsPer100g: carbsPer100g,
+                purchaseSizeBase: purchaseSizeBase,
+                purchaseBaseUnit: purchaseBaseUnit,
+                purchaseNoun: purchaseNoun,
+                unitsPerPurchase: unitsPerPurchase,
+                innerSizeBase: innerSizeBase,
                 lastModified: lastModified,
               ),
           withReferenceMapper: (p0) => p0

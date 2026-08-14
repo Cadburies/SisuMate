@@ -43,6 +43,11 @@ class PantryIngredientRepositoryImpl implements PantryIngredientRepository {
     ..purchaseHistory = (jsonDecode(r.purchaseHistory) as List)
         .map((e) => PurchaseRecord.fromJson(e as Map<String, dynamic>))
         .toList()
+    ..purchaseSizeBase = r.purchaseSizeBase
+    ..purchaseBaseUnit = r.purchaseBaseUnit
+    ..purchaseNoun = r.purchaseNoun
+    ..unitsPerPurchase = r.unitsPerPurchase
+    ..innerSizeBase = r.innerSizeBase
     ..caloriesPer100g = r.caloriesPer100g
     ..proteinPer100g = r.proteinPer100g
     ..fatPer100g = r.fatPer100g
@@ -76,6 +81,11 @@ class PantryIngredientRepositoryImpl implements PantryIngredientRepository {
         lastPurchasePlace: Value(i.lastPurchasePlace),
         purchaseHistory:
             Value(jsonEncode(i.purchaseHistory.map((p) => p.toJson()).toList())),
+        purchaseSizeBase: Value(i.purchaseSizeBase),
+        purchaseBaseUnit: Value(i.purchaseBaseUnit),
+        purchaseNoun: Value(i.purchaseNoun),
+        unitsPerPurchase: Value(i.unitsPerPurchase),
+        innerSizeBase: Value(i.innerSizeBase),
         caloriesPer100g: Value(i.caloriesPer100g),
         proteinPer100g: Value(i.proteinPer100g),
         fatPer100g: Value(i.fatPer100g),

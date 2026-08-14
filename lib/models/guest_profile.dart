@@ -7,6 +7,8 @@ class GuestProfile {
   List<String> allergenRestrictions = [];
   // dietaryTags: vegan | vegetarian | gluten-free | dairy-free | egg-free | nut-free | keto | paleo | halal | kosher | low-carb | low-sodium
   List<String> dietaryRequirements = [];
+  /// Liked bar products (catalog names or free text).
+  List<String> preferredDrinks = [];
   DateTime createdAt = DateTime.now();
 
   GuestProfile();
@@ -16,6 +18,7 @@ class GuestProfile {
     'name': name,
     'allergen_restrictions': allergenRestrictions,
     'dietary_requirements': dietaryRequirements,
+    'preferred_drinks': preferredDrinks,
     'created_at': createdAt.toIso8601String(),
   };
 
@@ -23,6 +26,7 @@ class GuestProfile {
     ..name = (json['name'] as String?) ?? ''
     ..allergenRestrictions = List<String>.from(json['allergen_restrictions'] as List? ?? [])
     ..dietaryRequirements = List<String>.from(json['dietary_requirements'] as List? ?? [])
+    ..preferredDrinks = List<String>.from(json['preferred_drinks'] as List? ?? [])
     ..createdAt = json['created_at'] != null
         ? DateTime.parse(json['created_at'] as String)
         : DateTime.now();
@@ -36,6 +40,7 @@ class GuestProfile {
           name == other.name &&
           listEquals(allergenRestrictions, other.allergenRestrictions) &&
           listEquals(dietaryRequirements, other.dietaryRequirements) &&
+          listEquals(preferredDrinks, other.preferredDrinks) &&
           createdAt == other.createdAt;
 
   @override
@@ -44,11 +49,13 @@ class GuestProfile {
         name,
         Object.hashAll(allergenRestrictions),
         Object.hashAll(dietaryRequirements),
+        Object.hashAll(preferredDrinks),
         createdAt,
       ]);
 
   @override
   String toString() => 'GuestProfile(id: $id, name: $name, '
       'allergenRestrictions: $allergenRestrictions, '
-      'dietaryRequirements: $dietaryRequirements, createdAt: $createdAt)';
+      'dietaryRequirements: $dietaryRequirements, '
+      'preferredDrinks: $preferredDrinks, createdAt: $createdAt)';
 }

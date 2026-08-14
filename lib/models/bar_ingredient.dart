@@ -34,6 +34,17 @@ class BarIngredient {
   String? lastPurchasePlace;
   List<PurchaseRecord> purchaseHistory = [];
 
+  /// Catalog SKU — how it is sold.
+  double? purchaseSizeBase;
+  String? purchaseBaseUnit;
+  String? purchaseNoun;
+  int unitsPerPurchase = 1;
+  double? innerSizeBase;
+
+  /// On-hand stock in metric (`ml` / `each`). Independent of purchase size.
+  double? onHandBase;
+  String? onHandUnit;
+
   factory BarIngredient.fromJson(Map<String, dynamic> json) {
     return BarIngredient()
       ..supabaseId = json['supabaseId'] ?? ''
@@ -57,6 +68,13 @@ class BarIngredient {
       ..purchaseHistory = ((json['purchaseHistory'] as List?) ?? const [])
           .map((e) => PurchaseRecord.fromJson(e as Map<String, dynamic>))
           .toList()
+      ..purchaseSizeBase = (json['purchaseSizeBase'] as num?)?.toDouble()
+      ..purchaseBaseUnit = json['purchaseBaseUnit'] as String?
+      ..purchaseNoun = json['purchaseNoun'] as String?
+      ..unitsPerPurchase = (json['unitsPerPurchase'] as num?)?.toInt() ?? 1
+      ..innerSizeBase = (json['innerSizeBase'] as num?)?.toDouble()
+      ..onHandBase = (json['onHandBase'] as num?)?.toDouble()
+      ..onHandUnit = json['onHandUnit'] as String?
       ..lastModified = DateTime.parse(
           json['lastModified'] ?? DateTime.now().toUtc().toIso8601String());
   }
@@ -81,6 +99,13 @@ class BarIngredient {
         'lastKnownPriceUnit': lastKnownPriceUnit,
         'lastPurchasePlace': lastPurchasePlace,
         'purchaseHistory': purchaseHistory.map((p) => p.toJson()).toList(),
+        'purchaseSizeBase': purchaseSizeBase,
+        'purchaseBaseUnit': purchaseBaseUnit,
+        'purchaseNoun': purchaseNoun,
+        'unitsPerPurchase': unitsPerPurchase,
+        'innerSizeBase': innerSizeBase,
+        'onHandBase': onHandBase,
+        'onHandUnit': onHandUnit,
         'lastModified': lastModified.toIso8601String(),
       };
 
@@ -109,7 +134,14 @@ class BarIngredient {
           priceCurrency == other.priceCurrency &&
           lastKnownPriceUnit == other.lastKnownPriceUnit &&
           lastPurchasePlace == other.lastPurchasePlace &&
-          listEquals(purchaseHistory, other.purchaseHistory);
+          listEquals(purchaseHistory, other.purchaseHistory) &&
+          purchaseSizeBase == other.purchaseSizeBase &&
+          purchaseBaseUnit == other.purchaseBaseUnit &&
+          purchaseNoun == other.purchaseNoun &&
+          unitsPerPurchase == other.unitsPerPurchase &&
+          innerSizeBase == other.innerSizeBase &&
+          onHandBase == other.onHandBase &&
+          onHandUnit == other.onHandUnit;
 
   @override
   int get hashCode => Object.hashAll([
@@ -134,6 +166,13 @@ class BarIngredient {
         lastKnownPriceUnit,
         lastPurchasePlace,
         Object.hashAll(purchaseHistory),
+        purchaseSizeBase,
+        purchaseBaseUnit,
+        purchaseNoun,
+        unitsPerPurchase,
+        innerSizeBase,
+        onHandBase,
+        onHandUnit,
       ]);
 
   @override
@@ -147,5 +186,6 @@ class BarIngredient {
       'lastKnownPrice: $lastKnownPrice, priceCurrency: $priceCurrency, '
       'lastKnownPriceUnit: $lastKnownPriceUnit, '
       'lastPurchasePlace: $lastPurchasePlace, '
-      'purchaseHistory: $purchaseHistory)';
+      'purchaseHistory: $purchaseHistory, purchaseSizeBase: $purchaseSizeBase, '
+      'onHandBase: $onHandBase)';
 }
