@@ -13,12 +13,9 @@
 # searching for the "Fingerprint: <hash>" marker in issue bodies — safe to
 # rerun as often as you like.
 #
-# Bonus: also pulls recent native/hard crash logs (.ips) for the Runner
-# process via `idb crash`. These are NOT auto-filed as GitHub issues — a
-# native crash has no ErrorLogTable fingerprint/message to dedupe against,
-# since Dart-level handlers never see it. They're just saved to the workdir
-# for a human/agent to read. This is the only way to see a hard crash at
-# all; ErrorLogTable only ever captures what Dart itself could catch.
+# Native/hard-crash .ips: handed to scripts/triage_ips_crashes.sh (copy
+# into crash_store/, fingerprint, file one issue per new ips: hash, wipe
+# crash_store/). ErrorLogTable never sees these — the process died first.
 #
 # Usage:
 #   bash scripts/triage_error_logs_ios.sh <udid> [--skip-crashes]
@@ -117,43 +114,9 @@ fi
 echo "==> $DB_LOCAL is marked processed locally for reference; the on-device DB was never modified."
 
 if [ "$SKIP_CRASHES" = true ]; then
-  echo "==> Skipping native crash log pull (--skip-crashes)"
+  echo "==> Skipping native .ips triage (--skip-crashes)"
   exit 0
 fi
 
-echo "==> Checking for native crash logs (Runner process — hard crashes ErrorLogTable never sees)"
-CRASH_LIST="$WORKDIR/crashes_${SAFE_UDID}.jsonl"
-idb crash list --udid "$UDID" 2>/dev/null | python3 -c '
-import json, sys
-for line in sys.stdin:
-    line = line.strip()
-    if not line:
-        continue
-    try:
-        obj = json.loads(line)
-    except json.JSONDecodeError:
-        continue
-    if obj.get("process_name") == "Runner":
-        print(json.dumps(obj))
-' > "$CRASH_LIST"
-
-if [ ! -s "$CRASH_LIST" ]; then
-  echo "No native Runner crash logs found on device."
-  exit 0
-fi
-
-CRASH_DIR="$WORKDIR/crashes_${SAFE_UDID}"
-mkdir -p "$CRASH_DIR"
-CRASH_COUNT="$(wc -l < "$CRASH_LIST" | tr -d ' ')"
-echo "==> Pulling $CRASH_COUNT native crash log(s) to $CRASH_DIR (informational — not filed as issues)"
-while IFS= read -r line; do
-  [ -z "$line" ] && continue
-  NAME="$(printf '%s' "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])')"
-  [ -z "$NAME" ] && continue
-  OUT="$CRASH_DIR/$NAME"
-  if [ -s "$OUT" ]; then
-    continue
-  fi
-  idb crash show --udid "$UDID" "$NAME" > "$OUT" 2>/dev/null || echo "  failed to pull $NAME" >&2
-done < "$CRASH_LIST"
-echo "==> Crash logs saved under $CRASH_DIR — read the most recent one (by filename timestamp) first."
+echo "==> Native .ips add-on (device pull → crash_store/ → file → wipe)"
+bash scripts/triage_ips_crashes.sh --udid "$UDID"

@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** #330–#333 seed quality — pantry/bar allergens, catalog name aliases, classic pours/grams.
+- **Last:** `.ips` triage add-on (`triage_ips_crashes.sh`) — collect into `crash_store/`, file app hard crashes, wipe the folder.
 - **Next:** pick next work from open issues.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 

@@ -25,7 +25,7 @@
 # `adb`, this repo's `dart`, `gh` authenticated for this repo.
 #
 # iOS: see scripts/triage_error_logs_ios.sh (#267) — separate script, idb-based
-# pull instead of `adb run-as`, plus a bonus native-crash-log pull.
+# pull instead of `adb run-as`. Native .ips hard crashes: scripts/triage_ips_crashes.sh.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -60,9 +60,8 @@ dart run tool/error_log_admin.dart dump-unprocessed "$DB_LOCAL" > "$DUMP"
 sed -i.bak 's/^[^{]*{/{/' "$DUMP" && rm -f "$DUMP.bak"
 
 if [ ! -s "$DUMP" ]; then
-  echo "No unprocessed error-log rows. Nothing to do."
-  exit 0
-fi
+  echo "No unprocessed error-log rows."
+else
 
 echo "==> Filing issues (one per new fingerprint; already-filed fingerprints are skipped)"
 while IFS= read -r line; do
@@ -96,6 +95,12 @@ while IFS= read -r line; do
   echo "  filed $FINGERPRINT -> $URL"
   dart run tool/error_log_admin.dart mark-processed "$DB_LOCAL" "$FINGERPRINT" "$URL" >/dev/null
 done < "$DUMP"
+fi
 
 echo "==> Done. $DB_LOCAL is marked processed locally for reference; the on-device DB was never modified."
 echo "==> Relaunch the app on $SERIAL if you want to keep testing."
+
+# Android has no .ips, but an operator may have dropped iOS reports into
+# crash_store/. Process + wipe that folder so it does not accumulate.
+echo "==> Native .ips add-on (crash_store/ leftovers, no device pull)"
+bash scripts/triage_ips_crashes.sh
