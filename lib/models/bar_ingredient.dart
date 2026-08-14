@@ -16,6 +16,7 @@ class BarIngredient {
   // Classification
   String category = ''; // spirit | liqueur | syrup | juice | mixer | bitters | garnish | rim | ice | wine
   List<String> flavorProfiles = [];
+  List<String> allergenTags = [];
   double? alcoholByVolume;
 
   // Substitute hierarchy — what this ingredient can fill in for
@@ -56,6 +57,7 @@ class BarIngredient {
       ..isSynced = json['isSynced'] ?? false
       ..category = json['category'] ?? ''
       ..flavorProfiles = stringListFromJson(json['flavorProfiles'])
+      ..allergenTags = stringListFromJson(json['allergenTags'])
       ..alcoholByVolume = (json['alcoholByVolume'] as num?)?.toDouble()
       ..substitute1 = json['substitute1']
       ..substitute2 = json['substitute2']
@@ -89,6 +91,7 @@ class BarIngredient {
         'isSynced': isSynced,
         'category': category,
         'flavorProfiles': flavorProfiles,
+        'allergenTags': allergenTags,
         'alcoholByVolume': alcoholByVolume,
         'substitute1': substitute1,
         'substitute2': substitute2,
@@ -125,6 +128,7 @@ class BarIngredient {
           lastModified == other.lastModified &&
           category == other.category &&
           listEquals(flavorProfiles, other.flavorProfiles) &&
+          listEquals(allergenTags, other.allergenTags) &&
           alcoholByVolume == other.alcoholByVolume &&
           substitute1 == other.substitute1 &&
           substitute2 == other.substitute2 &&
@@ -156,6 +160,7 @@ class BarIngredient {
         lastModified,
         category,
         Object.hashAll(flavorProfiles),
+        Object.hashAll(allergenTags),
         alcoholByVolume,
         substitute1,
         substitute2,
@@ -180,7 +185,8 @@ class BarIngredient {
       'boatSupabaseId: $boatSupabaseId, name: $name, inMyBar: $inMyBar, '
       'sortOrder: $sortOrder, isBundled: $isBundled, isSynced: $isSynced, '
       'lastModified: $lastModified, category: $category, '
-      'flavorProfiles: $flavorProfiles, alcoholByVolume: $alcoholByVolume, '
+      'flavorProfiles: $flavorProfiles, allergenTags: $allergenTags, '
+      'alcoholByVolume: $alcoholByVolume, '
       'substitute1: $substitute1, substitute2: $substitute2, '
       'localPhotoPath: $localPhotoPath, imageUrl: $imageUrl, '
       'lastKnownPrice: $lastKnownPrice, priceCurrency: $priceCurrency, '

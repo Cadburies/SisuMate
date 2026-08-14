@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../../models/models.dart';
 import '../drift/app_database.dart';
+import 'ingredient_aliases.dart';
 import 'recipe_drift_seed.dart';
 
 /// Bundled Chef expansion pack from `lib/recipe_import.json`, processed for
@@ -85,7 +86,7 @@ Future<void> seedMenusImport(String defaultBoatSupabaseId) async {
           ..supabaseId =
               'ing_${id}_${name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}_$i'
           ..recipeSupabaseId = id
-          ..name = name
+          ..name = isGarnish ? name : canonicalIngredientName(name)
           ..quantity = isGarnish ? null : qty
           ..unit = isGarnish ? null : ing['unit'] as String?
           ..substitute = ing['substitute'] as String?

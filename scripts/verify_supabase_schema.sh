@@ -119,6 +119,10 @@ expect_ok(
     "bar_ingredients.onHandBase",
     "/rest/v1/bar_ingredients?select=supabaseId,onHandBase&limit=1",
 )
+expect_ok(
+    "bar_ingredients.allergenTags",
+    "/rest/v1/bar_ingredients?select=supabaseId,allergenTags&limit=1",
+)
 
 failed = [(l, d) for l, s, d in checks if s == "FAIL"]
 for label, status, detail in checks:

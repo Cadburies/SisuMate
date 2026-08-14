@@ -5,6 +5,7 @@ import '../drift/app_database.dart';
 import '../repositories/recipe_repository_impl.dart';
 import 'cocktail_image_assets.dart';
 import 'cocktail_tags.dart';
+import 'ingredient_aliases.dart';
 import 'recipe_drift_seed.dart';
 
 /// Prefix for bar-catalog coverage cocktails (`cocktail_cov_...`).
@@ -64,7 +65,7 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
           ..supabaseId =
               'ing_${id}_${ingName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}_$i'
           ..recipeSupabaseId = id
-          ..name = ingName
+          ..name = isGarnish ? ingName : canonicalIngredientName(ingName)
           ..quantity = isGarnish ? null : qty
           ..unit = isGarnish ? null : unit
           ..isGarnish = isGarnish
@@ -86,7 +87,7 @@ Future<void> seedCoverageCocktails(String defaultBoatSupabaseId) async {
       ('Light Agricole Rum', 50, 'ml', garnish: false),
       ('Simple Syrup', 10, 'ml', garnish: false),
       ('Lime Wedges', null, null, garnish: true),
-      ('Ice Cubes', null, null, garnish: false),
+      ('Ice Cubes', null, null, garnish: true),
     ],
   );
   cocktail(

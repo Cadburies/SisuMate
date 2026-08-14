@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** seed audit filed #330–#333 (pantry allergens, recipe name-match, pours/measures, bar allergens).
-- **Next:** #330/#333 allergen safety first, then #331 name-match, then #332 specs.
+- **Last:** #330–#333 seed quality — pantry/bar allergens, catalog name aliases, classic pours/grams.
+- **Next:** pick next work from open issues.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
 

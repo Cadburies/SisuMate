@@ -28,6 +28,7 @@ import '../../core/colors.dart';
 import '../../core/units.dart';
 import '../../services/tag_library_service.dart';
 import '../../services/quantity_model.dart';
+import '../../services/recipe_allergen_service.dart';
 import '../../domain/repositories/shopping_repository.dart';
 import '../components/tag_combobox.dart';
 import '../components/native_ad_widget.dart';
@@ -1103,6 +1104,40 @@ class CocktailRecipeDetailScreenState
                       ),
                       const SizedBox(height: 12),
                     ],
+                    ingredientsAsync.when(
+                      data: (ingredients) {
+                        final bar = barAsync.asData?.value ?? const <BarIngredient>[];
+                        final assessment = RecipeAllergenService.assess(
+                          ingredients,
+                          const [],
+                          bar: bar,
+                        );
+                        if (assessment.allergens.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              for (final a in assessment.allergens)
+                                Chip(
+                                  label: Text(a,
+                                      style: const TextStyle(fontSize: 12)),
+                                  visualDensity: VisualDensity.compact,
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .error
+                                      .withValues(alpha: 0.15),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
+                    ),
                     if (widget.recipe.cuisine.isNotEmpty ||
                         widget.recipe.flavorProfiles.isNotEmpty) ...[
                       Wrap(

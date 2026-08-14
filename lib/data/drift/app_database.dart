@@ -397,6 +397,8 @@ class BarIngredients extends Table {
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   TextColumn get category => text().withDefault(const Constant(''))();
   TextColumn get flavorProfiles => text().withDefault(const Constant('[]'))();
+  /// #333 — same vocab as pantry allergenTags.
+  TextColumn get allergenTags => text().withDefault(const Constant('[]'))();
   RealColumn get alcoholByVolume => real().nullable()();
   TextColumn get substitute1 => text().nullable()();
   TextColumn get substitute2 => text().nullable()();
@@ -807,7 +809,7 @@ class AppDatabase extends _$AppDatabase {
   // No install base (dev/sim only). schemaVersion tracks changes; wipe local
   // DBs rather than writing upgrade branches for dropped/renamed columns.
   @override
-  int get schemaVersion => 28;
+  int get schemaVersion => 29;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

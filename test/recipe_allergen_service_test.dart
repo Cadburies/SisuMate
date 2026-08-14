@@ -67,6 +67,27 @@ void main() {
       expect(result.dietaryBadges, isEmpty);
     });
 
+    test('#333 bar orgeat / egg / cream allergens union with pantry', () {
+      final ingredients = [
+        RecipeIngredient()..name = 'Orgeat',
+        RecipeIngredient()..name = 'Egg White',
+        RecipeIngredient()..name = 'Baileys Irish Cream',
+      ];
+      final bar = [
+        BarIngredient()
+          ..name = 'Orgeat'
+          ..allergenTags = ['nuts'],
+        BarIngredient()
+          ..name = 'Egg White'
+          ..allergenTags = ['eggs'],
+        BarIngredient()
+          ..name = 'Baileys Irish Cream'
+          ..allergenTags = ['dairy'],
+      ];
+      final result = RecipeAllergenService.assess(ingredients, [], bar: bar);
+      expect(result.allergens, {'nuts', 'eggs', 'dairy'});
+    });
+
     test('non-positive dietary tags are filtered out of the badges', () {
       final ingredients = [RecipeIngredient()..name = 'Mystery Sauce'];
       final pantry = [

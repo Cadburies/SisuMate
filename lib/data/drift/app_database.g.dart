@@ -13625,6 +13625,18 @@ class $BarIngredientsTable extends BarIngredients
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _allergenTagsMeta = const VerificationMeta(
+    'allergenTags',
+  );
+  @override
+  late final GeneratedColumn<String> allergenTags = GeneratedColumn<String>(
+    'allergen_tags',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   static const VerificationMeta _alcoholByVolumeMeta = const VerificationMeta(
     'alcoholByVolume',
   );
@@ -13840,6 +13852,7 @@ class $BarIngredientsTable extends BarIngredients
     isSynced,
     category,
     flavorProfiles,
+    allergenTags,
     alcoholByVolume,
     substitute1,
     substitute2,
@@ -13931,6 +13944,15 @@ class $BarIngredientsTable extends BarIngredients
         flavorProfiles.isAcceptableOrUnknown(
           data['flavor_profiles']!,
           _flavorProfilesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('allergen_tags')) {
+      context.handle(
+        _allergenTagsMeta,
+        allergenTags.isAcceptableOrUnknown(
+          data['allergen_tags']!,
+          _allergenTagsMeta,
         ),
       );
     }
@@ -14142,6 +14164,10 @@ class $BarIngredientsTable extends BarIngredients
         DriftSqlType.string,
         data['${effectivePrefix}flavor_profiles'],
       )!,
+      allergenTags: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allergen_tags'],
+      )!,
       alcoholByVolume: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}alcohol_by_volume'],
@@ -14235,6 +14261,9 @@ class BarIngredientRow extends DataClass
   final bool isSynced;
   final String category;
   final String flavorProfiles;
+
+  /// #333 — same vocab as pantry allergenTags.
+  final String allergenTags;
   final double? alcoholByVolume;
   final String? substitute1;
   final String? substitute2;
@@ -14268,6 +14297,7 @@ class BarIngredientRow extends DataClass
     required this.isSynced,
     required this.category,
     required this.flavorProfiles,
+    required this.allergenTags,
     this.alcoholByVolume,
     this.substitute1,
     this.substitute2,
@@ -14300,6 +14330,7 @@ class BarIngredientRow extends DataClass
     map['is_synced'] = Variable<bool>(isSynced);
     map['category'] = Variable<String>(category);
     map['flavor_profiles'] = Variable<String>(flavorProfiles);
+    map['allergen_tags'] = Variable<String>(allergenTags);
     if (!nullToAbsent || alcoholByVolume != null) {
       map['alcohol_by_volume'] = Variable<double>(alcoholByVolume);
     }
@@ -14361,6 +14392,7 @@ class BarIngredientRow extends DataClass
       isSynced: Value(isSynced),
       category: Value(category),
       flavorProfiles: Value(flavorProfiles),
+      allergenTags: Value(allergenTags),
       alcoholByVolume: alcoholByVolume == null && nullToAbsent
           ? const Value.absent()
           : Value(alcoholByVolume),
@@ -14426,6 +14458,7 @@ class BarIngredientRow extends DataClass
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       category: serializer.fromJson<String>(json['category']),
       flavorProfiles: serializer.fromJson<String>(json['flavorProfiles']),
+      allergenTags: serializer.fromJson<String>(json['allergenTags']),
       alcoholByVolume: serializer.fromJson<double?>(json['alcoholByVolume']),
       substitute1: serializer.fromJson<String?>(json['substitute1']),
       substitute2: serializer.fromJson<String?>(json['substitute2']),
@@ -14464,6 +14497,7 @@ class BarIngredientRow extends DataClass
       'isSynced': serializer.toJson<bool>(isSynced),
       'category': serializer.toJson<String>(category),
       'flavorProfiles': serializer.toJson<String>(flavorProfiles),
+      'allergenTags': serializer.toJson<String>(allergenTags),
       'alcoholByVolume': serializer.toJson<double?>(alcoholByVolume),
       'substitute1': serializer.toJson<String?>(substitute1),
       'substitute2': serializer.toJson<String?>(substitute2),
@@ -14496,6 +14530,7 @@ class BarIngredientRow extends DataClass
     bool? isSynced,
     String? category,
     String? flavorProfiles,
+    String? allergenTags,
     Value<double?> alcoholByVolume = const Value.absent(),
     Value<String?> substitute1 = const Value.absent(),
     Value<String?> substitute2 = const Value.absent(),
@@ -14525,6 +14560,7 @@ class BarIngredientRow extends DataClass
     isSynced: isSynced ?? this.isSynced,
     category: category ?? this.category,
     flavorProfiles: flavorProfiles ?? this.flavorProfiles,
+    allergenTags: allergenTags ?? this.allergenTags,
     alcoholByVolume: alcoholByVolume.present
         ? alcoholByVolume.value
         : this.alcoholByVolume,
@@ -14578,6 +14614,9 @@ class BarIngredientRow extends DataClass
       flavorProfiles: data.flavorProfiles.present
           ? data.flavorProfiles.value
           : this.flavorProfiles,
+      allergenTags: data.allergenTags.present
+          ? data.allergenTags.value
+          : this.allergenTags,
       alcoholByVolume: data.alcoholByVolume.present
           ? data.alcoholByVolume.value
           : this.alcoholByVolume,
@@ -14646,6 +14685,7 @@ class BarIngredientRow extends DataClass
           ..write('isSynced: $isSynced, ')
           ..write('category: $category, ')
           ..write('flavorProfiles: $flavorProfiles, ')
+          ..write('allergenTags: $allergenTags, ')
           ..write('alcoholByVolume: $alcoholByVolume, ')
           ..write('substitute1: $substitute1, ')
           ..write('substitute2: $substitute2, ')
@@ -14680,6 +14720,7 @@ class BarIngredientRow extends DataClass
     isSynced,
     category,
     flavorProfiles,
+    allergenTags,
     alcoholByVolume,
     substitute1,
     substitute2,
@@ -14713,6 +14754,7 @@ class BarIngredientRow extends DataClass
           other.isSynced == this.isSynced &&
           other.category == this.category &&
           other.flavorProfiles == this.flavorProfiles &&
+          other.allergenTags == this.allergenTags &&
           other.alcoholByVolume == this.alcoholByVolume &&
           other.substitute1 == this.substitute1 &&
           other.substitute2 == this.substitute2 &&
@@ -14744,6 +14786,7 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
   final Value<bool> isSynced;
   final Value<String> category;
   final Value<String> flavorProfiles;
+  final Value<String> allergenTags;
   final Value<double?> alcoholByVolume;
   final Value<String?> substitute1;
   final Value<String?> substitute2;
@@ -14773,6 +14816,7 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     this.isSynced = const Value.absent(),
     this.category = const Value.absent(),
     this.flavorProfiles = const Value.absent(),
+    this.allergenTags = const Value.absent(),
     this.alcoholByVolume = const Value.absent(),
     this.substitute1 = const Value.absent(),
     this.substitute2 = const Value.absent(),
@@ -14803,6 +14847,7 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     this.isSynced = const Value.absent(),
     this.category = const Value.absent(),
     this.flavorProfiles = const Value.absent(),
+    this.allergenTags = const Value.absent(),
     this.alcoholByVolume = const Value.absent(),
     this.substitute1 = const Value.absent(),
     this.substitute2 = const Value.absent(),
@@ -14833,6 +14878,7 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     Expression<bool>? isSynced,
     Expression<String>? category,
     Expression<String>? flavorProfiles,
+    Expression<String>? allergenTags,
     Expression<double>? alcoholByVolume,
     Expression<String>? substitute1,
     Expression<String>? substitute2,
@@ -14863,6 +14909,7 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
       if (isSynced != null) 'is_synced': isSynced,
       if (category != null) 'category': category,
       if (flavorProfiles != null) 'flavor_profiles': flavorProfiles,
+      if (allergenTags != null) 'allergen_tags': allergenTags,
       if (alcoholByVolume != null) 'alcohol_by_volume': alcoholByVolume,
       if (substitute1 != null) 'substitute1': substitute1,
       if (substitute2 != null) 'substitute2': substitute2,
@@ -14896,6 +14943,7 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     Value<bool>? isSynced,
     Value<String>? category,
     Value<String>? flavorProfiles,
+    Value<String>? allergenTags,
     Value<double?>? alcoholByVolume,
     Value<String?>? substitute1,
     Value<String?>? substitute2,
@@ -14926,6 +14974,7 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
       isSynced: isSynced ?? this.isSynced,
       category: category ?? this.category,
       flavorProfiles: flavorProfiles ?? this.flavorProfiles,
+      allergenTags: allergenTags ?? this.allergenTags,
       alcoholByVolume: alcoholByVolume ?? this.alcoholByVolume,
       substitute1: substitute1 ?? this.substitute1,
       substitute2: substitute2 ?? this.substitute2,
@@ -14979,6 +15028,9 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
     }
     if (flavorProfiles.present) {
       map['flavor_profiles'] = Variable<String>(flavorProfiles.value);
+    }
+    if (allergenTags.present) {
+      map['allergen_tags'] = Variable<String>(allergenTags.value);
     }
     if (alcoholByVolume.present) {
       map['alcohol_by_volume'] = Variable<double>(alcoholByVolume.value);
@@ -15050,6 +15102,7 @@ class BarIngredientsCompanion extends UpdateCompanion<BarIngredientRow> {
           ..write('isSynced: $isSynced, ')
           ..write('category: $category, ')
           ..write('flavorProfiles: $flavorProfiles, ')
+          ..write('allergenTags: $allergenTags, ')
           ..write('alcoholByVolume: $alcoholByVolume, ')
           ..write('substitute1: $substitute1, ')
           ..write('substitute2: $substitute2, ')
@@ -32366,6 +32419,7 @@ typedef $$BarIngredientsTableCreateCompanionBuilder =
       Value<bool> isSynced,
       Value<String> category,
       Value<String> flavorProfiles,
+      Value<String> allergenTags,
       Value<double?> alcoholByVolume,
       Value<String?> substitute1,
       Value<String?> substitute2,
@@ -32397,6 +32451,7 @@ typedef $$BarIngredientsTableUpdateCompanionBuilder =
       Value<bool> isSynced,
       Value<String> category,
       Value<String> flavorProfiles,
+      Value<String> allergenTags,
       Value<double?> alcoholByVolume,
       Value<String?> substitute1,
       Value<String?> substitute2,
@@ -32473,6 +32528,11 @@ class $$BarIngredientsTableFilterComposer
 
   ColumnFilters<String> get flavorProfiles => $composableBuilder(
     column: $table.flavorProfiles,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get allergenTags => $composableBuilder(
+    column: $table.allergenTags,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -32626,6 +32686,11 @@ class $$BarIngredientsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get allergenTags => $composableBuilder(
+    column: $table.allergenTags,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get alcoholByVolume => $composableBuilder(
     column: $table.alcoholByVolume,
     builder: (column) => ColumnOrderings(column),
@@ -32759,6 +32824,11 @@ class $$BarIngredientsTableAnnotationComposer
 
   GeneratedColumn<String> get flavorProfiles => $composableBuilder(
     column: $table.flavorProfiles,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get allergenTags => $composableBuilder(
+    column: $table.allergenTags,
     builder: (column) => column,
   );
 
@@ -32898,6 +32968,7 @@ class $$BarIngredientsTableTableManager
                 Value<bool> isSynced = const Value.absent(),
                 Value<String> category = const Value.absent(),
                 Value<String> flavorProfiles = const Value.absent(),
+                Value<String> allergenTags = const Value.absent(),
                 Value<double?> alcoholByVolume = const Value.absent(),
                 Value<String?> substitute1 = const Value.absent(),
                 Value<String?> substitute2 = const Value.absent(),
@@ -32927,6 +32998,7 @@ class $$BarIngredientsTableTableManager
                 isSynced: isSynced,
                 category: category,
                 flavorProfiles: flavorProfiles,
+                allergenTags: allergenTags,
                 alcoholByVolume: alcoholByVolume,
                 substitute1: substitute1,
                 substitute2: substitute2,
@@ -32958,6 +33030,7 @@ class $$BarIngredientsTableTableManager
                 Value<bool> isSynced = const Value.absent(),
                 Value<String> category = const Value.absent(),
                 Value<String> flavorProfiles = const Value.absent(),
+                Value<String> allergenTags = const Value.absent(),
                 Value<double?> alcoholByVolume = const Value.absent(),
                 Value<String?> substitute1 = const Value.absent(),
                 Value<String?> substitute2 = const Value.absent(),
@@ -32987,6 +33060,7 @@ class $$BarIngredientsTableTableManager
                 isSynced: isSynced,
                 category: category,
                 flavorProfiles: flavorProfiles,
+                allergenTags: allergenTags,
                 alcoholByVolume: alcoholByVolume,
                 substitute1: substitute1,
                 substitute2: substitute2,

@@ -7,6 +7,7 @@ import '../../models/models.dart';
 import '../drift/app_database.dart';
 import 'cocktail_image_assets.dart';
 import 'cocktail_tags.dart';
+import 'ingredient_aliases.dart';
 import 'recipe_drift_seed.dart';
 
 /// Bundled expansion pack from `cocktails_import.json`, processed to:
@@ -89,7 +90,7 @@ Future<void> seedCocktailsImport(String defaultBoatSupabaseId) async {
           ..supabaseId =
               'ing_${id}_${ingName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}_$i'
           ..recipeSupabaseId = id
-          ..name = ingName
+          ..name = isGarnish ? ingName : canonicalIngredientName(ingName)
           ..quantity = isGarnish ? null : qty
           ..unit = isGarnish ? null : ing['unit'] as String?
           ..isGarnish = isGarnish

@@ -26,6 +26,7 @@ class BarIngredientRepositoryImpl implements BarIngredientRepository {
     ..isSynced = r.isSynced
     ..category = r.category
     ..flavorProfiles = (jsonDecode(r.flavorProfiles) as List).cast<String>()
+    ..allergenTags = (jsonDecode(r.allergenTags) as List).cast<String>()
     ..alcoholByVolume = r.alcoholByVolume
     ..substitute1 = r.substitute1
     ..substitute2 = r.substitute2
@@ -57,6 +58,7 @@ class BarIngredientRepositoryImpl implements BarIngredientRepository {
         isSynced: Value(i.isSynced),
         category: Value(i.category),
         flavorProfiles: Value(jsonEncode(i.flavorProfiles)),
+        allergenTags: Value(jsonEncode(i.allergenTags)),
         alcoholByVolume: Value(i.alcoholByVolume),
         substitute1: Value(i.substitute1),
         substitute2: Value(i.substitute2),

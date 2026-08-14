@@ -320,6 +320,19 @@ const _barData =
 // Substitute hierarchy: key ingredient can substitute FOR the listed names.
 // e.g. 'Orange Curacao' -> ('Triple Sec', 'Cointreau') means:
 // if you have Orange Curacao stocked, recipes calling for Triple Sec or Cointreau are covered.
+/// #333 — bar catalog allergens (EU-style vocab). Coconut is not tree-nut.
+const _barAllergens = <String, List<String>>{
+  'Orgeat': ['nuts'],
+  'Amaretto': ['nuts'],
+  'Velvet Falernum': ['nuts'],
+  'Falernum Syrup': ['nuts'],
+  'Creme de Noyaux': ['nuts'],
+  'Pecan Liqueur': ['nuts'],
+  'Egg White': ['eggs'],
+  'Baileys Irish Cream': ['dairy'],
+  'Amarula': ['dairy'],
+};
+
 const _barSubstitutes = <String, (String?, String?)>{
   'Orange Curacao':        ('Triple Sec', 'Cointreau'),
   'Velvet Falernum':       ('Falernum Syrup', null),
@@ -339,7 +352,8 @@ const _barSubstitutes = <String, (String?, String?)>{
   'Bourbon':               ('Rye Whiskey', 'Irish Whiskey'),
 };
 
-List<BarIngredient> _buildBarIngredients() {
+/// Bundled bar catalog (seed + tests).
+List<BarIngredient> bundledBarIngredients() {
   final ingredients = <BarIngredient>[];
   for (var i = 0; i < _barData.length; i++) {
     final (name, cat, flavors, abv, price, priceUnit, imgUrl) = _barData[i];
@@ -355,6 +369,7 @@ List<BarIngredient> _buildBarIngredients() {
       ..name = name
       ..category = cat
       ..flavorProfiles = List<String>.from(flavors)
+      ..allergenTags = List<String>.from(_barAllergens[name] ?? const [])
       ..alcoholByVolume = abv
       ..lastKnownPrice = price
       ..priceCurrency = 'USD'
@@ -373,7 +388,7 @@ List<BarIngredient> _buildBarIngredients() {
 
 Future<void> seedBarIngredients() async {
   // BarIngredient moved to Drift (S1).
-  final ingredients = _buildBarIngredients();
+  final ingredients = bundledBarIngredients();
   if (await barIngredientCountInDrift() == 0) {
     await seedBarIngredientsToDrift(ingredients);
   } else {

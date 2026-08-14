@@ -4,6 +4,7 @@ import '../repositories/recipe_repository_impl.dart';
 import 'cocktail_image_assets.dart';
 import 'cocktail_tags.dart';
 import 'recipe_drift_seed.dart';
+import 'ingredient_aliases.dart';
 import 'seed_cocktails_import.dart';
 import 'seed_coverage_cocktails.dart';
 import 'seed_menus_import.dart';
@@ -258,7 +259,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       RecipeIngredient()
         ..supabaseId = 'ing_${recipeId}_${name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}'
         ..recipeSupabaseId = recipeId
-        ..name = name
+        ..name = isGarnish ? name : canonicalIngredientName(name)
         ..quantity = quantity
         ..unit = unit
         ..substitute = substitute
@@ -292,7 +293,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
 
   // Painkiller
   addCocktail('cocktail_painkiller', 'Dark Blended Rum', 60, 'ml');
-  addCocktail('cocktail_painkiller', 'Pineapple Juice', 30, 'ml');
+  addCocktail('cocktail_painkiller', 'Pineapple Juice', 120, 'ml');
   addCocktail('cocktail_painkiller', 'Orange Juice', 30, 'ml');
   addCocktail('cocktail_painkiller', 'Cream of Coconut', 30, 'ml');
   addCocktail('cocktail_painkiller', 'Freshly Grated Nutmeg', null, null, isGarnish: true, garnishNotes: 'Grate whole nutmeg directly over the surface of the drink just before serving - the warmth of the foam carries the spice. Pre-ground nutmeg loses most of its punch.');
@@ -311,7 +312,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addCocktail('cocktail_suffering_bastard', 'Bourbon', 30, 'ml');
   addCocktail('cocktail_suffering_bastard', 'Fresh Lime Juice', 20, 'ml');
   addCocktail('cocktail_suffering_bastard', 'Angostura Bitters', 2.0, 'dash');
-  addCocktail('cocktail_suffering_bastard', 'Ginger Beer', null, null, isOptional: true);
+  addCocktail('cocktail_suffering_bastard', 'Ginger Beer', 100, 'ml');
   addCocktail('cocktail_suffering_bastard', 'Fresh Mint Sprig', null, null, isGarnish: true, garnishNotes: 'Slap the sprig and tuck it into the neck of the tiki mug or alongside the ice. A cucumber slice on the rim is a classic British Cairo-era touch - add one if available.');
   addCocktail('cocktail_suffering_bastard', 'Lime Wedge', null, null, isGarnish: true, garnishNotes: 'Squeeze the wedge over the top and drop it in. The fresh citrus brightens the ginger beer finish.');
 
@@ -619,7 +620,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
       RecipeIngredient()
         ..supabaseId = 'ing_${recipeId}_${name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}'
         ..recipeSupabaseId = recipeId
-        ..name = name
+        ..name = isGarnish ? name : canonicalIngredientName(name)
         ..quantity = quantity
         ..unit = unit
         ..substitute = substitute
@@ -652,12 +653,12 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addMenu('menu_asian_fusion_yacht_dinner', 'Jasmine Rice', 160.0, 'g');
 
   // Classic French Bistro
-  addMenu('menu_classic_french_bistro', 'Duck Breast', 2.0, 'pieces');
+  addMenu('menu_classic_french_bistro', 'Duck Breast', 350.0, 'g');
   addMenu('menu_classic_french_bistro', 'Fingerling Potatoes', 300.0, 'g');
   addMenu('menu_classic_french_bistro', 'French Green Beans', 200.0, 'g');
   addMenu('menu_classic_french_bistro', 'Shallots', 2.0, 'pieces');
   addMenu('menu_classic_french_bistro', 'Dry White Wine', 100.0, 'ml');
-  addMenu('menu_classic_french_bistro', 'Fresh Thyme', 15.0, 'ml');
+  addMenu('menu_classic_french_bistro', 'Fresh Thyme', 5.0, 'g');
   addMenu('menu_classic_french_bistro', 'Butter', 60.0, 'g');
   addMenu('menu_classic_french_bistro', 'Dijon Mustard', 15.0, 'ml', isOptional: true);
 
@@ -678,18 +679,18 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addMenu('menu_caribbean_yacht_bbq', 'Mango', 1.0, 'pieces');
   addMenu('menu_caribbean_yacht_bbq', 'Allspice Berries', 5.0, 'ml');
   addMenu('menu_caribbean_yacht_bbq', 'Scotch Bonnet Peppers', 1.0, 'pieces', substitute: 'Chilli Flakes');
-  addMenu('menu_caribbean_yacht_bbq', 'Fresh Thyme', 15.0, 'ml');
+  addMenu('menu_caribbean_yacht_bbq', 'Fresh Thyme', 5.0, 'g');
   addMenu('menu_caribbean_yacht_bbq', 'Dark Blended Rum', 30.0, 'ml');
 
   // Modern Australian Cuisine
-  addMenu('menu_modern_australian_cuisine', 'Lamb Rack', 2.0, 'pieces');
+  addMenu('menu_modern_australian_cuisine', 'Lamb Rack', 500.0, 'g');
   addMenu('menu_modern_australian_cuisine', 'Wattleseed', 5.0, 'ml', isOptional: true);
   addMenu('menu_modern_australian_cuisine', 'Fresh Oysters', 6.0, 'pieces');
   addMenu('menu_modern_australian_cuisine', 'Macadamia Nuts', 40.0, 'g');
   addMenu('menu_modern_australian_cuisine', 'Honey', 15.0, 'ml');
   addMenu('menu_modern_australian_cuisine', 'Fresh Lemon', 1.0, 'pieces');
   addMenu('menu_modern_australian_cuisine', 'Extra Virgin Olive Oil', 30.0, 'ml');
-  addMenu('menu_modern_australian_cuisine', 'Fresh Thyme', 15.0, 'ml');
+  addMenu('menu_modern_australian_cuisine', 'Fresh Thyme', 5.0, 'g');
 
   // Spanish Tapas Yacht Party
   addMenu('menu_spanish_tapas_yacht_party', 'Serrano Ham', 80.0, 'g');
@@ -712,18 +713,18 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
   addMenu('menu_japanese_kaiseki_dinner', 'Sesame Oil', 5.0, 'ml');
 
   // American Steakhouse Classic
-  addMenu('menu_american_steakhouse_classic', 'Prime Ribeye Steak', 2.0, 'pieces');
+  addMenu('menu_american_steakhouse_classic', 'Prime Ribeye Steak', 600.0, 'g');
   addMenu('menu_american_steakhouse_classic', 'Asparagus', 200.0, 'g');
   addMenu('menu_american_steakhouse_classic', 'Butter', 40.0, 'g');
   addMenu('menu_american_steakhouse_classic', 'Heavy Cream', 100.0, 'ml');
   addMenu('menu_american_steakhouse_classic', 'Garlic', 3.0, 'cloves');
-  addMenu('menu_american_steakhouse_classic', 'Fresh Thyme', 15.0, 'ml');
+  addMenu('menu_american_steakhouse_classic', 'Fresh Thyme', 5.0, 'g');
   addMenu('menu_american_steakhouse_classic', 'Salt', null, 'to taste');
   addMenu('menu_american_steakhouse_classic', 'Black Pepper', null, 'to taste');
 
   // Thai Royal Cuisine
   addMenu('menu_thai_royal_cuisine', 'Fresh Seafood', 350.0, 'g');
-  addMenu('menu_thai_royal_cuisine', 'Coconut Milk', 1.0, 'cans');
+  addMenu('menu_thai_royal_cuisine', 'Coconut Milk', 400.0, 'ml');
   addMenu('menu_thai_royal_cuisine', 'Lemongrass', 2.0, 'stalks');
   addMenu('menu_thai_royal_cuisine', 'Thai Basil', 10.0, 'g', substitute: 'Fresh Basil');
   addMenu('menu_thai_royal_cuisine', 'Galangal', 15.0, 'g', substitute: 'Fresh Ginger');
@@ -926,7 +927,7 @@ Future<void> seedRecipes(String defaultBoatSupabaseId) async {
         ..supabaseId =
             'ing_${recipeId}_${name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}'
         ..recipeSupabaseId = recipeId
-        ..name = name
+        ..name = canonicalIngredientName(name)
         ..quantity = quantity
         ..unit = unit
         ..isOptional = isOptional,

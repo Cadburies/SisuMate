@@ -16,11 +16,8 @@
         "savory",
         "meaty",
         "rich",
-        "citrusy",
         "warm",
-        "sweet",
-        "aromatic",
-        "nutty"
+        "aromatic"
       ],
       "cookingMethod": "Grill",
       "prepMinutes": 20,
@@ -1091,7 +1088,6 @@
         "smoky",
         "salty",
         "warm",
-        "citrusy",
         "aromatic"
       ],
       "cookingMethod": "Grill",
@@ -3673,8 +3669,7 @@
       ],
       "flavorProfiles": [
         "savory",
-        "neutral",
-        "sweet"
+        "meaty"
       ],
       "cookingMethod": "Grill",
       "prepMinutes": 10,

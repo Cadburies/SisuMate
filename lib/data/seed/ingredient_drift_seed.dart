@@ -38,6 +38,7 @@ Future<void> seedBarIngredientsToDrift(List<BarIngredient> ingredients) async {
           isBundled: Value(i.isBundled),
           category: Value(i.category),
           flavorProfiles: Value(jsonEncode(i.flavorProfiles)),
+          allergenTags: Value(jsonEncode(i.allergenTags)),
           alcoholByVolume: Value(i.alcoholByVolume),
           substitute1: Value(i.substitute1),
           substitute2: Value(i.substitute2),

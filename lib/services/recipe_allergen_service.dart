@@ -21,17 +21,24 @@ class RecipeAllergenService {
   /// carries that tag.
   static RecipeAllergenAssessment assess(
     List<RecipeIngredient> ingredients,
-    List<PantryIngredient> pantry,
-  ) {
+    List<PantryIngredient> pantry, {
+    List<BarIngredient> bar = const [],
+  }) {
     final pantryByName = {
       for (final p in pantry) p.name.toLowerCase().trim(): p,
+    };
+    final barByName = {
+      for (final b in bar) b.name.toLowerCase().trim(): b,
     };
     final allergens = <String>{};
     Set<String>? dietaryIntersection;
     for (final ing in ingredients) {
-      final p = pantryByName[ing.name.toLowerCase().trim()];
+      final key = ing.name.toLowerCase().trim();
+      final p = pantryByName[key];
+      final b = barByName[key];
+      if (p != null) allergens.addAll(p.allergenTags);
+      if (b != null) allergens.addAll(b.allergenTags);
       if (p == null) continue;
-      allergens.addAll(p.allergenTags);
       if (!ing.isGarnish && p.dietaryTags.isNotEmpty) {
         dietaryIntersection = dietaryIntersection == null
             ? p.dietaryTags.toSet()

@@ -2895,7 +2895,7 @@
       "description": "The original cocktail - a simple, elegant whiskey drink that started it all.",
       "instructions": "Stir whiskey, sugar, and bitters with ice. Strain over a large ice cube in a rocks glass. Garnish with orange twist.",
       "recipeType": "cocktail",
-      "glassware": "Coupe",
+      "glassware": "Rocks glass",
       "prepMinutes": 4,
       "story": "First documented in the early 1800s, the Old Fashioned is the drink that gave the word 'cocktail' its meaning. It evolved from the basic spirit-sugar-water-bitters formula. A true American classic that has survived every trend. Bartenders love telling guests it's the grandfather of all mixed drinks - strong, simple, and timeless.",
       "cuisine": [
@@ -2946,7 +2946,7 @@
       "description": "The epitome of sophistication - crisp gin and vermouth.",
       "instructions": "Stir gin and dry vermouth with ice. Strain into a chilled coupe or martini glass. Garnish with olive or lemon twist.",
       "recipeType": "cocktail",
-      "glassware": "Rocks glass",
+      "glassware": "Coupe",
       "prepMinutes": 3,
       "story": "Evolving in the late 19th century from the Martinez, the Martini became the symbol of elegance during the Jazz Age and beyond. Its simplicity hides perfect balance. Whether wet or dry, it remains the king of cocktails. Every great bartender has their own ritual for this timeless icon.",
       "cuisine": [

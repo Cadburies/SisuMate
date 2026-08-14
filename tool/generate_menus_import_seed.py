@@ -9,6 +9,9 @@
 
 Regenerate:
   python3 tool/generate_menus_import_seed.py
+
+Ingredient names are remapped to pantry/bar catalog names at seed
+insert via lib/data/seed/ingredient_aliases.dart (#331).
 """
 
 from __future__ import annotations
