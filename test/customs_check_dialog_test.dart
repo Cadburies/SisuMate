@@ -88,16 +88,18 @@ void main() {
       (tester) async {
     await pumpScreen(tester);
 
-    expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.auto_awesome));
+    expect(find.byTooltip('Plan port run'), findsOneWidget);
+    expect(find.byTooltip('Item shop guide'), findsOneWidget);
+    await tester.tap(find.byTooltip('Item shop guide'));
     await tester.pumpAndSettle();
 
     expect(find.byType(ShoppingItemAiDialog), findsOneWidget);
     expect(find.byType(CustomsCheckDialog), findsNothing);
     expect(find.textContaining('Duty-free rum'), findsWidgets);
     expect(find.textContaining('Offline shopping guide'), findsOneWidget);
-    expect(find.text('Find nearest shop (online)'), findsOneWidget);
-    expect(find.text('Improve with AI (online)'), findsOneWidget);
+    expect(find.text('Find nearest shop (online)'), findsNothing);
+    expect(find.text('Improve with AI (online)'), findsNothing);
+    expect(find.text('Plan port run for this list'), findsOneWidget);
     // Alcohol customs pack should auto-appear offline for rum.
     expect(find.textContaining('Alcohol quantities'), findsOneWidget);
   });

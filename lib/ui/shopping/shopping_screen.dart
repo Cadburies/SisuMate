@@ -24,6 +24,7 @@ import '../../services/email_service.dart';
 import '../../services/smart_shopping_service.dart';
 import 'customs_check_dialog.dart';
 import 'shopping_item_ai_dialog.dart';
+import 'shopping_port_run_dialog.dart';
 
 enum SortOption { original, name, completed, price, priority }
 
@@ -181,6 +182,12 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
                 title: 'Shopping & Spares',
                 onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
                 actionsBuilder: (color) => [
+                  // #337 — whole-list port run (not the per-item guide).
+                  IconButton(
+                    icon: Icon(Icons.auto_awesome, color: color),
+                    tooltip: 'Plan port run',
+                    onPressed: () => openShoppingPortRun(context, ref),
+                  ),
                   // #317 — list-level customs (not the per-item AI badge).
                   IconButton(
                     icon: Icon(Icons.public, color: color),
@@ -1050,14 +1057,23 @@ class ShoppingItemTile extends ConsumerWidget {
               customBorder: const CircleBorder(),
               onTap: () => showDialog(
                 context: context,
-                builder: (_) => ShoppingItemAiDialog(item: item),
+                builder: (dialogContext) => ShoppingItemAiDialog(
+                  item: item,
+                  onPlanPortRun: () {
+                    Navigator.of(dialogContext).pop();
+                    openShoppingPortRun(context, ref);
+                  },
+                ),
               ),
-              child: const Padding(
-                padding: EdgeInsets.all(6),
-                child: Icon(
-                  Icons.auto_awesome,
-                  size: 16,
-                  color: Colors.white,
+              child: const Tooltip(
+                message: 'Item shop guide',
+                child: Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(
+                    Icons.auto_awesome,
+                    size: 16,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

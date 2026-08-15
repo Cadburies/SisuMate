@@ -228,6 +228,40 @@ void main() {
     expect(payload.keys, isNot(contains('longitude')));
   });
 
+  test('#337 shoppingPortRunQuery whitelists list + coarse city + guests, '
+      'never GPS or last names', () {
+    final payload = LlmPayloadBuilder.shoppingPortRunQuery(
+      coarseLocation: 'St George\'s, Grenada',
+      weekday: 'Saturday',
+      items: [
+        (
+          name: 'Beef Tenderloin',
+          origin: 'pantry',
+          quantity: 1,
+          unit: 'pack',
+          lastPurchasePrice: 6.0,
+          lastPurchasePlace: null,
+        ),
+      ],
+      guests: [
+        (
+          firstName: 'Marie',
+          allergens: const ['nuts'],
+          diets: const ['halal'],
+        ),
+      ],
+    );
+    final encoded = jsonEncode(payload);
+    expect(payload['coarseLocation'], 'St George\'s, Grenada');
+    expect(payload['weekday'], 'Saturday');
+    expect((payload['items'] as List).single['name'], 'Beef Tenderloin');
+    expect((payload['guests'] as List).single['firstName'], 'Marie');
+    expect(encoded, isNot(contains('boatSupabaseId')));
+    expect(encoded, isNot(contains('latitude')));
+    expect(encoded, isNot(contains('longitude')));
+    expect(payload.keys, {'coarseLocation', 'weekday', 'items', 'guests'});
+  });
+
   test('#334 shoppingShopFinderQuery omits coarseLocation when missing', () {
     final payload = LlmPayloadBuilder.shoppingShopFinderQuery(
       itemName: 'Olive oil',

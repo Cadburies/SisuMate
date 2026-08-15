@@ -59,10 +59,9 @@ class ShoppingItemLocalGuide {
 
     buf.writeln();
     buf.writeln(
-      'Tip: this guide does not query live places. Use “Find nearest shop '
-      '(online)” for a named store, expected price, and walking distance '
-      'when online + an AI API key is set. “Improve with AI” can still '
-      'suggest local product names and store types for a typed region.',
+      'Tip: this is one line. Use “Plan port run” on the Shopping title '
+      'bar to split the whole list across named shops, with walk times '
+      'and guest-allergy watch — offline first, live names optional.',
     );
     return buf.toString().trimRight();
   }

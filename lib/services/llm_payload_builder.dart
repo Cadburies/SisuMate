@@ -205,6 +205,61 @@ class LlmPayloadBuilder {
     };
   }
 
+  /// #337 — whole-list port run (grounded search).
+  ///
+  /// Item summaries + coarse city + weekday + guest first-name / allergen
+  /// / diet tags. Never lat/lon, boat ids, photos, or guest last names.
+  static Map<String, dynamic> shoppingPortRunQuery({
+    required String coarseLocation,
+    required String weekday,
+    required Iterable<
+            ({
+              String name,
+              String origin,
+              int quantity,
+              String? unit,
+              double? lastPurchasePrice,
+              String? lastPurchasePlace,
+            })>
+        items,
+    required Iterable<
+            ({
+              String firstName,
+              List<String> allergens,
+              List<String> diets,
+            })>
+        guests,
+  }) {
+    final loc = coarseLocation.trim();
+    return {
+      'coarseLocation': loc.length > 120 ? loc.substring(0, 120) : loc,
+      'weekday': weekday,
+      'items': [
+        for (final i in items)
+          {
+            'name': i.name,
+            'origin': i.origin,
+            'quantity': i.quantity,
+            'unit': ?i.unit,
+            'lastPurchasePrice': ?i.lastPurchasePrice,
+            if (i.lastPurchasePlace != null &&
+                i.lastPurchasePlace!.trim().isNotEmpty)
+              'lastPurchasePlace': i.lastPurchasePlace!.trim().length > 80
+                  ? i.lastPurchasePlace!.trim().substring(0, 80)
+                  : i.lastPurchasePlace!.trim(),
+          },
+      ],
+      'guests': [
+        for (final g in guests)
+          {
+            'firstName': g.firstName,
+            'allergens': g.allergens,
+            'diets': g.diets,
+          },
+      ],
+    };
+  }
+
   /// Freeform Captain's Log entry parsing (#220): **intentionally not
   /// whitelist-filtered** like every other builder in this file — the
   /// user's own freeform typed/dictated text *is* the payload; there is no

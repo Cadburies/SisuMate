@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** #334 shopping “Find nearest shop (online)” — grounded BYOK lookup, or Settings → AI API Keys.
+- **Last:** #337 shopping port run — whole-list shop plan; per-item sparkle is offline-only.
 - **Next:** pick next work from open issues.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 
