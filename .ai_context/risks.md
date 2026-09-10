@@ -26,7 +26,7 @@ Change field → Drift column + repo row↔domain + `fromJson`/`toJson` if seria
 ### RevenueCat / isProProvider
 **High** · `revenuecat_service.dart`, `isProProvider`  
 Gates: ads, completion, boats, FreeEditGate, paywall UI. Sync uses separate `_syncAllowed()`.  
-If RC init fails, `isPro()` may retry init and treat user Free until success. Debug force-Pro: `kDebugMode` only.
+If RC init fails, `isPro()` may retry init and treat user Free until success. Debug force-Pro: `kDebugMode` only. Tester-build Pro: `FORCE_PRO_UNTIL` dart-define only (omit on production store builds).
 
 ### SyncService
 **High** · `sync_service.dart`, `wire_prefix.dart`  

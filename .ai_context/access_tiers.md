@@ -24,6 +24,7 @@
 - **UI gate:** watch `isProProvider` (`StreamProvider` in `di.dart`) — re-emits on purchase/restore/login.
 - **Not authoritative:** `UserSettings.isPro` / `proExpiresAt` (legacy/local only).
 - **Debug:** `kForceProForTesting` only when `kDebugMode` (RM1) — release ignores it. See GitHub issue #1.
+- **Tester IPA:** `--dart-define=FORCE_PRO_UNTIL=<ISO-8601 UTC>` grants Pro in release until that instant (current wave: `2026-12-31T23:59:59Z`). Omit on production store builds — empty define is a no-op. Still ignored under `FLUTTER_TEST`.
 
 ## Sync ≠ Pro (decision 2026-07-11)
 

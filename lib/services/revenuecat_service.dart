@@ -17,6 +17,35 @@ import 'error_log_service.dart';
 /// outstanding.md (RM1).
 const bool kForceProForTesting = true;
 
+/// Tester-build Pro expiry. Empty in ordinary debug/release. Pass
+/// `--dart-define=FORCE_PRO_UNTIL=2026-12-31T23:59:59Z` only when compiling a
+/// TestFlight / Play internal IPA so testers get Pro until that UTC instant.
+/// A production store build must omit this define (compile-time empty → no-op).
+/// Never applies under `FLUTTER_TEST`.
+const String kForceProUntilRaw = String.fromEnvironment('FORCE_PRO_UNTIL');
+
+/// Parses [kForceProUntilRaw] (or [raw] in tests). Null when unset/invalid.
+DateTime? parseForceProUntil(String raw) {
+  if (raw.trim().isEmpty) return null;
+  return DateTime.tryParse(raw.trim())?.toUtc();
+}
+
+/// True when a tester-build [FORCE_PRO_UNTIL] dart-define is still in the
+/// future. Always false under the test runner unless [underTest] is forced
+/// false so the helper itself can be unit-tested.
+bool isTesterProActive({
+  String raw = kForceProUntilRaw,
+  DateTime? now,
+  bool? underTest,
+}) {
+  final inTest =
+      underTest ?? Platform.environment.containsKey('FLUTTER_TEST');
+  if (inTest) return false;
+  final until = parseForceProUntil(raw);
+  if (until == null) return false;
+  return (now ?? DateTime.now().toUtc()).isBefore(until);
+}
+
 /// Debug bootstrap identity used together with [kForceProForTesting] so on-device
 /// Pro testing runs against a fixed Supabase owner account + boat instead of the
 /// full sign-up flow. Only consumed on debug (kDebugMode) code paths. The account
@@ -170,10 +199,15 @@ class RevenueCatService {
     }
   }
 
-  /// Real entitlement expiration (null when not subscribed). Deliberately NOT
-  /// covered by the testing bypass — the profiles heartbeat (STALE-DATA) must
-  /// record the true subscription state, never the debug fiction.
+  /// Real entitlement expiration (null when not subscribed). The debug
+  /// [kForceProForTesting] bypass is deliberately NOT reflected here — the
+  /// profiles heartbeat (STALE-DATA) must record the true subscription state.
+  /// Tester-build [kForceProUntilRaw] *is* returned so TestFlight Pro grants
+  /// stamp the compiled expiry (end of 2026 for the current tester wave).
   Future<DateTime?> proExpiresAt() async {
+    if (isTesterProActive()) {
+      return parseForceProUntil(kForceProUntilRaw);
+    }
     if (!_isInitialized && !_initFailed) await init();
     final s = _customerInfo?.entitlements.active[entitlementId]?.expirationDate;
     return s != null ? DateTime.tryParse(s) : null;
@@ -183,6 +217,11 @@ class RevenueCatService {
     if (Platform.environment.containsKey('FLUTTER_TEST') &&
         debugProOverrideForTests != null) {
       return debugProOverrideForTests!;
+    }
+    // Tester IPA/APK compiled with FORCE_PRO_UNTIL — release-safe because
+    // the define is empty unless that build flag is passed. Never in tests.
+    if (isTesterProActive()) {
+      return true;
     }
     if (!_isInitialized && !_initFailed) await init();
     final entitlements = _customerInfo?.entitlements.active ?? {};

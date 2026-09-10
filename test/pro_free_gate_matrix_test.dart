@@ -50,6 +50,17 @@ void main() {
       );
     });
 
+    test('FORCE_PRO_UNTIL tester grant is compile-time and ignored in tests',
+        () {
+      final src = File('$root/lib/services/revenuecat_service.dart')
+          .readAsStringSync();
+      expect(src, contains("String.fromEnvironment('FORCE_PRO_UNTIL')"));
+      expect(src, contains('isTesterProActive'));
+      expect(kForceProUntilRaw, isEmpty,
+          reason: 'host tests must not compile in a tester Pro grant');
+      expect(isTesterProActive(raw: '2026-12-31T23:59:59Z'), isFalse);
+    });
+
     test('kBypassOnboardingForTesting is gated by kDebugMode only', () {
       final src =
           File('$root/lib/ui/onboarding/onboarding_screen.dart').readAsStringSync();

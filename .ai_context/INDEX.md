@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** #337 shopping port run — whole-list shop plan; per-item sparkle is offline-only.
+- **Last:** tester IPA — Pro via `FORCE_PRO_UNTIL=2026-12-31T23:59:59Z` (omit on production).
 - **Next:** pick next work from open issues.
 - **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
 

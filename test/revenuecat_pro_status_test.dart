@@ -20,6 +20,51 @@ void main() {
       expect(isPro, isFalse);
     });
 
+    test('parseForceProUntil is null for empty/invalid and UTC for ISO dates',
+        () {
+      expect(parseForceProUntil(''), isNull);
+      expect(parseForceProUntil('   '), isNull);
+      expect(parseForceProUntil('not-a-date'), isNull);
+      expect(
+        parseForceProUntil('2026-12-31T23:59:59Z'),
+        DateTime.utc(2026, 12, 31, 23, 59, 59),
+      );
+    });
+
+    test('isTesterProActive honors expiry and is off under the test runner', () {
+      const until = '2026-12-31T23:59:59Z';
+      expect(
+        isTesterProActive(
+          raw: until,
+          now: DateTime.utc(2026, 6, 1),
+          underTest: false,
+        ),
+        isTrue,
+      );
+      expect(
+        isTesterProActive(
+          raw: until,
+          now: DateTime.utc(2027, 1, 1),
+          underTest: false,
+        ),
+        isFalse,
+      );
+      expect(
+        isTesterProActive(
+          raw: until,
+          now: DateTime.utc(2026, 6, 1),
+          underTest: true,
+        ),
+        isFalse,
+      );
+      expect(isTesterProActive(raw: '', underTest: false), isFalse);
+      // Default path: FLUTTER_TEST is set, so even a future date is ignored.
+      expect(
+        isTesterProActive(raw: until, now: DateTime.utc(2026, 6, 1)),
+        isFalse,
+      );
+    });
+
     test('updateCustomerInfo notifies listeners (PRO2)', () async {
       final rc = RevenueCatService();
       var notified = 0;
