@@ -26,6 +26,7 @@ import '../../models/models.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../core/colors.dart';
+import '../../core/platform_capabilities.dart';
 import '../../core/units.dart';
 import '../../services/tag_library_service.dart';
 import '../../services/quantity_model.dart';
@@ -2756,6 +2757,17 @@ class BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!DeviceCapabilities.cameraScanner) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Scan Bottle Barcode')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text('Camera barcode scanning is not available on this device.'),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Scan Bottle Barcode')),
       body: Stack(

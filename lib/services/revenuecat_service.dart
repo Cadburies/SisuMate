@@ -7,6 +7,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/platform_capabilities.dart';
 import '../ui/paywall/paywall_screen.dart';
 import 'error_log_service.dart';
 
@@ -92,6 +93,10 @@ class RevenueCatService {
 
   Future<void> init() async {
     if (_isInitialized || _initFailed) return;
+    if (!DeviceCapabilities.inAppPurchases) {
+      _initFailed = true;
+      return;
+    }
 
     try {
       // await Purchases.setLogLevel(LogLevel.debug);
@@ -240,6 +245,16 @@ class RevenueCatService {
   }
 
   Future<void> showPaywall(BuildContext context) async {
+    if (!DeviceCapabilities.inAppPurchases) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Subscriptions are not available on this device.'),
+          ),
+        );
+      }
+      return;
+    }
     try {
       final result = await Navigator.of(context).push(
         MaterialPageRoute(

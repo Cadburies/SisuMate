@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:sensors_plus/sensors_plus.dart';
 
+import '../core/platform_capabilities.dart';
 import 'error_log_service.dart';
 import 'imu_heave_estimator.dart';
 
@@ -34,6 +35,10 @@ class ImuSeaStateService {
   /// Begin accelerometer stream (idempotent).
   void start() {
     if (_started) return;
+    if (!DeviceCapabilities.motionSensors) {
+      _lastError = 'motion sensors unavailable on this platform';
+      return;
+    }
     _started = true;
     try {
       _sub = accelerometerEventStream(samplingPeriod: samplingInterval).listen(

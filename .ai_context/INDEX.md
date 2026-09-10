@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** Tester `1.0.0+6` on Play internal + TestFlight; Frik's Testers assigned.
+- **Last:** macOS 13 floor + iOS opted out of Apple Silicon Mac (#343 #344).
 - **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 

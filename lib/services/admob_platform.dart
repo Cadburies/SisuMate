@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+import '../core/platform_capabilities.dart';
 
 /// TEST4 seam: platform-side ad operations without hard-wiring the Mobile Ads
 /// SDK into control-flow unit tests.
@@ -37,7 +38,7 @@ class LiveAdMobPlatform implements AdMobPlatform {
   const LiveAdMobPlatform();
 
   @override
-  bool get isSupported => Platform.isAndroid || Platform.isIOS;
+  bool get isSupported => DeviceCapabilities.ads;
 
   @override
   Future<void> initialize() async {
