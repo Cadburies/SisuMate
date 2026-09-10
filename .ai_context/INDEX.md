@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last:** Play internal `1.0.0+2` uploaded (`com.sailingsisu.sisumate`); add testers in Console.
-- **Next:** pick next work from open issues.
-- **Blockers:** android-34 emulator image broken.
+- **Last:** Play internal `1.0.0+2` uploaded; App Store upload script added (needs ASC `issuer_id`).
+- **Next:** paste App Store Connect Issuer ID into `secrets/appstore-connect.json`, then TestFlight upload.
+- **Blockers:** android-34 emulator image broken; ASC issuer_id still empty.
 
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.

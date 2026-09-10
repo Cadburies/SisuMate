@@ -25,3 +25,17 @@ Local upload: `./scripts/play_release.sh --track internal` (see script header). 
 If this key was ever listed under `flutter.assets`, treat prior debug/release builds as
 having leaked it: **rotate the Play service-account key** in Google Cloud / Play Console
 and update the local/CI secret copy.
+
+## App Store Connect API key
+
+| | |
+| --- | --- |
+| Local path | `secrets/AuthKey_<KEY_ID>.p8` + `secrets/appstore-connect.json` (gitignored) |
+| Used for | `scripts/appstore_release.sh` — TestFlight / App Store Connect upload |
+| Not used by | The Flutter app runtime |
+
+`appstore-connect.json` fields: `issuer_id` (UUID from the API Keys page), `key_id`, `bundle_id`, `team_id`.
+
+Issuer ID: [App Store Connect → Users and Access → Integrations → App Store Connect API](https://appstoreconnect.apple.com/access/integrations/api) — UUID at the top of the page.
+
+Local upload: `./scripts/appstore_release.sh --track testflight` (default). `--track appstore` still only **uploads** the IPA; submitting for App Review stays a Console click. `--test` checks the key without building.
