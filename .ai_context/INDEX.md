@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** App Store Connect API key works; Sisu Mate is `PREPARE_FOR_SUBMISSION` (1.0).
-- **Next:** TestFlight upload when asked (`./scripts/appstore_release.sh`).
+- **Last:** TestFlight IPA `1.0.0+2` uploaded (`com.sailingsisu.sisumate`); Apple processing.
+- **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 
 
