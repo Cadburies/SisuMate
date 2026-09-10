@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last:** Play internal `1.0.0+2` uploaded; App Store upload script added (needs ASC `issuer_id`).
-- **Next:** paste App Store Connect Issuer ID into `secrets/appstore-connect.json`, then TestFlight upload.
-- **Blockers:** android-34 emulator image broken; ASC issuer_id still empty.
+- **Last:** App Store Connect API key works; Sisu Mate is `PREPARE_FOR_SUBMISSION` (1.0).
+- **Next:** TestFlight upload when asked (`./scripts/appstore_release.sh`).
+- **Blockers:** android-34 emulator image broken.
 
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.
