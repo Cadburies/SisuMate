@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** TestFlight IPA `1.0.0+2` uploaded (`com.sailingsisu.sisumate`); Apple processing.
-- **Next:** pick next work from open issues.
+- **Last:** TestFlight `1.0.0+2` uploaded; store-release doc in `.ai_context/store_release.md`.
+- **Next:** open issues (#339 maintenance→shopping, #340 pantry tap, #341 crash-log upload).
 - **Blockers:** android-34 emulator image broken.
 
 
@@ -16,6 +16,7 @@
 
 | Task | Load |
 | --- | --- |
+| Play / App Store upload | `.ai_context/store_release.md` (commands, secrets, tester tracks). Scripts: `play_release.sh`, `appstore_release.sh` |
 | Backlog / pick next work | GitHub Issues: `gh issue list --state open` (skip `agent:*`-claimed, placeholder-Touches, unresolved `Depends on #N`; "do all TEST issues" adds `--label test-gap`; protocol in `Claude.md` §Issue kickoff) |
 | Parallel agents | `Claude.md` §Parallel agents (issue labels + worktrees) |
 | Full test suite (post every task) | **`./scripts/run_full_suite.sh`** (SEC3 → analyze → `flutter test` → live RLS → integration). Flags: `--skip-live`, `--skip-integration`, `--device <id>`. Detail: `Claude.md` §5 + `README.md` Testing + `test-gap` issues on GitHub |

@@ -39,3 +39,5 @@ and update the local/CI secret copy.
 Issuer ID: [App Store Connect → Users and Access → Integrations → App Store Connect API](https://appstoreconnect.apple.com/access/integrations/api) — UUID at the top of the page.
 
 Local upload: `./scripts/appstore_release.sh --track testflight` (default). `--track appstore` still only **uploads** the IPA; submitting for App Review stays a Console click. `--test` checks the key without building.
+
+Agent procedure (both stores, tester tracks, first-time setup): `.ai_context/store_release.md`.
