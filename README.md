@@ -159,12 +159,18 @@ source tree stays private (`legal/*-url.txt` holds each published URL):
 
 | Page | Source | Published |
 | --- | --- | --- |
+| Marketing | `legal/marketing.html` (+ `legal/feature-graphic.png` hero) | https://cadburies.github.io/sisumate-legal/marketing.html |
 | Privacy policy | `legal/privacy-policy.html` | https://cadburies.github.io/sisumate-legal/privacy-policy.html |
 | Terms of use | `legal/terms.html` | https://cadburies.github.io/sisumate-legal/terms.html |
 | Support | `legal/support.html` | https://cadburies.github.io/sisumate-legal/support.html |
+| Copyright (attributions page) | `legal/copyright.html` | https://cadburies.github.io/sisumate-legal/copyright.html |
 
 Edit the file here, then copy it over to the `sisumate-legal` repo and push, so the two don't
 drift. Also copied into `.claude/store_assets/` for the store-submission checklist below.
+
+Note: App Store Connect's **Copyright** field itself is plain text, not a URL — use the value
+in `legal/copyright-text.txt` (`2026 Frik Olivier`) there. `copyright.html` is a separate,
+optional public attributions page (open-source acknowledgements), not what goes in that field.
 
 `grok/forms/` still has the original drafts of these three plus store-questionnaire answer
 text (App Privacy, Data Safety, keywords, age rating, etc.) — see `grok/forms/README.md` for
