@@ -262,6 +262,27 @@ class SisuColors {
               );
     }
   }
+
+  /// Darker shade of the same hue (HSL lightness only — no new pigment).
+  static Color darkerSameHue(Color color, {double amount = 0.22}) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl
+        .withLightness((hsl.lightness - amount).clamp(0.04, 1.0))
+        .toColor();
+  }
+
+  /// Horizontal tonal bar: token colour in the middle, darker same-hue at
+  /// both ends (theme.md §2.1). Direction-neutral; text contrast is still
+  /// the centre token.
+  static LinearGradient tonalBarGradient(Color color) {
+    final edge = darkerSameHue(color);
+    return LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [edge, color, edge],
+      stops: const [0.0, 0.5, 1.0],
+    );
+  }
 }
 
 /// Visual state for item-list tiles (theme.md §6.5).

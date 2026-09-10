@@ -7,6 +7,7 @@ import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
 import '../components/group_grid.dart';
 import '../components/main_list_tile.dart';
+import '../components/sisu_tile_card.dart';
 import '../../providers/checklist_provider.dart';
 import '../../providers/checklist_autopilot_provider.dart';
 import '../../providers/shopping_provider.dart';
@@ -242,7 +243,7 @@ class _ChecklistAutopilotBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: Card(
+      child: SisuTileCard(
         elevation: 2,
         color: SisuColors.getTileColor(isDark),
         child: Padding(

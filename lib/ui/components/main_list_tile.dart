@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/colors.dart';
+import 'sisu_tile_card.dart';
 
 /// Shared **main-list** card (theme.md §5 — Chef is the reference).
 ///
@@ -73,11 +74,10 @@ class MainListTile extends StatelessWidget {
     final secondary = SisuColors.getTextSecondaryColor(isDark);
     final chipColor = tagColor ?? SisuColors.completedBackground;
 
-    return Card(
+    return SisuTileCard(
       elevation: 4,
       color: SisuColors.getTileColor(isDark),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),

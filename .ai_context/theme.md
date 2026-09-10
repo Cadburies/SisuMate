@@ -28,6 +28,12 @@ All colours live in `lib/core/colors.dart` (`SisuColors`). Existing tokens: stat
 
 Tiles are separated from their background not by heavy borders but by an **elegant** cue: a soft **shadow**, subtle **glow**, or light **3D** raise. Pick one token and use it everywhere so all tiles feel the same. The three background layers (§3) plus this elevation are what make the UI read cleanly on dark grey.
 
+### 2.1 Tonal bar fill (title bar + tiles)
+
+Horizontal surfaces (title bar, home tiles, main-list tiles, item rows) are **not** a flat fill. They use a **same-hue tonal bar**: the `SisuColors` token in the **middle**, a **darker shade of that same hue** (HSL lightness only) at **both ends**. Constructor: `SisuColors.tonalBarGradient`. Do not invent a second hue or a left-to-right brand wipe.
+
+Picked over LTR dark→colour (pulls the eye to one side) and centre-dark (reads as a crease). Text contrast is still against the centre token.
+
 ---
 
 ## 3. Background layering (applies to ALL screens)

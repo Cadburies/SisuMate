@@ -154,7 +154,9 @@ class _TitleTileState extends ConsumerState<TitleTile> {
     return Container(
       width: double.infinity,
       height: 62,
-      color: backgroundColor,
+      decoration: BoxDecoration(
+        gradient: SisuColors.tonalBarGradient(backgroundColor),
+      ),
       padding: EdgeInsets.only(
         left: canPop ? 0 : 16,
         right: showMenu || actionExtras.isNotEmpty ? 4 : 16,

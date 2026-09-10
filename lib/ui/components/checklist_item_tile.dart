@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/colors.dart';
 import '../../models/models.dart';
 import 'smart_image.dart';
+import 'sisu_tile_card.dart';
 import 'swipeable_list_item.dart';
 
 /// Shared themed tile for a `ChecklistItem` — used by Checklists, Maintenance,
@@ -51,7 +52,7 @@ class ChecklistItemTile extends StatelessWidget {
       onUnhide: onUnhide,
       onAddToShopping: onAddToShopping,
       shoppingIsPending: isInShopping,
-      child: Card(
+      child: SisuTileCard(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         color: c.bg,
         elevation: 3,

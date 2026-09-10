@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
+import '../components/sisu_tile_card.dart';
 import '../../core/di.dart';
 import '../../services/error_log_service.dart';
 
@@ -276,10 +277,9 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return SisuTileCard(
       color: SisuColors.getTileColor(isDark),
       elevation: 2,
-      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: child,

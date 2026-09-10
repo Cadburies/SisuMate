@@ -6,6 +6,7 @@ import '../../core/colors.dart';
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
 import '../components/banner_ad_widget.dart';
+import '../components/sisu_tile_card.dart';
 
 class _IsMultiplayerNotifier extends Notifier<bool> {
   @override
@@ -72,10 +73,9 @@ class GamesScreen extends ConsumerWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-                    child: Material(
+                    child: SisuTileCard(
                       color: SisuColors.getTileColor(isDark),
                       elevation: 2,
-                      borderRadius: BorderRadius.circular(12),
                       child: SwitchListTile(
                         title: Text(
                           'Multiplayer Mode',
@@ -170,11 +170,10 @@ class _GameTile extends StatelessWidget {
         ? 'Solo only — single-player by design'
         : 'Solo only — multiplayer coming soon';
 
-    return Card(
+    return SisuTileCard(
       elevation: 4,
       color: SisuColors.getTileColor(isDark),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),

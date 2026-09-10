@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/colors.dart';
+import 'sisu_tile_card.dart';
 
 /// Raised, state-coloured list row (theme.md §6). Colour tells the state —
 /// no tick / cart / status icons on the tile itself.
@@ -33,7 +34,7 @@ class ThemedStateTile extends StatelessWidget {
     final c = SisuColors.itemStateColors(isDark, state);
     final multiLine = (subtitle != null && tertiary != null);
 
-    return Card(
+    return SisuTileCard(
       margin: margin,
       color: c.bg,
       elevation: 3,

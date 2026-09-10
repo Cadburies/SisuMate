@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../components/title_tile.dart';
 import '../components/common_drawer.dart';
 import '../components/banner_ad_widget.dart';
+import '../components/sisu_tile_card.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../core/colors.dart';
@@ -279,7 +280,7 @@ class _PassageReadinessCard extends StatelessWidget {
     final ready = readiness.isReady;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: Card(
+      child: SisuTileCard(
         elevation: 2,
         color: ready
             ? SisuColors.getTileColor(isDark)
@@ -341,7 +342,7 @@ class _SuggestionsBanner extends StatelessWidget {
     final top = suggestions.take(3).toList();
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-      child: Card(
+      child: SisuTileCard(
         elevation: 2,
         color: SisuColors.getTileColor(isDark),
         child: Padding(
@@ -434,7 +435,7 @@ class _AppTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
+    return SisuTileCard(
       elevation: 4,
       color: SisuColors.getHomeTile(isDark),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
+import '../components/sisu_tile_card.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/conflict_resolution_service.dart';
@@ -72,7 +73,7 @@ class _ConflictCard extends ConsumerWidget {
     final remoteSummary = _summary(conflict.remoteData);
     final suggested = report?.overall;
 
-    return Card(
+    return SisuTileCard(
       color: SisuColors.getTileColor(isDark),
       elevation: 2,
       child: Padding(

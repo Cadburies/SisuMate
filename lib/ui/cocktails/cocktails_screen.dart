@@ -10,6 +10,7 @@ import '../components/common_drawer.dart';
 import '../components/import_export.dart';
 import '../components/smart_image.dart';
 import '../components/swipeable_list_item.dart';
+import '../components/sisu_tile_card.dart';
 import '../components/themed_state_tile.dart';
 import '../components/ingredient_list_sort.dart';
 import '../components/photo_source_picker.dart';
@@ -2254,7 +2255,7 @@ class _BarIngredientTile extends ConsumerWidget {
       onDelete: ingredient.isBundled
           ? null
           : () => _confirmDelete(context, ref),
-      child: Card(
+      child: SisuTileCard(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         color: c.bg,
         elevation: 3,
