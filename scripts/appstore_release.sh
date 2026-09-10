@@ -11,7 +11,8 @@
 # Requires (gitignored):
 #   secrets/appstore-connect.json   (issuer_id + key_id)
 #   secrets/AuthKey_<key_id>.p8     (App Store Connect API key)
-#   dart-defines.json               (FORCE_PRO_* is refused)
+#   dart-defines.json               (FORCE_PRO_* must not live in this file.
+#                                    TestFlight injects FORCE_PRO_UNTIL for 2026.)
 #
 # Issuer ID: App Store Connect → Users and Access → Integrations → App Store Connect API
 #   https://appstoreconnect.apple.com/access/integrations/api
@@ -73,10 +74,22 @@ bad=[k for k in d if k.upper().startswith('FORCE_PRO')]
 if bad:
     print(','.join(bad)); sys.exit(1)
 "; then
-  ok "dart-defines has no FORCE_PRO_* (store-safe)"
+  ok "dart-defines has no FORCE_PRO_* (file stays production-safe)"
 else
-  fail "dart-defines.json contains FORCE_PRO_* — omit that for App Store / TestFlight builds"
+  fail "dart-defines.json contains FORCE_PRO_* — keep it out of the file; TestFlight injects it on the command line"
 fi
+
+TESTER_PRO_UNTIL="2026-12-31T23:59:59Z"
+TESTER_DEFINE=""
+case "$TRACK" in
+  testflight)
+    TESTER_DEFINE="--dart-define=FORCE_PRO_UNTIL=$TESTER_PRO_UNTIL"
+    ok "tester Pro grant until $TESTER_PRO_UNTIL"
+    ;;
+  appstore)
+    ok "appstore track — no FORCE_PRO_UNTIL (review binary)"
+    ;;
+esac
 
 VERSION_LINE="$(python3 -c "
 import re
@@ -108,6 +121,7 @@ if [[ "$SKIP_BUILD" -eq 0 ]]; then
   ok "building signed IPA (this takes several minutes)"
   flutter build ipa --release \
     --dart-define-from-file="$DEFINES" \
+    $TESTER_DEFINE \
     --export-options-plist="$EXPORT_PLIST"
   IPA="$(ls -1 "$ROOT"/build/ios/ipa/*.ipa 2>/dev/null | head -1 || true)"
 else

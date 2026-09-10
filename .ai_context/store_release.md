@@ -7,7 +7,7 @@ Agent-facing. Identity, secrets, and commands to ship a build. Do **not** submit
 | | |
 | --- | --- |
 | Application / bundle id | `com.sailingsisu.sisumate` |
-| Version | `pubspec.yaml` `version:` (`1.0.0+2` → name `1.0.0`, code `2`) |
+| Version | `pubspec.yaml` `version:` (`1.0.0+3` → name `1.0.0`, code `3`) |
 | Apple team | `D6WY6A2237` (Automatic signing) |
 | Play package | same as application id |
 
@@ -28,7 +28,19 @@ Bump `version:` (especially `+N`) before a second upload of the same binary iden
 
 `--track production` (Play) or `--track appstore` (iOS) still **uploads** only. Play production rollout and App Store “Submit for Review” stay Console clicks.
 
-Both scripts: `--dart-define-from-file=dart-defines.json`, SEC3 scan, refuse `FORCE_PRO_*` in dart-defines, never copy credentials into `assets/`.
+Both scripts: `--dart-define-from-file=dart-defines.json`, SEC3 scan, never copy credentials into `assets/`.
+
+## Tester Pro (2026)
+
+The next store uploads are **tester builds**. Play `internal`/`alpha`/`beta` and App Store `testflight` **must** grant full Pro until **2026-12-31T23:59:59Z**.
+
+The scripts inject that themselves:
+
+`--dart-define=FORCE_PRO_UNTIL=2026-12-31T23:59:59Z`
+
+Keep `FORCE_PRO_*` **out of** `dart-defines.json` (that file is production credentials). Production / App Store review builds (`--track production` / `--track appstore`) must **not** get the define — the scripts refuse it in the json file and do not inject it.
+
+`kForceProForTesting` only affects **debug** `flutter run`. Release tester APK/IPA/AAB need the dart-define.
 
 ## Required local files (all gitignored)
 

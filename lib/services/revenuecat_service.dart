@@ -17,12 +17,14 @@ import 'error_log_service.dart';
 /// outstanding.md (RM1).
 const bool kForceProForTesting = true;
 
-/// Tester-build Pro expiry. Empty in ordinary debug/release. Pass
-/// `--dart-define=FORCE_PRO_UNTIL=2026-12-31T23:59:59Z` only when compiling a
-/// TestFlight / Play internal IPA so testers get Pro until that UTC instant.
-/// A production store build must omit this define (compile-time empty → no-op).
-/// Never applies under `FLUTTER_TEST`.
+/// Tester-build Pro expiry. Empty in ordinary debug/release. Play internal /
+/// TestFlight scripts inject `--dart-define=FORCE_PRO_UNTIL=2026-12-31T23:59:59Z`
+/// so testers have full Pro for all of 2026. A production store build must omit
+/// this define (compile-time empty → no-op). Never applies under `FLUTTER_TEST`.
+/// Keep this ISO string in sync with `scripts/play_release.sh`,
+/// `scripts/appstore_release.sh`, and `.ai_context/store_release.md`.
 const String kForceProUntilRaw = String.fromEnvironment('FORCE_PRO_UNTIL');
+const String kTesterProUntil = '2026-12-31T23:59:59Z';
 
 /// Parses [kForceProUntilRaw] (or [raw] in tests). Null when unset/invalid.
 DateTime? parseForceProUntil(String raw) {

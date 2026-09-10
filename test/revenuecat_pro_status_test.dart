@@ -29,6 +29,11 @@ void main() {
         parseForceProUntil('2026-12-31T23:59:59Z'),
         DateTime.utc(2026, 12, 31, 23, 59, 59),
       );
+      expect(kTesterProUntil, '2026-12-31T23:59:59Z');
+      expect(
+        parseForceProUntil(kTesterProUntil),
+        DateTime.utc(2026, 12, 31, 23, 59, 59),
+      );
     });
 
     test('isTesterProActive honors expiry and is off under the test runner', () {

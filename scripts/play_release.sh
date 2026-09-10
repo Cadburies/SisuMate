@@ -10,7 +10,9 @@
 # Requires (gitignored):
 #   secrets/google-play-service-account.json
 #   android/key.properties + the upload keystore it points at
-#   dart-defines.json   (production credentials; FORCE_PRO_* is refused)
+#   dart-defines.json   (production credentials; FORCE_PRO_* must not live
+#                        in this file. Tester tracks inject FORCE_PRO_UNTIL
+#                        for 2026 via --dart-define.)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -67,10 +69,25 @@ bad=[k for k in d if k.upper().startswith('FORCE_PRO')]
 if bad:
     print(','.join(bad)); sys.exit(1)
 "; then
-  ok "dart-defines has no FORCE_PRO_* (production-safe)"
+  ok "dart-defines has no FORCE_PRO_* (file stays production-safe)"
 else
-  fail "dart-defines.json contains FORCE_PRO_* — omit that for Play builds"
+  fail "dart-defines.json contains FORCE_PRO_* — keep it out of the file; tester tracks inject it on the command line"
 fi
+
+# Tester Pro for 2026: Play internal/alpha/beta. Production must not get this.
+# Plain string (not a bash array) — macOS /bin/bash is 3.2 and `set -u`
+# errors on "${arr[@]}" when empty.
+TESTER_PRO_UNTIL="2026-12-31T23:59:59Z"
+TESTER_DEFINE=""
+case "$TRACK" in
+  internal|alpha|beta)
+    TESTER_DEFINE="--dart-define=FORCE_PRO_UNTIL=$TESTER_PRO_UNTIL"
+    ok "tester Pro grant until $TESTER_PRO_UNTIL"
+    ;;
+  production)
+    ok "production track — no FORCE_PRO_UNTIL"
+    ;;
+esac
 
 VERSION_LINE="$(python3 -c "
 import re
@@ -91,7 +108,8 @@ print(p.read_text().strip()[:500] if p.is_file() else '')
 
 if [[ "$SKIP_BUILD" -eq 0 ]]; then
   ok "building signed app bundle (this takes several minutes)"
-  flutter build appbundle --release --dart-define-from-file="$DEFINES"
+  flutter build appbundle --release --dart-define-from-file="$DEFINES" \
+    $TESTER_DEFINE
 else
   ok "skipping build"
 fi
