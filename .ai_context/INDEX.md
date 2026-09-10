@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last:** tester IPA — Pro via `FORCE_PRO_UNTIL=2026-12-31T23:59:59Z` (omit on production).
+- **Last:** Play internal `1.0.0+2` uploaded (`com.sailingsisu.sisumate`); add testers in Console.
 - **Next:** pick next work from open issues.
-- **Blockers:** rotate Play SA key if prior builds shipped; android-34 emulator image broken.
+- **Blockers:** android-34 emulator image broken.
 
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.

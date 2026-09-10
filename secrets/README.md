@@ -13,6 +13,8 @@ Flutter packages those paths into every APK/IPA; anyone can extract them from th
 
 ### CI / release
 
+Local upload: `./scripts/play_release.sh --track internal` (see script header). The JSON must belong to the current Sisu Mate Play account (`sisu-mate-ai@…`), never the closed Boat Checks SA.
+
 1. Store the JSON as a CI secret (GitHub Actions secret, Codemagic env file, etc.).
 2. Write it to a path **outside** `assets/` at job start, e.g. `$RUNNER_TEMP/play-sa.json`.
 3. Point your upload tool at that path (`GOOGLE_APPLICATION_CREDENTIALS`, Fastlane `json_key`, …).
