@@ -151,6 +151,19 @@ lib/ui/       home, modules (checklists, chef, games, …), community, account
 Pattern: **repository → provider → `ConsumerWidget`**. The UI never talks to Drift or
 Supabase directly — everything goes through repositories wired up in `lib/core/di.dart`.
 
+## Legal
+
+- Privacy policy source: `legal/privacy-policy.html` (`legal/privacy-policy-url.txt` holds the
+  published URL). Published via GitHub Pages from a separate public repo, so this private
+  source tree stays private: https://cadburies.github.io/sisumate-legal/privacy-policy.html —
+  this is the URL used in store listings (App Store / Play Console) and the Wix site embed.
+  Edit the file here, then copy it over to `sisumate-legal` and push, so the two don't drift.
+- `grok/forms/` also has draft `terms.html` / `support.html` (same publish pattern, not yet
+  hosted) and store-questionnaire answer text (App Privacy, Data Safety, keywords, age rating,
+  etc.) — see `grok/forms/README.md` for what goes where.
+- Store listing copy/assets (short/full description, icon, feature graphic, screenshots):
+  `.claude/store_assets/`.
+
 ## Working on this project
 
 This repo is set up for AI-assisted development with a token-efficient context system —
