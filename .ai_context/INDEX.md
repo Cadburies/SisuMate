@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** TestFlight `1.0.0+2` uploaded; store-release doc in `.ai_context/store_release.md`.
-- **Next:** open issues (#339 maintenance→shopping, #340 pantry tap, #341 crash-log upload).
+- **Last:** Store upload documented; #335–#340 closed; #341 crash-log upload landing.
+- **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 
 

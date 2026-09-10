@@ -355,4 +355,48 @@ void main() {
       expect(rows.single.message, contains('some other uncaught bug'));
     });
   });
+
+  group('#341 test-mode flag + upload', () {
+    test('enabled=false writes no rows', () async {
+      ErrorLogService.enabled = false;
+      await ErrorLogService().logWarning('should not persist');
+      try {
+        throw StateError('should not persist');
+      } catch (e, st) {
+        await ErrorLogService().logException(e, st);
+      }
+      expect(await repo.getUnprocessed(), isEmpty);
+    });
+
+    test('enabled=true still writes as today', () async {
+      ErrorLogService.enabled = true;
+      await ErrorLogService().logWarning('tester period');
+      expect(await repo.getUnprocessed(), hasLength(1));
+    });
+
+    test('uploadUnsent pushes unprocessed rows and marks them processed',
+        () async {
+      await ErrorLogService().logWarning('device boom');
+      expect(await repo.getUnprocessed(), hasLength(1));
+
+      var sent = 0;
+      final n = await ErrorLogService().uploadUnsent(
+        uploader: (rows) async {
+          sent = rows.length;
+          expect(rows.single.message, contains('device boom'));
+          return 'uploaded:test';
+        },
+      );
+      expect(n, 1);
+      expect(sent, 1);
+      expect(await repo.getUnprocessed(), isEmpty);
+
+      final n2 = await ErrorLogService().uploadUnsent(
+        uploader: (rows) async {
+          fail('must not re-send processed rows');
+        },
+      );
+      expect(n2, 0);
+    });
+  });
 }

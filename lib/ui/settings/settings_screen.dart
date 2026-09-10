@@ -79,6 +79,13 @@ class SettingsScreen extends ConsumerWidget {
               subtitle: Text(e.toString()),
             ),
           ),
+          ListTile(
+            leading: const Icon(Icons.cloud_upload_outlined),
+            title: const Text('Upload crash log'),
+            subtitle: const Text(
+                'Send stored errors from this device so we can fix them'),
+            onTap: () => _handleUploadCrashLog(context),
+          ),
           const Divider(),
           _buildSectionHeader(context, 'Boats'),
           Consumer(
@@ -443,6 +450,15 @@ class SettingsScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _handleUploadCrashLog(BuildContext context) async {
+    final n = await ErrorLogService().uploadUnsent();
+    if (!context.mounted) return;
+    final msg = n == 0
+        ? 'Nothing to upload (sign in if you have logs, or none are pending)'
+        : 'Uploaded $n error${n == 1 ? '' : 's'}';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   /// Irreversible + affects other crew on any boat this user owns, so this

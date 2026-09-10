@@ -3,13 +3,20 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show RealtimeSubscribeException;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show RealtimeSubscribeException, Supabase;
 
 import '../data/drift/app_database.dart';
 import '../data/repositories/error_log_repository_impl.dart';
 import '../domain/repositories/error_log_repository.dart';
 import '../models/models.dart';
 import 'revenuecat_service.dart';
+
+/// Tester-period gate for persisting rows (#341). Default **true** so TestFlight
+/// / Play-internal builds keep a local log. Flip to `false` (or delete the
+/// flag) before general-population release so we do not collect telemetry
+/// without opt-in. Mirrors [kForceProForTesting].
+const bool kErrorLoggingTestMode = true;
 
 /// App-wide error/exception/warning telemetry (#121).
 ///
@@ -38,6 +45,9 @@ class ErrorLogService {
   );
   factory ErrorLogService() => _instance;
 
+  /// Runtime switch, defaults to [kErrorLoggingTestMode]. Tests flip this.
+  static bool enabled = kErrorLoggingTestMode;
+
   final ErrorLogRepository _repo;
 
   /// Test-only seam — mirrors [AppDatabase.setInstanceForTesting].
@@ -48,6 +58,7 @@ class ErrorLogService {
 
   @visibleForTesting
   static void resetInstanceForTests() {
+    enabled = kErrorLoggingTestMode;
     _instance = ErrorLogService._(
       repository: ErrorLogRepositoryImpl(AppDatabase.instance),
     );
@@ -166,12 +177,67 @@ class ErrorLogService {
 
   // ── Internals ──────────────────────────────────────────────────────────
 
+  /// Push unprocessed local rows to Supabase `error_log_uploads` and mark
+  /// them processed so they are not re-sent. Returns how many rows were
+  /// uploaded. No-op when [enabled] is false, nothing is pending, or the
+  /// user is signed out / offline. Best-effort — never throws.
+  Future<int> uploadUnsent({
+    Future<String?> Function(List<ErrorLogEntry> rows)? uploader,
+  }) async {
+    if (!enabled) return 0;
+    try {
+      final rows = await _repo.getUnprocessed();
+      if (rows.isEmpty) return 0;
+      final send = uploader ?? _uploadToSupabase;
+      final marker = await send(rows);
+      if (marker == null || marker.isEmpty) return 0;
+      for (final row in rows) {
+        await _repo.markProcessed(row.fingerprint, issueUrl: marker);
+      }
+      return rows.length;
+    } catch (e) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('ErrorLogService: upload failed: $e');
+      }
+      return 0;
+    }
+  }
+
+  Future<String?> _uploadToSupabase(List<ErrorLogEntry> rows) async {
+    final client = Supabase.instance.client;
+    final uid = client.auth.currentUser?.id;
+    if (uid == null) return null;
+    final payload = rows
+        .map((e) => {
+              'level': e.level,
+              'message': e.message,
+              'stackTrace': e.stackTrace,
+              'sourceFile': e.sourceFile,
+              'routeHint': e.routeHint,
+              'appVersion': e.appVersion,
+              'platform': e.platform,
+              'isPro': e.isPro,
+              'fingerprint': e.fingerprint,
+              'occurrences': e.occurrences,
+              'createdAt': e.createdAt.toUtc().toIso8601String(),
+              'debugBreadcrumbs': e.debugBreadcrumbs,
+            })
+        .toList();
+    await client.from('error_log_uploads').insert({
+      'user_id': uid,
+      'payload': payload,
+    });
+    return 'uploaded:${DateTime.now().toUtc().toIso8601String()}';
+  }
+
   Future<void> _log({
     required String level,
     required String rawMessage,
     StackTrace? stack,
     String? context,
   }) async {
+    if (!enabled) return;
     try {
       final message = _redactSecrets(
         context == null ? rawMessage : '$context: $rawMessage',

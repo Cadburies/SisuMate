@@ -201,7 +201,7 @@ void main() {
       const SettingsScreen(),
       // Settings' ListView is long enough that a shorter viewport leaves
       // late sections (e.g. Data Management) unbuilt (lazy sliver list).
-      surfaceSize: const Size(400, 2400),
+      surfaceSize: const Size(400, 2800),
     );
 
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
@@ -216,7 +216,7 @@ void main() {
       const SettingsScreen(),
       // Settings' ListView is long enough that a shorter viewport leaves
       // late sections (e.g. Data Management) unbuilt (lazy sliver list).
-      surfaceSize: const Size(400, 2400),
+      surfaceSize: const Size(400, 2800),
     );
 
     await expectLater(tester, meetsGuideline(textContrastGuideline));
@@ -232,7 +232,7 @@ void main() {
       const SettingsScreen(),
       // Settings' ListView is long enough that a shorter viewport leaves
       // late sections (e.g. Data Management) unbuilt (lazy sliver list).
-      surfaceSize: const Size(400, 2400),
+      surfaceSize: const Size(400, 2800),
     );
 
     for (final label in [

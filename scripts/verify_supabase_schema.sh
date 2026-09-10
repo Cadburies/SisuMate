@@ -123,6 +123,10 @@ expect_ok(
     "bar_ingredients.allergenTags",
     "/rest/v1/bar_ingredients?select=supabaseId,allergenTags&limit=1",
 )
+expect_ok(
+    "error_log_uploads.payload",
+    "/rest/v1/error_log_uploads?select=id,payload&limit=1",
+)
 
 failed = [(l, d) for l, s, d in checks if s == "FAIL"]
 for label, status, detail in checks:
