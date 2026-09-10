@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Delete Your Sisu Mate Account</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.5; color: #111; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.2rem; margin-top: 2rem; }
+  ol { padding-left: 1.2rem; }
+  li { margin-bottom: 0.6rem; }
+  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+  th, td { text-align: left; padding: 6px 10px; border: 1px solid #ddd; vertical-align: top; }
+  th { background: #f5f5f5; }
+</style>
+</head>
+<body>
+<h1>Delete Your Sisu Mate Account</h1>
+<p><strong>Sisu Mate</strong>, published by <strong>Sailing Sisu</strong> (developer: Frik Olivier), lets you request permanent deletion of your account and the data associated with it.</p>
+
+<h2>Option 1 — delete it yourself, in the app (instant)</h2>
+<ol>
+  <li>Open <strong>Sisu Mate</strong> and go to <strong>Settings</strong>.</li>
+  <li>Under <strong>Account</strong>, tap <strong>Delete My Account</strong> (shown in red).</li>
+  <li>Confirm on the warning dialog. This is permanent and cannot be undone.</li>
+</ol>
+<p>Your account and the cloud data described below are deleted immediately — no waiting period.</p>
+
+<h2>Option 2 — request deletion by email</h2>
+<ol>
+  <li>Send an email to <a href="mailto:sailingsisu@outlook.com">sailingsisu@outlook.com</a> <strong>from the same email address registered on your account</strong> — for example if you're signed out and can't get back in.</li>
+  <li>Use the subject line <strong>"Delete my Sisu Mate account"</strong>.</li>
+  <li>We verify the request and delete your account and associated cloud data, normally within <strong>30 days</strong>.</li>
+  <li>You'll receive a confirmation email once deletion is complete.</li>
+</ol>
+<p>If you only want the app's local copy removed from your device, you can instead uninstall the app, or use <strong>Settings → Factory Reset</strong> inside the app — no request needed for that, and it doesn't touch your cloud account.</p>
+
+<h2>What gets deleted</h2>
+<table>
+  <tr><th>Data</th><th>Deleted?</th><th>Notes</th></tr>
+  <tr><td>Account (email, login credentials)</td><td>Yes</td><td>Removed from our Supabase authentication system</td></tr>
+  <tr><td>Boat data you own (checklists, inventory, maintenance, logs, crew records, etc.)</td><td>Yes</td><td>Deleted from our cloud database</td></tr>
+  <tr><td>Purchase history</td><td>Retained</td><td>Apple/Google and RevenueCat keep transaction records for legal, tax, and fraud-prevention purposes, independent of your account deletion</td></tr>
+  <tr><td>Your membership on boats owned by someone else</td><td>Yes</td><td>You're removed as crew; the boat and its data are unaffected for the owner and other crew</td></tr>
+  <tr><td>Data already synced to other crew members' devices</td><td>Not retroactively removed</td><td>Crew members on a boat you owned keep their own local copy of data synced before deletion, even though the shared cloud copy is gone</td></tr>
+  <tr><td>Local data on your device</td><td>Not automatically deleted</td><td>Uninstall the app or use in-app Factory Reset to erase the on-device copy</td></tr>
+</table>
+
+<p>Questions about this process? Contact <a href="mailto:sailingsisu@outlook.com">sailingsisu@outlook.com</a>.</p>
+</body>
+</html>

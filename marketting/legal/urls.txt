@@ -2,3 +2,4 @@ Privacy Policy: https://cadburies.github.io/sisumate-legal/privacy-policy.html
 Terms of Use: https://cadburies.github.io/sisumate-legal/terms.html
 Support: https://cadburies.github.io/sisumate-legal/support.html
 Marketing URL	https://cadburies.github.io/sisumate-legal/marketing.html
+Delete Account: https://cadburies.github.io/sisumate-legal/delete-account.html

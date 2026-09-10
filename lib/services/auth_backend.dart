@@ -43,6 +43,12 @@ abstract class AuthBackend {
     required String boatSupabaseId,
     required String ownerId,
   });
+
+  /// Permanently deletes the signed-in user's Supabase account and their
+  /// owned cloud data (`delete_own_account` RPC — server-side scoped to
+  /// `auth.uid()`, self only). Throws on failure; caller still owns local
+  /// wipe + sign-out afterward.
+  Future<void> deleteAccount();
 }
 
 /// Production [AuthBackend] over [SupabaseClientWrapper.instance].
@@ -112,5 +118,13 @@ class LiveAuthBackend implements AuthBackend {
     await _c
         .from('boats')
         .update({'ownerId': ownerId}).eq('supabaseId', boatSupabaseId);
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    await _c.rpc('delete_own_account');
+    // The server-side row is gone; drop the now-stale local session too
+    // instead of waiting for a future token refresh to fail.
+    await _c.auth.signOut();
   }
 }

@@ -103,6 +103,19 @@ void main() {
       expect(await auth.fetchBoatShareCode('boat-1'), 'SISU-42');
       expect(await auth.fetchBoatShareCode('missing'), isNull);
     });
+
+    test('deleteAccount hits the backend and clears the session', () async {
+      backend.setUser(fakeOwnerUser());
+      await auth.deleteAccount();
+      expect(backend.deleteAccountCalls, 1);
+      expect(auth.currentUser, isNull);
+    });
+
+    test('deleteAccount propagates backend failures', () async {
+      backend.setUser(fakeOwnerUser());
+      backend.shouldFail = true;
+      await expectLater(auth.deleteAccount(), throwsException);
+    });
   });
 
   group('AuthService joinBoat', () {

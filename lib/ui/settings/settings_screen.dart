@@ -61,6 +61,15 @@ class SettingsScreen extends ConsumerWidget {
                     title: const Text('Sign Out'),
                     onTap: () => ref.read(authServiceProvider).signOut(),
                   ),
+                  if (!user.isAnonymous)
+                    ListTile(
+                      leading: const Icon(Icons.delete_forever, color: Colors.red),
+                      title: const Text('Delete My Account',
+                          style: TextStyle(color: Colors.red)),
+                      subtitle: const Text(
+                          'Permanently deletes your account and owned boat data'),
+                      onTap: () => _handleDeleteAccount(context, ref),
+                    ),
                 ],
               );
             },
@@ -431,6 +440,91 @@ class SettingsScreen extends ConsumerWidget {
               child: const Text('Reset', style: TextStyle(color: Colors.red)),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  /// Irreversible + affects other crew on any boat this user owns, so this
+  /// gates behind typing DELETE rather than a single tap (Factory Reset's
+  /// pattern is local-only, so one confirm is enough there).
+  void _handleDeleteAccount(BuildContext context, WidgetRef ref) {
+    final confirmController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final canConfirm =
+                confirmController.text.trim().toUpperCase() == 'DELETE';
+            return AlertDialog(
+              title: const Text('Delete My Account'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'This permanently deletes your account and any boats you '
+                    'own, including their checklists, logs, inventory, and '
+                    'crew data — for every crew member on that boat. This '
+                    'cannot be undone.',
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: confirmController,
+                    autofocus: true,
+                    onChanged: (_) => setState(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Type DELETE to confirm',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: !canConfirm
+                      ? null
+                      : () async {
+                          Navigator.of(dialogContext).pop();
+                          try {
+                            await ref
+                                .read(authServiceProvider)
+                                .deleteAccount();
+                            final dbService =
+                                ref.read(databaseServiceProvider);
+                            await dbService.factoryReset();
+                            invalidateAfterFactoryReset(ref);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Account deleted'),
+                                ),
+                              );
+                            }
+                          } catch (e, st) {
+                            unawaited(ErrorLogService().logException(e, st,
+                                context:
+                                    'settings_screen: deleteAccount'));
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text('Could not delete account: $e')),
+                              );
+                            }
+                          }
+                        },
+                  child: const Text('Delete Account',
+                      style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
         );
       },
     );

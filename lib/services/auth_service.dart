@@ -91,4 +91,9 @@ class AuthService {
         await _backend.fetchBoatRow(boatSupabaseId, select: 'shareCode');
     return row?['shareCode'] as String?;
   }
+
+  /// Permanently deletes the signed-in user's account + owned cloud data.
+  /// Caller is responsible for the local wipe (factory reset) afterward —
+  /// this only removes the Supabase side. Throws on failure.
+  Future<void> deleteAccount() => _backend.deleteAccount();
 }

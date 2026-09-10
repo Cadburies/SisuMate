@@ -14,6 +14,7 @@ class FakeAuthBackend implements AuthBackend {
   final List<(String email, String password)> signedInWithPassword = [];
   final List<(String email, String password)> signedUp = [];
   int signOutCalls = 0;
+  int deleteAccountCalls = 0;
   int anonymousSignInCalls = 0;
   final List<String> redeemedCodes = [];
   final List<(String boatId, String ownerId)> claimedOwnership = [];
@@ -153,6 +154,13 @@ class FakeAuthBackend implements AuthBackend {
     claimedOwnership.add((boatSupabaseId, ownerId));
     final existing = boats[boatSupabaseId] ?? {};
     boats[boatSupabaseId] = {...existing, 'ownerId': ownerId};
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    _throwIfFailing();
+    deleteAccountCalls++;
+    _user = null;
   }
 }
 
