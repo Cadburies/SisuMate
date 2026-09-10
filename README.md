@@ -153,16 +153,25 @@ Supabase directly — everything goes through repositories wired up in `lib/core
 
 ## Legal
 
-- Privacy policy source: `legal/privacy-policy.html` (`legal/privacy-policy-url.txt` holds the
-  published URL). Published via GitHub Pages from a separate public repo, so this private
-  source tree stays private: https://cadburies.github.io/sisumate-legal/privacy-policy.html —
-  this is the URL used in store listings (App Store / Play Console) and the Wix site embed.
-  Edit the file here, then copy it over to `sisumate-legal` and push, so the two don't drift.
-- `grok/forms/` also has draft `terms.html` / `support.html` (same publish pattern, not yet
-  hosted) and store-questionnaire answer text (App Privacy, Data Safety, keywords, age rating,
-  etc.) — see `grok/forms/README.md` for what goes where.
-- Store listing copy/assets (short/full description, icon, feature graphic, screenshots):
-  `.claude/store_assets/`.
+Three standalone pages (not iframe fragments — paste the URL straight into a store form field),
+sourced in `legal/` and published via GitHub Pages from a separate public repo so this private
+source tree stays private (`legal/*-url.txt` holds each published URL):
+
+| Page | Source | Published |
+| --- | --- | --- |
+| Privacy policy | `legal/privacy-policy.html` | https://cadburies.github.io/sisumate-legal/privacy-policy.html |
+| Terms of use | `legal/terms.html` | https://cadburies.github.io/sisumate-legal/terms.html |
+| Support | `legal/support.html` | https://cadburies.github.io/sisumate-legal/support.html |
+
+Edit the file here, then copy it over to the `sisumate-legal` repo and push, so the two don't
+drift. Also copied into `.claude/store_assets/` for the store-submission checklist below.
+
+`grok/forms/` still has the original drafts of these three plus store-questionnaire answer
+text (App Privacy, Data Safety, keywords, age rating, etc.) — see `grok/forms/README.md` for
+what goes where.
+
+Store listing copy/assets (short/full description, icon, feature graphic, screenshots):
+`.claude/store_assets/`.
 
 ## Working on this project
 
