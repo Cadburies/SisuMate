@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** Tester Pro until 2026-12-31 wired; tonal bar gradients (#342).
+- **Last:** Tester `1.0.0+3` on Play internal + TestFlight (Pro until 2026-12-31).
 - **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 
