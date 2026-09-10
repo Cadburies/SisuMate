@@ -163,6 +163,17 @@ class _ChefScreenState extends ConsumerState<ChefScreen>
     return ImportPersistResult(inserted: inserted, updated: updated);
   }
 
+  /// #340: off-screen TabBarView pages still participate in Android hit-testing
+  /// and focus. Ignore pointers + exclude focus on inactive tabs so a tap on
+  /// My Pantry cannot land on Chef's search field (or vice versa).
+  Widget _gatedTab(int index, Widget child) {
+    final active = _tabController.index == index;
+    return ExcludeFocus(
+      excluding: !active,
+      child: IgnorePointer(ignoring: !active, child: child),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isProAsync = ref.watch(isProProvider);
@@ -217,14 +228,17 @@ class _ChefScreenState extends ConsumerState<ChefScreen>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _ChefTab(
-                      searchController: _searchController,
-                      searchQuery: _searchQuery,
-                      onSearchChanged: (v) =>
-                          setState(() => _searchQuery = v.toLowerCase()),
+                    _gatedTab(
+                      0,
+                      _ChefTab(
+                        searchController: _searchController,
+                        searchQuery: _searchQuery,
+                        onSearchChanged: (v) =>
+                            setState(() => _searchQuery = v.toLowerCase()),
+                      ),
                     ),
-                    _PantryTab(order: _pantryOrder),
-                    const _ChefsCornerTab(),
+                    _gatedTab(1, _PantryTab(order: _pantryOrder)),
+                    _gatedTab(2, const _ChefsCornerTab()),
                   ],
                 ),
               ),
@@ -2115,6 +2129,7 @@ class _PantryTabState extends ConsumerState<_PantryTab> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: TextField(
             controller: _searchController,
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
             decoration: InputDecoration(
               hintText: 'Search pantry...',
               prefixIcon: const Icon(Icons.search),
@@ -2164,7 +2179,12 @@ class _PantryTabState extends ConsumerState<_PantryTab> {
               final isPro = ref.watch(isProProvider).value ?? false;
               final adSlots =
                   _adSlotCache.forList(filtered.length, showAds: !isPro);
-              return ListView.builder(
+              return Listener(
+                onPointerDown: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
+                child: ListView.builder(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 itemCount: filtered.length + adSlots.length,
                 itemBuilder: (_, idx) {
                   if (isNativeAdSlot(idx, adSlots)) {
@@ -2178,6 +2198,7 @@ class _PantryTabState extends ConsumerState<_PantryTab> {
                     allIngredients: filtered,
                   );
                 },
+              ),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -2276,6 +2297,7 @@ class _PantryIngredientTile extends ConsumerWidget {
         elevation: 3,
         child: InkWell(
           onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
             final idx = allIngredients
                 .indexWhere((p) => p.supabaseId == ingredient.supabaseId);
             context.push(

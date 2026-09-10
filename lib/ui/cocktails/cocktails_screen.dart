@@ -124,6 +124,16 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
     return ImportPersistResult(inserted: inserted, updated: updated);
   }
 
+  /// #340: off-screen TabBarView pages still participate in Android hit-testing
+  /// and focus. Same gate as Chef / My Pantry.
+  Widget _gatedTab(int index, Widget child) {
+    final active = _tabController.index == index;
+    return ExcludeFocus(
+      excluding: !active,
+      child: IgnorePointer(ignoring: !active, child: child),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isProAsync = ref.watch(isProProvider);
@@ -181,22 +191,25 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _CocktailsTab(
-                      searchController: _searchController,
-                      searchQuery: _searchQuery,
-                      onSearchChanged: (v) =>
-                          setState(() => _searchQuery = v.toLowerCase()),
-                      sortByAvailability: _sortByAvailability,
-                      onSortByAvailabilityChanged: (v) =>
-                          setState(() => _sortByAvailability = v),
-                      favouritesOnly: _favouritesOnly,
-                      onFavouritesChanged: (v) =>
-                          setState(() => _favouritesOnly = v),
-                      key: const ValueKey('cocktails_tab'),
+                    _gatedTab(
+                      0,
+                      _CocktailsTab(
+                        searchController: _searchController,
+                        searchQuery: _searchQuery,
+                        onSearchChanged: (v) =>
+                            setState(() => _searchQuery = v.toLowerCase()),
+                        sortByAvailability: _sortByAvailability,
+                        onSortByAvailabilityChanged: (v) =>
+                            setState(() => _sortByAvailability = v),
+                        favouritesOnly: _favouritesOnly,
+                        onFavouritesChanged: (v) =>
+                            setState(() => _favouritesOnly = v),
+                        key: const ValueKey('cocktails_tab'),
+                      ),
                     ),
-                    _BarTab(order: _barOrder),
-                    const _MixologistTab(),
-                    const _SyrupsTab(),
+                    _gatedTab(1, _BarTab(order: _barOrder)),
+                    _gatedTab(2, const _MixologistTab()),
+                    _gatedTab(3, const _SyrupsTab()),
                   ],
                 ),
               ),
@@ -2052,6 +2065,7 @@ class _BarTabState extends ConsumerState<_BarTab> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: TextField(
             controller: _searchController,
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
             decoration: InputDecoration(
               hintText: 'Search ingredients...',
               prefixIcon: const Icon(Icons.search),
@@ -2148,8 +2162,13 @@ class _BarTabState extends ConsumerState<_BarTab> {
               final isPro = ref.watch(isProProvider).value ?? false;
               final adSlots =
                   _adSlotCache.forList(filtered.length, showAds: !isPro);
-              return ListView.builder(
+              return Listener(
+                onPointerDown: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
+                child: ListView.builder(
                 // Keys keep tiles stable when data updates without reordering.
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 itemCount: filtered.length + adSlots.length,
                 itemBuilder: (_, idx) {
                   if (isNativeAdSlot(idx, adSlots)) {
@@ -2163,6 +2182,7 @@ class _BarTabState extends ConsumerState<_BarTab> {
                     allIngredients: filtered,
                   );
                 },
+              ),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -2240,6 +2260,7 @@ class _BarIngredientTile extends ConsumerWidget {
         elevation: 3,
         child: InkWell(
           onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
             final idx = allIngredients.indexWhere(
               (b) => b.supabaseId == ingredient.supabaseId,
             );
