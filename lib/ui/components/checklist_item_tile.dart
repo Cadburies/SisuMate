@@ -15,6 +15,8 @@ class ChecklistItemTile extends StatelessWidget {
   final VoidCallback onHide;
   final VoidCallback onUnhide;
   final VoidCallback onTap;
+  final VoidCallback? onAddToShopping;
+  final bool isInShopping;
   final IconData fallbackIcon;
 
   const ChecklistItemTile({
@@ -25,6 +27,8 @@ class ChecklistItemTile extends StatelessWidget {
     required this.onHide,
     required this.onUnhide,
     required this.onTap,
+    this.onAddToShopping,
+    this.isInShopping = false,
     this.fallbackIcon = Icons.checklist,
   });
 
@@ -45,6 +49,8 @@ class ChecklistItemTile extends StatelessWidget {
       onComplete: onComplete,
       onHide: onHide,
       onUnhide: onUnhide,
+      onAddToShopping: onAddToShopping,
+      shoppingIsPending: isInShopping,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         color: c.bg,

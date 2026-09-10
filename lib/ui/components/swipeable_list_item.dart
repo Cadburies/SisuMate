@@ -163,6 +163,8 @@ class SwipeableListItem extends StatelessWidget {
     required VoidCallback onComplete,
     required VoidCallback onHide,
     VoidCallback? onUnhide,
+    VoidCallback? onAddToShopping,
+    bool shoppingIsPending = false,
     required Widget child,
   }) {
     return SwipeableListItem(
@@ -171,6 +173,8 @@ class SwipeableListItem extends StatelessWidget {
       onComplete: onComplete,
       onHide: onHide,
       onUnhide: onUnhide,
+      onAddToShopping: onAddToShopping,
+      shoppingIsPending: shoppingIsPending,
       child: child,
     );
   }

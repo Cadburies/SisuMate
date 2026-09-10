@@ -23,6 +23,7 @@ import '../components/import_export.dart';
 import '../../core/di.dart';
 import '../../core/app_router.dart';
 import '../../core/colors.dart';
+import '../../domain/repositories/shopping_repository.dart';
 import '../../models/models.dart';
 
 /// Dedicated screen for displaying maintenance checklist items for a specific group
@@ -59,6 +60,8 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
     final isProAsync = ref.watch(isProProvider);
     final isPro = isProAsync.value ?? false;
     final currentItems = asyncItems.asData?.value ?? const <ChecklistItem>[];
+    final shoppingNames =
+        ref.watch(shoppingItemNamesProvider).asData?.value ?? const <String>{};
     final showHidden =
         ref.watch(userSettingsProvider).asData?.value?.showHiddenItems ?? false;
     // #319 — keep the spare-link inventory watch warm so the decrement
@@ -184,6 +187,9 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                             onHide: () => _toggleHide(item),
                             onUnhide: () => _unhideItem(item),
                             onTap: () => _openViewer(item),
+                            isInShopping: shoppingNames
+                                .contains(item.title.toLowerCase().trim()),
+                            onAddToShopping: () => _addPartToShopping(item),
                           ),
                           // #18/#208: AI explainer — a visually distinct
                           // badge (own icon, own color), never mixed into
@@ -238,6 +244,35 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
       ),
       endDrawer: _buildEndDrawer(),
     );
+  }
+
+  /// #339: same catalog-aware shopping path as Pantry/Bar/Chef. Default
+  /// line name is the task title (no silent parse of part numbers out of
+  /// description/notes). The dialog lets the user edit the name; description
+  /// is kept as the shopping-line note.
+  Future<void> _addPartToShopping(ChecklistItem item) async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => _AddPartToShoppingDialog(item: item),
+    );
+    if (name == null || name.isEmpty || !mounted) return;
+
+    final note = (item.description ?? '').trim();
+    final added =
+        await ref.read(shoppingRepositoryProvider).ensurePacksInShopping(
+              name: name,
+              origin: 'maintenance',
+              packs: 1,
+              merge: ShopPackMerge.increment,
+              note: note.isEmpty ? null : note,
+            );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(added
+          ? '$name added to shopping list'
+          : '$name is already on the shopping list'),
+      duration: const Duration(seconds: 1),
+    ));
   }
 
   Future<void> _openViewer(ChecklistItem item) async {
@@ -762,6 +797,74 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
           onPressed: () => RevenueCatService().showPaywall(context),
         ),
       ),
+    );
+  }
+}
+
+class _AddPartToShoppingDialog extends StatefulWidget {
+  final ChecklistItem item;
+  const _AddPartToShoppingDialog({required this.item});
+
+  @override
+  State<_AddPartToShoppingDialog> createState() =>
+      _AddPartToShoppingDialogState();
+}
+
+class _AddPartToShoppingDialogState extends State<_AddPartToShoppingDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.item.title);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.of(context).pop(_controller.text.trim());
+
+  @override
+  Widget build(BuildContext context) {
+    final description = (widget.item.description ?? '').trim();
+    return AlertDialog(
+      title: const Text('Add to shopping'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Shopping item',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+            ),
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(description, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          child: const Text('Add'),
+        ),
+      ],
     );
   }
 }
