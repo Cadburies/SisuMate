@@ -1,0 +1,11 @@
+Developer / copyright holder: Frik Olivier
+Brand: Sailing Sisu
+App name: Sisu Mate
+Bundle ID / application ID: com.sailingsisu.sisumate
+Contact email: sailingsisu@outlook.com
+YouTube: Sailing Sisu
+
+Play Console “email address” (required): sailingsisu@outlook.com
+Play Console “phone” (optional): leave blank unless you want a public number
+Play Console “website” (optional): your hosted support URL
+App Store “marketing URL” (optional): YouTube channel or support URL

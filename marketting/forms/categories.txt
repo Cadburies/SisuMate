@@ -1,0 +1,11 @@
+App Store
+Primary: Navigation
+Secondary: Lifestyle
+(Navigation fits weather/anchor/passage; Lifestyle covers provisioning, crew, and games.)
+
+Google Play
+Application type: Application (not Game)
+Main category: Maps & Navigation
+Tags if offered: Boating, Offline, Travel, Tools
+
+Do not list it as a Game even though it contains games — the product is a boat operations suite.

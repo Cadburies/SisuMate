@@ -1,0 +1,45 @@
+APPLE AGE RATING (App Store Connect → Age Rating)
+
+Made for Kids?  No
+
+Unrestricted Web Access?  No
+
+Age rating questionnaire — pick the lowest true level:
+
+Cartoon or Fantasy Violence          None
+Realistic Violence                   None
+Prolonged Graphic or Sadistic        None
+Profanity or Crude Humor             None
+Horror / Fear Themes                 None
+Mature / Suggestive Themes           None
+Medical / Treatment Information      None
+Alcohol, Tobacco, or Drug Use        Infrequent/Mild
+  Reason: cocktail recipes and a bar module. No purchasing of alcohol in-app.
+Simulated Gambling                   Infrequent/Mild
+  Reason: onboard games include Poker, Liar’s Dice, and Dudo. No real money,
+  no casino cash-out, no loot boxes.
+Sexual Content or Nudity             None
+Graphic Sexual Content               None
+Gambling and Contests                None (not real-money)
+Guns or Other Weapons                None
+
+Expected result: 12+ because of alcohol references and card/dice games.
+Do not claim 4+ / Kids.
+
+GOOGLE PLAY CONTENT RATING (IARC questionnaire)
+
+Is this a game?                      No — it is a utility with optional games
+Alcohol use                          Yes, fictional / recipes only (reference)
+Tobacco / drugs                      No
+Gambling                             Simulated only, no real money
+Violence                             None
+Sexual content                       None
+Language                             None
+User interaction / social            Users can share templates (Community) and
+                                     invite crew with a code. No public chat.
+Location sharing                     Yes, optional (weather / log / anchor)
+Digital purchases                    Yes (Pro subscription)
+Personal info collected              Yes (account email if they sign in)
+
+Target audience: 18+ recommended because of cocktail content, even if IARC
+lands at Everyone 10+ / Teen. Do not tick “Designed for children”.

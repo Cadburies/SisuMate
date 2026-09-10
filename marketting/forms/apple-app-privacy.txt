@@ -1,0 +1,98 @@
+APP STORE CONNECT → APP PRIVACY
+Answer from what the shipping app actually does. “Linked to identity” means
+you can tie it to the signed-in account or the boat record.
+
+Do you collect data from this app?     YES
+
+
+DATA USED TO TRACK YOU
+Tracking = linking this app’s data with third-party data for advertising.
+There is no App Tracking Transparency prompt in the binary, so:
+  Data used to track you:  NONE
+
+
+DATA LINKED TO THE USER  (declare each row)
+
+1) Contact Info → Email Address
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: optional boat account (sign-up / magic link). Stored in Supabase Auth.
+
+2) Contact Info → Name
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: crew roster and guest names the user types.
+
+3) Contact Info → Phone Number
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: optional crew / ICE phone numbers.
+
+4) Location → Precise Location
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: optional. Weather “use my location”, captain’s log GPS stamp,
+   anchor alarm, shopping port-run, nearby-parts lookup. Log/anchor
+   positions sync with the boat if Pro/crew sync is on.
+
+5) Location → Coarse Location
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: same optional location features; weather/map providers see an
+   approximate position or IP when tiles/forecasts are fetched.
+
+6) User Content → Photos or Videos
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: optional item / log / ingredient photos. Stored on device;
+   metadata/paths can sync with the boat on Pro.
+
+7) User Content → Other User Content
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: checklists, maintenance, log entries, inventory, shopping,
+   recipes, cocktails, documents the user creates. Local always;
+   synced to our Supabase project when Pro or crew sync is on.
+
+8) Sensitive Info
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: optional crew fields — date of birth, nationality, passport
+   number, dietary and allergen tags — used for port paperwork and
+   galley planning. Synced with the boat if sync is on.
+
+9) Identifiers → User ID
+   Purposes: App Functionality
+   Linked: Yes   Tracking: No
+   Why: Supabase account id; RevenueCat app user id (same person
+   after login).
+
+10) Purchases → Purchase History
+    Purposes: App Functionality
+    Linked: Yes   Tracking: No
+    Why: Sisu Mate Pro via RevenueCat / App Store. Used only to unlock
+    Pro features.
+
+11) Identifiers → Device ID
+    Purposes: Third-Party Advertising
+    Linked: No
+    Tracking: No
+    Why: Google AdMob on the Free tier (banner, native, interstitial).
+    Not tied to the Sisu Mate account. Pro hides ads. No ATT / IDFA
+    tracking prompt ships in this build.
+
+
+DO NOT DECLARE (stays on the device, never sent to us)
+• On-device error log table
+• LLM API keys the user types (BYOK) — sent only to the provider they chose
+• PredictWind Hub / YDWG / Home Assistant passwords
+• Guest profiles that are local-only
+
+
+PRODUCT TYPES
+In-app purchases: Yes (auto-renewable Pro subscription)
+Account required: No for core offline use; Yes for sync / crew share
+
+
+PRIVACY POLICY URL
+Paste the public URL of privacy-policy.html

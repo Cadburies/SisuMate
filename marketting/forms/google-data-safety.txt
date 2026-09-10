@@ -1,0 +1,97 @@
+PLAY CONSOLE → APP CONTENT → DATA SAFETY
+
+Does your app collect or share any of the required user data types?  YES
+Is all of the user data collected by your app encrypted in transit?  YES  (HTTPS)
+Do you provide a way for users to request that their data is deleted?  YES
+  How: email sailingsisu@outlook.com from the account address; we delete the
+  Supabase account and synced boat rows. Local data is erased by uninstall
+  or in-app factory reset.
+
+
+COLLECTED BY YOU (developer backend = Supabase)
+
+Location — Approximate
+  Collected: Yes   Shared: Yes (weather/map providers when the user fetches
+  a forecast or map tiles)
+  Required: No (optional permission)
+  Purposes: App functionality
+  Ephemeral: No for log/anchor positions saved on the boat; Yes for a
+  one-off “centre weather here” request
+
+Location — Precise
+  Collected: Yes   Shared: Yes (same weather/map providers; also stored on
+  the boat record if the user stamps a log or drops anchor)
+  Required: No
+  Purposes: App functionality
+
+Personal info — Email
+  Collected: Yes   Shared: No
+  Required: No (only if they create a boat account)
+  Purposes: App functionality, Account management
+
+Personal info — Name
+  Collected: Yes   Shared: No
+  Required: No
+  Purposes: App functionality
+
+Personal info — Phone
+  Collected: Yes   Shared: No
+  Required: No
+  Purposes: App functionality
+
+Personal info — Other (passport number, nationality, date of birth on crew)
+  Collected: Yes   Shared: No
+  Required: No
+  Purposes: App functionality
+
+Health — Other health (allergen / dietary tags on crew)
+  Collected: Yes   Shared: No
+  Required: No
+  Purposes: App functionality
+
+Photos and videos — Photos
+  Collected: Yes   Shared: No
+  Required: No
+  Purposes: App functionality
+
+App info and performance — Other app performance data
+  Collected: No (error logs stay on the device and are not uploaded)
+
+Financial — Purchase history
+  Collected: Yes   Shared: Yes (Apple/Google Play and RevenueCat, to
+  validate the Pro subscription)
+  Required: No (only if they buy Pro)
+  Purposes: App functionality, Account management
+
+Device or other IDs
+  Collected: Yes   Shared: Yes (Google AdMob on Free tier)
+  Required: No
+  Purposes: Advertising or marketing
+
+
+NOT COLLECTED
+Crash logs (no cloud crash reporter)
+Web browsing history
+Contacts list from the phone address book (crew is typed in-app)
+Microphone, SMS, calendar
+
+
+DATA DELETION
+Users can: uninstall (wipes local DB), factory-reset in the drawer, or
+email sailingsisu@outlook.com to delete the cloud account.
+
+
+ADS
+Free tier shows AdMob banners, native ads, and interstitials.
+Pro removes ads. Ads are not shown to children. The app is not directed
+at children.
+
+
+SECURITY PRACTICES tick-boxes
+[x] Data is encrypted in transit
+[x] Users can request data deletion
+[ ] Data is encrypted at rest  — only tick if you are sure your Supabase
+    project has at-rest encryption (Supabase does on hosted Postgres; safe
+    to tick for the cloud copy)
+[ ] We independently review our data practices against a global security
+    standard  — leave unchecked unless you have a real audit

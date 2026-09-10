@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sisu Mate store assets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0D0D0D;
+    --surface: #121212;
+    --tile: #1e1e1e;
+    --home: #2E3D45;
+    --pro: #00504F;
+    --text: #ffffff;
+    --muted: #b0bec5;
+    --teal: #80deea;
+    --done: #006666;
+    --open: #546e7a;
+    --red: #cc0000;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; color: var(--text); font-family: Nunito, system-ui, sans-serif; }
+  body.feature { width: 1024px; height: 500px; overflow: hidden; }
+  body.shot { width: 1080px; height: 1920px; overflow: hidden; }
+  body.ios { width: 1320px; height: 2868px; overflow: hidden; }
+
+  /* Feature graphic */
+  .fg {
+    width: 1024px; height: 500px;
+    background: radial-gradient(ellipse at 28% 55%, #163a48 0%, #0D0D0D 58%);
+    display: flex; align-items: center; padding: 48px 72px; gap: 48px;
+  }
+  .fg img { width: 320px; height: 320px; border-radius: 72px; }
+  .fg h1 { font-size: 72px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .fg p { margin-top: 16px; font-size: 28px; font-weight: 600; color: var(--teal); max-width: 520px; }
+
+  /* Phone marketing screenshot */
+  .shot-wrap {
+    width: 100%; height: 100%;
+    background: radial-gradient(ellipse at 50% 0%, #163a48 0%, #0D0D0D 52%);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 72px 56px 48px;
+  }
+  body.ios .shot-wrap { padding: 160px 80px 80px; }
+  .kicker { font-size: 22px; font-weight: 700; color: var(--teal); letter-spacing: 2px; text-transform: uppercase; }
+  body.ios .kicker { font-size: 28px; }
+  .headline { margin-top: 14px; font-size: 48px; font-weight: 800; text-align: center; line-height: 1.15; max-width: 920px; }
+  body.ios .headline { font-size: 64px; margin-top: 24px; }
+  .phone {
+    margin-top: 40px; width: 780px; flex: 1;
+    background: var(--bg); border-radius: 48px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,.55);
+    border: 3px solid #2a2a2a;
+    display: flex; flex-direction: column;
+  }
+  body.ios .phone { margin-top: 64px; width: 980px; border-radius: 56px; }
+  .status { height: 28px; background: var(--bg); }
+  .bar {
+    background: var(--pro); padding: 18px 20px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .bar .back { font-size: 28px; width: 28px; }
+  .bar h2 { font-size: 28px; font-weight: 800; line-height: 1.1; }
+  .bar .sub { font-size: 14px; color: #c8e6e5; margin-top: 4px; font-weight: 600; }
+  .bar .menu { margin-left: auto; font-size: 30px; }
+  .search {
+    margin: 12px 14px 8px; background: #1a1a1a; border-radius: 24px;
+    padding: 12px 18px; color: var(--muted); font-weight: 600; font-size: 18px;
+  }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 14px 16px; }
+  .htile {
+    background: var(--home); border-radius: 14px; min-height: 118px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.45);
+  }
+  .htile .ic { font-size: 34px; line-height: 1; }
+  .htile span { font-size: 15px; font-weight: 700; text-align: center; padding: 0 6px; }
+  .card {
+    background: var(--open); border-radius: 14px; padding: 16px 14px 14px;
+    min-height: 168px; box-shadow: 0 4px 10px rgba(0,0,0,.45);
+  }
+  .card.done { background: var(--done); }
+  .card.shop { background: #1565c0; }
+  .card.miss { background: var(--red); }
+  .card h3 { font-size: 20px; font-weight: 800; }
+  .card p { margin-top: 8px; font-size: 15px; color: #d7e3e8; font-weight: 600; line-height: 1.35; }
+  .row {
+    margin: 8px 14px; background: var(--open); border-radius: 12px;
+    padding: 16px 16px; display: flex; align-items: center; gap: 14px;
+    font-weight: 700; font-size: 20px;
+  }
+  .row.done { background: var(--done); }
+  .row.shop { background: #1565c0; }
+  .chk { width: 26px; height: 26px; border: 2px solid #cfd8dc; border-radius: 6px; }
+  .row.done .chk { background: var(--teal); border-color: var(--teal); }
+  .foot { text-align: center; margin-top: 28px; font-weight: 800; font-size: 22px; color: var(--muted); }
+  body.ios .foot { margin-top: 48px; font-size: 28px; }
+  .list { flex: 1; overflow: hidden; }
+  .map {
+    margin: 12px 14px; height: 280px; border-radius: 16px;
+    background: linear-gradient(180deg, #0b3a4a 0%, #123 60%, #0D0D0D 100%);
+    position: relative; overflow: hidden;
+  }
+  .map .boat {
+    position: absolute; left: 48%; top: 42%; width: 18px; height: 18px;
+    background: #80deea; border-radius: 50%; box-shadow: 0 0 16px #80deea;
+  }
+  .chiprow { display: flex; gap: 8px; padding: 0 14px; }
+  .chip { background: var(--home); border-radius: 18px; padding: 8px 14px; font-weight: 700; font-size: 15px; color: var(--muted); }
+  .chip.on { background: var(--pro); color: #fff; }
+  .game {
+    background: var(--home); border-radius: 14px; padding: 22px 12px;
+    text-align: center; font-weight: 800; font-size: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.45);
+  }
+  .game .ic { font-size: 36px; display: block; margin-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <div id="feature" class="fg hidden">
+    <img id="fg-icon" alt="Sisu Mate icon" />
+    <div>
+      <h1>Sisu Mate</h1>
+      <p>Offshore boat ops. Works fully offline.</p>
+    </div>
+  </div>
+
+  <div id="shot" class="shot-wrap hidden">
+    <div class="kicker" id="kicker"></div>
+    <div class="headline" id="headline"></div>
+    <div class="phone">
+      <div class="status"></div>
+      <div class="bar">
+        <div class="back" id="back">‹</div>
+        <div>
+          <h2 id="title"></h2>
+          <div class="sub" id="sub">Sisu • Pro • Offline</div>
+        </div>
+        <div class="menu">☰</div>
+      </div>
+      <div class="list" id="body"></div>
+    </div>
+    <div class="foot">Sisu Mate</div>
+  </div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const kind = params.get('k') || 'feature';
+const screen = params.get('s') || 'home';
+const tiles = [
+  ['🛒','#4caf50','Shopping'],
+  ['🍸','#7e57c2','Cocktails'],
+  ['🍽️','#ffc107','Chef'],
+  ['⛑️','#ef5350','Safety'],
+  ['✅','#42a5f5','Checklists'],
+  ['🔧','#ffa726','Maintenance'],
+  ['📒','#8d6e63',"Captain's Log"],
+  ['⛽','#ff7043','Fuel & Water'],
+  ['📦','#26a69a','Inventory'],
+  ['👥','#ab47bc','Crew & Contacts'],
+  ['📁','#90a4ae','Documents'],
+  ['🌐','#26c6da','Community'],
+  ['☁️','#29b6f6','Weather'],
+  ['📡','#18ffff','Polar'],
+  ['⚓','#78909c','Anchor Alarm'],
+  ['🎲','#5c6bc0','Games'],
+];
+
+function home() {
+  document.getElementById('back').textContent = '';
+  return `<div class="search">Search modules</div>
+    <div class="grid3">${tiles.map(t =>
+      `<div class="htile"><div class="ic" style="color:${t[1]}">${t[0]}</div><span>${t[2]}</span></div>`
+    ).join('')}</div>`;
+}
+function checklists() {
+  const items = [
+    ['done','Daily Engine Checks','12 of 14 complete'],
+    ['','One Day Before Departure Checks','0 of 13 complete'],
+    ['','One Week Before Departure','3 of 23 complete'],
+    ['done','Watch Checks','8 of 8 complete'],
+    ['','Annual Checks','41 of 82 complete'],
+    ['','Last Minute','2 of 14 complete'],
+  ];
+  return `<div class="search">Search checklists</div>
+    <div class="grid2">${items.map(([c,n,s]) =>
+      `<div class="card ${c}"><h3>${n}</h3><p>${s}</p></div>`
+    ).join('')}</div>`;
+}
+function shopping() {
+  const rows = [
+    ['done','Diesel — 80 L'],
+    ['shop','Engine oil 15W-40'],
+    ['shop','Fresh vegetables'],
+    ['','Spare impeller'],
+    ['shop','UHT milk'],
+    ['','Winch grease'],
+  ];
+  return `<div class="search">Search shopping</div>
+    ${rows.map(([c,n]) => `<div class="row ${c}"><div class="chk"></div>${n}</div>`).join('')}`;
+}
+function weather() {
+  return `<div class="search">Search weather</div>
+    <div class="map"><div class="boat"></div></div>
+    <div class="row"><div>🌬</div>Wind 16 kn · 240°</div>
+    <div class="row"><div>🌊</div>Waves 1.4 m · 8 s</div>
+    <div class="row done"><div>🗺</div>Passage GRIB loaded</div>`;
+}
+function chef() {
+  const items = [
+    ['done','Traditional Bobotie','Pantry ready'],
+    ['','Navy bean stew','2 missing'],
+    ['shop','Sourdough pancakes','On shopping list'],
+    ['','Grilled yellowtail','Pantry ready'],
+  ];
+  return `<div class="chiprow"><div class="chip on">Menus</div><div class="chip">My Pantry</div><div class="chip">Chef's Choice</div></div>
+    <div class="search">Search recipes</div>
+    <div class="grid2">${items.map(([c,n,s]) =>
+      `<div class="card ${c}"><h3>${n}</h3><p>${s}</p></div>`
+    ).join('')}</div>`;
+}
+function games() {
+  const g = [
+    ['🎲','Yatzy'],['🎲','Liar\'s Dice'],['🎲','Dudo'],
+    ['♟️','Checkers'],['♟️','Backgammon'],['🃏','Cribbage'],
+    ['🃏','Uno'],['🃏','Poker'],['🃏','Solitaire'],
+  ];
+  return `<div class="search">Search games</div>
+    <div class="grid3">${g.map(([i,n]) =>
+      `<div class="game"><span class="ic">${i}</span>${n}</div>`
+    ).join('')}</div>`;
+}
+function cocktails() {
+  const items = [
+    ['done','Mai Tai','Can make now'],
+    ['done','Navy Grog','Can make now'],
+    ['miss','Espresso Martini','Missing coffee liqueur'],
+    ['shop','Paloma','On shopping list'],
+  ];
+  return `<div class="chiprow"><div class="chip on">Cocktails</div><div class="chip">My Bar</div><div class="chip">Mixologist</div></div>
+    <div class="search">Search drinks</div>
+    <div class="grid2">${items.map(([c,n,s]) =>
+      `<div class="card ${c}"><h3>${n}</h3><p>${s}</p></div>`
+    ).join('')}</div>`;
+}
+function anchor() {
+  return `<div class="map" style="height:340px"><div class="boat"></div></div>
+    <div class="row done"><div>⚓</div>Scope 5:1 · 28 m rode</div>
+    <div class="row"><div>📉</div>Depth 6.2 m</div>
+    <div class="row"><div>🌬</div>Wind alarm 25 kn</div>
+    <div class="row"><div>📍</div>Saved spot: Cala Blanca</div>`;
+}
+
+const screens = {
+  home: { title: 'Sisu Mate', back: false, kicker: 'All in one place', headline: 'Every boat system, one home screen', body: home },
+  checklists: { title: 'Checklists', back: true, kicker: 'Ready to leave', headline: 'Run departure checks even offshore', body: checklists },
+  shopping: { title: 'Shopping', back: true, kicker: 'Port run', headline: 'Provision by origin — galley, engine, deck', body: shopping },
+  weather: { title: 'Weather', back: true, kicker: 'On passage', headline: 'GRIB, routing, and marine weather', body: weather },
+  chef: { title: 'Chef', back: true, kicker: 'Galley', headline: 'Plan meals from what is actually onboard', body: chef },
+  games: { title: 'Games', back: true, kicker: 'At anchor', headline: 'Nine games. LAN multiplayer. No internet.', body: games },
+  cocktails: { title: 'Cocktails', back: true, kicker: 'Sundowners', headline: 'Scale a round for the whole crew', body: cocktails },
+  anchor: { title: 'Anchor Alarm', back: true, kicker: 'On the hook', headline: 'Watch the rode while you sleep', body: anchor },
+};
+
+if (kind === 'feature') {
+  document.body.className = 'feature';
+  document.getElementById('feature').classList.remove('hidden');
+  document.getElementById('fg-icon').src = params.get('icon') || '../app-icon-1024.png';
+} else {
+  document.body.className = kind === 'ios' ? 'ios' : 'shot';
+  document.getElementById('shot').classList.remove('hidden');
+  const sc = screens[screen] || screens.home;
+  document.getElementById('kicker').textContent = sc.kicker;
+  document.getElementById('headline').textContent = sc.headline;
+  document.getElementById('title').textContent = sc.title;
+  document.getElementById('back').textContent = sc.back ? '‹' : '';
+  document.getElementById('body').innerHTML = sc.body();
+}
+</script>
+</body>
+</html>

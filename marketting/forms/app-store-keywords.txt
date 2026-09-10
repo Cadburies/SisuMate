@@ -1,0 +1,2 @@
+boat,sailing,checklist,logbook,maintenance,yacht,cruising,offline,weather,provisioning,anchor,crew
+

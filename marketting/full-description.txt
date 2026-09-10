@@ -1,0 +1,36 @@
+Sisu Mate is the offshore-ready companion for sailors. Run the boat, feed the crew, watch the weather, and play a round at anchor — even when there is no signal.
+
+OFFLINE FIRST
+The app is fully usable with no internet. Your data lives on the device. When you are back online, Pro accounts sync across phones and tablets, and crew can join the boat with a share code.
+
+BOAT OPERATIONS
+• Checklists — departure, watch, engine, and annual checks with a guided check-page flow, notes, photos, and history
+• Maintenance — service intervals, hours tracking, and linked spares
+• Safety — briefings and equipment checks for day trips and longer passages
+• Captain’s Log — trips, conditions, incidents, and GPS-aware entries
+• Fuel & Water — tank logs with unit-aware prices
+• Inventory — onboard spares, barcode entry, and location filters
+• Documents — registration, insurance, manuals, and crew-linked papers
+• Crew & Contacts — roster, ICE details, dietary/allergen tags, and guest profiles
+
+PASSAGE TOOLS
+• Weather — marine forecast, GRIB files, and passage planning
+• Polar — performance diagram from your boat’s data
+• Anchor Alarm — scope, depth, wind, and saved spots
+
+PROVISIONING & LIFE ONBOARD
+• Shopping — lists by origin (galley, engine, deck) with prices and a port-run flow
+• Chef — recipes, meal plans, pantry, and cooking mode
+• Cocktails — recipes with batch scaling for the whole crew
+
+GAMES
+Nine onboard games for weather days and quiet nights: Yatzy, Liar’s Dice, Dudo, Checkers, Backgammon, Cribbage, Uno, Poker, and Solitaire. Eight support local LAN multiplayer on the boat Wi-Fi — no internet required. Play against AI when you are solo.
+
+COMMUNITY
+Browse and import checklists, recipes, cocktails, and shopping collections shared by other sailors.
+
+FREE AND PRO
+Free: full read access, limited edits, ads.
+Pro: unlimited completion and notes, multi-boat, realtime sync, crew share code, Community import, no ads.
+
+Sisu Mate is built for real boats: metric or imperial display, dark theme by default, and a design that stays readable in a dim nav station.

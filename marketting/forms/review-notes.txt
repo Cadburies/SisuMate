@@ -1,0 +1,17 @@
+Sisu Mate is an offline-first boat operations app. Most features work with no account and no network.
+
+Sign-in is optional. Free users can browse seeded checklists, recipes, and games. Creating an account is only needed to test Pro sync and crew share codes.
+
+In-app purchases:
+• Sisu Mate Pro monthly — sisu_mate_pro_monthly (iOS) / promonthly:promonthly (Android)
+• Sisu Mate Pro yearly — sisu_mate_pro_yearly (iOS) / proyearly:yearly (Android)
+Restore Purchases is on the paywall.
+
+Permissions are optional and used only when the user taps the matching feature:
+• Location — centre weather, stamp a log position, anchor alarm, port-run shopping, nearby-parts lookup
+• Camera / photos — barcodes and item photos
+• Local network — LAN multiplayer games on the boat Wi-Fi
+
+Ads (banner, native, interstitial) show on the Free tier only. Pro hides ads.
+
+No demo password is required. Create a new email on the Boat account screen if you want to test sync.

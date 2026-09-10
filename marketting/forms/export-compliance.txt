@@ -1,0 +1,12 @@
+App Store Connect → Export Compliance
+
+Does your app use encryption?
+Yes — only HTTPS to talk to our backend, Apple/Google, ads, and weather/map services.
+
+Does your app qualify for the exemption in category 5 part 2?
+Yes.
+
+Is your app designed to use cryptography for something other than authentication, digital signatures, or HTTPS?
+No.
+
+The iOS binary already sets ITSAppUsesNonExemptEncryption = false, so choose the standard HTTPS exemption. Do not upload an ERN.
