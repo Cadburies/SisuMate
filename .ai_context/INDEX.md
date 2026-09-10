@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** Tester `1.0.0+3` on Play internal + TestFlight (Pro until 2026-12-31).
+- **Last:** Tester `1.0.0+6` on Play internal + TestFlight; Frik's Testers assigned.
 - **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 

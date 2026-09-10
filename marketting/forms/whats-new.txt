@@ -1,7 +1,9 @@
-Welcome to Sisu Mate — the offshore-ready boat companion.
+Build 6 — tester update
 
-• Checklists, maintenance, safety, captain’s log, fuel & water, inventory, documents, and crew
-• Weather, polar diagram, and anchor alarm
-• Shopping, chef, and cocktails that work from what is actually onboard
-• Nine games with LAN multiplayer on the boat Wi-Fi
-• Fully usable with no signal; Pro syncs when you are back online
+• Full Pro until 31 Dec 2026 (no paywall)
+• Title bar and tiles: same-colour gradient, darker at the ends
+• Maintenance: swipe a task to add the part to Shopping
+• Chef → My Pantry: tap a card to open it (Android)
+• Settings: Upload crash log if something breaks
+
+Please update from 1.0.0 (2) and tell us if Pro, shopping, and pantry taps work.

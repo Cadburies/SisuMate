@@ -122,7 +122,7 @@ ok "AAB $(ls -lh "$AAB" | awk '{print $5, $9}')"
 if [[ ! -x "$VENV/bin/python" ]]; then
   ok "creating Play API venv at $VENV"
   python3 -m venv "$VENV"
-  "$VENV/bin/pip" install --quiet 'google-auth>=2.0' 'requests>=2.0'
+  "$VENV/bin/pip" install --quiet 'google-auth>=2.0' 'requests>=2.0' 'PyJWT[crypto]>=2.0'
 fi
 
 ok "uploading to Play track=$TRACK"
@@ -135,5 +135,9 @@ ok "uploading to Play track=$TRACK"
   --version-code "$VERSION_CODE" \
   --notes "$NOTES" \
   --sa-json "$SA_JSON"
+
+ok "notifying testers"
+"$VENV/bin/python" "$ROOT/scripts/_tester_notify.py" \
+  --platform android --version-code "$VERSION_CODE" --track "$TRACK"
 
 ok "done. Testers: Play Console → Sisu Mate → Test and release → Internal testing → Testers"

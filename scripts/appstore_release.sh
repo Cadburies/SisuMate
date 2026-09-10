@@ -28,6 +28,7 @@ ASC_JSON="$ROOT/secrets/appstore-connect.json"
 EXPORT_PLIST="$ROOT/ios/ExportOptions-appstore.plist"
 IPA=""
 KEYS_DIR="$HOME/.appstoreconnect/private_keys"
+VENV="${PLAY_API_VENV:-/tmp/play-api-venv}"
 
 usage() {
   sed -n '2,16p' "$0"
@@ -141,7 +142,14 @@ xcrun iTMSTransporter -m upload \
   -v informational
 
 ok "uploaded $BUNDLE_ID $VERSION_NAME+$VERSION_CODE"
-ok "Apple will process the build (often 5–30 min), then it appears under TestFlight."
+if [[ ! -x "$VENV/bin/python" ]]; then
+  ok "creating API venv at $VENV"
+  python3 -m venv "$VENV"
+  "$VENV/bin/pip" install --quiet 'google-auth>=2.0' 'requests>=2.0' 'PyJWT[crypto]>=2.0'
+fi
+ok "assigning Frik's Testers + What to Test (waits for Apple processing)"
+"$VENV/bin/python" "$ROOT/scripts/_tester_notify.py" \
+  --platform ios --version-code "$VERSION_CODE"
 ok "Testers: App Store Connect → Sisu Mate → TestFlight"
 if [[ "$TRACK" == "appstore" ]]; then
   ok "App Store review is not submitted automatically. In Console: App Store → + version → select this build → Submit for Review."

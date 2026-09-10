@@ -7,7 +7,7 @@ Agent-facing. Identity, secrets, and commands to ship a build. Do **not** submit
 | | |
 | --- | --- |
 | Application / bundle id | `com.sailingsisu.sisumate` |
-| Version | `pubspec.yaml` `version:` (`1.0.0+3` → name `1.0.0`, code `3`) |
+| Version | `pubspec.yaml` `version:` (`1.0.0+6` → name `1.0.0`, code `6`) |
 | Apple team | `D6WY6A2237` (Automatic signing) |
 | Play package | same as application id |
 
@@ -56,8 +56,11 @@ Keep `FORCE_PRO_*` **out of** `dart-defines.json` (that file is production crede
 
 ## After a successful upload
 
-- **Play internal:** Console → Sisu Mate → Test and release → Internal testing → Testers (add Gmail / Google Group). Opt-in link; not public.
-- **TestFlight:** App Store Connect → Sisu Mate → TestFlight. Apple processes 5–30 min, then Internal Testing. External testing needs Beta App Review.
+Scripts call `scripts/_tester_notify.py`:
+
+- **TestFlight:** waits until the build is VALID, sets *What to Test* from `marketting/forms/whats-new.txt`, adds the build to the **Frik's Testers** group, invites anyone still `NOT_INVITED`, and relies on TestFlight auto-notify.
+- **Play internal:** refreshes release notes. The Play API **cannot** manage Console email lists (only Google Groups). Testers already on the internal email list get the new build automatically. Opt-in: https://play.google.com/apps/internaltest/com.sailingsisu.sisumate
+
 - Flutter may warn that the iOS **launch image is the default placeholder** — not a TestFlight blocker; replace before App Review.
 
 ## If credentials are missing / 403
