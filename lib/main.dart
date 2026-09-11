@@ -111,6 +111,10 @@ class SisuMateApp extends ConsumerWidget {
       theme: sisuMateLightTheme,
       darkTheme: sisuMateDarkTheme,
       themeMode: themeMode,
+      // Debug-only ribbon; release/profile builds never show it regardless.
+      // Suppressed here too so debug-mode screenshots (e.g. iOS Simulator,
+      // which can't run release/profile at all) come out clean.
+      debugShowCheckedModeBanner: false,
       routerConfig: appRouter,
     );
   }
