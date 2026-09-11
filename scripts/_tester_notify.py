@@ -5,7 +5,8 @@ TestFlight: wait until Apple finishes processing, set whatsNew, add the build
 to the named beta group, invite anyone still NOT_INVITED, then notify.
 
 Play: the Publisher API cannot manage Console email lists (only Google
-Groups). We refresh release notes and print the internal opt-in URL.
+Groups), so testers GET is empty even when **Frik's Testers** is checked
+on Internal testing. We refresh release notes and print the opt-in URL.
 """
 from __future__ import annotations
 

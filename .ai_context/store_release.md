@@ -60,7 +60,7 @@ Keep `FORCE_PRO_*` **out of** `dart-defines.json` (that file is production crede
 Scripts call `scripts/_tester_notify.py`:
 
 - **TestFlight:** waits until the build is VALID, sets *What to Test* from `marketting/forms/whats-new.txt`, adds the build to the **Frik's Testers** group, invites anyone still `NOT_INVITED`, and relies on TestFlight auto-notify.
-- **Play internal:** refreshes release notes. The Play API **cannot** manage Console email lists (only Google Groups). Testers already on the internal email list get the new build automatically. Opt-in: https://play.google.com/apps/internaltest/com.sailingsisu.sisumate
+- **Play internal:** refreshes release notes. **Frik's Testers** is a Play Console *email list* on Internal testing (same name as the TestFlight group). The Play API **cannot** read or write that list (it only sees Google Groups, so testers GET returns `{}`). Leave the list checked on the Testers tab; people already on it get the new build. Opt-in: https://play.google.com/apps/internaltest/com.sailingsisu.sisumate
 
 - Flutter may warn that the iOS **launch image is the default placeholder** — not a TestFlight blocker; replace before App Review.
 
