@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,7 @@ import '../../services/revenuecat_service.dart';
 import '../../services/record_share_service.dart';
 import '../../services/import_service.dart';
 import '../../services/inventory_reorder_service.dart';
+import '../../services/image_service.dart';
 import '../../providers/checklist_provider.dart';
 
 final inventoryItemsProvider = StreamProvider<List<InventoryItem>>((ref) {
@@ -566,6 +568,10 @@ class AddEditInventoryItemDialog extends StatefulWidget {
   /// Called instead of [onSave] when a scanned barcode matches an existing
   /// item and the user chooses to open it rather than add a duplicate.
   final ValueChanged<InventoryItem>? onOpenExisting;
+  /// #349 — when adding (not editing), prefills name/notes/linked-item from
+  /// this maintenance item and durably copies its photo, so "Add spare"
+  /// reachable from a maintenance item doesn't start from a blank form.
+  final ChecklistItem? seedFromMaintenanceItem;
   const AddEditInventoryItemDialog({
     super.key,
     this.existing,
@@ -574,6 +580,7 @@ class AddEditInventoryItemDialog extends StatefulWidget {
     this.maintenanceItems = const [],
     this.maintenanceGroups = const [],
     this.onOpenExisting,
+    this.seedFromMaintenanceItem,
   });
 
   @override
@@ -598,6 +605,7 @@ class AddEditInventoryItemDialogState
   void initState() {
     super.initState();
     final existing = widget.existing;
+    final seed = widget.seedFromMaintenanceItem;
     if (existing != null) {
       _nameCtrl.text = existing.name;
       _locationCtrl.text = existing.location ?? '';
@@ -611,7 +619,28 @@ class AddEditInventoryItemDialogState
       _localPath = existing.localPath;
       _linkedMaintenanceItemSupabaseId =
           existing.linkedMaintenanceItemSupabaseId;
+    } else if (seed != null) {
+      // #349 — "Add spare" from a maintenance item: notes carry the
+      // description (e.g. a part number embedded there), and the spare is
+      // linked back to the source item automatically instead of requiring
+      // the "Used by" dropdown to be set by hand.
+      _nameCtrl.text = seed.title;
+      _notesCtrl.text = seed.description ?? '';
+      _linkedMaintenanceItemSupabaseId = seed.supabaseId;
+      final sourcePhoto = seed.userPhotoPath;
+      if (sourcePhoto != null && sourcePhoto.isNotEmpty) {
+        unawaited(_seedPhotoFrom(sourcePhoto));
+      }
     }
+  }
+
+  /// Durably copies the maintenance item's photo into its own file rather
+  /// than aliasing the source path, so later changing/removing the
+  /// maintenance item's photo doesn't affect this spare's copy.
+  Future<void> _seedPhotoFrom(String sourcePath) async {
+    final copied =
+        await ImageService().persistPickedPath(sourcePath, prefix: 'spare');
+    if (mounted) setState(() => _localPath = copied);
   }
 
   @override

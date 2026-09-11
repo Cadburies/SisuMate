@@ -8,6 +8,7 @@ import '../components/native_ad_widget.dart';
 import '../components/ad_slots.dart';
 import '../components/add_checklist_item_dialog.dart';
 import '../checklists/check_page_viewer.dart';
+import '../inventory/inventory_screen.dart';
 import 'maintenance_ai_explainer_dialog.dart';
 import 'warranty_check_dialog.dart';
 import 'part_sourcing_dialog.dart';
@@ -215,6 +216,30 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                               ),
                             ),
                           ),
+                          // #349 — "Add spare" — own badge (Inventory's
+                          // brown, matches inventory_screen.dart's tile
+                          // icon color), separate from the AI badge above.
+                          Positioned(
+                            top: 6,
+                            left: 6,
+                            child: Material(
+                              color: Colors.brown,
+                              shape: const CircleBorder(),
+                              elevation: 2,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => _addSpare(item),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(6),
+                                  child: Icon(
+                                    Icons.inventory_2_outlined,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -334,6 +359,71 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// #349 — "Add spare" reachable from a maintenance item: opens the
+  /// Inventory add dialog pre-filled from [item] (name, notes from
+  /// description, photo, and the linked-item — see
+  /// `AddEditInventoryItemDialog.seedFromMaintenanceItem`). Gated the same
+  /// as Inventory's own add FAB (`inventory_screen.dart`).
+  Future<void> _addSpare(ChecklistItem item) async {
+    final isPro = ref.read(isProProvider).value ?? false;
+    if (!isPro) {
+      _showSpareProRequiredDialog();
+      return;
+    }
+    final maintItems = ref
+            .read(checklistItemsForAppTypeProvider('maintenance'))
+            .asData
+            ?.value ??
+        const <ChecklistItem>[];
+    final maintGroups =
+        ref.read(checklistGroupsProvider('maintenance')).asData?.value ??
+            const <ChecklistGroup>[];
+    final existingItems =
+        ref.read(inventoryItemsProvider).asData?.value ??
+            const <InventoryItem>[];
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (_) => AddEditInventoryItemDialog(
+        existingItems: existingItems,
+        maintenanceItems: maintItems,
+        maintenanceGroups: maintGroups,
+        seedFromMaintenanceItem: item,
+        onSave: (spare) async {
+          await ref.read(inventoryItemRepositoryProvider).addInventoryItem(spare);
+          navigator.pop();
+          messenger.showSnackBar(
+              SnackBar(content: Text('${spare.name} added to inventory')));
+        },
+      ),
+    );
+  }
+
+  void _showSpareProRequiredDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Sisu Mate Pro Required'),
+        content: const Text(
+            'Adding spares to inventory is a Pro feature. Upgrade to unlock inventory management.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              RevenueCatService().showPaywall(context);
+            },
+            child: const Text('Upgrade to Pro'),
+          ),
+        ],
       ),
     );
   }

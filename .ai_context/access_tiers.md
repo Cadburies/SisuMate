@@ -54,6 +54,7 @@ Feature gates (ads, complete, multi-boat) use `isProProvider`.
 | 7 | Banner ad | `banner_ad_widget.dart` | Shown; Pro → shrink |
 | 8 | Native ad every 8 items | checklist list + `NativeAdWidget` | Widget should suppress for Pro — verify in widget |
 | 9 | Upgrade tile | `common_drawer.dart` `ProUpgradeSection` | Enabled when not Pro |
+| 10 | Add spare (from maintenance item) | `maintenance_items_screen.dart` `_addSpare` | Internal Pro check → paywall dialog, same pattern as #6 |
 
 **New gated feature:** add a row here + implement with `isProProvider` / same patterns. Never bypass.
 
