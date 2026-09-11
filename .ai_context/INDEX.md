@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** tester 1.0.0+7 on Play internal + TestFlight (iOS 14.0, focus Safety/Maintenance/Chef/Cocktails/Shopping).
+- **Last:** #346 — Safety/Maintenance/Checklists tiles stay grey/green/dark-grey; red is recipe-missing only.
 - **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 

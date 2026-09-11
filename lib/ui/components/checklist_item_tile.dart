@@ -5,6 +5,15 @@ import 'smart_image.dart';
 import 'sisu_tile_card.dart';
 import 'swipeable_list_item.dart';
 
+/// Checklist / Maintenance / Safety tile colour (theme.md §6.5).
+/// Grey not-done, green completed, dark grey hidden. Never
+/// [ItemListState.unavailable] — red is Chef/Cocktails recipe-missing only.
+ItemListState checklistItemListState(ChecklistItem item) => item.isHidden
+    ? ItemListState.hidden
+    : item.isCompleted
+        ? ItemListState.stocked
+        : ItemListState.defaults;
+
 /// Shared themed tile for a `ChecklistItem` — used by Checklists, Maintenance,
 /// and Safety Briefings so they look and swipe identically (theme.md §6).
 /// The tile colour tells the state (green completed / dark hidden / grey
@@ -33,11 +42,7 @@ class ChecklistItemTile extends StatelessWidget {
     this.fallbackIcon = Icons.checklist,
   });
 
-  ItemListState get _state => item.isHidden
-      ? ItemListState.hidden
-      : item.isCompleted
-          ? ItemListState.stocked
-          : ItemListState.defaults;
+  ItemListState get _state => checklistItemListState(item);
 
   @override
   Widget build(BuildContext context) {

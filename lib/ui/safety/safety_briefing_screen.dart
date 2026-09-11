@@ -256,7 +256,7 @@ class _SafetyBriefingItemsScreenState
   Future<void> _toggleHide(ChecklistItem item) async {
     final repository = ref.read(checklistRepositoryProvider);
     if (item.isHidden) {
-      await repository.unhideItem(item);
+      await repository.permanentlyDelete(item);
     } else {
       await repository.hideItem(item);
     }

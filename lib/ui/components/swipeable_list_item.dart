@@ -4,12 +4,14 @@ import '../../core/colors.dart';
 
 /// Universal swipeable list item (theme.md §6.6). Uniform across every list:
 ///   Swipe RIGHT (icons appear on the LEFT)  = organise: (un)hide, delete-when-
-///                                             hidden (red), shopping (blue),
+///                                             hidden (red action, not a red
+///                                             tile), shopping (blue),
 ///                                             email (indigo).
 ///   Swipe LEFT  (icons appear on the RIGHT) = state toggle only: (un)complete
 ///                                             / in-stock — no secondary actions.
 /// Complete and stock are **toggles** — always available; the label/colour
-/// flips with `isCompleted` / `isStocked`.
+/// flips with `isCompleted` / `isStocked`. Deleted checklist/safety/maintenance
+/// rows leave the list; they are never painted `ItemListState.unavailable`.
 class SwipeableListItem extends StatelessWidget {
   final Widget child;
   final bool isHidden;

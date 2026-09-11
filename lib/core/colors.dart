@@ -88,7 +88,7 @@ class SisuColors {
   static const Color stateShoppingBg = Color(0xFF13386E);
   static const Color stateShoppingDesc = Color(0xFF93C5FD);
   static const Color stateShoppingTitle = Color(0xFFDBEAFE);
-  // Not in stock / deleted — red
+  // Recipe-missing (Chef / Cocktails) — red. Not a deleted-row colour.
   static const Color stateUnavailableBg = Color(0xFF6E1D1D);
   static const Color stateUnavailableDesc = Color(0xFFFCA5A5);
   static const Color stateUnavailableTitle = Color(0xFFFEE2E2);
@@ -293,7 +293,9 @@ enum ItemListState {
   stocked,
   /// Blue: in the shopping basket.
   shopping,
-  /// Red: this Chef/Cocktail recipe line is missing (alarm). Not catalog unstocked.
+  /// Red: this Chef/Cocktail recipe line is missing (alarm).
+  /// Not catalog unstocked, and never a deleted-row colour
+  /// (Safety / Maintenance / Checklists hide then delete-forever).
   unavailable,
   /// Dark grey: soft-hidden.
   hidden,

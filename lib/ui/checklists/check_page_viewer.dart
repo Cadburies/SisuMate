@@ -7,6 +7,7 @@ import '../../core/colors.dart';
 import '../../services/free_edit_gate.dart';
 import '../../services/revenuecat_service.dart';
 import '../components/smart_image.dart';
+import '../components/checklist_item_tile.dart';
 import '../components/item_detail_shell.dart';
 import '../components/common_drawer.dart';
 import '../components/photo_source_picker.dart';
@@ -122,12 +123,7 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
 
   Color _stateColor(ChecklistItem item) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final state = item.isHidden
-        ? ItemListState.hidden
-        : item.isCompleted
-            ? ItemListState.stocked
-            : ItemListState.defaults;
-    return SisuColors.itemStateColors(isDark, state).bg;
+    return SisuColors.itemStateColors(isDark, checklistItemListState(item)).bg;
   }
 
   /// FREE-EDITS: completing/uncompleting and editing notes are Pro features
@@ -307,11 +303,7 @@ class _CheckPageViewerState extends ConsumerState<CheckPageViewer> {
         final item = _item(index);
         final c = SisuColors.itemStateColors(
           isDark,
-          item.isHidden
-              ? ItemListState.hidden
-              : item.isCompleted
-                  ? ItemListState.stocked
-                  : ItemListState.defaults,
+          checklistItemListState(item),
         );
         if (isEditing) {
           return SingleChildScrollView(

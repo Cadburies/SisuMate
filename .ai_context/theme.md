@@ -124,10 +124,10 @@ Each state uses a background with a **lighter description** text and an **even-l
 | **Grey** | `defaults` | Still to do (Safety / Maintenance / checklists), or listed in pantry/bar but not aboard. No alarm. |
 | **Green** | `stocked` | Done, or aboard (in pantry / in bar / bought). |
 | **Blue** | `shopping` | On the shopping list. |
-| **Red** | `unavailable` | Missing for *this* recipe (Chef / Cocktails ingredient rows + “Missing N” on recipe cards). Alarm only. Not used for pantry/bar catalog unstocked, and not implemented as “deleted”. |
-| **Dark grey** | `hidden` | Hidden on purpose. |
+| **Red** | `unavailable` | Missing for *this* recipe (Chef / Cocktails ingredient rows + “Missing N” on recipe cards). Alarm only. Not pantry/bar catalog unstocked, and **not** deleted. |
+| **Dark grey** | `hidden` | Hidden on purpose (reversible). |
 
-Pantry / My Bar catalog: green → blue → **grey**. Recipe lines: green → blue → **red**. Checklists never use red.
+Pantry / My Bar catalog: green → blue → **grey**. Recipe lines: green → blue → **red**. Safety / Maintenance / Checklists: grey / green / dark grey only — never red. Hide is reversible (dark grey); delete is permanent and the row leaves the list (no red tile).
 
 *(If a state is missing from this list, raise it — the owner asked to be told.)*
 
