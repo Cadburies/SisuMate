@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last:** macOS 13 floor + iOS opted out of Apple Silicon Mac (#343 #344).
+- **Last:** iOS floor 14.0 (#345). macOS 13 + iOS opted out of Apple Silicon Mac (#343 #344).
 - **Next:** pick next work from open issues.
-- **Blockers:** android-34 emulator image broken.
+- **Blockers:** android-34 emulator image broken. Local `flutter build ios` needs Xcode iOS 26.5 Components.
 
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.
