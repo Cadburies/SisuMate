@@ -216,8 +216,8 @@ void main() {
   });
 
   group('Onboarding bypass constant still present for debug', () {
-    test('kBypassOnboardingForTesting is true in source (debug-only use)', () {
-      expect(kBypassOnboardingForTesting, isTrue);
+    test('kBypassOnboardingForTesting is false so debug shows onboarding', () {
+      expect(kBypassOnboardingForTesting, isFalse);
     });
   });
 }

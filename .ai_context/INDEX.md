@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** #348 — tester/debug grant shows Tester 2026 (not Pro/Free); ads stay off.
+- **Last:** debug onboarding bypass off (`kBypassOnboardingForTesting = false`).
 - **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 

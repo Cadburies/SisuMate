@@ -11,7 +11,7 @@ const _kOnboardingSeenKey = 'onboarding_seen_v1';
 /// to Home. Only ever takes effect in debug builds (gated by [kDebugMode] at
 /// the use site), so a release build always shows onboarding even if this is
 /// left `true`. Tracked in outstanding.md (RM2).
-const bool kBypassOnboardingForTesting = true;
+const bool kBypassOnboardingForTesting = false;
 
 /// Returns true if the user has already completed onboarding (or the testing
 /// bypass is on, in debug builds only).
