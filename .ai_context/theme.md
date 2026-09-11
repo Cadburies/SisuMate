@@ -117,15 +117,17 @@ Follows §5.1 (binding for every screen, including item screens): mandatory stat
 - **Next row:** the date it was last completed / added / purchased (where appropriate), with associated **cost** where appropriate. Design a genuinely useful secondary line per app — **not** a literal "in my pantry / fresh provision" label (that's conveyed by colour).
 
 ### 6.5 State → colour (the tile colour IS the status)
-Each state uses a background with a **lighter description** text and an **even-lighter title** text:
+Each state uses a background with a **lighter description** text and an **even-lighter title** text. Grey is the quiet default; red is alarm — they are not two spellings of “not stocked”.
 
-| State | Tile background | Description text | Title text |
-|---|---|---|---|
-| Not completed (default) | normal grey | lighter grey | lightest |
-| Not in stock (Chef/Cocktails) / **deleted** (other lists) | light **red** | lighter red | lightest |
-| In shopping basket | **blue** | lighter blue | lightest |
-| Hidden | dark grey | lighter grey | lightest |
-| In stock / completed | **green** | lighter green | lightest |
+| Colour | Enum | Meaning |
+|---|---|---|
+| **Grey** | `defaults` | Still to do (Safety / Maintenance / checklists), or listed in pantry/bar but not aboard. No alarm. |
+| **Green** | `stocked` | Done, or aboard (in pantry / in bar / bought). |
+| **Blue** | `shopping` | On the shopping list. |
+| **Red** | `unavailable` | Missing for *this* recipe (Chef / Cocktails ingredient rows + “Missing N” on recipe cards). Alarm only. Not used for pantry/bar catalog unstocked, and not implemented as “deleted”. |
+| **Dark grey** | `hidden` | Hidden on purpose. |
+
+Pantry / My Bar catalog: green → blue → **grey**. Recipe lines: green → blue → **red**. Checklists never use red.
 
 *(If a state is missing from this list, raise it — the owner asked to be told.)*
 

@@ -1,10 +1,14 @@
 Build 7 — tester update
 
-Please focus testing on Safety, Maintenance, Chef, Cocktails, and Shopping.
-Other modules are still in progress — skip those unless something obviously breaks.
+Focus on Safety, Maintenance, Chef, Cocktails, and Shopping. Other modules still in progress.
 
-• Full Pro until 31 Dec 2026 (no paywall)
-• iOS 14.0+ (was 15.5)
-• iPhone app no longer runs on Mac
+Tile colour is the status (no ticks):
+• Grey — still to do, or listed but not aboard
+• Green — done / aboard
+• Blue — on the shopping list
+• Red — missing for this recipe (Chef/Cocktails only)
+• Dark grey — hidden on purpose
 
-Please update from 1.0.0 (6).
+Swipe left = done / in stock. Swipe right = hide / shop / delete.
+
+Full Pro until 31 Dec 2026. Update from 1.0.0 (6).

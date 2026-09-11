@@ -287,15 +287,15 @@ class SisuColors {
 
 /// Visual state for item-list tiles (theme.md §6.5).
 enum ItemListState {
-  /// Not completed / not in stock / normal row.
+  /// Grey: still to do, or pantry/bar catalog not aboard. Not an alarm.
   defaults,
-  /// Completed / in bar / in pantry / bought.
+  /// Green: completed / in bar / in pantry / bought.
   stocked,
-  /// In shopping basket (shopping list origin or flag).
+  /// Blue: in the shopping basket.
   shopping,
-  /// Deleted / not available.
+  /// Red: this Chef/Cocktail recipe line is missing (alarm). Not catalog unstocked.
   unavailable,
-  /// Soft-hidden.
+  /// Dark grey: soft-hidden.
   hidden,
 }
 
