@@ -14,11 +14,21 @@ migrate_working_dir/
 .env
 .secret
 dart-defines.json
+crash_store/
+ios/build/ios/XCBuildData/PIFCache/
+test/failures/
 
 # Real credentials — never commit (SEC1: Play SA must not be a Flutter asset)
 assets/service-account-google-play.json
 secrets/**
 !secrets/README.md
+
+# Android release signing — passwords + keystore path; the .jks itself lives
+# outside the repo entirely (~/keystores/sisumate/), this is defense in depth
+android/key.properties
+*.jks
+*.keystore
+**/client_secret*.json
 
 # Local-machine tooling, not project state
 .idea/

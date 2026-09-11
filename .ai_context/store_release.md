@@ -7,7 +7,7 @@ Agent-facing. Identity, secrets, and commands to ship a build. Do **not** submit
 | | |
 | --- | --- |
 | Application / bundle id | `com.sailingsisu.sisumate` |
-| Version | `pubspec.yaml` `version:` (`1.0.0+6` → name `1.0.0`, code `6`) |
+| Version | `pubspec.yaml` `version:` (`1.0.0+7` → name `1.0.0`, code `7`) |
 | Apple team | `D6WY6A2237` (Automatic signing) |
 | Min iOS | 14.0 (`ios/Podfile` + `IPHONEOS_DEPLOYMENT_TARGET`; #345) |
 | Play package | same as application id |

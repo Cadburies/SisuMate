@@ -1,9 +1,10 @@
-Build 6 — tester update
+Build 7 — tester update
+
+Please focus testing on Safety, Maintenance, Chef, Cocktails, and Shopping.
+Other modules are still in progress — skip those unless something obviously breaks.
 
 • Full Pro until 31 Dec 2026 (no paywall)
-• Title bar and tiles: same-colour gradient, darker at the ends
-• Maintenance: swipe a task to add the part to Shopping
-• Chef → My Pantry: tap a card to open it (Android)
-• Settings: Upload crash log if something breaks
+• iOS 14.0+ (was 15.5)
+• iPhone app no longer runs on Mac
 
-Please update from 1.0.0 (2) and tell us if Pro, shopping, and pantry taps work.
+Please update from 1.0.0 (6).

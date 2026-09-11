@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last:** iOS floor 14.0 (#345). macOS 13 + iOS opted out of Apple Silicon Mac (#343 #344).
+- **Last:** tester 1.0.0+7 on Play internal + TestFlight (iOS 14.0, focus Safety/Maintenance/Chef/Cocktails/Shopping).
 - **Next:** pick next work from open issues.
-- **Blockers:** android-34 emulator image broken. Local `flutter build ios` needs Xcode iOS 26.5 Components.
+- **Blockers:** android-34 emulator image broken.
 
 
 **Rule:** update NEXT before ending a session (≤6 lines). No essay of shipped history.
