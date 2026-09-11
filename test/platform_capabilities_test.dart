@@ -33,13 +33,15 @@ void main() {
     expect(pbx, contains('SUPPORTS_MACCATALYST = NO'));
   });
 
-  test('iOS deployment target is 14.0 (#345)', () {
+  test('iOS deployment target is 13.0 (#345, further lowered from 14.0)', () {
     final pod = File('ios/Podfile').readAsStringSync();
-    expect(pod, contains("platform :ios, '14.0'"));
-    expect(pod, contains("config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'"));
+    expect(pod, contains("platform :ios, '13.0'"));
+    expect(pod, contains("config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'"));
+    expect(pod, isNot(contains('14.0')));
     expect(pod, isNot(contains('15.5')));
     final pbx = File('ios/Runner.xcodeproj/project.pbxproj').readAsStringSync();
-    expect(pbx, contains('IPHONEOS_DEPLOYMENT_TARGET = 14.0'));
+    expect(pbx, contains('IPHONEOS_DEPLOYMENT_TARGET = 13.0'));
+    expect(pbx, isNot(contains('IPHONEOS_DEPLOYMENT_TARGET = 14.0')));
     expect(pbx, isNot(contains('IPHONEOS_DEPLOYMENT_TARGET = 15.5')));
   });
 
