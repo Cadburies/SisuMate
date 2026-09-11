@@ -1135,7 +1135,10 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
     final nextIsLocalAi =
         !state.isHumanTurn && (!state.isMultiplayer || state.isOpponentAI);
     if (nextIsLocalAi) {
-      Future.delayed(const Duration(milliseconds: 300), roll);
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (!ref.mounted) return;
+        roll();
+      });
     }
   }
 
