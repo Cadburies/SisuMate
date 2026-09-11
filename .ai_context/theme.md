@@ -69,6 +69,7 @@ Implemented once in `TitleTile` (`lib/ui/components/title_tile.dart`) — plug i
 
 1. **Line 2 is ALWAYS the status line**: `boat name • Pro/Free • Online/Offline • email user`,
    with `• Syncing (N)` appended while the outbox is non-empty (`syncOutboxCountProvider`).
+   Tester/debug grant (`isTestModeActive`) uses **Tester 2026** instead of Pro/Free.
    Per-screen subtitle text is retired — `TitleTile.subtitle` is ignored (strip on touch, UX7).
 2. **Back arrow on the far left** whenever the screen can pop (`Navigator.canPop`); the home
    screen is the root so it never shows one. No screen adds its own back button.

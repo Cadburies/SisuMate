@@ -8,12 +8,13 @@ import '../../providers/shopping_provider.dart';
 import '../../core/di.dart';
 import '../../core/colors.dart';
 import '../../services/error_log_service.dart';
+import '../../services/revenuecat_service.dart';
 
 /// Universal Title Tile that replaces the status bar across all screens.
 ///
 /// Title-bar standard (owner, 2026-07-12 — see theme.md §5.1):
 /// - Line 1: the screen title. Line 2 is ALWAYS the status line
-///   (boat • Pro/Free • Online/Offline • email user • Syncing (N)).
+///   (boat • Pro/Free or Tester 2026 • Online/Offline • email user • Syncing (N)).
 /// - A back arrow sits on the far left whenever the screen can pop
 ///   (the home screen can't, so it never shows one).
 /// - Trailing icons, right to left: drawer (menu), import/export, share.
@@ -93,9 +94,9 @@ class _TitleTileState extends ConsumerState<TitleTile> {
     final backgroundColor = SisuColors.getStatusBarColor(isPro, isOnline);
     final textColor = Theme.of(context).colorScheme.onPrimary;
 
-    // Status line (mandatory): Boat • Pro/Free • Online/Offline • user • Syncing (N)
+    // Status line (mandatory): Boat • Pro/Free (or Tester 2026) • Online/Offline • user • Syncing (N)
     final boatName = activeBoat?.name ?? 'No Boat';
-    final proStatus = isPro ? 'Pro' : 'Free';
+    final proStatus = statusTierLabel(isPro: isPro);
     final onlineStatus = isPro ? (isOnline ? 'Online' : 'Offline') : '';
     final username = isPro && user != null
         ? user.email?.split('@')[0] ?? ''

@@ -36,6 +36,49 @@ void main() {
       );
     });
 
+    test('statusTierLabel is Tester 2026 in tester mode, else Pro/Free', () {
+      expect(
+        statusTierLabel(isPro: true, testerMode: true),
+        kTesterStatusLabel,
+      );
+      expect(
+        statusTierLabel(isPro: false, testerMode: true),
+        kTesterStatusLabel,
+      );
+      expect(statusTierLabel(isPro: true, testerMode: false), 'Pro');
+      expect(statusTierLabel(isPro: false, testerMode: false), 'Free');
+    });
+
+    test('hideAdsFor is true for Pro and for tester mode', () {
+      expect(hideAdsFor(isPro: true, testerMode: false), isTrue);
+      expect(hideAdsFor(isPro: false, testerMode: true), isTrue);
+      expect(hideAdsFor(isPro: false, testerMode: false), isFalse);
+    });
+
+    test('isTestModeActive follows FORCE_PRO_UNTIL and debug override', () {
+      addTearDown(() => debugTestModeOverrideForTests = null);
+      expect(
+        isTestModeActive(
+          raw: kTesterProUntil,
+          now: DateTime.utc(2026, 6, 1),
+          underTest: false,
+        ),
+        isTrue,
+      );
+      expect(
+        isTestModeActive(
+          raw: '',
+          now: DateTime.utc(2026, 6, 1),
+          underTest: false,
+        ),
+        isTrue,
+      );
+      debugTestModeOverrideForTests = true;
+      expect(isTestModeActive(), isTrue);
+      debugTestModeOverrideForTests = false;
+      expect(isTestModeActive(), isFalse);
+    });
+
     test('isTesterProActive honors expiry and is off under the test runner', () {
       const until = '2026-12-31T23:59:59Z';
       expect(

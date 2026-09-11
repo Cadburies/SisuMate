@@ -49,6 +49,46 @@ bool isTesterProActive({
   return (now ?? DateTime.now().toUtc()).isBefore(until);
 }
 
+/// Title-bar token while a tester/debug grant is live (#348).
+const String kTesterStatusLabel = 'Tester 2026';
+
+/// Test-only seam so widget tests can force the Tester 2026 label / ads-off
+/// path. Reset in `tearDown`. Never consulted outside `FLUTTER_TEST`.
+@visibleForTesting
+bool? debugTestModeOverrideForTests;
+
+/// Tester IPA (`FORCE_PRO_UNTIL`) or debug `kForceProForTesting`. False under
+/// the test runner unless [debugTestModeOverrideForTests] / [underTest] say
+/// otherwise.
+bool isTestModeActive({
+  String raw = kForceProUntilRaw,
+  DateTime? now,
+  bool? underTest,
+}) {
+  if (Platform.environment.containsKey('FLUTTER_TEST') &&
+      debugTestModeOverrideForTests != null) {
+    return debugTestModeOverrideForTests!;
+  }
+  if (isTesterProActive(raw: raw, now: now, underTest: underTest)) {
+    return true;
+  }
+  final inTest =
+      underTest ?? Platform.environment.containsKey('FLUTTER_TEST');
+  if (inTest) return false;
+  return kDebugMode && kForceProForTesting;
+}
+
+/// Status-line Pro/Free token. Tester/debug grant reads [kTesterStatusLabel].
+String statusTierLabel({required bool isPro, bool? testerMode}) {
+  if (testerMode ?? isTestModeActive()) return kTesterStatusLabel;
+  return isPro ? 'Pro' : 'Free';
+}
+
+/// Ads (banner / native / interstitial / reserved slots) stay off for Pro
+/// *and* for the tester/debug grant.
+bool hideAdsFor({required bool isPro, bool? testerMode}) =>
+    isPro || (testerMode ?? isTestModeActive());
+
 /// Debug bootstrap identity used together with [kForceProForTesting] so on-device
 /// Pro testing runs against a fixed Supabase owner account + boat instead of the
 /// full sign-up flow. Only consumed on debug (kDebugMode) code paths. The account

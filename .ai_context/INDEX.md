@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #347 — onboarding uses home-tile tonal bar + list-colour pitch page.
-- **Next:** #348 Tester 2026 status label; no ads in tester mode.
+- **Last:** #348 — tester/debug grant shows Tester 2026 (not Pro/Free); ads stay off.
+- **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 
 
