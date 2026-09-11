@@ -30,7 +30,7 @@ Tiles are separated from their background not by heavy borders but by an **elega
 
 ### 2.1 Tonal bar fill (title bar + tiles)
 
-Horizontal surfaces (title bar, home tiles, main-list tiles, item rows) are **not** a flat fill. They use a **same-hue tonal bar**: the `SisuColors` token in the **middle**, a **darker shade of that same hue** (HSL lightness only) at **both ends**. Constructor: `SisuColors.tonalBarGradient`. Do not invent a second hue or a left-to-right brand wipe.
+Horizontal surfaces (title bar, home tiles, main-list tiles, item rows) are **not** a flat fill. They use a **same-hue tonal bar**: the `SisuColors` token in the **middle**, a **darker shade of that same hue** (HSL lightness only) at **both ends**. Constructor: `SisuColors.tonalBarGradient`. Do not invent a second hue or a left-to-right brand wipe. Onboarding uses the same gradient on `getHomeTile` as the full-screen fill — never `getBackgroundColor(false)` under dark-theme white text.
 
 Picked over LTR dark→colour (pulls the eye to one side) and centre-dark (reads as a crease). Text contrast is still against the centre token.
 

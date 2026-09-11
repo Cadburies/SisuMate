@@ -1,0 +1,25 @@
+Lists: Open a list and work the tiles. Colour is the status — no tick or cart icon.
+
+How to use
+• Tap a tile to open, edit, save.
+• Swipe left = done / in stock.
+• Swipe right = hide, shopping, or delete.
+• Hidden stays in the list until you unhide it.
+
+Colours
+
+┌───────────┬─────────────────────────────────────────────────────────┐
+│ Colour    │ Meaning                                                 │
+├───────────┼─────────────────────────────────────────────────────────┤
+│ Grey      │ Still to do, or listed but not aboard. No alarm.        │
+├───────────┼─────────────────────────────────────────────────────────┤
+│ Green     │ Done / aboard.                                          │
+├───────────┼─────────────────────────────────────────────────────────┤
+│ Blue      │ On the shopping list.                                   │
+├───────────┼─────────────────────────────────────────────────────────┤
+│ Red       │ Missing for this recipe (Chef / Cocktails only). Alarm. │
+├───────────┼─────────────────────────────────────────────────────────┤
+│ Dark grey │ Hidden on purpose.                                      │
+└───────────┴─────────────────────────────────────────────────────────┘
+
+Grey on pantry/bar means “not aboard.” Red only means “this dish or drink is blocked.” They are not two names for the same thing.

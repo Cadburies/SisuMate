@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #346 — Safety/Maintenance/Checklists tiles stay grey/green/dark-grey; red is recipe-missing only.
-- **Next:** pick next work from open issues.
+- **Last:** #347 — onboarding uses home-tile tonal bar + list-colour pitch page.
+- **Next:** #348 Tester 2026 status label; no ads in tester mode.
 - **Blockers:** android-34 emulator image broken.
 
 
