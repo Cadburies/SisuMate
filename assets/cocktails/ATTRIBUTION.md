@@ -1,8 +1,9 @@
 # Cocktail image attribution
 
 ## Size
-All images are resized to max **720×480** JPEG (quality ~72) to match the cocktail
-detail hero (`width: full`, `height: 200` logical) while keeping the APK small.
+All images are resized to max **720×480** JPEG (quality ~72) — **3:2**. The
+detail hero and grid cards must keep that aspect (`CocktailArt`); a short
+full-bleed `BoxFit.cover` on iPad crops through the glass.
 
 ## Sources
 - **Glassware defaults** (`_default*.jpg`): generated offline silhouettes (no third-party copyright).

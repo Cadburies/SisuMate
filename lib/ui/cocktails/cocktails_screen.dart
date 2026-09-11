@@ -35,6 +35,7 @@ import '../../domain/repositories/shopping_repository.dart';
 import '../components/tag_combobox.dart';
 import '../components/native_ad_widget.dart';
 import '../components/ad_slots.dart';
+import 'cocktail_art.dart';
 
 class CocktailsScreen extends ConsumerStatefulWidget {
   const CocktailsScreen({super.key});
@@ -716,14 +717,16 @@ class _CocktailsTabState extends ConsumerState<_CocktailsTab> {
   Widget _cocktailGridSliver(List<Recipe> recipes, {bool withAds = false}) {
     final slots = withAds ? _adSlotCache(recipes.length) : const <int>[];
     final count = recipes.length + slots.length;
+    final width = MediaQuery.sizeOf(context).width;
+    final cross = width >= 1100 ? 4 : width >= 700 ? 3 : 2;
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: cross,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.55,
+          childAspectRatio: cross >= 3 ? 0.70 : 0.55,
         ),
         delegate: SliverChildBuilderDelegate((_, i) {
           if (isNativeAdSlot(i, slots)) {
@@ -790,24 +793,9 @@ class _CocktailCard extends ConsumerWidget {
                     topLeft: Radius.circular(12),
                     topRight: Radius.circular(12),
                   ),
-                  child: SizedBox(
-                    height: 90,
-                    width: double.infinity,
-                    child: SmartImage(
-                      assetName: recipe.imageAsset,
-                      userPhotoPath: recipe.localPath,
-                      width: double.infinity,
-                      height: 90,
-                      fit: BoxFit.cover,
-                      customFallback: Container(
-                        color: Colors.deepPurple.withValues(alpha: 0.12),
-                        child: const Icon(
-                          Icons.local_bar,
-                          size: 36,
-                          color: Colors.deepPurple,
-                        ),
-                      ),
-                    ),
+                  child: CocktailArt(
+                    assetName: recipe.imageAsset,
+                    userPhotoPath: recipe.localPath,
                   ),
                 ),
                 Positioned(
@@ -1070,29 +1058,10 @@ class CocktailRecipeDetailScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Offline cocktail art — sized for detail hero (~full width × 200).
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 200,
-                        child: SmartImage(
-                          assetName: widget.recipe.imageAsset,
-                          userPhotoPath: widget.recipe.localPath,
-                          width: double.infinity,
-                          height: 200,
-                          fit: BoxFit.cover,
-                          customFallback: Container(
-                            color: Colors.deepPurple.withValues(alpha: 0.12),
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              Icons.local_bar,
-                              size: 56,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                        ),
-                      ),
+                    CocktailArt(
+                      assetName: widget.recipe.imageAsset,
+                      userPhotoPath: widget.recipe.localPath,
+                      detail: true,
                     ),
                     const SizedBox(height: 16),
                     if (widget.recipe.description != null) ...[

@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** debug onboarding bypass off (`kBypassOnboardingForTesting = false`).
+- **Last:** #350 — iPad cocktail art keeps 3:2 so glass photos are not cropped into a strip.
 - **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 
