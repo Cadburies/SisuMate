@@ -5,7 +5,7 @@
 
 ## NEXT
 
-- **Last:** #350 — iPad cocktail art keeps 3:2 so glass photos are not cropped into a strip.
+- **Last:** #351 — home tiles long-press to jiggle + drag reorder (device-local).
 - **Next:** pick next work from open issues.
 - **Blockers:** android-34 emulator image broken.
 

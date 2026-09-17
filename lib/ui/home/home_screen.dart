@@ -8,8 +8,11 @@ import '../components/sisu_tile_card.dart';
 import '../../core/app_router.dart';
 import '../../core/di.dart';
 import '../../core/colors.dart';
+import '../../providers/home_tile_order_provider.dart';
 import '../../providers/passage_readiness_provider.dart';
 import '../../services/suggestion_engine.dart';
+import 'components/home_module_tile.dart';
+import 'home_modules.dart';
 
 /// #278 — session-only hide for home strips (process restart restores them).
 /// Does not delete underlying readiness/suggestion data.
@@ -41,6 +44,8 @@ class HomeScreen extends ConsumerWidget {
         ref.watch(homePassageReadinessDismissedProvider);
     final suggestionsDismissed =
         ref.watch(homeSuggestionsDismissedProvider);
+    final editing = ref.watch(homeTileEditModeProvider);
+    final modules = HomeModules.resolve(ref.watch(homeTileOrderProvider));
 
     return Scaffold(
       body: SafeArea(
@@ -50,7 +55,33 @@ class HomeScreen extends ConsumerWidget {
               // Title Tile at the top
               TitleTile(
                 title: 'Sisu Mate',
-                onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
+                onMenuPressed: () {
+                  ref.read(homeTileEditModeProvider.notifier).exit();
+                  Scaffold.of(context).openEndDrawer();
+                },
+                actionsBuilder: editing
+                    ? (iconColor) => [
+                          TextButton(
+                            key: const ValueKey('home_tile_edit_done'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: iconColor,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              minimumSize: const Size(40, 40),
+                              tapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            onPressed: () => ref
+                                .read(homeTileEditModeProvider.notifier)
+                                .exit(),
+                            child: const Text(
+                              'Done',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ]
+                    : null,
               ),
               if (!readinessDismissed)
                 Dismissible(
@@ -93,108 +124,13 @@ class HomeScreen extends ConsumerWidget {
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
                   children: [
-                    // ── Row 1: daily-use provisioning ────────────────
-                    _AppTile(
-                      title: 'Shopping',
-                      icon: Icons.shopping_cart,
-                      color: Colors.green,
-                      onTap: () => context.push(AppRoutes.shopping),
-                    ),
-                    _AppTile(
-                      title: 'Cocktails',
-                      icon: Icons.local_bar,
-                      color: Colors.deepPurple,
-                      onTap: () => context.push(AppRoutes.cocktails),
-                    ),
-                    _AppTile(
-                      title: 'Chef',
-                      icon: Icons.restaurant_menu,
-                      color: Colors.amber,
-                      onTap: () => context.push(AppRoutes.chef),
-                    ),
-                    // ── Row 2: safety & operational checklists ────────
-                    _AppTile(
-                      title: 'Safety',
-                      icon: Icons.health_and_safety,
-                      color: Colors.red,
-                      onTap: () => context.push(AppRoutes.safety),
-                    ),
-                    _AppTile(
-                      title: 'Checklists',
-                      icon: Icons.checklist,
-                      color: Colors.blue,
-                      onTap: () => context.push(AppRoutes.checklists),
-                    ),
-                    _AppTile(
-                      title: 'Maintenance',
-                      icon: Icons.build,
-                      color: Colors.orange,
-                      onTap: () => context.push(AppRoutes.maintenance),
-                    ),
-                    // ── Row 3: voyage logging & monitoring ────────────
-                    _AppTile(
-                      title: "Captain's Log",
-                      icon: Icons.book,
-                      color: Colors.brown,
-                      onTap: () => context.push(AppRoutes.logbook),
-                    ),
-                    _AppTile(
-                      title: 'Fuel & Water',
-                      icon: Icons.local_gas_station,
-                      color: Colors.deepOrange,
-                      onTap: () => context.push(AppRoutes.fuel),
-                    ),
-                    _AppTile(
-                      title: 'Inventory',
-                      icon: Icons.inventory,
-                      color: Colors.teal,
-                      onTap: () => context.push(AppRoutes.inventory),
-                    ),
-                    // ── Row 4: crew, admin & community ───────────────
-                    _AppTile(
-                      title: 'Crew & Contacts',
-                      icon: Icons.people,
-                      color: Colors.purple,
-                      onTap: () => context.push(AppRoutes.crew),
-                    ),
-                    _AppTile(
-                      title: 'Documents',
-                      icon: Icons.folder,
-                      color: Colors.grey,
-                      onTap: () => context.push(AppRoutes.documents),
-                    ),
-                    _AppTile(
-                      title: 'Community',
-                      icon: Icons.people_outline,
-                      color: Colors.cyan,
-                      onTap: () => context.push(AppRoutes.community),
-                    ),
-                    // ── Row 5: passage tools ──────────────────────────
-                    _AppTile(
-                      title: 'Weather',
-                      icon: Icons.wb_cloudy,
-                      color: Colors.lightBlue,
-                      onTap: () => context.push(AppRoutes.weather),
-                    ),
-                    _AppTile(
-                      title: 'Polar',
-                      icon: Icons.radar,
-                      color: Colors.cyanAccent,
-                      onTap: () => context.push(AppRoutes.polarChart),
-                    ),
-                    _AppTile(
-                      title: 'Anchor Alarm',
-                      icon: Icons.anchor,
-                      color: Colors.blueGrey,
-                      onTap: () => context.push(AppRoutes.anchorAlarm),
-                    ),
-                    // ── Last: entertainment ───────────────────────────
-                    _AppTile(
-                      title: 'Games',
-                      icon: Icons.casino,
-                      color: Colors.indigo,
-                      onTap: () => context.push(AppRoutes.games),
-                    ),
+                    for (var i = 0; i < modules.length; i++)
+                      HomeModuleTile(
+                        key: ValueKey('home_tile_${modules[i].id}'),
+                        module: modules[i],
+                        index: i,
+                        editing: editing,
+                      ),
                   ],
                 ),
               ),
@@ -419,51 +355,4 @@ class _SuggestionsBanner extends StatelessWidget {
   }
 }
 
-class _AppTile extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
 
-  const _AppTile({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return SisuTileCard(
-      elevation: 4,
-      color: SisuColors.getHomeTile(isDark),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 36, color: color),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                  color: SisuColors.getTextPrimaryColor(isDark),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

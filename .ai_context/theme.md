@@ -53,7 +53,7 @@ Light theme mirrors this (lightest → white).
 - Background: darkest grey (`SisuColors.getAppBackground` → `#0D0D0D` dark).
 - Module tiles: **one uniform dark blue-grey** in the title-bar family but darker — `SisuColors.getHomeTile` (`#2E3D45` dark) — with the standard elevation (§2). (The owner preferred this cohesive blue-grey over a neutral `#121212`.)
 - Each tile keeps its **per-module accent colour on the icon only** (green cart, purple glass, gold spoons, …) for identity; the tile background stays uniform.
-- **Three columns.**
+- **Three columns.** Long-press a tile to rearrange (jiggle + drag); order is device-local SharedPreferences, not synced.
 
 ---
 

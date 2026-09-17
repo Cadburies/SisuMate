@@ -109,9 +109,12 @@ void main() {
     });
 
     test('home keeps distinct Weather and Anchor Alarm tiles', () {
-      final src = File('${Directory.current.path}/lib/ui/home/home_screen.dart')
-          .readAsStringSync();
+      final src =
+          File('${Directory.current.path}/lib/ui/home/home_modules.dart')
+              .readAsStringSync();
+      expect(src.contains("id: 'weather'"), isTrue);
       expect(src.contains("title: 'Weather'"), isTrue);
+      expect(src.contains("id: 'anchor'"), isTrue);
       expect(src.contains("title: 'Anchor Alarm'"), isTrue);
     });
 

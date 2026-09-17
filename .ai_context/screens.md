@@ -39,6 +39,7 @@
 | Checklist autopilot (BAI3) | Banner is keyword-match on existing checklist *titles* (last minute / one day / one week / document / watch) from trip window + weather — no new schema. Logic: `SuggestionEngine.checklistAutopilot` + `checklist_autopilot_provider.dart`. |
 | Home drawer Pro | Free + ≤1 boat → lock tile for boat management (no navigation). |
 | Crew join (`/join`) | Always go through `JoinBoatService.join` — never set active boat before redeem succeeds. Restamp is required so local rows use the captain’s boat GUID for wire-prefix sync. |
+| Home tile order (#351) | Device-local SharedPreferences (`home_tile_order_v1`); not synced. Long-press → jiggle edit mode + drag; **Done** exits. New catalog ids merge next to default neighbors (`HomeModules.merge`). |
 | Home readiness (BAI1) | `_PassageReadinessCard` always shown (Ready is useful). Uses `passage_readiness_provider` + `SuggestionEngine.passageReadiness` (safety + maint + wind + fuel ETA). |
 | Fuel burn (BAI4/SUG6–7) | Single fill → remaining is **unknown** (`null`), not full tank. L/day = last 6 intervals, recency-weighted. Source: `fuel_burn_estimator.dart`. |
 | Games multiplayer | Hub multiplayer toggle: non-`multiplayerReady` tiles dim + "Solo only" badge. Lobby `switch (gameId)` starts the matching notifier — add both chip + case when shipping a new multiplayer title. |
