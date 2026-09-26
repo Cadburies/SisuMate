@@ -159,6 +159,7 @@ class FuelScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Add fuel log',
         onPressed: () => isPro
             ? _showAddEditDialog(context, ref)
             : _showProRequiredDialog(context),

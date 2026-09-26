@@ -279,6 +279,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       floatingActionButton: _selecting
           ? null
           : FloatingActionButton(
+              tooltip: 'Add inventory item',
               onPressed: () => isPro
                   ? _showAddEditDialog(
                       context, ref, allItems, maintItems, maintGroups)
