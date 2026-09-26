@@ -394,14 +394,18 @@ class _ShakingDice extends StatefulWidget {
 
 class _ShakingDiceState extends State<_ShakingDice>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 400),
-  );
+  // Created in initState, not as a lazy `late final` initializer: a die that
+  // never shook would otherwise build it inside dispose() (vsync then looks
+  // up a deactivated ancestor and throws).
+  late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
     if (widget.shake) _controller.repeat(reverse: true);
   }
 
