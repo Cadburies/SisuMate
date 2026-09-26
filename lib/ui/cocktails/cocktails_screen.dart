@@ -226,6 +226,7 @@ class _CocktailsScreenState extends ConsumerState<CocktailsScreen>
           if (_tabController.index == 0) {
             return FloatingActionButton(
               heroTag: 'cocktail_fab',
+              tooltip: 'Add cocktail',
               onPressed: () => isPro
                   ? _showAddRecipeDialog(context)
                   : _showProRequiredDialog(context),
@@ -1502,6 +1503,7 @@ class CocktailRecipeDetailScreenState
       floatingActionButton: isProAsync.when(
         data: (isPro) => isPro
             ? FloatingActionButton(
+                tooltip: 'Edit cocktail',
                 onPressed: () => _showEditDialog(context),
                 child: const Icon(Icons.edit),
               )
