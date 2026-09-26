@@ -58,6 +58,13 @@ Omitted key = any. Gate *rules* live in `access_tiers.md`; only state what this 
 - `--device` runs the same `reach` steps on a real phone/sim via `scripts/lt_ui_helpers.sh` (label taps, scroll-retry).
 - Missing script test for a feature? Create it in the area file. The suite runs every host script.
 
+## Public wiki (generated — this folder is the only source)
+
+`title`, `desc`, `keywords`, `looks`, `reach`, `needs`, `action`, `expect` of `layer: ux` features are
+**published** to the public GitHub wiki: write them in plain user language (no paths, class/function
+names, `AppRoutes`, `()`). Developer/debug-only and `system/…` features are never published.
+After creating or changing any feature file: `scripts/publish_wiki.sh` (`--dry-run` to preview).
+
 ## Find things (cheapest first)
 
 ```
