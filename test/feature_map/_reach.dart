@@ -10,11 +10,12 @@ import 'package:sisu_mate/core/app_router.dart';
 import 'package:sisu_mate/core/di.dart';
 import 'package:sisu_mate/core/theme.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
-import 'package:sisu_mate/data/seed/bundled_data_seeder.dart';
 import 'package:sisu_mate/data/seed/seed_expansion_catalog.dart';
 import 'package:sisu_mate/providers/passage_readiness_provider.dart';
+import 'package:sisu_mate/services/database_service.dart';
 import 'package:sisu_mate/services/revenuecat_service.dart';
 import 'package:sisu_mate/services/suggestion_engine.dart';
+import 'package:sisu_mate/services/sync_service.dart';
 
 import '../../tool/feature_map.dart' as fm;
 import '../test_helpers/platform_mocks.dart';
@@ -55,7 +56,7 @@ Future<FmApp> reach(
   String id, {
   String? tier,
   bool seed = true,
-  bool expansionSeed = false,
+  bool expansionSeed = true,
   Future<void> Function(AppDatabase db)? setup,
   List<Object> overrides = const [],
   bool defaultOverrides = true,
@@ -80,7 +81,8 @@ Future<FmApp> reach(
   AppDatabase.setInstanceForTesting(db);
   addTearDown(db.close);
   if (seed) {
-    await tester.runAsync(seedBundledData);
+    // Same path as a real fresh install: settings row + bundled seed + baseline.
+    await tester.runAsync(DatabaseService().init);
     if (expansionSeed) {
       await tester.runAsync(() => seedExpansionCatalog('00000000-0000-0000-0000-000000000000'));
     }
@@ -93,6 +95,9 @@ Future<FmApp> reach(
   final container = ProviderContainer(overrides: [
     appDatabaseProvider.overrideWithValue(db),
     isProProvider.overrideWith((ref) => Stream.value(isPro)),
+    // Host runs never talk to Supabase; a started SyncService would also leave
+    // its 30 s queue-monitor timer pending at test end.
+    syncServiceProvider.overrideWith((ref) => _HostSyncService(ref)),
     if (defaultOverrides) ...[
       boatSuggestionsProvider.overrideWith((ref) => const <BoatSuggestion>[]),
       passageReadinessProvider.overrideWith(
@@ -214,4 +219,11 @@ Future<Finder> _reveal(WidgetTester tester, Finder finder, String step) async {
   if (n == 0) fail('reach "$step": target not found on screen');
   if (n > 1) fail('reach "$step": $n matches; targets must be unique (add a tooltip/semanticsLabel)');
   return hittable();
+}
+
+class _HostSyncService extends SyncService {
+  _HostSyncService(super.ref);
+
+  @override
+  Future<void> ensureStarted() async {}
 }
