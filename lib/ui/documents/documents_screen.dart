@@ -297,23 +297,26 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                             Positioned(
                               top: 6,
                               right: 6,
-                              child: Material(
-                                color: Colors.deepPurple,
-                                shape: const CircleBorder(),
-                                elevation: 2,
-                                child: InkWell(
-                                  customBorder: const CircleBorder(),
-                                  onTap: () => showDialog(
-                                    context: context,
-                                    builder: (_) =>
-                                        const InsuranceClaimCheckDialog(),
-                                  ),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(6),
-                                    child: Icon(
-                                      Icons.auto_awesome,
-                                      size: 16,
-                                      color: Colors.white,
+                              child: Tooltip(
+                                message: 'Insurance claim check: ${document.title}',
+                                child: Material(
+                                  color: Colors.deepPurple,
+                                  shape: const CircleBorder(),
+                                  elevation: 2,
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: () => showDialog(
+                                      context: context,
+                                      builder: (_) =>
+                                          const InsuranceClaimCheckDialog(),
+                                    ),
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(6),
+                                      child: Icon(
+                                        Icons.auto_awesome,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -336,6 +339,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       floatingActionButton: _selecting
           ? null
           : FloatingActionButton(
+              tooltip: 'Add document',
               onPressed: () => isPro
                   ? _showAddEditDialog(context, ref, crewMembers)
                   : _showProRequiredDialog(context),

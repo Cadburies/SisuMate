@@ -301,6 +301,7 @@ class _CrewScreenState extends ConsumerState<CrewScreen> {
       floatingActionButton: _selecting
           ? null
           : FloatingActionButton(
+              tooltip: 'Add crew member',
               onPressed: () => isPro
                   ? _showAddEditDialog(context, ref)
                   : _showProRequiredDialog(context),
