@@ -69,6 +69,11 @@ void main() {
     expect(pages['Shopping & Spares.md'], contains('[[Shopping & Spares - Add shopping item]]'));
   });
 
+  test('angle brackets are escaped so the wiki does not strip them as HTML', () {
+    final f = feature('home/a', {'expect': 'Shows "<name> added"'});
+    expect(renderWiki([f]).values.join(), contains('&lt;name&gt; added'));
+  });
+
   test('the real feature map renders cleanly', () {
     final pages = renderWiki(loadFeatures(Directory('.ai_context/feature_map')));
     expect(pages, contains('Home.md'));

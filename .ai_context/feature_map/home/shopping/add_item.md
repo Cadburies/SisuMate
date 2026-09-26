@@ -5,9 +5,9 @@ keywords: shopping, spares, add, new item, fab, plus
 kind: fab
 looks: Round "+" button, bottom-right of the Shopping & Spares screen.
 reach: text:Shopping > tip:Add item
-needs: tier=pro (Free → "Sisu Mate Pro Required" dialog → Upgrade opens paywall)
-action: Opens dialog "Add Shopping Item": Item Name*, Quantity, Origin, Notes, Last Purchase Price.
-expect: "Add Item" saves → snackbar "<name> added to shopping list". Empty name → "Item name is required".
+needs: tier=pro (on Free, tapping + offers the upgrade instead)
+action: Opens "Add Shopping Item" where you enter the item name (required), quantity, origin, notes and last price paid.
+expect: Tap "Add Item": a message confirms "<name> added to shopping list". With no name you are told "Item name is required".
 uses: system/db/shopping_repository, system/pro/paywall
 script: shopping
 source: lib/ui/shopping/shopping_screen.dart (_showAddItemDialog, _showProRequiredDialog)

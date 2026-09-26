@@ -28,7 +28,9 @@ class Feature {
   final Map<String, String> fields;
   Feature(this.id, this.fields);
 
-  String operator [](String key) => fields[key] ?? '-';
+  /// Field value with `<`/`>` escaped: GitHub wiki strips them as HTML tags.
+  String operator [](String key) =>
+      (fields[key] ?? '-').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   String get root => id.split('/').first;
 }
 
@@ -76,7 +78,7 @@ bool isPublished(Feature f) =>
 /// Throws if a published field carries code-like text (paths, symbols, calls).
 void leakCheck(Feature f) {
   for (final key in _publishedFields) {
-    final m = _leakPattern.firstMatch(f[key]);
+    final m = _leakPattern.firstMatch(f.fields[key] ?? '-');
     if (m != null) {
       throw FeatureMapError(
           '${f.id}: "$key" looks internal ("${m[0]}"); published fields must be user language');
@@ -116,7 +118,7 @@ List<String> reachSteps(Feature f) {
         ? 'Open Sisu Mate for the first time.'
         : 'Open Sisu Mate on the Home screen.',
   ];
-  final reach = f['reach'];
+  final reach = f.fields['reach'] ?? '-';
   if (reach == '-' || f.id == 'home') return steps;
   for (final raw in reach.split(' > ')) {
     final step = raw.trim();
