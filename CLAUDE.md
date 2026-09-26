@@ -258,6 +258,8 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 | `supabase_cli.sh` | Auth/REST/RPC checks (credentials from dart-defines) |
 | `idb_tap_label.sh` / `adb_tap_text.sh` | UI tap by label/text (iOS / Android) — semantic match, not hand-computed pixel coords |
 | `adb_swipe_reveal_action.sh` | Android: swipe a list card to reveal its `SwipeableListItem` action pane, then tap the named action (e.g. swipe + tap "Complete") — bounds computed live from `uiautomator dump`, never hardcoded |
+| `fm.sh` | Feature Map runner (#354): `fm.sh <id>` runs that feature's script (host test named by id), `--reach` only reaches it, `--device <serial\|udid>` reaches it on a running phone/sim. Find ids with `dart run tool/feature_map.dart find <word>`; rules in `.ai_context/feature_map/FORMAT.md` |
+| `fm_device_reach.sh` | Runs a feature's `reach:` steps on a device via `lt_ui_helpers.sh` (label taps + scroll-retry; no `long:`, no iOS `swipe:`). Called by `fm.sh --device` |
 | `wipe_android_avds.sh` | Factory-wipe all local Android AVD userdata/snapshots (keeps AVD defs; does not touch physical phones) |
 
 ### GUI test drivers — run on demand only (real device/sim required; NOT part of `run_full_suite.sh`)

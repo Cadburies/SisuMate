@@ -8,13 +8,8 @@
 // Publishing (clone, sync, push) lives in scripts/publish_wiki.sh.
 import 'dart:io';
 
-const featureFields = [
-  'title', 'desc', 'layer', 'keywords', 'kind', 'looks', 'reach', //
-  'needs', 'action', 'expect', 'uses', 'script', 'source',
-];
-
-/// Root-level docs in the feature map that are not feature files.
-const _nonFeatureFiles = {'FORMAT.md', 'DESIGN.md', 'INDEX.md', 'README.md'};
+import 'feature_map.dart';
+export 'feature_map.dart';
 
 /// Fields that reach the public wiki — checked for leaked internals.
 const _publishedFields = [
@@ -23,50 +18,9 @@ const _publishedFields = [
 
 final _leakPattern = RegExp(r'lib/|\.dart\b|AppRoutes|\w\(\)|\b_[a-z]\w*[A-Z]');
 
-class Feature {
-  final String id;
-  final Map<String, String> fields;
-  Feature(this.id, this.fields);
-
-  /// Field value with `<`/`>` escaped: GitHub wiki strips them as HTML tags.
-  String operator [](String key) =>
-      (fields[key] ?? '-').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-  String get root => id.split('/').first;
-}
-
-class FeatureMapError implements Exception {
-  final String message;
-  FeatureMapError(this.message);
-  @override
-  String toString() => message;
-}
-
-/// Parses one 13-line `key: value` feature file.
-Feature parseFeature(String id, String text) {
-  final fields = <String, String>{};
-  for (final line in text.split('\n')) {
-    final i = line.indexOf(': ');
-    if (i <= 0) continue;
-    fields[line.substring(0, i).trim()] = line.substring(i + 2).trim();
-  }
-  final missing = featureFields.where((k) => !fields.containsKey(k)).toList();
-  if (missing.isNotEmpty) {
-    throw FeatureMapError('$id: missing ${missing.join(', ')}');
-  }
-  return Feature(id, fields);
-}
-
-List<Feature> loadFeatures(Directory root) {
-  final features = <Feature>[];
-  for (final entity in root.listSync(recursive: true)) {
-    if (entity is! File || !entity.path.endsWith('.md')) continue;
-    final rel = entity.path.substring(root.path.length + 1);
-    if (!rel.contains('/') && _nonFeatureFiles.contains(rel)) continue;
-    final id = rel.substring(0, rel.length - 3);
-    features.add(parseFeature(id, entity.readAsStringSync()));
-  }
-  features.sort((a, b) => a.id.compareTo(b.id));
-  return features;
+/// Published values: `<`/`>` escaped because the GitHub wiki strips them as HTML.
+extension on Feature {
+  String operator [](String key) => raw(key).replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
 bool isPublished(Feature f) =>
@@ -78,7 +32,7 @@ bool isPublished(Feature f) =>
 /// Throws if a published field carries code-like text (paths, symbols, calls).
 void leakCheck(Feature f) {
   for (final key in _publishedFields) {
-    final m = _leakPattern.firstMatch(f.fields[key] ?? '-');
+    final m = _leakPattern.firstMatch(f.raw(key));
     if (m != null) {
       throw FeatureMapError(
           '${f.id}: "$key" looks internal ("${m[0]}"); published fields must be user language');
@@ -118,7 +72,7 @@ List<String> reachSteps(Feature f) {
         ? 'Open Sisu Mate for the first time.'
         : 'Open Sisu Mate on the Home screen.',
   ];
-  final reach = f.fields['reach'] ?? '-';
+  final reach = f.raw('reach');
   if (reach == '-' || f.id == 'home') return steps;
   for (final raw in reach.split(' > ')) {
     final step = raw.trim();

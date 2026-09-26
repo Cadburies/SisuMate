@@ -90,7 +90,7 @@ flutter build apk --debug --dart-define-from-file=dart-defines.json
 ./scripts/run_full_suite.sh
 ```
 
-That is the single entry point. It runs, in order:
+That is the single entry point. (Feature Map: every UI feature's reach path in `.ai_context/feature_map/` is replayed by `test/feature_map/` inside step 3; run one with `scripts/fm.sh <id>`.) It runs, in order:
 
 | # | Step | What |
 | --- | --- | --- |

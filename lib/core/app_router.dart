@@ -233,9 +233,11 @@ Widget _recordDetailBuilder(GoRouterState state, String fallback) {
 }
 
 /// Application [GoRouter] — top-level modules + detail/game named routes (NAV1).
-GoRouter createAppRouter() {
+/// [initialLocation] lets Feature Map host tests (#354) start at Home or
+/// onboarding with an injected DB instead of booting [StartupScreen].
+GoRouter createAppRouter({String initialLocation = AppRoutes.startup}) {
   return GoRouter(
-    initialLocation: AppRoutes.startup,
+    initialLocation: initialLocation,
     debugLogDiagnostics: false,
     routes: [
       GoRoute(

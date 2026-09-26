@@ -58,6 +58,11 @@ void main() {
       expect(router.routeInformationProvider.value.uri.path, AppRoutes.startup);
     });
 
+    test('#354: createAppRouter honours initialLocation', () {
+      final router = createAppRouter(initialLocation: AppRoutes.home);
+      expect(router.routeInformationProvider.value.uri.path, AppRoutes.home);
+    });
+
     test('TEST1: router knows named detail routes', () {
       final router = createAppRouter();
       // Smoke: configuration includes nested module paths (NAV1).

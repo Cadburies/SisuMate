@@ -22,6 +22,7 @@ and an audit for dead routes, unreachable screens and handler-less menu items.
 | One host test file per area under `test/feature_map/`, tests named by id | Plain widget tests (parallel, fast). `integration_test/` can't hold them: on Flutter 3.41 `flutter test integration_test -d flutter-tester` fails to launch every file after the first. Device runs use `fm_device_reach.sh`, not `integration_test`. Keep surfaces ≥800 px wide: the test font is wider than real fonts. |
 | **All** layers: `system/<layer>/` for non-UI features, linked from UI via `uses:` | Completeness. "Enhance feature X" lands on the UI file and its `uses:` list names the DB/sync/network pieces. |
 | Public GitHub wiki **generated** from this folder (#394, `tool/feature_map_wiki.dart` + `scripts/publish_wiki.sh`) | One source. Users get plain-language pages; `reach` steps become numbered taps; internals never leave. The wiki is overwritten on every publish. |
+| Touches **derived** (`feature_map.dart touches/overlap`), not a field | `source` is the ownership list; a hand-kept touches line would drift. Hotspots from CLAUDE.md always conflict. |
 | No generated index | `grep`/`find` over tiny files is the index. Nothing is regenerated, so parallel agents never collide. |
 
 ## 3. Tier-C reconciliation (exemption approved)

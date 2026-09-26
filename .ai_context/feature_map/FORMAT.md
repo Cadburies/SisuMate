@@ -58,6 +58,19 @@ Omitted key = any. Gate *rules* live in `access_tiers.md`; only state what this 
 - `--device` runs the same `reach` steps on a real phone/sim via `scripts/lt_ui_helpers.sh` (label taps, scroll-retry).
 - Missing script test for a feature? Create it in the area file. The suite runs every host script.
 
+## Parallel work (Touches, derived — no extra field)
+
+`source` is the feature's ownership list: put **every** file a change to this feature edits
+(`a.dart (Sym); b.dart`). Then:
+
+```
+dart run tool/feature_map.dart touches <id> [<id>…]   # paste into the issue's Touches
+dart run tool/feature_map.dart overlap <id> <id>      # exit 2 + files if not parallel-safe
+```
+
+Touches = the feature file + `source` files + `script` file; `uses` sources are listed as
+dependencies. CLAUDE.md single-owner hotspots are flagged and always conflict.
+
 ## Public wiki (generated — this folder is the only source)
 
 `title`, `desc`, `keywords`, `looks`, `reach`, `needs`, `action`, `expect` of `layer: ux` features are
