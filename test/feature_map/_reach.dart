@@ -99,6 +99,8 @@ Future<FmApp> reach(
     // its 30 s queue-monitor timer pending at test end.
     syncServiceProvider.overrideWith((ref) => _HostSyncService(ref)),
     if (defaultOverrides) ...[
+      // Signed out (no Supabase on the host); crew/owner variants override this.
+      authStateProvider.overrideWith((ref) => Stream.value(null)),
       boatSuggestionsProvider.overrideWith((ref) => const <BoatSuggestion>[]),
       passageReadinessProvider.overrideWith(
         (ref) => const PassageReadiness(status: ReadinessStatus.ready, blockers: []),
