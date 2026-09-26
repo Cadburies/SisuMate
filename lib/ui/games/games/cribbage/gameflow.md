@@ -5,7 +5,7 @@ This document describes the complete game flow for Cribbage in the SisuMate app.
 ## Game Structure
 
 - **Players**: 2 — Human vs. AI.
-- **Modes**: Single-player only (human vs. AI). Multiplayer is not yet implemented.
+- **Modes**: Human vs. AI, or local Wi-Fi multiplayer via the Games lobby (`GameCatalog.multiplayerReady` in `lib/core/app_router.dart` is the source of truth).
 - **Rounds**: Multiple rounds until a player reaches 121 points. Dealer alternates each round (human deals first).
 - **Win Condition**: First player to reach **121 points** wins. Can win at any scoring moment (pegging, nibs, or hand counting).
 - **Deck**: Standard 52-card deck. Card encoding: `card = suit * 13 + rank`. Suit 0=♣ 1=♦ 2=♥ 3=♠. Rank 0=A, 1=2, … 12=K.
