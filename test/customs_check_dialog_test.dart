@@ -89,8 +89,8 @@ void main() {
     await pumpScreen(tester);
 
     expect(find.byTooltip('Plan port run'), findsOneWidget);
-    expect(find.byTooltip('Item shop guide'), findsOneWidget);
-    await tester.tap(find.byTooltip('Item shop guide'));
+    expect(find.byTooltip('Shop guide: Duty-free rum'), findsOneWidget);
+    await tester.tap(find.byTooltip('Shop guide: Duty-free rum'));
     await tester.pumpAndSettle();
 
     expect(find.byType(ShoppingItemAiDialog), findsOneWidget);

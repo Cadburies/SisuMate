@@ -1065,9 +1065,10 @@ class ShoppingItemTile extends ConsumerWidget {
                   },
                 ),
               ),
-              child: const Tooltip(
-                message: 'Item shop guide',
-                child: Padding(
+              // Per-item label so each row's badge is uniquely findable.
+              child: Tooltip(
+                message: 'Shop guide: ${item.name}',
+                child: const Padding(
                   padding: EdgeInsets.all(6),
                   child: Icon(
                     Icons.auto_awesome,
