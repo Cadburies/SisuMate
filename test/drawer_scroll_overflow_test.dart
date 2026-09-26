@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sisu_mate/ui/components/common_drawer.dart';
 
 /// #160 — 10 module drawers (cocktails, chef, checklist_items,
 /// maintenance_items, maintenance, documents, safety_briefing, crew, fuel,
@@ -84,5 +85,23 @@ void main() {
     expect(find.text('Option 0'), findsOneWidget);
     expect(find.text('Option 1'), findsOneWidget);
     expect(find.text('Sisu Mate v1.0.0'), findsOneWidget);
+  });
+
+  testWidgets('#403: DrawerHeaderWidget ellipsizes a long title at large text scale',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+        child: Scaffold(
+          body: SizedBox(
+            width: 272,
+            child: DrawerHeaderWidget(
+              title: 'Maintenance Filters & Options for this boat',
+            ),
+          ),
+        ),
+      ),
+    ));
+    expect(tester.takeException(), isNull);
   });
 }

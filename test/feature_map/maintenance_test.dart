@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import '_reach.dart';
 
 /// Feature Map scripts for `.ai_context/feature_map/home/maintenance*`.
-/// The module menu is left out until #403 (drawer header overflow) is fixed.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -81,5 +80,10 @@ void main() {
     await reach(tester, 'home/maintenance/hours/triage');
     expect(find.text('Maintenance risk triage'), findsOneWidget);
     expect(find.textContaining('[LOW] Change impeller'), findsOneWidget);
+  });
+
+  testWidgets('home/maintenance/filters', (tester) async {
+    await reach(tester, 'home/maintenance/filters');
+    expect(find.text('Show Hidden Items'), findsOneWidget);
   });
 }
