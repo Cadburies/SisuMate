@@ -5,7 +5,7 @@ This document describes the complete game flow for Checkers (Draughts) in the Si
 ## Game Structure
 
 - **Players**: 2 — Human (red) vs. AI (black).
-- **Modes**: Single-player only (human vs. AI). Multiplayer is not yet implemented.
+- **Modes**: Human vs. AI, or local Wi-Fi multiplayer via the Games lobby (`GameCatalog.multiplayerReady` in `lib/core/app_router.dart` is the source of truth).
 - **Rounds**: A single continuous game. No round structure.
 - **Focus**: Alternating turns. Human always moves first.
 - **Board**: 8×8 grid. Only dark squares are used (where `(row + col) % 2 == 1`). Rows 0–7, columns 0–7.
