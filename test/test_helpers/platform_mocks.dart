@@ -34,6 +34,9 @@ void mockPathProviderChannel() {
       case 'getApplicationSupportPath':
       case 'getTemporaryPath':
       case 'getLibraryPath':
+      // The platform interface sends *Directory names (see note on #408);
+      // only the cache dir is answered so flutter_map's tile cache works.
+      case 'getApplicationCacheDirectory':
         return '/tmp/sisu_mate_test';
       default:
         return null;
