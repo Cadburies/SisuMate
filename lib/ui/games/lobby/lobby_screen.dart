@@ -73,7 +73,15 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
   // is about to or has been unmounted is unsafe") — this was silently
   // swallowing the endSession() cleanup call below, leaving the host's
   // WebSocket server + mDNS broadcast running forever after Cancel/back.
-  late final GameLanService _lan = ref.read(gameLanServiceProvider);
+  // Read eagerly in initState: a lazy `late final` initializer would first
+  // run inside dispose() when the user leaves without hosting/joining (#411).
+  late final GameLanService _lan;
+
+  @override
+  void initState() {
+    super.initState();
+    _lan = ref.read(gameLanServiceProvider);
+  }
 
   @override
   void dispose() {
