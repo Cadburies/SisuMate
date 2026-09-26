@@ -154,10 +154,10 @@ Future<void> runStep(WidgetTester tester, String step) async {
     case 'tip':
       await _act(tester, find.byTooltip(arg), step);
     case 'label':
-      await _act(tester, find.bySemanticsLabel(arg), step);
+      await _act(tester, _byLabel(arg), step);
     case 'long':
       final byText = find.text(arg);
-      await _act(tester, byText.evaluate().isNotEmpty ? byText : find.bySemanticsLabel(arg), step,
+      await _act(tester, byText.evaluate().isNotEmpty ? byText : _byLabel(arg), step,
           long: true);
     case 'swipe':
       final i = arg.lastIndexOf(':');
@@ -185,6 +185,12 @@ Future<void> runStep(WidgetTester tester, String step) async {
       if (find.text(arg).evaluate().isEmpty) fail('reach "$step": "$arg" never appeared');
   }
 }
+
+/// Semantics label match without enabling the semantics tree (widget tests
+/// run with semantics off, so `find.bySemanticsLabel` misses scrims etc.).
+Finder _byLabel(String label) => find.byWidgetPredicate(
+    (w) => w is Semantics && w.properties.label == label,
+    description: 'Semantics(label: "$label")');
 
 Future<void> _act(WidgetTester tester, Finder finder, String step, {bool long = false}) async {
   final target = await _reveal(tester, finder, step);
