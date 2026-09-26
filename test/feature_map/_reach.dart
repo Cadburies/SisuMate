@@ -173,9 +173,9 @@ Future<void> runStep(WidgetTester tester, String step) async {
     case 'type':
       final i = arg.indexOf('=');
       final label = arg.substring(0, i);
-      var field = find.widgetWithText(TextField, label);
-      if (field.evaluate().isEmpty) field = find.widgetWithText(TextFormField, label);
-      final target = await _reveal(tester, field, step);
+      // TextFormField builds a TextField, so this also finds form fields,
+      // including ones that start off-screen in a lazy list.
+      final target = await _reveal(tester, find.widgetWithText(TextField, label), step);
       await tester.enterText(target, arg.substring(i + 1));
       await settle(tester);
     case 'wait':

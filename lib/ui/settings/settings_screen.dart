@@ -105,6 +105,7 @@ class SettingsScreen extends ConsumerWidget {
                             title: const Text('Active Boat'),
                             subtitle: Text(activeBoat?.name ?? 'No boat selected'),
                             trailing: PopupMenuButton<Boat>(
+                              tooltip: 'Choose active boat',
                               onSelected: (boat) async {
                                 final userSettings = await ref.read(userSettingsProvider.future);
                                 if (userSettings != null) {
@@ -246,6 +247,7 @@ class SettingsScreen extends ConsumerWidget {
                   themeMode == ThemeMode.dark ? 'Dark Theme' : 'Light Theme'
                 ),
                 trailing: PopupMenuButton<ThemeMode>(
+                  tooltip: 'Choose theme',
                   onSelected: (ThemeMode mode) {
                     final themeNotifier = ref.read(themeModeProvider.notifier);
                     switch (mode) {
