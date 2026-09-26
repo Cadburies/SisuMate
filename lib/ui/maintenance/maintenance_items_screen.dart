@@ -198,19 +198,22 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                           Positioned(
                             top: 6,
                             right: 6,
-                            child: Material(
-                              color: Colors.deepPurple,
-                              shape: const CircleBorder(),
-                              elevation: 2,
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () => _showAiMenu(item),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(6),
-                                  child: Icon(
-                                    Icons.auto_awesome,
-                                    size: 16,
-                                    color: Colors.white,
+                            child: Tooltip(
+                              message: 'AI tools: ${item.title}',
+                              child: Material(
+                                color: Colors.deepPurple,
+                                shape: const CircleBorder(),
+                                elevation: 2,
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => _showAiMenu(item),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(6),
+                                    child: Icon(
+                                      Icons.auto_awesome,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -222,19 +225,22 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
                           Positioned(
                             top: 6,
                             left: 6,
-                            child: Material(
-                              color: Colors.brown,
-                              shape: const CircleBorder(),
-                              elevation: 2,
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () => _addSpare(item),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(6),
-                                  child: Icon(
-                                    Icons.inventory_2_outlined,
-                                    size: 16,
-                                    color: Colors.white,
+                            child: Tooltip(
+                              message: 'Add spare: ${item.title}',
+                              child: Material(
+                                color: Colors.brown,
+                                shape: const CircleBorder(),
+                                elevation: 2,
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => _addSpare(item),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(6),
+                                    child: Icon(
+                                      Icons.inventory_2_outlined,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
