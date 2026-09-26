@@ -5,8 +5,8 @@
 
 ## NEXT
 
-- **Last:** #351 — home tiles long-press to jiggle + drag reorder (device-local).
-- **Next:** pick next work from open issues.
+- **Last:** #353 — Feature Map planned: `feature_map/DESIGN.md` + child issues #354–#382 (sub-issues of #353).
+- **Next:** #354 Feature Map foundation (blocks the tree), after Frik OKs the Tier-C exemption (DESIGN §9); else pick next work.
 - **Blockers:** android-34 emulator image broken.
 
 
@@ -31,6 +31,7 @@
 | Seed | `bundled_data_seeder.dart` (+ `data_models.md` §Seed if needed) |
 | Import / export | `import_service.dart` + `ui/components/import_export.dart` |
 | Cascade risk (model/Pro/sync) | matching **§** in `risks.md` only |
+| Find / reach / script a feature (Feature Map) | `feature_map/DESIGN.md` (schema, ids, scripts); built by #354–#382 |
 | Epic design (sharing, conflicts) | `plans/<epic>.md` only when implementing that epic |
 
 **Never session-load:** `.ai_context/archive/*` (includes retired changelog/parallel_ai/outstanding snapshots). Open backlog = GitHub Issues, not a context file.

@@ -1,6 +1,7 @@
 # Screens & Navigation — gotchas only
 
 > **No full screen inventory or route tree.** Source: `lib/core/app_router.dart` (`AppRoutes`, `GameCatalog`), screen files under `lib/ui/`.
+> The lint-checked, pointer-only exception is the Feature Map: `.ai_context/feature_map/` (see its `DESIGN.md` §9).
 
 ## Navigation
 
