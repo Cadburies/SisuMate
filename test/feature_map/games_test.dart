@@ -17,4 +17,27 @@ void main() {
     expect(find.text('Multiplayer Mode'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('home/games', (tester) async {
+    await reach(tester, 'home/games');
+    expect(find.text('Dudo'), findsOneWidget);
+    expect(find.byTooltip('Multiplayer ready: Dudo'), findsOneWidget);
+  });
+
+  testWidgets('home/games/multiplayer', (tester) async {
+    await reach(tester, 'home/games/multiplayer');
+    await runStep(tester, 'text:Solitaire');
+    expect(find.text('Solo only'), findsOneWidget);
+  });
+
+  testWidgets('home/games/lobby', (tester) async {
+    await reach(tester, 'home/games/lobby');
+    expect(find.text('Host Game'), findsOneWidget);
+    expect(find.text('Join a Game'), findsOneWidget);
+  });
+
+  testWidgets('home/games/help', (tester) async {
+    await reach(tester, 'home/games/help');
+    expect(find.text('How a Turn Works'), findsOneWidget);
+  });
 }

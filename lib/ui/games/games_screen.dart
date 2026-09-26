@@ -224,7 +224,7 @@ class _GameTile extends StatelessWidget {
                 top: 6,
                 right: 6,
                 child: Tooltip(
-                  message: 'Multiplayer ready',
+                  message: 'Multiplayer ready: $title',
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
