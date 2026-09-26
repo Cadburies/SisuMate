@@ -254,6 +254,7 @@ class _ChefScreenState extends ConsumerState<ChefScreen>
                 if (_tabController.index == 0) {
                   return FloatingActionButton(
                     heroTag: 'menu_fab',
+                    tooltip: 'Add recipe',
                     onPressed: () => isPro
                         ? _showAddRecipeOptions(context)
                         : _showProRequiredDialog(context),

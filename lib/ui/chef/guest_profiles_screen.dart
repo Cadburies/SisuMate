@@ -93,6 +93,7 @@ class GuestProfilesScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Add guest profile',
         onPressed: () => _showEditDialog(context, ref, null),
         backgroundColor: SisuColors.completedBackground,
         foregroundColor: Colors.white,

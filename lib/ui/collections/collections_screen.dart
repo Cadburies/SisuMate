@@ -89,6 +89,7 @@ class CollectionsScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'New collection',
         onPressed: () => _showEditDialog(context, ref, null),
         backgroundColor: SisuColors.completedBackground,
         foregroundColor: Colors.white,
@@ -289,6 +290,7 @@ class CollectionDetailScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Add recipes',
         onPressed: () => _showRecipePicker(context, ref, currentCollection),
         backgroundColor: SisuColors.completedBackground,
         foregroundColor: Colors.white,

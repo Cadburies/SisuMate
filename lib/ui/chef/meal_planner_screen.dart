@@ -89,6 +89,7 @@ class MealPlannerScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'New meal plan',
         onPressed: () => _showEditDialog(context, ref, null),
         backgroundColor: SisuColors.completedBackground,
         foregroundColor: Colors.white,
