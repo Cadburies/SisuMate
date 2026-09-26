@@ -71,6 +71,7 @@ class _BoatsScreenState extends ConsumerState<BoatsScreen> {
       floatingActionButton: isProAsync.when(
         data: (isPro) => isPro
             ? FloatingActionButton(
+                tooltip: 'Add boat',
                 onPressed: () => _showAddBoatDialog(context, ref),
                 child: const Icon(Icons.add),
               )
@@ -324,6 +325,7 @@ class BoatListTile extends StatelessWidget {
         subtitle: isActive ? const Text('Active Boat') : null,
         trailing: isPro
             ? PopupMenuButton<String>(
+                tooltip: 'Boat options: ${boat.name}',
                 onSelected: (value) {
                   switch (value) {
                     case 'edit':
