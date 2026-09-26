@@ -182,6 +182,7 @@ class _LogbookScreenState extends ConsumerState<LogbookScreen> {
           const SizedBox(width: 12),
           FloatingActionButton(
             heroTag: 'logbookAddFab',
+            tooltip: 'Add log entry',
             onPressed: () {
               final isPro = ref.read(isProProvider).value ?? false;
               if (isPro) {
