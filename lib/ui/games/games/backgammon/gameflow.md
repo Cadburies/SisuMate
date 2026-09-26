@@ -5,7 +5,7 @@ This document describes the complete game flow for Backgammon in the SisuMate ap
 ## Game Structure
 
 - **Players**: 2 — Human (white) vs. AI (black).
-- **Modes**: Single-player only (human vs. AI). Multiplayer is not yet implemented.
+- **Modes**: Human vs. AI, or local Wi-Fi multiplayer via the Games lobby (`GameCatalog.multiplayerReady` in `lib/core/app_router.dart` is the source of truth).
 - **Rounds**: A single game. No round structure — the game ends when one player bears off all 15 pieces.
 - **Focus**: One active player at a time. Human and AI alternate turns; the human always goes first.
 - **Board**: 24 points, numbered 1–24. Represented internally as indices 0–23 (`board[i]` where `i+1` = point number).

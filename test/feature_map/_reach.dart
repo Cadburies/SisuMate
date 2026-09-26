@@ -44,6 +44,14 @@ Future<void> settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 500));
 }
 
+/// Advances fake time so AI turns (short delayed timers in the game
+/// notifiers) finish before a test ends with no pending timers.
+Future<void> drain(WidgetTester tester, {int seconds = 10}) async {
+  for (var i = 0; i < seconds * 2; i++) {
+    await tester.pump(const Duration(milliseconds: 500));
+  }
+}
+
 /// Boots the app for [id] and runs its reach steps.
 ///
 /// [tier] overrides `needs: tier=` (default Pro, so gates don't block reach;

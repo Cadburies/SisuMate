@@ -18,6 +18,7 @@ void main() {
   for (final f in features) {
     testWidgets('reach ${f.id}', (tester) async {
       await reach(tester, f.id);
+      await drain(tester); // game AI turns run on short timers
     });
   }
 }
