@@ -12,6 +12,7 @@ void main() {
     await reach(tester, 'home/games/cribbage');
     expect(find.text('Your Hand — select 2 to discard'), findsOneWidget);
     expect(find.text('Select 2 more'), findsOneWidget);
+    await finish(tester);
   });
 
   testWidgets('home/games/cribbage/discard', (tester) async {
@@ -26,10 +27,12 @@ void main() {
     await runStep(tester, 'text:Confirm Discard');
     await drain(tester);
     expect(find.text('Your Hand — select 2 to discard'), findsNothing);
+    await finish(tester);
   });
 
   testWidgets('home/games/cribbage/new_game', (tester) async {
     await reach(tester, 'home/games/cribbage/new_game');
     expect(find.text('Select 2 more'), findsOneWidget);
+    await finish(tester);
   });
 }

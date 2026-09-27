@@ -52,6 +52,14 @@ Future<void> drain(WidgetTester tester, {int seconds = 10}) async {
   }
 }
 
+/// Ends a test that may still have AI-turn timers queued (some games schedule
+/// chained 2 s timers from build): unmount the app, then let the
+/// mounted-guarded timers fire harmlessly so none are pending at test end.
+Future<void> finish(WidgetTester tester) async {
+  await tester.pumpWidget(const SizedBox());
+  await tester.pump(const Duration(seconds: 10));
+}
+
 /// Boots the app for [id] and runs its reach steps.
 ///
 /// [tier] overrides `needs: tier=` (default Pro, so gates don't block reach;

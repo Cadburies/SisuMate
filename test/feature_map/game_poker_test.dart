@@ -9,24 +9,28 @@ void main() {
   testWidgets('home/games/poker', (tester) async {
     await reach(tester, 'home/games/poker');
     expect(find.text('Bet \$20'), findsOneWidget);
+    await finish(tester);
   });
 
   testWidgets('home/games/poker/check', (tester) async {
     await reach(tester, 'home/games/poker/check');
     await drain(tester);
     expect(find.textContaining('Pot: \$'), findsOneWidget);
+    await finish(tester);
   });
 
   testWidgets('home/games/poker/bet', (tester) async {
     await reach(tester, 'home/games/poker/bet');
     await drain(tester);
     expect(find.textContaining('Pot: \$'), findsOneWidget);
+    await finish(tester);
   });
 
   testWidgets('home/games/poker/fold', (tester) async {
     await reach(tester, 'home/games/poker/fold');
     await drain(tester);
     expect(find.textContaining('AI: \$'), findsOneWidget);
+    await finish(tester);
   });
 
   testWidgets('home/games/poker/draw', (tester) async {
@@ -37,11 +41,12 @@ void main() {
       if (find.text('Check').evaluate().isNotEmpty) await runStep(tester, 'text:Check');
     }
     expect(find.textContaining('Draw ('), findsOneWidget);
-    await drain(tester);
+    await finish(tester);
   });
 
   testWidgets('home/games/poker/new_game', (tester) async {
     await reach(tester, 'home/games/poker/new_game');
     expect(find.text('Fold'), findsOneWidget);
+    await finish(tester);
   });
 }

@@ -10,18 +10,20 @@ void main() {
   testWidgets('home/games/dudo', (tester) async {
     await reach(tester, 'home/games/dudo');
     expect(find.text('Start Game'), findsOneWidget);
+    await finish(tester);
   });
 
   testWidgets('home/games/dudo/add_players', (tester) async {
     await reach(tester, 'home/games/dudo/add_players');
     expect(find.text('You'), findsOneWidget);
     expect(find.textContaining('AI '), findsWidgets);
+    await finish(tester);
   });
 
   testWidgets('home/games/dudo/start', (tester) async {
     await reach(tester, 'home/games/dudo/start');
     expect(find.text('Add Players (2–6)'), findsNothing);
-    await drain(tester);
+    await finish(tester);
   });
 
   testWidgets('home/games/dudo/bid', (tester) async {
@@ -34,11 +36,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
     }
     expect(find.text('Dudo!').evaluate().isNotEmpty || find.text('Bid').evaluate().isNotEmpty, isTrue);
-    await drain(tester);
+    await finish(tester);
   });
 
   testWidgets('home/games/dudo/reset', (tester) async {
     await reach(tester, 'home/games/dudo/reset');
     expect(find.text('Add Players (2–6)'), findsOneWidget);
+    await finish(tester);
   });
 }
