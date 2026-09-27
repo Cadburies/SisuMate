@@ -10,4 +10,4 @@ action: Tick the guest's allergens and diets and save.
 expect: "New Guest Profile" opens.
 uses: -
 script: chef
-source: lib/ui/chef/guest_profiles_screen.dart (GuestProfilesScreen)
+source: lib/ui/chef/guest_profiles_screen.dart (GuestProfilesScreen); lib/ui/chef/guest_profiles_screen.dart (AddEditGuestProfileDialog)

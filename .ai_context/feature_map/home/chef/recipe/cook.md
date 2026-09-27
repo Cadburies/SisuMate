@@ -10,4 +10,4 @@ action: Next and Previous move through the method.
 expect: "Step 1 of 2" is shown.
 uses: -
 script: chef
-source: lib/ui/chef/chef_screen.dart (ChefRecipeDetailScreen)
+source: lib/ui/chef/chef_screen.dart (ChefRecipeDetailScreen); lib/ui/chef/chef_screen.dart (CookingModeScreen)

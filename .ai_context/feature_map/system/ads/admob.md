@@ -10,4 +10,4 @@ action: Initialises AdMob on supported platforms; ad slots are placed by positio
 expect: Free shows ads on a real phone; Pro never does.
 uses: system/pro/revenuecat
 script: test/admob_service_test.dart
-source: lib/services/admob_service.dart (AdMobService); lib/ui/components/ad_slots.dart
+source: lib/services/admob_service.dart (AdMobService); lib/ui/components/ad_slots.dart; lib/services/admob_platform.dart

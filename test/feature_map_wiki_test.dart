@@ -78,4 +78,11 @@ void main() {
     final pages = renderWiki(loadFeatures(Directory('.ai_context/feature_map')));
     expect(pages, contains('Home.md'));
   });
+
+  test('#382 manual renders a published subtree in plain language', () {
+    final text = renderManual(loadFeatures(Directory('.ai_context/feature_map')), 'home/shopping');
+    expect(text, startsWith('# Shopping & Spares — user guide'));
+    expect(text, contains('Tap the **Add item** button.'));
+    expect(text, isNot(contains('lib/')));
+  });
 }

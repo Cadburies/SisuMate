@@ -10,4 +10,4 @@ action: Save adds the document; pick the type from the Type list (Registration, 
 expect: "Add Document" opens.
 uses: -
 script: documents
-source: lib/ui/documents/documents_screen.dart (DocumentsScreen)
+source: lib/ui/documents/documents_screen.dart (DocumentsScreen); lib/ui/documents/documents_screen.dart (AddEditDocumentDialog)

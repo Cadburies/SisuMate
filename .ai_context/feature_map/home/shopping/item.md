@@ -10,4 +10,4 @@ action: Mark it bought, hide it or edit it; swipe sideways for the next item.
 expect: "Status: to buy" and a "Bought" button are shown.
 uses: shared/check_page_viewer/edit
 script: shopping
-source: lib/ui/shopping/shopping_screen.dart (ShoppingScreen); lib/ui/components/item_detail_shell.dart (ItemDetailShell)
+source: lib/ui/shopping/shopping_screen.dart (ShoppingScreen); lib/ui/components/item_detail_shell.dart (ItemDetailShell); lib/ui/shopping/shopping_screen.dart (ShoppingItemDetailScreen)

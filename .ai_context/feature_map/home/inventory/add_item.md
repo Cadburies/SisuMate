@@ -10,4 +10,4 @@ action: Save adds the item; "Scan barcode" uses the camera on a phone.
 expect: "Add Inventory Item" opens; after Save the item shows with "Qty: 1".
 uses: -
 script: inventory
-source: lib/ui/inventory/inventory_screen.dart (InventoryScreen)
+source: lib/ui/inventory/inventory_screen.dart (InventoryScreen); lib/ui/inventory/inventory_screen.dart (AddEditInventoryItemDialog)

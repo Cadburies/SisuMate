@@ -10,4 +10,4 @@ action: Opens "New Log Entry"; Save adds it to the log.
 expect: "New Log Entry" opens; after Save the entry shows in the list and "Log entry added" appears.
 uses: -
 script: logbook
-source: lib/ui/logbook/logbook_screen.dart (_showAddEditDialog)
+source: lib/ui/logbook/logbook_screen.dart (_showAddEditDialog); lib/ui/logbook/logbook_screen.dart (AddEditCaptainLogDialog)

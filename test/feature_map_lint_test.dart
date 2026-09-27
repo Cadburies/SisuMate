@@ -93,11 +93,28 @@ void main() {
       expect(errors(), containsAll([contains('root must be'), contains('cannot be layer ux')]));
     });
 
-    test('dangling uses is only a warning', () {
+    test('dangling uses is an error (#382)', () {
       write('home', file({'reach': '-', 'uses': 'system/db/nope'}));
-      final r = lint(root, repo: repo);
-      expect(r.errors, isEmpty);
-      expect(r.warnings.single, contains('system/db/nope'));
+      expect(errors(), contains(contains('system/db/nope')));
+    });
+
+    test('UI script: - is an error unless platform=device', () {
+      write('home', file({'reach': '-', 'script': '-'}));
+      expect(errors(), contains(contains('script: -')));
+      write('home', file({'reach': '-', 'script': '-', 'needs': 'platform=device'}));
+      expect(errors(), isEmpty);
+    });
+
+    test('audit reports screens and services no feature references', () {
+      File('${repo.path}/lib/ui/x/orphan_screen.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('class OrphanScreen {}');
+      File('${repo.path}/lib/services/orphan_service.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('class OrphanService {}');
+      final r = audit(root, repo: repo);
+      expect(r.unmappedScreens.single, contains('OrphanScreen'));
+      expect(r.unmappedServices.single, 'lib/services/orphan_service.dart');
     });
   });
 
@@ -116,6 +133,13 @@ void main() {
     expect(overlapOf(features, 'home/a', 'home/c'), {'lib/ui/a.dart'});
     // Both depend on a hotspot: not parallel-safe even though neither edits it.
     expect(overlapOf(features, 'home/a', 'home/b'), {'lib/core/di.dart'});
+  });
+
+  test('the real map has no unmapped screens, routes or services', () {
+    final r = audit(Directory(featureMapRoot));
+    expect(r.unmappedScreens, isEmpty);
+    expect(r.unmappedRouteWidgets, isEmpty);
+    expect(r.unmappedServices, isEmpty);
   });
 
   test('path walks root to leaf through existing nodes', () {

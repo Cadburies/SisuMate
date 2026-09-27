@@ -5,6 +5,7 @@
 // developer/debug-only); `source`, `script` and `uses` never leave the repo.
 //
 // Usage: dart run tool/feature_map_wiki.dart <out-dir> [<feature-map-root>]
+//        dart run tool/feature_map_wiki.dart --manual <id-prefix> <out.md>
 // Publishing (clone, sync, push) lives in scripts/publish_wiki.sh.
 import 'dart:io';
 
@@ -208,7 +209,49 @@ Map<String, String> renderWiki(List<Feature> features) {
   return pages;
 }
 
+/// User-manual proof of concept (#382): one Markdown chapter for every
+/// published feature under [prefix], in tree order, from the same fields and
+/// plain-language steps as the wiki.
+String renderManual(List<Feature> features, String prefix) {
+  final chapter = features
+      .where((f) => (f.id == prefix || f.id.startsWith('$prefix/')) && isPublished(f))
+      .toList();
+  if (chapter.isEmpty) throw FeatureMapError('no published features under "$prefix"');
+  for (final f in chapter) {
+    leakCheck(f);
+  }
+  final b = StringBuffer('# ${chapter.first['title']} — user guide\n\n');
+  b.writeln('_Generated from the Sisu Mate feature map (`$prefix`)._\n');
+  for (final f in chapter) {
+    final depth = f.id.split('/').length - prefix.split('/').length;
+    b.writeln('${'#' * (2 + depth.clamp(0, 3))} ${f['title']}\n');
+    if (f['needs'].contains('tier=pro')) b.writeln('**Pro feature.** ');
+    b.writeln('${f['desc']}\n');
+    if (f['looks'] != '-') b.writeln('**Where:** ${f['looks']}\n');
+    final steps = reachSteps(f);
+    for (var i = 0; i < steps.length; i++) {
+      b.writeln('${i + 1}. ${steps[i]}');
+    }
+    b.writeln();
+    if (f['action'] != '-') b.writeln('**What it does:** ${f['action']}\n');
+  }
+  return b.toString();
+}
+
 void main(List<String> args) {
+  if (args.length == 3 && args.first == '--manual') {
+    try {
+      final text = renderManual(loadFeatures(Directory('.ai_context/feature_map')), args[1]);
+      File(args[2])
+        ..createSync(recursive: true)
+        ..writeAsStringSync(text);
+      stdout.writeln('manual: ${args[1]} → ${args[2]}');
+    } on FeatureMapError catch (e) {
+      stderr.writeln('manual: $e');
+      exit(1);
+    }
+    return;
+  }
   if (args.isEmpty) {
     stderr.writeln('usage: dart run tool/feature_map_wiki.dart <out-dir> [<feature-map-root>]');
     exit(64);

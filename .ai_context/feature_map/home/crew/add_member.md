@@ -10,4 +10,4 @@ action: Opens the crew form; Save adds the person.
 expect: After Save the person is listed with their role.
 uses: -
 script: crew
-source: lib/ui/crew/crew_screen.dart (CrewScreen)
+source: lib/ui/crew/crew_screen.dart (CrewScreen); lib/ui/crew/crew_screen.dart (AddEditCrewMemberDialog)

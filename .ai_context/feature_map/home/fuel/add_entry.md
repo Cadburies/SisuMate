@@ -10,4 +10,4 @@ action: Save adds the fill and updates totals and the burn estimate.
 expect: "Add Entry" opens; after Save the totals show the new volume.
 uses: -
 script: fuel
-source: lib/ui/fuel/fuel_screen.dart (FuelScreen)
+source: lib/ui/fuel/fuel_screen.dart (FuelScreen); lib/ui/fuel/fuel_screen.dart (AddEditFuelEntryDialog)

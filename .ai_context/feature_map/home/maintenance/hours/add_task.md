@@ -10,4 +10,4 @@ action: Opens "Add Maintenance Task": description, interval in engine hours and/
 expect: The "Add Maintenance Task" dialog opens; Save adds the task with "Never logged done".
 uses: -
 script: maintenance
-source: lib/ui/maintenance/maintenance_hours_screen.dart (MaintenanceHoursScreen)
+source: lib/ui/maintenance/maintenance_hours_screen.dart (MaintenanceHoursScreen); lib/ui/maintenance/maintenance_hours_screen.dart (AddEditMaintenanceTaskDialog)

@@ -6,6 +6,7 @@
 //   dart run tool/feature_map.dart script <id>     # how scripts/fm.sh runs it (one line)
 //   dart run tool/feature_map.dart touches <id>... # derived Touches list for an issue
 //   dart run tool/feature_map.dart overlap <id> <id>  # can two features be worked in parallel?
+//   dart run tool/feature_map.dart audit           # code the map doesn't cover (#382)
 //
 // Pure Dart (dart:io only) so it runs without Flutter; also imported by tests
 // and tool/feature_map_wiki.dart.
@@ -248,7 +249,11 @@ LintResult lint(Directory root, {Directory? repo}) {
 
     final script = resolveScript(f);
     if (script == null) {
-      if (f.isUx) result.warnings.add('$id: UI feature has script: -');
+      // Device-only UI features may have no host script (verified with
+      // fm.sh --device); everything else must be scripted (#382).
+      if (f.isUx && f.needs['platform'] != 'device') {
+        result.errors.add('$id: UI feature has script: - but is not platform=device');
+      }
     } else {
       final file = File('$base/${script.path}');
       if (!file.existsSync()) {
@@ -264,7 +269,7 @@ LintResult lint(Directory root, {Directory? repo}) {
     final uses = f.raw('uses');
     if (uses != '-') {
       for (final u in uses.split(',').map((s) => s.trim())) {
-        if (!ids.contains(u)) result.warnings.add('$id: uses "$u" does not exist yet');
+        if (!ids.contains(u)) result.errors.add('$id: uses "$u" does not exist');
       }
     }
   }
@@ -320,6 +325,93 @@ Set<String> overlapOf(List<Feature> features, String a, String b) {
     ...ta.touches.intersection(tb.touches),
     ...{...ta.touches, ...ta.deps}.intersection({...tb.touches, ...tb.deps}).intersection(hotspots),
   };
+}
+
+class AuditReport {
+  final List<String> unmappedScreens = [];
+  final List<String> unmappedRouteWidgets = [];
+  final List<String> extraOnlyRoutes = [];
+  final List<String> nullTapHandlers = [];
+  final List<String> unmappedServices = [];
+  final List<String> unscripted = [];
+
+  Map<String, List<String>> get sections => {
+        'Screens/dialogs no feature references': unmappedScreens,
+        'Routed widgets no feature references': unmappedRouteWidgets,
+        'Detail routes that need extra (not deep-linkable)': extraOnlyRoutes,
+        'onTap: null handlers (check each is a gate or a bug)': nullTapHandlers,
+        'Services no system feature points at': unmappedServices,
+        'Features with script: -': unscripted,
+      };
+}
+
+/// Cross-checks the map against the code (#382): what exists in `lib/` that
+/// no feature points at. Report only; findings become issues, not fixes.
+AuditReport audit(Directory root, {Directory? repo}) {
+  final base = repo?.path ?? '.';
+  final features = loadFeatures(root);
+  final symbols = <String>{};
+  final paths = <String>{};
+  // A source entry without symbols covers every class in that file.
+  final wholeFiles = <String>{};
+  for (final f in features) {
+    for (final (path, syms) in parseSource(f.raw('source'))) {
+      paths.add(path);
+      if (syms.isEmpty) wholeFiles.add(path);
+      for (final sym in syms) {
+        symbols.addAll(sym.split('.'));
+      }
+    }
+  }
+  final r = AuditReport();
+  for (final f in features) {
+    if (resolveScript(f) == null) r.unscripted.add(f.id);
+  }
+  List<File> dartFiles(String dir) {
+    final d = Directory('$base/$dir');
+    if (!d.existsSync()) return const [];
+    return d.listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart')).toList();
+  }
+
+  String rel(File f) => f.path.substring(base.length + 1);
+  final screenRe = RegExp(r'^class ([A-Z]\w*(?:Screen|Dialog|Sheet))\b', multiLine: true);
+  for (final f in dartFiles('lib/ui')) {
+    final text = f.readAsStringSync();
+    for (final m in screenRe.allMatches(text)) {
+      if (!symbols.contains(m[1]) && !wholeFiles.contains(rel(f))) {
+        r.unmappedScreens.add('${rel(f)} ${m[1]}');
+      }
+    }
+    final lines = text.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].contains('onTap: null') || lines[i].contains('onPressed: null')) {
+        r.nullTapHandlers.add('${rel(f)}:${i + 1}');
+      }
+    }
+  }
+  final router = File('$base/lib/core/app_router.dart');
+  if (router.existsSync()) {
+    final text = router.readAsStringSync();
+    for (final m in RegExp(r'=> (?:const )?([A-Z]\w+)\(').allMatches(text)) {
+      final cls = m[1]!;
+      final inWholeFile = wholeFiles.any((w) {
+        final file = File('$base/$w');
+        return file.existsSync() && file.readAsStringSync().contains('class $cls ');
+      });
+      if (!symbols.contains(cls) && !inWholeFile && cls != 'Scaffold') {
+        r.unmappedRouteWidgets.add(cls);
+      }
+    }
+    for (final m in RegExp(r"name: '(\w+)',\s*builder: \(context, state\) \{[^}]*_MissingExtraScreen").allMatches(text)) {
+      r.extraOnlyRoutes.add(m[1]!);
+    }
+  }
+  for (final f in dartFiles('lib/services')) {
+    final p = rel(f);
+    final hit = paths.any((x) => x == p || (x.endsWith('/') && p.startsWith(x)) || p.startsWith('$x/'));
+    if (!hit) r.unmappedServices.add(p);
+  }
+  return r;
 }
 
 /// Ancestors (that exist) from root to [id], inclusive.
@@ -384,13 +476,22 @@ void main(List<String> args) {
         for (final p in deps.difference(touches).toList()..sort()) {
           stdout.writeln('- `$p` (dependency, read-mostly${hotspots.contains(p) ? ', HOTSPOT' : ''})');
         }
+      case 'audit':
+        final r = audit(root);
+        r.sections.forEach((title, items) {
+          stdout.writeln('## $title (${items.length})');
+          for (final i in items) {
+            stdout.writeln('- $i');
+          }
+          stdout.writeln();
+        });
       case 'overlap':
         final shared = overlapOf(loadFeatures(root), args[1], args[2]);
         stdout.writeln(shared.isEmpty ? 'parallel-safe' : 'CONFLICT: ${shared.join(', ')}');
         exit(shared.isEmpty ? 0 : 2);
       default:
         stderr.writeln('usage: feature_map.dart lint | find <kw> | path <id> | script <id> | '
-            'touches <id>... | overlap <a> <b>');
+            'touches <id>... | overlap <a> <b> | audit');
         exit(64);
     }
   } on FeatureMapError catch (e) {

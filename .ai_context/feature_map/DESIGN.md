@@ -58,12 +58,13 @@ malformed `reach` step; `source` file missing or symbol not found; `script` name
 or the area file has no `testWidgets('<id>'`; a test-path `script` doesn't exist; a child folder
 without its `<name>.md`.
 
-**Warnings** (errors after the Audit issue): a `uses:` id that doesn't exist yet (so parallel
-issues never block each other); `script: -` on a UI feature.
+**Also errors since #382:** a `uses:` id that doesn't exist; a UI feature with `script: -` that isn't `platform=device`.
 
-The Audit issue adds: `AppRoutes` constants with no feature file, `_MissingExtraScreen`-only
-routes, `onTap: null` menu items without a gate note, screens no `reach` visits, and services in
-`lib/services/` with no `system/` file.
+**Audit** (`dart run tool/feature_map.dart audit`, #382): lists screens/dialogs, routed widgets and
+`lib/services/` files no feature points at (all three are pinned to zero in `test/feature_map_lint_test.dart`),
+plus informational lists: detail routes that need `extra` (reached by tapping, never deep-linked),
+`onTap: null` handlers (all reviewed as by-design at #382), and features without a host script.
+**Manual:** `dart run tool/feature_map_wiki.dart --manual <id-prefix> <out.md>` (example: `docs/manual/shopping.md`).
 
 ## 6. Order
 

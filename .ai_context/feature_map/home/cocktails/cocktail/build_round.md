@@ -10,4 +10,4 @@ action: Change the number of drinks and read the total amounts.
 expect: "Drinks:" and "Total batch" are shown.
 uses: -
 script: cocktails
-source: lib/ui/cocktails/cocktails_screen.dart (CocktailRecipeDetailScreen)
+source: lib/ui/cocktails/cocktails_screen.dart (CocktailRecipeDetailScreen); lib/ui/cocktails/cocktails_screen.dart (CocktailBatchScreen)

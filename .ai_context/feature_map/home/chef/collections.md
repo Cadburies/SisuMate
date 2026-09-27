@@ -10,4 +10,4 @@ action: Tap a collection to see and add its recipes.
 expect: "No collections yet" on a fresh install.
 uses: -
 script: chef
-source: lib/ui/collections/collections_screen.dart (CollectionsScreen)
+source: lib/ui/collections/collections_screen.dart (CollectionsScreen); lib/ui/collections/collections_screen.dart (CollectionDetailScreen)

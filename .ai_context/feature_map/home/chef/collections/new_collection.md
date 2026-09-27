@@ -10,4 +10,4 @@ action: Name it and tap Create, then add recipes to it.
 expect: "New Collection" opens.
 uses: -
 script: chef
-source: lib/ui/collections/collections_screen.dart (CollectionsScreen)
+source: lib/ui/collections/collections_screen.dart (CollectionsScreen); lib/ui/collections/collections_screen.dart (AddEditCollectionDialog)

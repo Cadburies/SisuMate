@@ -10,4 +10,4 @@ action: The host broadcasts and runs the authoritative game state; clients rende
 expect: Joined players appear in the host's lobby; a dropped player can rejoin their seat mid-game.
 uses: system/ai/game_ai
 script: test/games_multiplayer_lan_test.dart
-source: lib/services/lan/game_lan_service.dart (GameLanService); lib/services/lan/lan_engine.dart; lib/services/lan/lan_providers.dart
+source: lib/services/lan/game_lan_service.dart (GameLanService); lib/services/lan/lan_engine.dart; lib/services/lan/lan_providers.dart; lib/services/lan/lan_message.dart
