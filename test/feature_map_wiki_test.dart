@@ -77,6 +77,7 @@ void main() {
   test('the real feature map renders cleanly', () {
     final pages = renderWiki(loadFeatures(Directory('.ai_context/feature_map')));
     expect(pages, contains('Home.md'));
+    expect(pages['Home.md'], contains('https://github.com/Cadburies/SisuMate'));
   });
 
   test('#382 manual renders a published subtree in plain language', () {

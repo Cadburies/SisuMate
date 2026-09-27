@@ -1,5 +1,5 @@
 name: sisu_mate
-description: "Sisu Mate - Offshore-Ready Boating Suite"
+description: "Offline-first Flutter app for sailors: checklists, maintenance, safety, provisioning, crew, weather, anchor alarm and games."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev

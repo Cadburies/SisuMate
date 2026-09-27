@@ -1,0 +1,49 @@
+Sisu Mate
+Copyright 2026 Frik Olivier (trading as Sailing Sisu)
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+The "Sisu Mate" and "Sailing Sisu" names and logos are not licensed under
+Apache 2.0; section 6 of the License (Trademarks) applies.
+
+-------------------------------------------------------------------------------
+Third-party content bundled with this product
+-------------------------------------------------------------------------------
+
+The following files are NOT covered by the Apache License. Each remains under
+its own licence, and is redistributed unmodified apart from resizing.
+
+Cocktail photographs (assets/cocktails/), from Wikimedia Commons.
+Source URLs and details: assets/cocktails/manifest.json and ATTRIBUTION.md.
+
+  espresso_martini.jpg
+    "Espresso Martini 01" by Arnaud 25
+    License: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+    Resized to 720x480. The resized image remains under CC BY-SA 4.0.
+
+  bloody_mary.jpg
+    "Bloody Mary Coctail with celery stalk" by Evan Swigart from Chicago, USA
+    License: CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/)
+    Resized to 720x480.
+
+  navy_grog.jpg
+    "Royal Navy Grog issue" by Robert Sargent Austin RA. Public domain.
+
+  paper_plane.jpg
+    "Dieter Michael Krone Paper Plane" by RegiegeigeR. Public domain.
+
+  paloma.jpg
+    "TequilaPaloma" by Antonio Cavallo. Public domain.
+
+Font (assets/games/fonts/NotoSansRunic-Regular.ttf)
+
+  Noto Sans Runic, Copyright 2022 The Noto Project Authors
+  (https://github.com/notofonts/runic).
+  License: SIL Open Font License, Version 1.1 (https://openfontlicense.org).
+
+-------------------------------------------------------------------------------
+Dart / Flutter dependencies
+-------------------------------------------------------------------------------
+
+Packages resolved via pubspec.yaml keep their own licences (BSD, MIT,
+Apache 2.0, and MPL 2.0 for the Linux-only dbus/geoclue/gsettings/gtk/nm
+packages). They are not redistributed in this repository.

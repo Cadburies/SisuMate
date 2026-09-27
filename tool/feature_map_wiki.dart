@@ -203,6 +203,7 @@ Map<String, String> renderWiki(List<Feature> features) {
   pages['Home.md'] = '# Sisu Mate help\n\n'
       'Every feature of the Sisu Mate sailing app: where it is, how to get there, and what it needs. '
       'Use the wiki search box, or browse below.\n\n'
+      'Source code, README and licence (Apache 2.0): https://github.com/Cadburies/SisuMate\n\n'
       '${published.isEmpty ? '_No features published yet._\n' : tree}\n'
       '---\n<sub>Generated from the Sisu Mate feature map. Edits made here are overwritten.</sub>\n';
   pages['_Sidebar.md'] = '**[[Home]]**\n\n$tree';

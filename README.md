@@ -184,3 +184,12 @@ Store listing copy/assets (short/full description, icon, feature graphic, screen
 This repo is set up for AI-assisted development with a token-efficient context system —
 see `CLAUDE.md` for the project's session rules and `.ai_context/` for the maintained
 context files (`INDEX.md` is the entry point).
+
+## License
+
+Sisu Mate is licensed under the [Apache License 2.0](LICENSE). Copyright 2026 Frik Olivier.
+
+Some bundled content keeps its own licence and is **not** covered by Apache 2.0: the
+Wikimedia Commons cocktail photos (public domain, CC BY 2.0, CC BY-SA 4.0) and the Noto Sans
+Runic font (SIL OFL 1.1). See [NOTICE](NOTICE) and
+[assets/cocktails/ATTRIBUTION.md](assets/cocktails/ATTRIBUTION.md) for credits.

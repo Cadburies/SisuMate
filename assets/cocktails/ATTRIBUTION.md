@@ -12,3 +12,5 @@ full-bleed `BoxFit.cover` on iPad crops through the glass.
 
 Wikimedia bulk download is rate-limited; re-run a slow fetch later to add more named photos.
 Named files currently may include: navy_grog, bloody_mary, espresso_martini, paloma, paper_plane, sidecar.
+
+Licence summary for the whole repo (Apache 2.0 vs. these photos): see `NOTICE` at the repo root.
