@@ -6,6 +6,8 @@ import 'package:sisu_mate/core/app_router.dart';
 import 'package:sisu_mate/core/di.dart';
 import 'package:sisu_mate/ui/components/common_drawer.dart';
 
+import 'feature_map/_reach.dart';
+
 /// #141 — "Boat account" / "Join a boat" drawer tiles must navigate with
 /// context.push (not context.go), so the destination screen's automatic
 /// AppBar back arrow has a route to pop back to. Regression-tests the
@@ -80,4 +82,24 @@ void main() {
         reason: 'context.push (not go) must leave Home poppable so the '
             'destination screen\'s default AppBar back arrow renders (#141)');
   });
+
+  // #401: module drawers used to carry their own magic-link "Sign In" tile
+  // and About dialog; every menu must show the shared sections instead.
+  for (final (id, steps, extra) in [
+    ('home/checklists/checklist/complete_all', 3, null),
+    ('home/safety/briefing/complete_all', 3, null),
+    ('home/maintenance/schedule', null, 'tip:Menu'),
+    ('home/drawer/settings/sign_in', null, null),
+  ]) {
+    testWidgets('$id menu uses the shared Account + About sections (#401)', (tester) async {
+      await reach(tester, id, steps: steps);
+      if (extra != null) await runStep(tester, extra);
+      expect(find.byType(AccountSection), findsOneWidget);
+      expect(find.text('Boat account'), findsOneWidget);
+      expect(find.text('Join a boat'), findsOneWidget);
+      expect(find.text('Sync data (Pro only)'), findsNothing);
+      expect(find.text('Sign in to sync data (Pro only)'), findsNothing);
+      if (!id.contains('settings')) expect(find.byType(AboutSection), findsOneWidget);
+    });
+  }
 }

@@ -147,6 +147,8 @@ flutter:
     - assets/games/games/uno/
     - assets/games/games/yatzy/
     - assets/games/games/dudo/
+    # #416: shown on the in-app licence page (BundledLicenses).
+    - assets/games/fonts/OFL.txt
 
   fonts:
     - family: RuneFont

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '_reach.dart';
@@ -67,11 +68,33 @@ void main() {
 
   testWidgets('home/drawer/settings/sign_in', (tester) async {
     await reach(tester, 'home/drawer/settings/sign_in');
-    expect(find.text('Send Magic Link'), findsOneWidget);
+    expect(find.text('Boat account'), findsOneWidget);
+    expect(find.text('Join a boat'), findsOneWidget);
+    expect(find.text('Send Magic Link'), findsNothing);
   });
 
   testWidgets('home/drawer/settings/ais_alarm', (tester) async {
     await reach(tester, 'home/drawer/settings/ais_alarm');
     expect(find.widgetWithText(SwitchListTile, 'AIS collision alarm'), findsOneWidget);
+  });
+
+  testWidgets('home/drawer/settings/legal', (tester) async {
+    const channel = MethodChannel('plugins.flutter.io/url_launcher');
+    final launched = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'launch') launched.add((call.arguments as Map)['url'] as String);
+      return true;
+    });
+    addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null));
+    await reach(tester, 'home/drawer/settings/legal');
+    expect(launched, ['https://cadburies.github.io/sisumate-legal/privacy-policy.html']);
+  });
+
+  testWidgets('home/drawer/settings/licences', (tester) async {
+    await reach(tester, 'home/drawer/settings/licences');
+    expect(find.byType(LicensePage), findsOneWidget);
+    expect(find.text('\u00a9 2026 Frik Olivier. Apache License 2.0.'), findsOneWidget);
   });
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../components/common_drawer.dart';
 import '../components/title_tile.dart';
 import 'boat_polar_dialog.dart';
 import 'llm_api_key_dialog.dart';
@@ -41,14 +42,8 @@ class SettingsScreen extends ConsumerWidget {
           _buildSectionHeader(context, 'Account'),
           userAsync.when(
             data: (user) {
-              if (user == null) {
-                return ListTile(
-                  leading: const Icon(Icons.login),
-                  title: const Text('Sign In'),
-                  subtitle: const Text('Sign in to sync data (Pro only)'),
-                  onTap: () => _showSignInDialog(context, ref),
-                );
-              }
+              // Same sign-in flow as every drawer (#401): /account or /join.
+              if (user == null) return const AccountSection();
               return Column(
                 children: [
                   ListTile(
@@ -333,6 +328,9 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.warning, color: Colors.red),
             onTap: () => _handleFactoryReset(context, ref),
           ),
+          const Divider(),
+          _buildSectionHeader(context, 'Legal'),
+          const LegalSection(),
           const SizedBox(height: 24),
         ],
               ),
@@ -354,66 +352,6 @@ class SettingsScreen extends ConsumerWidget {
           color: SisuColors.getTextSecondaryColor(isDark),
           fontWeight: FontWeight.bold,
         ),
-      ),
-    );
-  }
-
-  void _showSignInDialog(BuildContext context, WidgetRef ref) {
-    final emailController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign In'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter your email to receive a magic link to sign in.'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final email = emailController.text.trim();
-              if (email.isNotEmpty) {
-                Navigator.pop(context);
-                try {
-                  await ref
-                      .read(authServiceProvider)
-                      .signInWithMagicLink(email);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Magic link sent! Check your email.'),
-                      ),
-                    );
-                  }
-                } catch (e, st) {
-                  unawaited(ErrorLogService().logException(e, st,
-                      context: 'settings_screen: signInWithMagicLink'));
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                  }
-                }
-              }
-            },
-            child: const Text('Send Magic Link'),
-          ),
-        ],
       ),
     );
   }

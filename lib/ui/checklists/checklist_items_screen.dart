@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../components/common_drawer.dart';
 import '../components/title_tile.dart';
 import '../components/checklist_item_tile.dart';
 import '../components/native_ad_widget.dart';
@@ -14,7 +15,6 @@ import '../../providers/checklist_provider.dart';
 import '../../providers/package_info_provider.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/admob_service.dart';
-import '../../services/error_log_service.dart';
 import '../../services/import_service.dart';
 import '../components/import_export.dart';
 import '../../core/di.dart';
@@ -366,36 +366,9 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
               },
             ),
 
-            Consumer(
-              builder: (context, ref, child) {
-                final userAsync = ref.watch(authStateProvider);
-                return userAsync.when(
-                  data: (user) => ListTile(
-                    leading: Icon(user != null ? Icons.logout : Icons.login),
-                    title: Text(user != null ? 'Sign Out' : 'Sign In'),
-                    subtitle: Text(user != null ? 'Signed in as ${user.email}' : 'Sync data (Pro only)'),
-                    onTap: user != null
-                        ? () => ref.read(authServiceProvider).signOut()
-                        : () => _showSignInDialog(context, ref),
-                  ),
-                  loading: () => const ListTile(
-                    title: Text('Loading...'),
-                    leading: CircularProgressIndicator(),
-                  ),
-                  error: (e, _) => ListTile(
-                    title: const Text('Auth Error'),
-                    subtitle: Text(e.toString()),
-                  ),
-                );
-              },
-            ),
+            const AccountSection(),
 
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('About'),
-              subtitle: const Text('Version info & links'),
-              onTap: () => _showAboutDialog(context),
-            ),
+            const AboutSection(),
                   ],
                 ),
               ),
@@ -432,66 +405,6 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showSignInDialog(BuildContext context, WidgetRef ref) {
-    final emailController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign In'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter your email to receive a magic link to sign in.'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final email = emailController.text.trim();
-              if (email.isNotEmpty) {
-                Navigator.pop(context);
-                try {
-                  await ref
-                      .read(authServiceProvider)
-                      .signInWithMagicLink(email);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Magic link sent! Check your email.'),
-                      ),
-                    );
-                  }
-                } catch (e, st) {
-                  unawaited(ErrorLogService().logException(e, st,
-                      context: 'checklist_items_screen: signInWithMagicLink'));
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
-                  }
-                }
-              }
-            },
-            child: const Text('Send Magic Link'),
-          ),
-        ],
       ),
     );
   }
@@ -597,43 +510,6 @@ class _ChecklistItemsScreenState extends ConsumerState<ChecklistItemsScreen> {
           ],
         );
       },
-    );
-  }
-
-  void _showAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('About Sisu Mate'),
-        content: Consumer(
-          builder: (context, ref, child) {
-            final versionAsync = ref.watch(appVersionProvider);
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                versionAsync.when(
-                  data: (version) => Text('Version: $version'),
-                  loading: () => const Text('Version: Loading...'),
-                  error: (e, _) => const Text('Version: Unknown'),
-                ),
-                const SizedBox(height: 8),
-                const Text('Professional offshore boating suite with 12 integrated apps.'),
-                const SizedBox(height: 8),
-                const Text('Visit Sailing Sisu on YouTube for tutorials and tips.'),
-                const SizedBox(height: 8),
-                const Text('Privacy Policy & Terms available in Settings.'),
-              ],
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 

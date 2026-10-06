@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'services/revenuecat_service.dart';
 import 'services/admob_service.dart';
+import 'services/bundled_licenses.dart';
 import 'services/error_log_service.dart';
 import 'services/provider_breadcrumbs.dart';
 import 'core/theme.dart';
@@ -51,6 +52,7 @@ void main() async {
   ErrorLogService.routeHintProvider =
       () => appRouter.routerDelegate.currentConfiguration.uri.toString();
   ErrorLogService.providerBreadcrumbsProvider = () => _providerBreadcrumbs.recent;
+  BundledLicenses.register();
 
   assert(
     _supabaseUrl.isNotEmpty && _supabaseAnonKey.isNotEmpty,

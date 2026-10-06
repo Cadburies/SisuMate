@@ -11,11 +11,6 @@ abstract class AuthBackend {
 
   Stream<AuthState> get onAuthStateChange;
 
-  Future<void> signInWithOtp({
-    required String email,
-    String? emailRedirectTo,
-  });
-
   Future<void> signOut();
 
   Future<void> signInWithPassword({
@@ -62,13 +57,6 @@ class LiveAuthBackend implements AuthBackend {
 
   @override
   Stream<AuthState> get onAuthStateChange => _c.auth.onAuthStateChange;
-
-  @override
-  Future<void> signInWithOtp({
-    required String email,
-    String? emailRedirectTo,
-  }) =>
-      _c.auth.signInWithOtp(email: email, emailRedirectTo: emailRedirectTo);
 
   @override
   Future<void> signOut() => _c.auth.signOut();

@@ -977,7 +977,10 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
     final aiMustRespond = isHumanRole &&
         (!state.isMultiplayer || state.isOpponentAI);
     if (aiMustRespond) {
-      Future.delayed(const Duration(milliseconds: 700), _aiRespondToDouble);
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (!ref.mounted) return;
+        _aiRespondToDouble();
+      });
     }
   }
 
@@ -1001,7 +1004,10 @@ class BackgammonNotifier extends Notifier<BackgammonState> {
     final isLocalAiTurn =
         !state.isHumanTurn && (!state.isMultiplayer || state.isOpponentAI);
     if (isLocalAiTurn) {
-      Future.delayed(const Duration(milliseconds: 400), roll);
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (!ref.mounted) return;
+        roll();
+      });
     }
   }
 

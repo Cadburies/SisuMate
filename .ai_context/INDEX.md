@@ -6,7 +6,7 @@
 ## NEXT
 
 - **Last:** #402 maintenance AI tools work offline (explain, warranty, parts, insurance). Improve with AI is optional.
-- **Last:** #415 Apache-2.0 LICENSE/NOTICE; #401/#410/#416 sign-in, legal links, and licence page are with claudevc in this tree.
+- **Last:** #401/#410/#416 one sign-in flow (AccountSection everywhere, magic link removed), Settings → Legal links, in-app licence page (BundledLicenses); #417 game AI timers guard `ref.mounted`.
 - **Next:** #395 device verify of fm_device_reach; map bugs still open (#393, #396–#409). Copyright holder string still needs Frik's OK.
 - **Blockers:** android-34 emulator image broken.
 

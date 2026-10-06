@@ -15,13 +15,6 @@ class AuthService {
   Stream<User?> get authState =>
       _backend.onAuthStateChange.map((data) => data.session?.user);
 
-  Future<void> signInWithMagicLink(String email) async {
-    await _backend.signInWithOtp(
-      email: email,
-      emailRedirectTo: 'io.supabase.sisu://login-callback/',
-    );
-  }
-
   Future<void> signOut() => _backend.signOut();
 
   Future<void> signIn(String email, String password) async {

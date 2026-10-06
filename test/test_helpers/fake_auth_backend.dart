@@ -10,7 +10,6 @@ class FakeAuthBackend implements AuthBackend {
   User? _user;
   bool shouldFail = false;
 
-  final List<String> signedInWithOtp = [];
   final List<(String email, String password)> signedInWithPassword = [];
   final List<(String email, String password)> signedUp = [];
   int signOutCalls = 0;
@@ -51,15 +50,6 @@ class FakeAuthBackend implements AuthBackend {
 
   @override
   Stream<AuthState> get onAuthStateChange => _authController.stream;
-
-  @override
-  Future<void> signInWithOtp({
-    required String email,
-    String? emailRedirectTo,
-  }) async {
-    _throwIfFailing();
-    signedInWithOtp.add(email);
-  }
 
   @override
   Future<void> signOut() async {

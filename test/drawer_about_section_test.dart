@@ -99,4 +99,16 @@ void main() {
             'redundant Units-tile + explicit-tile + (removed) Boats copies '
             'it had before #209');
   });
+
+  test('#410/#401: no stub legal button, stale About text or magic-link sign-in left in lib/', () {
+    final hits = <String>[];
+    for (final f in Directory('$root/lib').listSync(recursive: true).whereType<File>()) {
+      if (!f.path.endsWith('.dart')) continue;
+      final src = f.readAsStringSync();
+      for (final banned in ['Opening website...', 'available in Settings.', 'signInWithMagicLink', 'Send Magic Link']) {
+        if (src.contains(banned)) hits.add('${f.path.substring(root.length + 1)}: $banned');
+      }
+    }
+    expect(hits, isEmpty);
+  });
 }

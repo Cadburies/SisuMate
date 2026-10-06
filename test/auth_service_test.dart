@@ -68,11 +68,6 @@ void main() {
   });
 
   group('AuthService auth actions', () {
-    test('signInWithMagicLink records the email on the backend', () async {
-      await auth.signInWithMagicLink('crew@example.com');
-      expect(backend.signedInWithOtp, ['crew@example.com']);
-    });
-
     test('signIn / signUp / signOut hit the backend', () async {
       await auth.signUp('new@example.com', 'secret');
       expect(backend.signedUp, [('new@example.com', 'secret')]);

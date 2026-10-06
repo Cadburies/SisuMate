@@ -311,6 +311,7 @@ class UnoNotifier extends Notifier<UnoState> {
   }
 
   void _broadcastIfHost() {
+    if (!ref.mounted) return; // timer may outlive the provider
     if (_isHostMode) {
       ref.read(gameLanServiceProvider).broadcastState(state.toJson());
     }
@@ -460,7 +461,7 @@ class UnoNotifier extends Notifier<UnoState> {
 
     if (otherGetsSkipped) {
       Future.delayed(const Duration(milliseconds: 700), () {
-        if (state.phase == UnoPhase.gameOver) return;
+        if (!ref.mounted || state.phase == UnoPhase.gameOver) return;
         state = state.copyWith(isPlayerTurn: isHostRole, message: 'Your turn!');
         _broadcastIfHost();
       });
@@ -508,7 +509,7 @@ class UnoNotifier extends Notifier<UnoState> {
 
     if (otherGetsSkipped) {
       Future.delayed(const Duration(milliseconds: 700), () {
-        if (state.phase == UnoPhase.gameOver) return;
+        if (!ref.mounted || state.phase == UnoPhase.gameOver) return;
         state = state.copyWith(isPlayerTurn: isHostRole, message: 'Your turn!');
         _broadcastIfHost();
       });
@@ -568,6 +569,7 @@ class UnoNotifier extends Notifier<UnoState> {
   }
 
   void _aiTurn() {
+    if (!ref.mounted) return; // timer may outlive the provider
     if (state.phase == UnoPhase.gameOver || state.isPlayerTurn) return;
     var deck = [...state.deck];
     var aiHand = [...state.aiHand];
@@ -696,7 +698,7 @@ class UnoNotifier extends Notifier<UnoState> {
 
     if (playerGetsSkipped) {
       Future.delayed(const Duration(milliseconds: 800), () {
-        if (state.phase == UnoPhase.gameOver) return;
+        if (!ref.mounted || state.phase == UnoPhase.gameOver) return;
         state = state.copyWith(isPlayerTurn: false, message: 'AI\'s turn again.');
         _broadcastIfHost();
         Future.delayed(const Duration(milliseconds: 700), _aiTurn);

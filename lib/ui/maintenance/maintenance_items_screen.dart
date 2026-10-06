@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../components/common_drawer.dart';
 import '../components/title_tile.dart';
 import '../components/checklist_item_tile.dart';
 import '../components/native_ad_widget.dart';
@@ -18,7 +19,6 @@ import '../../providers/checklist_provider.dart';
 import '../../providers/package_info_provider.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/admob_service.dart';
-import '../../services/error_log_service.dart';
 import '../../services/import_service.dart';
 import '../components/import_export.dart';
 import '../../core/di.dart';
@@ -606,36 +606,9 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
               },
             ),
 
-            Consumer(
-              builder: (context, ref, child) {
-                final userAsync = ref.watch(authStateProvider);
-                return userAsync.when(
-                  data: (user) => ListTile(
-                    leading: Icon(user != null ? Icons.logout : Icons.login),
-                    title: Text(user != null ? 'Sign Out' : 'Sign In'),
-                    subtitle: Text(user != null ? 'Signed in as ${user.email}' : 'Sync data (Pro only)'),
-                    onTap: user != null
-                        ? () => ref.read(authServiceProvider).signOut()
-                        : () => _showSignInDialog(context, ref),
-                  ),
-                  loading: () => const ListTile(
-                    title: Text('Loading...'),
-                    leading: CircularProgressIndicator(),
-                  ),
-                  error: (e, _) => ListTile(
-                    title: const Text('Auth Error'),
-                    subtitle: Text(e.toString()),
-                  ),
-                );
-              },
-            ),
+            const AccountSection(),
 
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('About'),
-              subtitle: const Text('Version info & links'),
-              onTap: () => _showAboutDialog(context),
-            ),
+            const AboutSection(),
                   ],
                 ),
               ),
@@ -773,108 +746,6 @@ class _MaintenanceItemsScreenState extends ConsumerState<MaintenanceItemsScreen>
           ),
         ],
       ),
-    );
-  }
-
-  void _showSignInDialog(BuildContext context, WidgetRef ref) {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    String? errorMessage;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Sign In'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (errorMessage != null) ...[
-                Text(
-                  errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-                const SizedBox(height: 8),
-              ],
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-                obscureText: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final email = emailController.text.trim();
-                final password = passwordController.text.trim();
-                if (email.isEmpty || password.isEmpty) {
-                  setState(() {
-                    errorMessage = 'Please enter email and password';
-                  });
-                  return;
-                }
-
-                try {
-                  await ref.read(authServiceProvider).signIn(email, password);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Signed in successfully')),
-                    );
-                  }
-                } catch (e, st) {
-                  unawaited(ErrorLogService()
-                      .logException(e, st, context: 'maintenance_items_screen: signIn'));
-                  setState(() {
-                    errorMessage = e.toString();
-                  });
-                }
-              },
-              child: const Text('Sign In'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAboutDialog(BuildContext context) {
-    showAboutDialog(
-      context: context,
-      applicationName: 'Sisu Mate',
-      applicationVersion: '1.0.0',
-      applicationIcon: const Icon(Icons.sailing),
-      children: [
-        const Text(
-          'Sisu Mate is a marine maintenance app for managing checklists and schedules.',
-        ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: () {
-            // Open website or privacy policy
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Opening website...')),
-            );
-          },
-          child: const Text('Privacy Policy & Terms'),
-        ),
-      ],
     );
   }
 

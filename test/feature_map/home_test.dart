@@ -99,5 +99,6 @@ void main() {
   testWidgets('home/drawer/about', (tester) async {
     await reach(tester, 'home/drawer/about');
     expect(find.text('About Sisu Mate'), findsOneWidget);
+    expect(find.text('\u00a9 2026 Frik Olivier. Apache License 2.0.'), findsOneWidget);
   });
 }

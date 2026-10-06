@@ -361,6 +361,86 @@ class ProUpgradeSection extends ConsumerWidget {
   }
 }
 
+/// Public legal pages on GitHub Pages (sisumate-legal), the same URLs as the
+/// store listings (#410).
+abstract final class LegalLinks {
+  static const _base = 'https://cadburies.github.io/sisumate-legal';
+  static const privacy = '$_base/privacy-policy.html';
+  static const terms = '$_base/terms.html';
+  static const support = '$_base/support.html';
+  static const deleteAccount = '$_base/delete-account.html';
+  static const legalese = '\u00a9 2026 Frik Olivier. Apache License 2.0.';
+}
+
+Future<void> openLegalLink(BuildContext context, String url) async {
+  var opened = false;
+  try {
+    opened = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  } catch (e) {
+    unawaited(ErrorLogService()
+        .logWarning('launchUrl failed for $url: $e', context: 'common_drawer: openLegalLink'));
+  }
+  if (!opened && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Could not open $url')),
+    );
+  }
+}
+
+/// Flutter's licence page: pub packages plus [BundledLicenses] (#416).
+void showSisuLicensePage(BuildContext context, WidgetRef ref) {
+  showLicensePage(
+    context: context,
+    applicationName: 'Sisu Mate',
+    applicationVersion: ref.read(appVersionProvider).value,
+    applicationLegalese: LegalLinks.legalese,
+  );
+}
+
+/// Privacy, terms, support, account deletion and open-source licences (#410).
+class LegalSection extends ConsumerWidget {
+  const LegalSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.privacy_tip_outlined),
+          title: const Text('Privacy Policy'),
+          trailing: const Icon(Icons.open_in_new),
+          onTap: () => openLegalLink(context, LegalLinks.privacy),
+        ),
+        ListTile(
+          leading: const Icon(Icons.gavel_outlined),
+          title: const Text('Terms of Use'),
+          trailing: const Icon(Icons.open_in_new),
+          onTap: () => openLegalLink(context, LegalLinks.terms),
+        ),
+        ListTile(
+          leading: const Icon(Icons.support_agent),
+          title: const Text('Support'),
+          trailing: const Icon(Icons.open_in_new),
+          onTap: () => openLegalLink(context, LegalLinks.support),
+        ),
+        ListTile(
+          leading: const Icon(Icons.person_remove_outlined),
+          title: const Text('Delete account (web)'),
+          subtitle: const Text('How to delete your account and data'),
+          trailing: const Icon(Icons.open_in_new),
+          onTap: () => openLegalLink(context, LegalLinks.deleteAccount),
+        ),
+        ListTile(
+          leading: const Icon(Icons.description_outlined),
+          title: const Text('Open-source licences'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => showSisuLicensePage(context, ref),
+        ),
+      ],
+    );
+  }
+}
+
 /// Reusable About Section for drawers
 class AboutSection extends ConsumerWidget {
   const AboutSection({super.key});
@@ -378,7 +458,7 @@ class AboutSection extends ConsumerWidget {
   void _showAboutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('About Sisu Mate'),
         content: Consumer(
           builder: (context, ref, child) {
@@ -393,22 +473,32 @@ class AboutSection extends ConsumerWidget {
                   error: (e, _) => const Text('Version: Unknown'),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Professional offshore boating suite with 12 integrated apps.',
-                ),
+                const Text('Offline-first boating suite for sailors.'),
                 const SizedBox(height: 8),
                 const Text(
                   'Visit Sailing Sisu on YouTube for tutorials and tips.',
                 ),
                 const SizedBox(height: 8),
-                const Text('Privacy Policy & Terms available in Settings.'),
+                const Text(LegalLinks.legalese),
+                const SizedBox(height: 8),
+                const Text(
+                  'Privacy Policy, Terms, Support and licences are also under Settings \u2192 Legal.',
+                ),
               ],
             );
           },
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => openLegalLink(dialogContext, LegalLinks.privacy),
+            child: const Text('Privacy'),
+          ),
+          TextButton(
+            onPressed: () => showSisuLicensePage(dialogContext, ref),
+            child: const Text('Licences'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Close'),
           ),
         ],

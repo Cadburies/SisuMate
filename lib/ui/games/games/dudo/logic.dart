@@ -323,6 +323,7 @@ class DudoGameNotifier extends Notifier<DudoGameState> {
   }
 
   void _broadcastIfHost() {
+    if (!ref.mounted) return; // timer may outlive the provider
     if (_isHostMode) {
       ref.read(gameLanServiceProvider).broadcastState(state.toJson());
     }
@@ -393,6 +394,7 @@ class DudoGameNotifier extends Notifier<DudoGameState> {
   }
 
   void determineStarter() {
+    if (!ref.mounted) return; // timer may outlive the provider
     final rolls = state.players.map((p) => p.dice.first).toList();
     final best = rolls.reduce((a, b) => a > b ? a : b);
     final tied = [
@@ -427,6 +429,7 @@ class DudoGameNotifier extends Notifier<DudoGameState> {
   // ── Round ─────────────────────────────────────────────────────────────────
 
   void beginRound() {
+    if (!ref.mounted) return; // timer may outlive the provider
     final updated = state.players.map((p) {
       if (p.isEliminated) return p;
       return p.copyWith(dice: rollDice(p.diceCount));
@@ -450,6 +453,7 @@ class DudoGameNotifier extends Notifier<DudoGameState> {
   }
 
   void startBidding() {
+    if (!ref.mounted) return; // timer may outlive the provider
     state = state.copyWith(
       currentState: DudoStateEnum.bidding,
       gameMessage: '${state.players[state.activePlayer].name}, make your bid.',
