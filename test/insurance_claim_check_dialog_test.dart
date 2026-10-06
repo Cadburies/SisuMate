@@ -33,36 +33,52 @@ void main() {
     await db.close();
   });
 
-  Future<ProviderContainer> pumpScreen(WidgetTester tester,
-      {required String documentType}) async {
-    await db.into(db.boats).insert(BoatsCompanion.insert(
-          supabaseId: const Value('boat_1'),
-          name: const Value('Sisu'),
-          llmApiKeys: const Value('[]'),
-        ));
-    await db.into(db.userSettingsTable).insert(
+  Future<ProviderContainer> pumpScreen(
+    WidgetTester tester, {
+    required String documentType,
+  }) async {
+    await db
+        .into(db.boats)
+        .insert(
+          BoatsCompanion.insert(
+            supabaseId: const Value('boat_1'),
+            name: const Value('Sisu'),
+            llmApiKeys: const Value('[]'),
+          ),
+        );
+    await db
+        .into(db.userSettingsTable)
+        .insert(
           UserSettingsTableCompanion.insert(
             id: const Value(1),
             activeBoatSupabaseId: const Value('boat_1'),
           ),
         );
-    await db.into(db.documents).insert(DocumentsCompanion.insert(
-          supabaseId: const Value('doc_1'),
-          boatSupabaseId: const Value('boat_1'),
-          title: const Value('Hull Insurance Policy'),
-          type: Value(documentType),
-        ));
+    await db
+        .into(db.documents)
+        .insert(
+          DocumentsCompanion.insert(
+            supabaseId: const Value('doc_1'),
+            boatSupabaseId: const Value('boat_1'),
+            title: const Value('Hull Insurance Policy'),
+            type: Value(documentType),
+          ),
+        );
 
-    final container = ProviderContainer(overrides: [
-      appDatabaseProvider.overrideWithValue(db),
-      isProProvider.overrideWith((ref) => Stream.value(true)),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        isProProvider.overrideWith((ref) => Stream.value(true)),
+      ],
+    );
     addTearDown(container.dispose);
 
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: const MaterialApp(home: DocumentsScreen()),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: DocumentsScreen()),
+      ),
+    );
     await tester.pump();
     await tester.pump();
     return container;
@@ -95,13 +111,25 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-        find.widgetWithText(TextField, 'What happened?'),
-        'Boom broke loose in a storm and cracked the rail');
+      find.widgetWithText(TextField, 'What happened?'),
+      'Boom broke loose in a storm and cracked the rail',
+    );
     await tester.enterText(
-        find.widgetWithText(TextField, 'Policy excerpt'),
-        'Storm damage to fittings is covered up to \$5,000.');
-    await tester.tap(find.text('Ask'));
+      find.widgetWithText(TextField, 'Policy excerpt'),
+      'Storm damage to fittings is covered up to \$5,000.',
+    );
+    await tester.tap(find.text('Check offline'));
     await tester.pump();
+
+    expect(find.textContaining('Offline reading'), findsOneWidget);
+    expect(find.textContaining('possibly in scope'), findsOneWidget);
+    expect(
+      find.textContaining('Limit named in the excerpt: \$5,000'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('No AI API key is configured'), findsNothing);
+
+    await tester.tap(find.text('Improve with AI (online)'));
     await tester.pump();
     await tester.pump();
 

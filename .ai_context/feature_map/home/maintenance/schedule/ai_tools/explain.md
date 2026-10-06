@@ -1,13 +1,13 @@
 title: Explain a maintenance task
-desc: Asks the AI to explain what a task involves and why it matters. Currently needs an AI key and a connection.
+desc: Shows a bundled offline note on why a maintenance task matters. Improve with AI is optional when a key and a connection are available.
 layer: ux
-keywords: explain, what is, why, ai, help, task
+keywords: explain, what is, why, ai, help, task, offline
 kind: dialog
 looks: "Explain this task" in the AI tools sheet; opens "AI: <task>".
 reach: text:Maintenance > text:Yanmar 4JH45 - 250-Hour Engine Service > tip:AI tools: Raw Water Pump Service > text:Explain this task
-needs: network=online (without an AI key it says to add one in Settings)
-action: Sends the task title and description to your AI provider and shows the answer.
-expect: "AI: Raw Water Pump Service" opens; with no key it offers "Go to Settings".
+needs: -
+action: Opens an offline note for the task. Improve with AI sends only the title and description, and only if you ask.
+expect: "AI: Raw Water Pump Service" opens with an offline note about the impeller. Go to Settings appears only after Improve with AI when no key is set.
 uses: system/ai/llm_client
 script: maintenance
-source: lib/ui/maintenance/maintenance_ai_explainer_dialog.dart (MaintenanceAiExplainerDialog)
+source: lib/ui/maintenance/maintenance_ai_explainer_dialog.dart (MaintenanceAiExplainerDialog); lib/services/maintenance_local_explain.dart

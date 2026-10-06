@@ -13,10 +13,11 @@ import '../../services/llm_client_service.dart';
 /// Extracted once a third near-identical dialog (#227) was about to be
 /// copy-pasted from #222/#226, per #227's own note.
 ///
-/// Each caller supplies its own field labels/helpers, system prompt +
-/// payload (via [onAsk]), and disclaimer wording — this widget only owns
-/// the two-field form, loading/result states, and the "no key configured →
-/// Go to Settings" affordance common to all four.
+/// Each caller supplies its own field labels/helpers, the offline reading
+/// ([onLocal]), the optional LLM call ([onAsk]), and disclaimer wording.
+/// This widget owns the two-field form. The offline reading runs with no
+/// key; "Improve with AI" is the only path that calls the LLM, and the
+/// "no key configured → Go to Settings" affordance stays on that path.
 class PastedExcerptCheckDialog extends ConsumerStatefulWidget {
   final String title;
   final String descriptionLabel;
@@ -24,6 +25,7 @@ class PastedExcerptCheckDialog extends ConsumerStatefulWidget {
   final String excerptLabel;
   final String excerptHelper;
   final String disclaimer;
+  final String Function(String description, String excerpt) onLocal;
   final Future<LlmResult> Function(String description, String excerpt) onAsk;
 
   const PastedExcerptCheckDialog({
@@ -34,6 +36,7 @@ class PastedExcerptCheckDialog extends ConsumerStatefulWidget {
     required this.excerptLabel,
     required this.excerptHelper,
     required this.disclaimer,
+    required this.onLocal,
     required this.onAsk,
   });
 
@@ -46,7 +49,8 @@ class _PastedExcerptCheckDialogState
     extends ConsumerState<PastedExcerptCheckDialog> {
   final _descriptionCtrl = TextEditingController();
   final _excerptCtrl = TextEditingController();
-  LlmResult? _result;
+  String? _localReport;
+  LlmResult? _llm;
   bool _loading = false;
 
   @override
@@ -56,31 +60,50 @@ class _PastedExcerptCheckDialogState
     super.dispose();
   }
 
-  Future<void> _ask() async {
+  (String, String)? _fields() {
     final description = _descriptionCtrl.text.trim();
     final excerpt = _excerptCtrl.text.trim();
-    if (description.isEmpty || excerpt.isEmpty) return;
+    if (description.isEmpty || excerpt.isEmpty) return null;
+    return (description, excerpt);
+  }
+
+  void _checkOffline() {
+    final fields = _fields();
+    if (fields == null) return;
+    setState(() {
+      _localReport = widget.onLocal(fields.$1, fields.$2);
+    });
+  }
+
+  Future<void> _improve() async {
+    final fields = _fields();
+    if (fields == null) return;
 
     setState(() {
+      _localReport = widget.onLocal(fields.$1, fields.$2);
       _loading = true;
-      _result = null;
+      _llm = null;
     });
 
-    final result = await widget.onAsk(description, excerpt);
-    if (mounted) setState(() { _loading = false; _result = result; });
+    final result = await widget.onAsk(fields.$1, fields.$2);
+    if (mounted) {
+      setState(() {
+        _loading = false;
+        _llm = result;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final result = _result;
+    final llm = _llm;
+    final local = _localReport;
     return AlertDialog(
       title: Row(
         children: [
           const Icon(Icons.auto_awesome, color: Colors.deepPurple, size: 20),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(widget.title, overflow: TextOverflow.ellipsis),
-          ),
+          Expanded(child: Text(widget.title, overflow: TextOverflow.ellipsis)),
         ],
       ),
       content: SizedBox(
@@ -114,19 +137,23 @@ class _PastedExcerptCheckDialogState
                 enabled: !_loading,
               ),
               const SizedBox(height: 12),
+              if (local != null)
+                _LocalView(text: local, disclaimer: widget.disclaimer),
               if (_loading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (result != null)
-                _ResultView(result: result, disclaimer: widget.disclaimer),
+              else if (llm != null) ...[
+                if (local != null) const SizedBox(height: 12),
+                _LlmView(result: llm),
+              ],
             ],
           ),
         ),
       ),
       actions: [
-        if (result?.status == LlmResultStatus.noKeyConfigured)
+        if (llm?.status == LlmResultStatus.noKeyConfigured)
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -135,8 +162,12 @@ class _PastedExcerptCheckDialogState
             child: const Text('Go to Settings'),
           ),
         TextButton(
-          onPressed: _loading ? null : _ask,
-          child: const Text('Ask'),
+          onPressed: _loading ? null : _checkOffline,
+          child: const Text('Check offline'),
+        ),
+        TextButton(
+          onPressed: _loading ? null : _improve,
+          child: const Text('Improve with AI (online)'),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -147,46 +178,61 @@ class _PastedExcerptCheckDialogState
   }
 }
 
-class _ResultView extends StatelessWidget {
-  final LlmResult result;
+class _LocalView extends StatelessWidget {
+  final String text;
   final String disclaimer;
-  const _ResultView({required this.result, required this.disclaimer});
+  const _LocalView({required this.text, required this.disclaimer});
 
   @override
   Widget build(BuildContext context) {
-    if (result.status != LlmResultStatus.success) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline,
-              size: 18, color: Theme.of(context).colorScheme.error),
-          const SizedBox(width: 8),
-          Expanded(child: Text(result.errorMessage ?? 'Something went wrong.')),
-        ],
-      );
-    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(result.text ?? ''),
+        Text(text),
         const SizedBox(height: 12),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.info_outline,
-                size: 16, color: Theme.of(context).colorScheme.secondary),
+            Icon(
+              Icons.info_outline,
+              size: 16,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 disclaimer,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontStyle: FontStyle.italic),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
               ),
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+class _LlmView extends StatelessWidget {
+  final LlmResult result;
+  const _LlmView({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    if (result.status == LlmResultStatus.success) {
+      return Text(result.text ?? '');
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.info_outline,
+          size: 18,
+          color: Theme.of(context).colorScheme.error,
+        ),
+        const SizedBox(width: 8),
+        Expanded(child: Text(result.errorMessage ?? 'Something went wrong.')),
       ],
     );
   }

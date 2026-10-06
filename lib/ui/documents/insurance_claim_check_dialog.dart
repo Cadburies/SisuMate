@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
+import '../../services/pasted_excerpt_local_check.dart';
 import '../components/pasted_excerpt_check_dialog.dart';
 
 /// #227: same document-grounded-reasoning shape as #222's
@@ -28,14 +29,21 @@ class InsuranceClaimCheckDialog extends ConsumerWidget {
     return PastedExcerptCheckDialog(
       title: 'AI: Insurance claim check',
       descriptionLabel: 'What happened?',
-      descriptionHelper: 'Describe the incident — storm damage, grounding, '
+      descriptionHelper:
+          'Describe the incident — storm damage, grounding, '
           'theft, gear loss.',
       excerptLabel: 'Policy excerpt',
-      excerptHelper: 'Paste the relevant coverage clause, exclusions '
+      excerptHelper:
+          'Paste the relevant coverage clause, exclusions '
           'section, or deductible terms — not the whole policy.',
-      disclaimer: 'This is an AI reading of the text you pasted, not a '
+      disclaimer:
+          'This is a reading of the text you pasted, not a '
           'claims or legal determination — confirm with your '
           'insurer/broker before relying on it.',
+      onLocal: (incident, excerpt) => PastedExcerptLocalCheck.insurance(
+        situation: incident,
+        excerpt: excerpt,
+      ),
       onAsk: (incident, excerpt) async {
         final boat = await ref.read(activeBoatProvider.future);
         final payload = LlmPayloadBuilder.insuranceClaimQuery(
@@ -44,7 +52,8 @@ class InsuranceClaimCheckDialog extends ConsumerWidget {
         );
         return LlmClientService().complete(
           boat: boat,
-          systemPrompt: 'You are a boat insurance assistant. Given a '
+          systemPrompt:
+              'You are a boat insurance assistant. Given a '
               'description of an incident and a pasted excerpt from the '
               'boat owner\'s own insurance policy (coverage clause, '
               'exclusions, deductible terms), assess whether the incident '

@@ -42,30 +42,46 @@ void main() {
   });
 
   Future<ProviderContainer> pumpScreen(WidgetTester tester) async {
-    await db.into(db.boats).insert(BoatsCompanion.insert(
-          supabaseId: const Value('boat_1'),
-          name: const Value('Sisu'),
-        ));
-    await db.into(db.userSettingsTable).insert(
+    await db
+        .into(db.boats)
+        .insert(
+          BoatsCompanion.insert(
+            supabaseId: const Value('boat_1'),
+            name: const Value('Sisu'),
+          ),
+        );
+    await db
+        .into(db.userSettingsTable)
+        .insert(
           UserSettingsTableCompanion.insert(
             id: const Value(1),
             activeBoatSupabaseId: const Value('boat_1'),
           ),
         );
-    await db.into(db.checklistGroups).insert(ChecklistGroupsCompanion.insert(
-          supabaseId: const Value(groupId),
-          boatSupabaseId: const Value('boat_1'),
-          appType: const Value('maintenance'),
-          title: const Value('Engine Room'),
-        ));
-    await db.into(db.checklistItems).insert(ChecklistItemsCompanion.insert(
-          supabaseId: const Value(itemId),
-          boatSupabaseId: const Value('boat_1'),
-          groupSupabaseId: const Value(groupId),
-          title: const Value('Check bilge pump'),
-          name: const Value('Check bilge pump'),
-          description: const Value('Verify the automatic float switch cycles'),
-        ));
+    await db
+        .into(db.checklistGroups)
+        .insert(
+          ChecklistGroupsCompanion.insert(
+            supabaseId: const Value(groupId),
+            boatSupabaseId: const Value('boat_1'),
+            appType: const Value('maintenance'),
+            title: const Value('Engine Room'),
+          ),
+        );
+    await db
+        .into(db.checklistItems)
+        .insert(
+          ChecklistItemsCompanion.insert(
+            supabaseId: const Value(itemId),
+            boatSupabaseId: const Value('boat_1'),
+            groupSupabaseId: const Value(groupId),
+            title: const Value('Check bilge pump'),
+            name: const Value('Check bilge pump'),
+            description: const Value(
+              'Verify the automatic float switch cycles',
+            ),
+          ),
+        );
 
     final group = ChecklistGroup()
       ..supabaseId = groupId
@@ -73,28 +89,37 @@ void main() {
       ..appType = 'maintenance'
       ..title = 'Engine Room';
 
-    final container = ProviderContainer(overrides: [
-      appDatabaseProvider.overrideWithValue(db),
-      isProProvider.overrideWith((ref) => Stream.value(true)),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        isProProvider.overrideWith((ref) => Stream.value(true)),
+      ],
+    );
     addTearDown(container.dispose);
 
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(home: MaintenanceItemsScreen(group: group)),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(home: MaintenanceItemsScreen(group: group)),
+      ),
+    );
     await tester.pump();
     await tester.pump();
     return container;
   }
 
-  testWidgets('the AI badge renders distinct from Complete/Hide icons',
-      (tester) async {
+  testWidgets('the AI badge renders distinct from Complete/Hide icons', (
+    tester,
+  ) async {
     await pumpScreen(tester);
 
-    expect(find.byIcon(Icons.auto_awesome), findsOneWidget,
-        reason: '#208: AI entry point must have its own icon, not reuse '
-            'Complete/Hide iconography');
+    expect(
+      find.byIcon(Icons.auto_awesome),
+      findsOneWidget,
+      reason:
+          '#208: AI entry point must have its own icon, not reuse '
+          'Complete/Hide iconography',
+    );
   });
 
   testWidgets('tapping the AI badge opens a menu, not the item detail '
@@ -105,11 +130,18 @@ void main() {
     await tester.pump();
 
     expect(find.text('Explain this task'), findsOneWidget);
-    expect(find.text('Check warranty coverage'), findsOneWidget,
-        reason: '#222: warranty check joins the explainer on the same AI '
-            'badge instead of a second competing badge');
-    expect(find.text('Find a compatible part near me'), findsOneWidget,
-        reason: '#217: part sourcing joins the same AI badge too');
+    expect(
+      find.text('Check warranty coverage'),
+      findsOneWidget,
+      reason:
+          '#222: warranty check joins the explainer on the same AI '
+          'badge instead of a second competing badge',
+    );
+    expect(
+      find.text('Find a compatible part near me'),
+      findsOneWidget,
+      reason: '#217: part sourcing joins the same AI badge too',
+    );
   });
 
   testWidgets('picking "Explain this task" from the AI menu opens the '
@@ -123,23 +155,29 @@ void main() {
 
     expect(find.byType(MaintenanceAiExplainerDialog), findsOneWidget);
     expect(find.textContaining('AI: Check bilge pump'), findsOneWidget);
+    expect(find.textContaining('Offline maintenance note'), findsOneWidget);
+    expect(find.text('Go to Settings'), findsNothing);
   });
 
-  testWidgets(
-      'with no key configured, the dialog says so instead of silently '
-      'failing', (tester) async {
+  testWidgets('with no key, the offline note shows first and Improve with AI '
+      'says so instead of silently failing', (tester) async {
     await pumpScreen(tester);
 
     await tester.tap(find.byIcon(Icons.auto_awesome));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Explain this task'));
     await tester.pumpAndSettle();
-    // Resolve the async explain() call (no-key path returns immediately,
-    // no real network involved).
+
+    expect(find.textContaining('Offline maintenance note'), findsOneWidget);
+    expect(find.textContaining('float switch'), findsWidgets);
+    expect(find.textContaining('No AI API key is configured'), findsNothing);
+
+    await tester.tap(find.text('Improve with AI (online)'));
     await tester.pump();
     await tester.pump();
 
     expect(find.textContaining('No AI API key is configured'), findsOneWidget);
     expect(find.text('Go to Settings'), findsOneWidget);
+    expect(find.textContaining('Offline maintenance note'), findsOneWidget);
   });
 }

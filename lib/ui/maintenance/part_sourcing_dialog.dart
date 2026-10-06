@@ -11,20 +11,16 @@ import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
 import '../../services/location_service.dart';
+import '../../services/maintenance_local_explain.dart';
 import '../../services/weather_service.dart';
 
-enum _Phase { locating, needsManualLocation, querying, done }
+enum _Phase { locating, needsManualLocation, ready }
 
-/// #217 / #208: "find a compatible replacement part near me" — reached only
-/// via the distinct AI badge on a maintenance tile (`maintenance_items_
-/// screen.dart`'s `_showAiMenu`), never blended into the item's offline
-/// Complete/Hide/Delete actions. Reuses `LocationService` (already extracted
-/// from `weather_screen.dart` for GPS-lock, #213) and `WeatherService.
-/// reverseGeocode` (already truncates to a short city/region label, #213/
-/// WX-adjacent) — never sends the boat's exact GPS coordinates to the LLM,
-/// only that coarse label, and falls back to a manually-typed location (same
-/// pattern as the weather screen) when permission is denied, the location
-/// service is off, or reverse-geocoding itself fails.
+/// #217 / #208 / #402: compatible-part hints for one maintenance task.
+///
+/// The offline spec is shown immediately. A coarse city (GPS reverse-geocode
+/// or typed) only names where to ask — raw coordinates are never shown and
+/// never sent to the LLM. "Improve with AI" is optional.
 class PartSourcingDialog extends ConsumerStatefulWidget {
   final ChecklistItem item;
   final LocationService? locationService;
@@ -38,8 +34,7 @@ class PartSourcingDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PartSourcingDialog> createState() =>
-      _PartSourcingDialogState();
+  ConsumerState<PartSourcingDialog> createState() => _PartSourcingDialogState();
 }
 
 class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
@@ -49,11 +44,15 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
 
   _Phase _phase = _Phase.locating;
   String? _locationNotice;
-  LlmResult? _result;
+  String? _coarse;
+  LlmResult? _llm;
+  bool _llmLoading = false;
+  late String _local;
 
   @override
   void initState() {
     super.initState();
+    _local = _spec();
     _detectLocation();
   }
 
@@ -63,9 +62,23 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
     super.dispose();
   }
 
-  String get _partDescription => [widget.item.title, widget.item.description]
-      .where((s) => s != null && s.isNotEmpty)
-      .join('. ');
+  String get _partDescription => [
+    widget.item.title,
+    widget.item.description,
+  ].where((s) => s != null && s.isNotEmpty).join('. ');
+
+  String _spec() => MaintenanceLocalExplain.partSpec(
+    title: widget.item.title,
+    description: widget.item.description,
+    coarseLocation: _coarse,
+  );
+
+  String? get _locationForQuery {
+    final known = _coarse?.trim();
+    if (known != null && known.isNotEmpty) return known;
+    final typed = _manualLocationCtrl.text.trim();
+    return typed.isEmpty ? null : typed;
+  }
 
   Future<void> _detectLocation() async {
     final result = await _locationService.getCurrentPosition();
@@ -75,8 +88,8 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
       case LocationFailureReason.serviceDisabled:
         setState(() {
           _phase = _Phase.needsManualLocation;
-          _locationNotice = 'Turn on location services, or enter your '
-              'city/region below.';
+          _locationNotice =
+              'Turn on location services, or enter your city/region below.';
         });
         return;
       case LocationFailureReason.permissionDenied:
@@ -101,9 +114,9 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
           client: widget.geocodeHttpClient,
         );
         if (!mounted) return;
-        // Never fall back to raw coordinates here — if reverse-geocoding
-        // itself fails, the location is unresolved, not "coarse", so the
-        // manual-entry path is the only privacy-safe option left.
+        // Never fall back to raw coordinates — an unresolved reverse-geocode
+        // is not a coarse location, so the manual path is the only
+        // privacy-safe option left.
         if (coarse == null || coarse.isEmpty) {
           setState(() {
             _phase = _Phase.needsManualLocation;
@@ -112,20 +125,32 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
           });
           return;
         }
-        await _query(coarseLocation: coarse);
+        _applyLocation(coarse);
     }
   }
 
-  Future<void> _query({String? coarseLocation}) async {
-    setState(() => _phase = _Phase.querying);
+  void _applyLocation(String? coarse) {
+    setState(() {
+      _coarse = coarse;
+      _phase = _Phase.ready;
+      _local = _spec();
+    });
+  }
+
+  Future<void> _improve() async {
+    setState(() {
+      _llmLoading = true;
+      _llm = null;
+    });
     final boat = await ref.read(activeBoatProvider.future);
     final payload = LlmPayloadBuilder.partSourcingQuery(
       partDescription: _partDescription,
-      coarseLocation: coarseLocation,
+      coarseLocation: _locationForQuery,
     );
     final result = await LlmClientService().complete(
       boat: boat,
-      systemPrompt: 'You are a boat maintenance parts-sourcing assistant. '
+      systemPrompt:
+          'You are a boat maintenance parts-sourcing assistant. '
           'Given a part/maintenance task description and (if provided) a '
           'coarse location, suggest known cross-compatible part numbers, '
           'thread/o-ring/seal specs, and the kind of local supplier likely '
@@ -134,8 +159,8 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
     );
     if (mounted) {
       setState(() {
-        _phase = _Phase.done;
-        _result = result;
+        _llmLoading = false;
+        _llm = result;
       });
     }
   }
@@ -143,13 +168,15 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Row(
+      title: const Row(
         children: [
-          const Icon(Icons.auto_awesome, color: Colors.deepPurple, size: 20),
-          const SizedBox(width: 8),
+          Icon(Icons.auto_awesome, color: Colors.deepPurple, size: 20),
+          SizedBox(width: 8),
           Expanded(
-            child: Text('AI: Find a compatible part',
-                overflow: TextOverflow.ellipsis),
+            child: Text(
+              'AI: Find a compatible part',
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -162,13 +189,19 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
             children: [
               const _DisclaimerBanner(),
               const SizedBox(height: 12),
-              _buildBody(context),
+              _buildLocation(context),
+              const SizedBox(height: 12),
+              Text(_local),
+              if (_llm != null) ...[
+                const SizedBox(height: 12),
+                _LlmView(result: _llm!),
+              ],
             ],
           ),
         ),
       ),
       actions: [
-        if (_result?.status == LlmResultStatus.noKeyConfigured)
+        if (_llm?.status == LlmResultStatus.noKeyConfigured)
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -177,6 +210,12 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
             child: const Text('Go to Settings'),
           ),
         TextButton(
+          onPressed: (_phase == _Phase.locating || _llmLoading)
+              ? null
+              : _improve,
+          child: const Text('Improve with AI (online)'),
+        ),
+        TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
         ),
@@ -184,21 +223,19 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildLocation(BuildContext context) {
     switch (_phase) {
       case _Phase.locating:
-      case _Phase.querying:
-        return const SizedBox(
-          height: 80,
-          child: Center(child: CircularProgressIndicator()),
-        );
+        return const LinearProgressIndicator();
       case _Phase.needsManualLocation:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_locationNotice != null) ...[
-              Text(_locationNotice!,
-                  style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                _locationNotice!,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const SizedBox(height: 8),
             ],
             TextField(
@@ -208,14 +245,14 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
-              onSubmitted: (v) => _submitManualLocation(),
+              onSubmitted: (_) => _submitManualLocation(),
             ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => _query(),
+                  onPressed: () => _applyLocation(null),
                   child: const Text('Skip'),
                 ),
                 ElevatedButton(
@@ -226,14 +263,14 @@ class _PartSourcingDialogState extends ConsumerState<PartSourcingDialog> {
             ),
           ],
         );
-      case _Phase.done:
-        return _ResultView(result: _result!);
+      case _Phase.ready:
+        return const SizedBox.shrink();
     }
   }
 
   void _submitManualLocation() {
     final typed = _manualLocationCtrl.text.trim();
-    _query(coarseLocation: typed.isEmpty ? null : typed);
+    _applyLocation(typed.isEmpty ? null : typed);
   }
 }
 
@@ -254,8 +291,11 @@ class _DisclaimerBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.warning_amber_rounded,
-              size: 18, color: theme.colorScheme.onErrorContainer),
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 18,
+            color: theme.colorScheme.onErrorContainer,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -275,9 +315,9 @@ class _DisclaimerBanner extends StatelessWidget {
   }
 }
 
-class _ResultView extends StatelessWidget {
+class _LlmView extends StatelessWidget {
   final LlmResult result;
-  const _ResultView({required this.result});
+  const _LlmView({required this.result});
 
   @override
   Widget build(BuildContext context) {
@@ -287,12 +327,13 @@ class _ResultView extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.info_outline,
-            size: 18, color: Theme.of(context).colorScheme.error),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(result.errorMessage ?? 'Something went wrong.'),
+        Icon(
+          Icons.info_outline,
+          size: 18,
+          color: Theme.of(context).colorScheme.error,
         ),
+        const SizedBox(width: 8),
+        Expanded(child: Text(result.errorMessage ?? 'Something went wrong.')),
       ],
     );
   }

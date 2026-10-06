@@ -49,18 +49,24 @@ void main() {
   testWidgets('home/maintenance/schedule/ai_tools/explain', (tester) async {
     await reach(tester, 'home/maintenance/schedule/ai_tools/explain');
     await runStep(tester, 'wait:AI: Raw Water Pump Service');
-    expect(find.text('Go to Settings'), findsOneWidget);
+    expect(find.textContaining('Offline maintenance note'), findsOneWidget);
+    expect(find.textContaining('impeller'), findsWidgets);
+    expect(find.text('Go to Settings'), findsNothing);
+    expect(find.text('Improve with AI (online)'), findsOneWidget);
   });
 
   testWidgets('home/maintenance/schedule/ai_tools/warranty', (tester) async {
     await reach(tester, 'home/maintenance/schedule/ai_tools/warranty');
     expect(find.text('AI: Warranty check'), findsOneWidget);
-    expect(find.text('Ask'), findsOneWidget);
+    expect(find.text('Check offline'), findsOneWidget);
   });
 
-  testWidgets('home/maintenance/schedule/ai_tools/part_sourcing', (tester) async {
+  testWidgets('home/maintenance/schedule/ai_tools/part_sourcing', (
+    tester,
+  ) async {
     await reach(tester, 'home/maintenance/schedule/ai_tools/part_sourcing');
     expect(find.text('AI: Find a compatible part'), findsOneWidget);
+    expect(find.textContaining('Offline part guide'), findsOneWidget);
   });
 
   testWidgets('home/maintenance/hours', (tester) async {

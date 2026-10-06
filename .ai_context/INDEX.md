@@ -5,9 +5,9 @@
 
 ## NEXT
 
-- **Last:** Feature Map complete (#353 tree #354–#392 + audit #382): 306 feature files, all reach lines replayed in the suite; public wiki published.
-- **Last:** #415 Apache-2.0 LICENSE/NOTICE + repo metadata (copyright holder string needs Frik's OK).
-- **Next:** #395 device verify of fm_device_reach; #416 in-app licence page; bug backlog found by the map (#393, #396–#414).
+- **Last:** #402 maintenance AI tools work offline (explain, warranty, parts, insurance). Improve with AI is optional.
+- **Last:** #415 Apache-2.0 LICENSE/NOTICE; #401/#410/#416 sign-in, legal links, and licence page are with claudevc in this tree.
+- **Next:** #395 device verify of fm_device_reach; map bugs still open (#393, #396–#409). Copyright holder string still needs Frik's OK.
 - **Blockers:** android-34 emulator image broken.
 
 

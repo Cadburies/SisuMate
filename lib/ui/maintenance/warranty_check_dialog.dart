@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/shopping_provider.dart' show activeBoatProvider;
 import '../../services/llm_client_service.dart';
 import '../../services/llm_payload_builder.dart';
+import '../../services/pasted_excerpt_local_check.dart';
 import '../components/pasted_excerpt_check_dialog.dart';
 
 /// #222: "is this covered?" — the user pastes the relevant excerpt of their
@@ -29,11 +30,17 @@ class WarrantyCheckDialog extends ConsumerWidget {
       descriptionLabel: 'What broke?',
       descriptionHelper: 'Describe the failure — what happened, when.',
       excerptLabel: 'Manual / warranty excerpt',
-      excerptHelper: 'Paste the relevant clause, manual section, or wiring '
+      excerptHelper:
+          'Paste the relevant clause, manual section, or wiring '
           'diagram labels — not the whole document.',
-      disclaimer: 'This is an AI reading of the text you pasted, not a '
+      disclaimer:
+          'This is a reading of the text you pasted, not a '
           'legal or warranty determination — confirm with the '
           'manufacturer/dealer before relying on it.',
+      onLocal: (breakage, excerpt) => PastedExcerptLocalCheck.warranty(
+        situation: breakage,
+        excerpt: excerpt,
+      ),
       onAsk: (breakage, excerpt) async {
         final boat = await ref.read(activeBoatProvider.future);
         final payload = LlmPayloadBuilder.warrantyQuery(
@@ -42,7 +49,8 @@ class WarrantyCheckDialog extends ConsumerWidget {
         );
         return LlmClientService().complete(
           boat: boat,
-          systemPrompt: 'You are a boat maintenance assistant. Given a '
+          systemPrompt:
+              'You are a boat maintenance assistant. Given a '
               'description of a breakage and a pasted excerpt from the '
               'boat\'s own manual, warranty terms, or wiring diagram labels, '
               'assess whether the breakage looks covered and explain your '
