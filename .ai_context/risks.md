@@ -7,7 +7,7 @@
 ### AppDatabase + DatabaseService
 **High** · `app_database.dart`, `database_service.dart`  
 Depends on: Drift, path_provider, seeder. Depended on by: all repos, SyncService, di, startup.  
-No install base yet — see `CLAUDE.md` § Mandatory rules: schema changes don't need backward-compatible migrations.
+No install base yet — see `AGENTS.md` § Mandatory rules: schema changes don't need backward-compatible migrations.
 
 - Every table must be in `@DriftDatabase(tables: [...])` or generated accessors never exist → `build_runner`.
 - Row classes: `@DataClassName('XRow')` to avoid domain name clashes. Outbox column: `targetTable`.

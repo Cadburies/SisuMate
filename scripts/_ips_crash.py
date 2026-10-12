@@ -311,7 +311,7 @@ def issue_body(header: dict, body: dict, *, extra: dict | None = None) -> str:
 Hard crash — relaunch will not restore state. If this is `com.sisu.boatchecks` (legacy Boat Checks) rather than `com.sailingsisu.sisumate`, confirm the plugin/frame still exists in the current iOS host before spending a cycle.
 
 ## Touches
-`{touches}` — guessed from the crashing symbols. **Verify and refine before claiming** (per CLAUDE.md: every issue needs an accurate Touches field).
+`{touches}` — guessed from the crashing symbols. **Verify and refine before claiming** (per AGENTS.md: every issue needs an accurate Touches field).
 
 ## Acceptance
 - [ ] Root cause identified and fixed, or confirmed obsolete (legacy bundle / gone plugin) and closed with a note

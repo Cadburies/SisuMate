@@ -136,7 +136,7 @@ flutter test test/offline_persistence_test.dart \              # TEST13
              test/checklist_items_screen_integration_test.dart # TEST17
 ```
 
-AI agents use the same gate in `CLAUDE.md` §5. Open backlog: GitHub Issues (`test-gap` label = testing gaps). Parallel agents: `CLAUDE.md` §Parallel agents.
+AI agents use the same gate in `AGENTS.md` §5. Open backlog: GitHub Issues (`test-gap` label = testing gaps). Parallel agents: `AGENTS.md` §Parallel agents.
 
 ## Architecture
 
@@ -182,7 +182,7 @@ Store listing copy/assets (short/full description, icon, feature graphic, screen
 ## Working on this project
 
 This repo is set up for AI-assisted development with a token-efficient context system —
-see `CLAUDE.md` for the project's session rules and `.ai_context/` for the maintained
+see `AGENTS.md` for the project's session rules and `.ai_context/` for the maintained
 context files (`INDEX.md` is the entry point).
 
 ## License

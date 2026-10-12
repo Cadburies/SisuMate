@@ -284,7 +284,7 @@ LintResult lint(Directory root, {Directory? repo}) {
   return result;
 }
 
-/// Single-owner hotspots from CLAUDE.md §Parallel agents: never touched by
+/// Single-owner hotspots from AGENTS.md §Parallel agents: never touched by
 /// two claimed issues at once.
 const hotspots = {
   'lib/core/di.dart', 'lib/data/drift/app_database.dart', 'lib/core/app_router.dart',

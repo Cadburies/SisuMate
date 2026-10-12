@@ -69,7 +69,7 @@ dart run tool/feature_map.dart overlap <id> <id>      # exit 2 + files if not pa
 ```
 
 Touches = the feature file + `source` files + `script` file; `uses` sources are listed as
-dependencies. CLAUDE.md single-owner hotspots are flagged and always conflict.
+dependencies. AGENTS.md single-owner hotspots are flagged and always conflict.
 
 ## Public wiki (generated — this folder is the only source)
 

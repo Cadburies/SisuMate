@@ -177,7 +177,7 @@ since Riverpod's own scheduler frames don't name which provider triggered them.
 Best-effort from the captured context — the route above is where the last occurrence fired; the stack trace is the exact call path. If the route hint is empty or unhelpful, the message/stack above is the primary lead (this is common for framework-level errors like a `RenderFlex` overflow, which layout internals report without an app-code stack frame).
 
 ## Touches
-`{touches}`{touches_suffix} — auto-predicted from the captured source file. **Verify and refine before claiming** (per CLAUDE.md: every issue needs an accurate Touches field for other agents to check parallel-safety against).
+`{touches}`{touches_suffix} — auto-predicted from the captured source file. **Verify and refine before claiming** (per AGENTS.md: every issue needs an accurate Touches field for other agents to check parallel-safety against).
 
 ## Acceptance
 - [ ] Root cause identified and fixed (or confirmed benign/expected and closed with a note — see #122's verdict table: expected control flow shouldn't have reached the error log in the first place, so if this fires again after the fix, check whether it should have been filtered at the `ErrorLogService` call site instead)

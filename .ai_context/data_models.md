@@ -68,7 +68,7 @@ Open the `.dart` file for fields. Only cross-cutting traps:
 | `AnchorSpot` | #328 named catalog, **local-only** (never synced). Independent of live `AnchorWatch`. Community publish copies a snapshot (`kind: anchorage`); weigh/drop never deletes spots. |
 | Drift rows | `@DataClassName('XRow')` avoids clashing with domain class names |
 
-**schemaVersion / migrations:** only `AppDatabase.schemaVersion` + migration steps in `app_database.dart`. Do not copy the number into other context files. No install base yet — wipe/reseed is OK for **local** Drift. **Remote is not optional:** every Supabase-affecting change needs a file under `supabase/migrations/`, apply via **Supabase MCP** (`list_migrations` → `apply_migration`), then `./scripts/verify_supabase_schema.sh --require` (see `CLAUDE.md` § Mandatory rules — Schema change ⇒ migrate + verify).
+**schemaVersion / migrations:** only `AppDatabase.schemaVersion` + migration steps in `app_database.dart`. Do not copy the number into other context files. No install base yet — wipe/reseed is OK for **local** Drift. **Remote is not optional:** every Supabase-affecting change needs a file under `supabase/migrations/`, apply via **Supabase MCP** (`list_migrations` → `apply_migration`), then `./scripts/verify_supabase_schema.sh --require` (see `AGENTS.md` § Mandatory rules — Schema change ⇒ migrate + verify).
 
 ## Repositories
 

@@ -1,13 +1,11 @@
 # Sisu Mate — AI Context Index
 
 > Only file read in full every session. Keep lean. Non-derivable orientation + router only.
-> Portable design rules + bootstrap prompt for other projects: `AI_CONTEXT_PLAYBOOK.md` (repo root).
 
 ## NEXT
 
-- **Last:** #402 maintenance AI tools work offline (explain, warranty, parts, insurance). Improve with AI is optional.
-- **Last:** #401/#410/#416 one sign-in flow (AccountSection everywhere, magic link removed), Settings → Legal links, in-app licence page (BundledLicenses); #417 game AI timers guard `ref.mounted`.
-- **Next:** #395 device verify of fm_device_reach; map bugs still open (#393, #396–#409). Copyright holder string still needs Frik's OK.
+- **Last:** factory hardening. `AGENTS.md` is now the only contract (`CLAUDE.md` points to it) (#418). Agnostic skills live in `skills/` (#425). The `scripts/_factory.py` guard denies unsafe git, generated-file edits and governance edits (#419).
+- **Next:** factory series #420 suite receipt + test floor → #421 claim scripts → #422 cold review → #423 out-of-scope list (Frik writes it). #424 flaky game timers. #395, map bugs #393/#396–#409.
 - **Blockers:** android-34 emulator image broken.
 
 
@@ -18,9 +16,9 @@
 | Task | Load |
 | --- | --- |
 | Play / App Store upload | `.ai_context/store_release.md` (commands, secrets, tester tracks). Scripts: `play_release.sh`, `appstore_release.sh` |
-| Backlog / pick next work | GitHub Issues: `gh issue list --state open` (skip `agent:*`-claimed, placeholder-Touches, unresolved `Depends on #N`; "do all TEST issues" adds `--label test-gap`; protocol in `Claude.md` §Issue kickoff) |
-| Parallel agents | `Claude.md` §Parallel agents (issue labels + worktrees) |
-| Full test suite (post every task) | **`./scripts/run_full_suite.sh`** (SEC3 → analyze → `flutter test` → live RLS → integration). Flags: `--skip-live`, `--skip-integration`, `--device <id>`. Detail: `Claude.md` §5 + `README.md` Testing + `test-gap` issues on GitHub |
+| Backlog / pick next work | GitHub Issues: `gh issue list --state open` (skip `agent:*`-claimed, placeholder-Touches, unresolved `Depends on #N`; "do all TEST issues" adds `--label test-gap`; protocol in `AGENTS.md` §Issue kickoff) |
+| Parallel agents | `AGENTS.md` §Parallel agents (issue labels, shared tree on main) |
+| Full test suite (post every task) | **`./scripts/run_full_suite.sh`** (SEC3 → analyze → `flutter test` → live RLS → integration). Flags: `--skip-live`, `--skip-integration`, `--device <id>`. Detail: `AGENTS.md` §5 + `README.md` Testing + `test-gap` issues on GitHub |
 | GUI / colour / layout | `theme.md` → `lib/core/colors.dart` |
 | New screen / home tile | `screens.md` gotchas + `home_screen.dart` + `theme.md` §5 |
 | One game | that game only: `lib/ui/games/games/<game>/gameflow.md` + `logic.dart` — never all 9 |
@@ -64,7 +62,7 @@ lib/ui/       home, modules…, games/, community/, account/, components/
 ## Rules (short)
 
 - Theme: `theme.md` before any UI colour/layout work.
-- Self-heal **Tier A/B only** (see `Claude.md`); never grow source mirrors.
+- Self-heal **Tier A/B only** (see `AGENTS.md`); never grow source mirrors.
 - End task: touch affected context + NEXT; close/comment the GitHub issue. History = git log + issue threads.
 - UI never talks to Drift/Supabase; Pro via `isProProvider`.
 - Drift between context and code is the failure mode — fix claims, delete mirrors.

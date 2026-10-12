@@ -2,7 +2,7 @@
 name: Agent task
 about: Bug, feature, or test gap that an agent can pick up
 title: ""
-labels: ["ready"]
+labels: []
 ---
 
 ## Task
