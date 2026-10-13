@@ -18,8 +18,16 @@ import _factory as f  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+_CLEAN = None
+
+
 def bash(cmd: str):
-    return f.pretool_decision({"tool_name": "Bash", "tool_input": {"command": cmd}, "cwd": ROOT})
+    """Guard decision with a clean throwaway repo as cwd (nothing staged), so
+    these tests don't depend on the real tree's index or receipt."""
+    global _CLEAN
+    _CLEAN = _CLEAN or FakeRepo()
+    return f.pretool_decision({"tool_name": "Bash", "tool_input": {"command": cmd},
+                               "cwd": _CLEAN.root})
 
 
 def edit(rel: str, tool: str = "Edit"):
@@ -138,6 +146,198 @@ class HookPlumbing(unittest.TestCase):
     def test_other_tools_allowed(self):
         self.assertIsNone(f.pretool_decision({"tool_name": "Read",
                                               "tool_input": {"file_path": "CLAUDE.md"}}))
+
+
+class FakeRepo:
+    """Throwaway git repo shaped like SisuMate (has scripts/_factory.py)."""
+
+    def __init__(self):
+        import tempfile
+        self.root = tempfile.mkdtemp()
+        self.git("init", "-q", "-b", "main")
+        self.git("config", "user.email", "t@t")
+        self.git("config", "user.name", "t")
+        self.write("scripts/_factory.py", "# marker\n")
+        self.write("lib/a.dart", "a1\n")
+        self.write("test/a_test.dart", "t1\n")
+        self.write("README.md", "r\n")
+        self.write("test/.test_floor", "10\n")
+        self.git("add", "-A")
+        self.git("commit", "-qm", "init")
+
+    def git(self, *args):
+        import subprocess
+        return subprocess.run(["git", "-C", self.root, *args], check=True,
+                              capture_output=True, text=True).stdout
+
+    def write(self, rel, text):
+        p = os.path.join(self.root, rel)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "w") as fh:
+            fh.write(text)
+
+    def report(self, passed=12, skipped=1, failed=0):
+        evs = [{"type": "testDone", "result": "success", "hidden": True}]  # loading test
+        evs += [{"type": "testDone", "result": "success", "hidden": False}] * passed
+        evs += [{"type": "testDone", "result": "success", "skipped": True}] * skipped
+        evs += [{"type": "testDone", "result": "failure"}] * failed
+        self.write("build/r.json", "\n".join(json.dumps(e) for e in evs) + "\n")
+        return "build/r.json"
+
+    def suite(self, flags="", during=None, **kw):
+        f.write_snapshot(self.root)
+        if during:
+            during()  # an edit while the suite is running
+        return f.write_receipt(self.root, flags, self.report(**kw), None)
+
+    def commit_decision(self, msg="msg"):
+        return f.commit_check(self.root, msg)
+
+
+import json  # noqa: E402
+
+
+class ReceiptAndCommitGate(unittest.TestCase):
+    def setUp(self):
+        self.r = FakeRepo()
+
+    def test_report_counts_ignore_hidden_and_skipped(self):
+        r = self.r.suite(passed=12, skipped=2)
+        self.assertEqual((r["host_tests"], r["skipped"]), (12, 2))
+
+    def test_failed_report_writes_no_receipt(self):
+        with self.assertRaises(SystemExit):
+            self.r.suite(failed=1)
+        self.assertIsNone(f.load_receipt(self.r.root))
+
+    def test_floor_ratchets_up_only_on_full_run(self):
+        self.r.suite(passed=12)
+        self.assertEqual(open(os.path.join(self.r.root, f.FLOOR)).read().strip(), "12")
+        self.r.suite(passed=11)  # fewer: never lowered
+        self.assertEqual(open(os.path.join(self.r.root, f.FLOOR)).read().strip(), "12")
+        self.r.suite(flags="--skip-live", passed=20)  # skip flags: no raise
+        self.assertEqual(open(os.path.join(self.r.root, f.FLOOR)).read().strip(), "12")
+
+    def test_commit_without_receipt_denied(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.git("add", "lib/a.dart")
+        d = self.r.commit_decision()
+        self.assertEqual(d[0], "deny")
+        self.assertIn("No suite receipt", d[1])
+
+    def test_commit_matching_receipt_allowed(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.suite()
+        self.r.git("add", "lib/a.dart")
+        self.assertIsNone(self.r.commit_decision())
+
+    def test_edit_after_suite_denied(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.suite()
+        self.r.write("lib/a.dart", "a3\n")
+        self.r.git("add", "lib/a.dart")
+        d = self.r.commit_decision()
+        self.assertEqual(d[0], "deny")
+        self.assertIn("differs from what the suite verified", d[1])
+
+    def test_edit_during_suite_run_is_not_verified(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.suite(during=lambda: self.r.write("lib/a.dart", "a3\n"))
+        self.r.git("add", "lib/a.dart")
+        self.assertIn("differs from what the suite verified", self.r.commit_decision()[1])
+
+    def test_new_file_during_suite_run_is_not_verified(self):
+        self.r.suite(during=lambda: self.r.write("lib/new.dart", "n\n"))
+        self.r.git("add", "lib/new.dart")
+        self.assertEqual(self.r.commit_decision()[0], "deny")
+
+    def test_receipt_needs_start_snapshot(self):
+        # Fresh repo: no snapshot was ever taken.
+        with self.assertRaises(SystemExit):
+            f.write_receipt(self.r.root, "", self.r.report(), None)
+
+    def test_other_agents_dirty_file_ignored(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.suite()
+        self.r.write("lib/other_agent.dart", "x\n")  # appears after the suite, not staged
+        self.r.git("add", "lib/a.dart")
+        self.assertIsNone(self.r.commit_decision())
+
+    def test_skip_flags_need_reason(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.suite(flags="--skip-live")
+        self.r.git("add", "lib/a.dart")
+        self.assertIn("suite-skip", self.r.commit_decision()[1])
+        self.assertIsNone(self.r.commit_decision("x\n\nsuite-skip: offline on a plane"))
+
+    def test_test_count_below_head_floor_denied(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.suite(flags="--skip-live", passed=9)  # floor in HEAD is 10
+        self.r.git("add", "lib/a.dart")
+        d = self.r.commit_decision("suite-skip: x")
+        self.assertIn("below the floor", d[1])
+
+    def test_lowering_floor_denied(self):
+        self.r.write("test/.test_floor", "5\n")
+        self.r.git("add", "test/.test_floor")
+        self.r.write("lib/a.dart", "a1\n")
+        d = self.r.commit_decision()
+        self.assertEqual(d[0], "deny")
+
+    def test_docs_only_commit_needs_no_receipt(self):
+        self.r.write("README.md", "r2\n")
+        self.r.git("add", "README.md")
+        self.assertIsNone(self.r.commit_decision())
+
+    def test_governance_change_asks_even_with_receipt(self):
+        self.r.write("scripts/_factory.py", "# changed by shell\n")
+        self.r.suite()
+        self.r.git("add", "scripts/_factory.py")
+        d = self.r.commit_decision()
+        self.assertEqual(d[0], "ask")
+        self.assertIn("governance", d[1])
+
+    def test_check_crash_fails_closed(self):
+        d = f.guarded_commit_check("/nonexistent/repo", "m")
+        self.assertEqual(d[0], "deny")
+        self.assertIn("crashed", d[1])
+
+    def test_bash_commit_routes_through_gate(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.git("add", "lib/a.dart")
+        d = f.check_bash(f"git -C {self.r.root} commit -m x", "/tmp")
+        self.assertIn("No suite receipt", d[1])
+
+    def test_stage_and_commit_in_one_command_denied(self):
+        d = f.check_bash(f"git -C {self.r.root} add lib/a.dart && git -C {self.r.root} commit -m x", "/tmp")
+        self.assertIn("separate commands", d[1])
+
+    def test_commit_with_paths_denied(self):
+        for cmd in ("git commit -m x lib/a.dart", "git commit -m x -- lib/a.dart",
+                    "git commit -i -m x", "git commit --only -m x"):
+            d = f.check_bash(cmd, self.r.root)
+            self.assertIn("without paths", d[1], cmd)
+
+    def test_commit_message_parsing(self):
+        self.assertEqual(f.commit_message(["-m", "a", "-m", "b"], "/"), "a\nb")
+        self.assertEqual(f.commit_message(["--message=z"], "/"), "z")
+
+
+class StopHook(unittest.TestCase):
+    def test_edited_paths_from_transcript(self):
+        lines = [json.dumps({"message": {"content": [
+            {"type": "tool_use", "name": "Edit", "input": {"file_path": "/r/lib/a.dart"}},
+            {"type": "tool_use", "name": "Read", "input": {"file_path": "/r/lib/b.dart"}}]}}),
+            "not json"]
+        self.assertEqual(f.edited_paths(lines), {"/r/lib/a.dart"})
+
+    def test_stale_only_for_unverified_session_edits(self):
+        r = FakeRepo()
+        r.write("lib/a.dart", "a2\n")
+        p = {os.path.join(r.root, "lib/a.dart")}
+        self.assertEqual(f.stale_session_edits(r.root, p), ["lib/a.dart"])
+        r.suite()
+        self.assertEqual(f.stale_session_edits(r.root, p), [])
 
 
 if __name__ == "__main__":

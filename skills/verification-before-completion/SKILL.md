@@ -35,4 +35,4 @@ Adapted from obra/superpowers `verification-before-completion` (MIT).
 
 ## Reporting
 
-Issue close comments quote the result line, flags and test count: "Suite green, no skip flags, 2517 host tests + integration_test". Never write "tests pass" without that line.
+Issue close comments paste the receipt line from `python3 scripts/_factory.py receipt`, which the green suite wrote: HEAD, flags, host test count, floor. Never type "tests pass" yourself.

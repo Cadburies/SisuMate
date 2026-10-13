@@ -164,7 +164,7 @@ Also: human **README.md → Testing**; open backlog = GitHub Issues (`test-gap` 
 1. Update **Tier A/B** files actually affected (not every file).
 2. Cap `INDEX.md` → **NEXT** at ~6 lines (last / doing / blockers).
 3. Changed any file under `.ai_context/feature_map/`? Run `scripts/publish_wiki.sh` after the push in §8 (the public wiki is generated from it — never edit the wiki by hand).
-4. Close or comment the GitHub issue: suite result (+ skip flags used), files touched, blockers. History = git log + issue threads — there is no changelog file.
+4. Close or comment the GitHub issue: paste the suite receipt line (`python3 scripts/_factory.py receipt`, written by a green `run_full_suite.sh`), files touched, blockers. Agent commits of code are refused unless that receipt covers exactly what is staged; stage and commit in separate commands. History = git log + issue threads — there is no changelog file.
 5. Remove the claim: `gh issue edit <N> --remove-label agent:<you>` (closing the issue leaves the
    label attached otherwise, which reads as still-claimed to the next session's §1 check).
 

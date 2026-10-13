@@ -5,7 +5,8 @@
 ## NEXT
 
 - **Last:** factory hardening. `AGENTS.md` is now the only contract (`CLAUDE.md` points to it) (#418). Agnostic skills live in `skills/` (#425). The `scripts/_factory.py` guard denies unsafe git, generated-file edits and governance edits (#419).
-- **Next:** factory series #420 suite receipt + test floor → #421 claim scripts → #422 cold review → #423 out-of-scope list (Frik writes it). #424 flaky game timers. #395, map bugs #393/#396–#409.
+- **Last:** #420 agent commits now need a green-suite receipt that covers exactly what's staged. `test/.test_floor` only goes up. #426 home goldens tolerate host-OS anti-alias drift (macOS 27.0.1) up to 0.02%.
+- **Next:** #421 claim scripts → #422 strengthened cold reviewer (no Greptile/CodeRabbit) → #423 out-of-scope list (Frik writes it). #424 flaky game timers. #395, map bugs #393/#396–#409.
 - **Blockers:** android-34 emulator image broken.
 
 
