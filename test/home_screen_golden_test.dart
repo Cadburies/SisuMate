@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,11 +14,40 @@ import 'package:sisu_mate/ui/home/home_screen.dart';
 
 import 'test_helpers/platform_mocks.dart';
 
+/// Host OS updates shift a few anti-aliased edge pixels with identical code and
+/// SDK (#426: macOS 27.0.1 moved 33–35px = 0.007%). Tolerate that, but stay
+/// below one changed text glyph (~100px+ at 400×1200) so real changes still fail.
+const double _maxGoldenDiffRate = 0.0002; // 0.02% ≈ 96px
+
+class _OsDriftTolerantComparator extends LocalFileComparator {
+  _OsDriftTolerantComparator(super.testFile);
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+    if (result.passed || result.diffPercent <= _maxGoldenDiffRate) {
+      result.dispose();
+      return true;
+    }
+    final error = await generateFailureOutput(result, golden, basedir);
+    result.dispose();
+    throw FlutterError(error);
+  }
+}
+
 /// TEST24: small, stable golden set for the home screen only — catches
 /// theme/layout disasters (e.g. a colour token regression) without the
 /// sprawl of full-app screenshot coverage.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  goldenFileComparator = _OsDriftTolerantComparator(
+    (goldenFileComparator as LocalFileComparator)
+        .basedir
+        .resolve('home_screen_golden_test.dart'),
+  );
 
   late AppDatabase db;
 
