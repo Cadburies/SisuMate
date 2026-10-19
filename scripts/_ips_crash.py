@@ -20,6 +20,8 @@ import json
 import sys
 from pathlib import Path
 
+import _untrusted as u
+
 APP_BUNDLES = frozenset({
     "com.sailingsisu.sisumate",
     "com.sisu.boatchecks",  # predecessor; same device, same Runner host
@@ -266,46 +268,47 @@ def issue_title(header: dict, body: dict) -> str:
         ),
         syms[0] if syms else "unknown frame",
     )
-    # Keep titles short enough for GitHub.
-    blame = blame[:80]
-    bits = " / ".join(p for p in (typ, sig) if p) or "native crash"
-    proc = _proc(header, body) or "unknown"
-    return f"Native crash ({proc}): {bits} in {blame}"
+    # Every part is from the crash file, so device-controlled (#433).
+    blame = u.inline(blame, 80)
+    bits = " / ".join(u.inline(p, 40) for p in (typ, sig) if p) or "native crash"
+    proc = u.inline(_proc(header, body) or "unknown", 40)
+    return u.inline(f"Native crash ({proc}): {bits} in {blame}", cap=200)
 
 
 def issue_body(header: dict, body: dict, *, extra: dict | None = None) -> str:
+    # Everything below except touches comes from the .ips, which testers can
+    # drop into crash_store/ — render it as inert data (#433).
     extra = extra or {}
-    fp = extra.get("fingerprint") or fingerprint(header, body)
-    count = extra.get("count", 1)
-    first = extra.get("first_seen") or timestamp_of(header, body) or "?"
-    last = extra.get("last_seen") or timestamp_of(header, body) or "?"
+    fp = extra.get("fingerprint")
+    if not u.valid_ips_fingerprint(fp):
+        fp = fingerprint(header, body)
+    count = u.inline(extra.get("count", 1), 12)
+    first = u.inline(extra.get("first_seen") or timestamp_of(header, body) or "?", 40)
+    last = u.inline(extra.get("last_seen") or timestamp_of(header, body) or "?", 40)
     typ, sig = exception_bits(body)
     syms = top_symbols(body)
     touches = guess_touches(syms)
-    stack = "\n".join(f"{i}. {s}" for i, s in enumerate(syms, 1)) or "(no frames)"
-    bundle = _bundle(header, body) or "?"
-    version = app_version_of(header, body) or "?"
-    osver = os_version_of(header, body) or "?"
-    proc = _proc(header, body) or "?"
+    stack = "\n".join(f"{i}. {u.inline(s, 300)}" for i, s in enumerate(syms, 1)) or "(no frames)"
+    bundle = u.inline(_bundle(header, body) or "?", 80)
+    version = u.inline(app_version_of(header, body) or "?", 40)
+    osver = u.inline(os_version_of(header, body) or "?", 40)
+    proc = u.inline(_proc(header, body) or "?", 40)
     term = body.get("termination") if isinstance(body.get("termination"), dict) else {}
     indicator = term.get("indicator") or sig or typ or "?"
 
     return f"""## Found by
 `scripts/triage_ips_crashes.sh` — auto-filed from a native/hard-crash `.ips` pulled off a connected iOS device (or dropped into `crash_store/`). Dart's `ErrorLogTable` never sees these: the process died before Flutter handlers ran. Verify against the frames before fixing.
 
+{u.UNTRUSTED_NOTE}
+
 ## Level
-`native-crash` — seen {count}x, first {first}, last {last}. Process: `{proc}`. Bundle: `{bundle}`. App version: {version}. OS: {osver}.
+`native-crash` — seen `{count}`x, first `{first}`, last `{last}`. Process: `{proc}`. Bundle: `{bundle}`. App version: `{version}`. OS: `{osver}`.
 
 ## Message
-```
-{indicator}
-{typ} {sig}
-```
+{u.fence(f"{indicator}\n{typ} {sig}", cap=2000)}
 
 ## Top frames (faulting thread)
-```
-{stack}
-```
+{u.fence(stack)}
 
 ## Recreate
 Hard crash — relaunch will not restore state. If this is `com.sisu.boatchecks` (legacy Boat Checks) rather than `com.sailingsisu.sisumate`, confirm the plugin/frame still exists in the current iOS host before spending a cycle.

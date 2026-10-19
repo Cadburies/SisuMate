@@ -3,7 +3,7 @@
 #
 # Order:
 #   1) SEC3 secrets scan
-#   2) factory guard tests   (scripts/_factory_test.py)
+#   2) factory guard tests   (scripts/_factory_test.py) + triage issue-body tests
 #   3) flutter analyze
 #   4) flutter test          (unit/widget/TEST6/P0/offline/import/AI/units/a11y)
 #   5) TEST8 live Supabase   (scripts/test_supabase_rls.sh; skips without dart-defines)
@@ -62,6 +62,10 @@ bash scripts/scan_release_secrets.sh
 
 echo "==> factory guard tests"
 python3 scripts/_factory_test.py
+
+echo "==> triage issue-body tests (#433)"
+python3 scripts/_ips_crash_test.py
+python3 scripts/_untrusted_test.py
 
 echo "==> flutter analyze"
 flutter analyze
