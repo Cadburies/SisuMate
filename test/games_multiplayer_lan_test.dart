@@ -30,7 +30,7 @@ void main() {
     await hostService.hostGame(gameName: 'Test Game', hostPlayerName: 'Skipper');
     final dummyService =
         BonsoirService(name: 'Test Game', type: '_sisumate._tcp', port: 0);
-    await clientService.joinGame(service: dummyService, playerName: playerName);
+    await clientService.joinGame(service: dummyService, playerName: playerName, accessCode: '000000');
     await flush();
   }
 
@@ -99,9 +99,9 @@ void main() {
       await host.hostGame(gameName: '4-up', hostPlayerName: 'Skipper');
       final dummy =
           BonsoirService(name: '4-up', type: '_sisumate._tcp', port: 0);
-      await client1.joinGame(service: dummy, playerName: 'Mate1');
-      await client2.joinGame(service: dummy, playerName: 'Mate2');
-      await client3.joinGame(service: dummy, playerName: 'Mate3');
+      await client1.joinGame(service: dummy, playerName: 'Mate1', accessCode: '000000');
+      await client2.joinGame(service: dummy, playerName: 'Mate2', accessCode: '000000');
+      await client3.joinGame(service: dummy, playerName: 'Mate3', accessCode: '000000');
       await flush();
 
       expect(host.lobbyPlayers.map((p) => p.name).toSet(),
@@ -124,8 +124,8 @@ void main() {
       await host.hostGame(gameName: 'Bcast', hostPlayerName: 'H');
       final dummy =
           BonsoirService(name: 'Bcast', type: '_sisumate._tcp', port: 0);
-      await client1.joinGame(service: dummy, playerName: 'A');
-      await client2.joinGame(service: dummy, playerName: 'B');
+      await client1.joinGame(service: dummy, playerName: 'A', accessCode: '000000');
+      await client2.joinGame(service: dummy, playerName: 'B', accessCode: '000000');
       await flush();
 
       final f1 = client1.remoteStates.first;
@@ -151,8 +151,8 @@ void main() {
       await host.hostGame(gameName: 'Moves', hostPlayerName: 'H');
       final dummy =
           BonsoirService(name: 'Moves', type: '_sisumate._tcp', port: 0);
-      await client1.joinGame(service: dummy, playerName: 'A');
-      await client2.joinGame(service: dummy, playerName: 'B');
+      await client1.joinGame(service: dummy, playerName: 'A', accessCode: '000000');
+      await client2.joinGame(service: dummy, playerName: 'B', accessCode: '000000');
       await flush();
 
       final moves = <({String peerId, String action, Map<String, dynamic> data})>[];
@@ -178,7 +178,7 @@ void main() {
       await host.hostGame(gameName: 'AI+Human', hostPlayerName: 'Host');
       final dummy =
           BonsoirService(name: 'AI+Human', type: '_sisumate._tcp', port: 0);
-      await client1.joinGame(service: dummy, playerName: 'Human');
+      await client1.joinGame(service: dummy, playerName: 'Human', accessCode: '000000');
       await flush();
 
       host.addLocalPlayer(const LobbyPlayer(
@@ -221,7 +221,7 @@ void main() {
 
         final dummyService =
             BonsoirService(name: 'Test Game', type: '_sisumate._tcp', port: 0);
-        clientService.joinGame(service: dummyService, playerName: 'Mate');
+        clientService.joinGame(service: dummyService, playerName: 'Mate', accessCode: '000000');
         async.flushMicrotasks();
 
         hostService.startGame();

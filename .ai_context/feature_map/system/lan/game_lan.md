@@ -1,5 +1,5 @@
 title: LAN multiplayer games
-desc: Hosts and joins games over local Wi-Fi: mDNS (bonsoir) discovery, a WebSocket host running the game, clients sending moves, player joins/leaves, and rejoining the same seat after a drop.
+desc: Hosts and joins games over local Wi-Fi: mDNS (bonsoir) discovery, a WebSocket host running the game, clients sending moves, player joins/leaves, and rejoining the same seat after a drop. The host only admits devices that send its 6-digit access code, and a live seat moves only with its secret rejoin token (#435).
 layer: lan
 keywords: lan, multiplayer, wifi, bonsoir, mdns, websocket, host, join, rejoin
 kind: service

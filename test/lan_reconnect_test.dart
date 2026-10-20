@@ -14,6 +14,12 @@ import 'test_helpers/fake_lan_engine.dart';
 // Covers F6 client reconnect helpers and LT7 mid-game same-seat rejoin.
 // Full mDNS discovery is not required — host binds a real WebSocket server
 // and clients connect by hostPort.
+void sayHello(WebSocket ws, LanEngine host) => ws.add(LanMessage(
+      channel: kLanAccessChannel,
+      type: 'hello',
+      payload: {'code': host.accessCode},
+    ).encode());
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   group('LanEngine.reconnectToLastHost (F6)', () {
@@ -118,12 +124,16 @@ void main() {
 
       // Client A connects + joins.
       final clientA = await WebSocket.connect('ws://127.0.0.1:$port');
+      // #435: the host only admits peers that present its access code.
+      sayHello(clientA, hostEngine);
       final welcomeA = Completer<String>();
       final statesA = <Map<String, dynamic>>[];
+      String? tokenA;
       clientA.listen((data) {
         if (data is! String) return;
         final msg = LanMessage.decode(data);
         if (msg.type == 'welcome') {
+          tokenA = msg.payload['rejoinToken'] as String?;
           welcomeA.complete(msg.payload['yourId'] as String);
         }
         if (msg.type == 'state') {
@@ -163,8 +173,10 @@ void main() {
           reason: 'leave must be deferred during reconnect grace');
       expect(host.lobbyPlayers.map((p) => p.id), contains(peerId));
 
-      // Client B reconnects with same name + preferredId (simulates reconnect()).
+      // Client B reconnects with preferredId + rejoin token (simulates reconnect()).
       final clientB = await WebSocket.connect('ws://127.0.0.1:$port');
+      // #435: the host only admits peers that present its access code.
+      sayHello(clientB, hostEngine);
       final welcomeB = Completer<String>();
       final statesB = <Map<String, dynamic>>[];
       final rejoinEvents = <LobbyPlayer>[];
@@ -183,7 +195,7 @@ void main() {
       clientB.add(LanMessage(
         channel: 'game',
         type: 'join',
-        payload: {'name': 'Alex', 'preferredId': peerId},
+        payload: {'name': 'Alex', 'preferredId': peerId, 'rejoinToken': tokenA},
       ).encode());
 
       final rejoinId =
@@ -230,6 +242,8 @@ void main() {
       host.startGame();
 
       final stranger = await WebSocket.connect('ws://127.0.0.1:$port');
+      // #435: the host only admits peers that present its access code.
+      sayHello(stranger, hostEngine);
       final welcomes = <String>[];
       stranger.listen((data) {
         if (data is! String) return;
@@ -264,6 +278,8 @@ void main() {
       final port = hostEngine.hostPort!;
 
       final client = await WebSocket.connect('ws://127.0.0.1:$port');
+      // #435: the host only admits peers that present its access code.
+      sayHello(client, hostEngine);
       final welcome = Completer<String>();
       client.listen((data) {
         if (data is! String) return;
@@ -320,7 +336,7 @@ void main() {
 
       var started = 0;
       final sub = client.gameStarted.listen((_) => started++);
-      await client.joinGame(service: dummy, playerName: 'Alex');
+      await client.joinGame(service: dummy, playerName: 'Alex', accessCode: '000000');
       await flush();
       expect(started, 0,
           reason: 'lobby welcome must not route the client into the game');
@@ -346,7 +362,7 @@ void main() {
       await host.hostGame(gameName: 'LT7 Rejoin', hostPlayerName: 'Skipper');
       final dummy =
           BonsoirService(name: 'LT7 Rejoin', type: '_sisumate._tcp', port: 0);
-      await client.joinGame(service: dummy, playerName: 'Alex');
+      await client.joinGame(service: dummy, playerName: 'Alex', accessCode: '000000');
       await flush();
 
       host.startGame();
@@ -365,7 +381,7 @@ void main() {
 
       var started = 0;
       final startSub = client2.gameStarted.listen((_) => started++);
-      await client2.joinGame(service: dummy, playerName: 'Alex');
+      await client2.joinGame(service: dummy, playerName: 'Alex', accessCode: '000000');
       await flush();
 
       expect(started, 1,
@@ -398,7 +414,7 @@ void main() {
       await host.hostGame(gameName: 'Game A', hostPlayerName: 'Skipper');
       final dummyA =
           BonsoirService(name: 'Game A', type: '_sisumate._tcp', port: 0);
-      await client.joinGame(service: dummyA, playerName: 'Alex');
+      await client.joinGame(service: dummyA, playerName: 'Alex', accessCode: '000000');
       await flush();
       host.startGame();
       host.broadcastState({'marker': 'game-a-state'});
@@ -411,7 +427,7 @@ void main() {
       await host2.hostGame(gameName: 'Game B', hostPlayerName: 'Other');
       final dummyB =
           BonsoirService(name: 'Game B', type: '_sisumate._tcp', port: 0);
-      await client.joinGame(service: dummyB, playerName: 'Alex');
+      await client.joinGame(service: dummyB, playerName: 'Alex', accessCode: '000000');
       await flush();
 
       final events = <Map<String, dynamic>>[];

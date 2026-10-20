@@ -96,6 +96,17 @@ class ShareLanService {
   bool _isHost = false;
   SharePayload? _offered;
 
+  /// Host-side: asked once per requesting device before content is sent
+  /// (#435). Crew lists are personal data; a code on the Wi-Fi isn't consent.
+  Future<bool> Function(String peerId)? _approve;
+  final Set<String> _answered = {};
+
+  /// Host-side: the code receiving devices must type (show it on screen).
+  String? get accessCode => _engine.accessCode;
+
+  /// Client-side: the host rejected the typed access code.
+  Stream<void> get accessDenied => _engine.accessDenied;
+
   final _contentCtrl = StreamController<SharePayload>.broadcast();
   final _recipientCtrl = StreamController<String>.broadcast();
 
@@ -121,9 +132,12 @@ class ShareLanService {
   Future<void> hostShare({
     required String shareName,
     required SharePayload payload,
+    required Future<bool> Function(String peerId) approve,
   }) async {
     _isHost = true;
     _offered = payload;
+    _approve = approve;
+    _answered.clear();
     await _engine.startHost(shareName);
   }
 
@@ -133,9 +147,12 @@ class ShareLanService {
   Future<void> scanForShares() => _engine.startDiscovery();
 
   /// Connect to [service] and request the content it is offering.
-  Future<void> joinShare({required BonsoirService service}) async {
+  Future<void> joinShare({
+    required BonsoirService service,
+    required String accessCode,
+  }) async {
     _isHost = false;
-    await _engine.connectToService(service);
+    await _engine.connectToService(service, accessCode: accessCode);
     _engine.sendToHost(const LanMessage(
       channel: _kChannel,
       type: _T.request,
@@ -148,10 +165,24 @@ class ShareLanService {
   Future<void> endSession() async {
     _isHost = false;
     _offered = null;
+    _approve = null;
+    _answered.clear();
     await _engine.dispose();
   }
 
   // ── Internal ───────────────────────────────────────────────────────────────
+
+  Future<void> _sendIfApproved(String peerId, SharePayload payload,
+      Future<bool> Function(String peerId) approve) async {
+    if (!await approve(peerId)) return;
+    // The share may have ended or changed while the host was deciding.
+    if (!_isHost || !identical(_offered, payload)) return;
+    _engine.sendTo(
+      peerId,
+      LanMessage(channel: _kChannel, type: _T.content, payload: payload.toJson()),
+    );
+    _recipientCtrl.add(peerId);
+  }
 
   void _dispatch(({String peerId, LanMessage message}) record) {
     final peerId = record.peerId;
@@ -161,21 +192,22 @@ class ShareLanService {
     switch (msg.type) {
       case _T.request:
         final payload = _offered;
-        if (_isHost && payload != null) {
-          _engine.sendTo(
-            peerId,
-            LanMessage(
-              channel: _kChannel,
-              type: _T.content,
-              payload: payload.toJson(),
-            ),
-          );
-          _recipientCtrl.add(peerId);
+        final approve = _approve;
+        // One prompt per device; repeated requests can't spam the host.
+        if (_isHost && payload != null && approve != null &&
+            _answered.add(peerId)) {
+          unawaited(_sendIfApproved(peerId, payload, approve));
         }
 
       case _T.content:
         if (!_isHost) {
-          _contentCtrl.add(SharePayload.fromJson(msg.payload));
+          final SharePayload decoded;
+          try {
+            decoded = SharePayload.fromJson(msg.payload);
+          } catch (_) {
+            return; // Malformed payload from the host: drop it.
+          }
+          _contentCtrl.add(decoded);
         }
     }
   }

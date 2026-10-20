@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:bonsoir/bonsoir.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/app_router.dart';
 import '../../../core/colors.dart';
 import '../../../services/game_ai/game_ai_difficulty.dart';
@@ -61,6 +63,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
   StreamSubscription<String>? _leaveSub;
   StreamSubscription<List<BonsoirService>>? _discoverySub;
   StreamSubscription<void>? _startSub;
+  StreamSubscription<void>? _deniedSub;
 
   // Set right before navigating to the game screen (host starting, or a
   // client's gameStarted listener firing). Guards the dispose()-time cleanup
@@ -90,6 +93,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
     _leaveSub?.cancel();
     _discoverySub?.cancel();
     _startSub?.cancel();
+    _deniedSub?.cancel();
     // Leaving the lobby without starting (back button, Cancel, or the
     // screen being popped for any other reason) must tear down the host's
     // WebSocket server + mDNS broadcast (or the client's connection)
@@ -252,15 +256,64 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
     }
   }
 
+  // Remembered so a player whose app died mid-game can rejoin: the host is
+  // in the game by then and no longer shows the code.
+  static const _kLastJoinCodeKey = 'lan_last_join_code';
+
+  Future<String?> _lastJoinCode() async {
+    try {
+      return (await SharedPreferences.getInstance()).getString(_kLastJoinCodeKey);
+    } catch (_) {
+      return null; // Convenience only: an empty field is the fallback.
+    }
+  }
+
+  Future<void> _rememberJoinCode(String? code) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      code == null
+          ? await prefs.remove(_kLastJoinCodeKey)
+          : await prefs.setString(_kLastJoinCodeKey, code);
+    } catch (_) {
+      // Convenience only; the player can type the code again.
+    }
+  }
+
+  /// #435: the host shows a 6-digit code; only devices that type it get in.
+  Future<String?> _askAccessCode() async {
+    final initial = await _lastJoinCode() ?? '';
+    if (!mounted) return null;
+    return showDialog<String>(
+      context: context,
+      builder: (_) => _JoinCodeDialog(initial: initial),
+    );
+  }
+
   Future<void> _connect(BonsoirService service) async {
     final name = _nameCtrl.text.trim();
+    final code = await _askAccessCode();
+    if (code == null || !mounted) return;
     setState(() {
       _busy = true;
       _error = null;
     });
 
     try {
-      await _lan.joinGame(service: service, playerName: name);
+      _deniedSub?.cancel();
+      _deniedSub = _lan.accessDenied.listen((_) {
+        // Expected control flow (mistyped code), not an error to log.
+        _startSub?.cancel();
+        unawaited(_lan.endSession());
+        unawaited(_rememberJoinCode(null));
+        if (!mounted) return;
+        setState(() {
+          _busy = false;
+          _view = _LobbyView.pickRole;
+          _error = 'Wrong join code. Check the code on the host\'s screen.';
+        });
+      });
+      await _lan.joinGame(service: service, playerName: name, accessCode: code);
+      unawaited(_rememberJoinCode(code));
       // myAssignedId arrives asynchronously via the welcome message.
       // Set localPlayerIdProvider just before entering the game screen so
       // the correct peer id is always available (welcome arrives well before
@@ -334,6 +387,7 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
           onJoin: _scan,
         ),
       _LobbyView.hosting => _HostingView(
+          accessCode: _lan.accessCode,
           players: _lobbyPlayers,
           onStart: _lobbyPlayers.length >= 2 ? _startGame : null,
           onAddAi: _addAiPlayer,
@@ -357,6 +411,59 @@ class _GameLobbyScreenState extends ConsumerState<GameLobbyScreen> {
 }
 
 enum _LobbyView { pickRole, hosting, joining, waitingForHost }
+
+/// Owns its controller so it outlives the dialog's closing animation.
+class _JoinCodeDialog extends StatefulWidget {
+  final String initial;
+  const _JoinCodeDialog({required this.initial});
+
+  @override
+  State<_JoinCodeDialog> createState() => _JoinCodeDialogState();
+}
+
+class _JoinCodeDialogState extends State<_JoinCodeDialog> {
+  // Pre-selected so typing a new host's code replaces the remembered one.
+  late final _ctrl = TextEditingController(text: widget.initial)
+    ..selection =
+        TextSelection(baseOffset: 0, extentOffset: widget.initial.length);
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final v = _ctrl.text.trim();
+    if (v.length == 6) Navigator.pop(context, v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Join code'),
+      content: TextField(
+        controller: _ctrl,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        maxLength: 6,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: const InputDecoration(
+          hintText: '6-digit code on the host\'s screen',
+          border: OutlineInputBorder(),
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Join')),
+      ],
+    );
+  }
+}
 
 // ── Sub-views ─────────────────────────────────────────────────────────────────
 
@@ -420,6 +527,7 @@ class _PickRoleView extends StatelessWidget {
 }
 
 class _HostingView extends StatelessWidget {
+  final String? accessCode;
   final List<LobbyPlayer> players;
   final VoidCallback? onStart;
   final VoidCallback onAddAi;
@@ -432,6 +540,7 @@ class _HostingView extends StatelessWidget {
   final VoidCallback onCycleAiPreset;
 
   const _HostingView({
+    required this.accessCode,
     required this.players,
     required this.onStart,
     required this.onAddAi,
@@ -456,11 +565,27 @@ class _HostingView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Other players open the app, tap Multiplayer, then Join a Game. '
-          'You can also add AI players below.',
+          'Other players open the app, tap Multiplayer, then Join a Game '
+          'and enter this code. You can also add AI players below.',
           style: Theme.of(context).textTheme.bodySmall,
           textAlign: TextAlign.center,
         ),
+        if (accessCode != null) ...[
+          const SizedBox(height: 12),
+          Semantics(
+            label: 'Join code ${accessCode!.split('').join(' ')}',
+            excludeSemantics: true,
+            child: Text(
+              '${accessCode!.substring(0, 3)} ${accessCode!.substring(3)}',
+              key: const Key('lobby-access-code'),
+              style: Theme.of(context)
+                  .textTheme
+                  .displaySmall
+                  ?.copyWith(letterSpacing: 4),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         Expanded(
           child: players.isEmpty

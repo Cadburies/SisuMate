@@ -263,6 +263,10 @@ ios_wait_label "$IOS_CLIENT" "Games" 8 || { log "  rejoin: no home screen"; ok=0
 JOIN_TAPPED_AT=$SECONDS
 log "  join tapped at +$((JOIN_TAPPED_AT - KILL_AT))s (grace 15s)"
 [ $ok = 1 ] && { tap_scan_entry "$IOS_CLIENT" || { sleep 1; tap_scan_entry "$IOS_CLIENT"; } || { sleep 1; tap_scan_entry "$IOS_CLIENT"; } || ok=0; }
+# #435: the join dialog is pre-filled with the code this device last used
+# (the host is mid-game and no longer shows it), so only Join is tapped.
+[ $ok = 1 ] && ios_wait_label "$IOS_CLIENT" "Join code" 3 || ok=0
+[ $ok = 1 ] && { ios_tap "$IOS_CLIENT" "Join" || ok=0; }
 
 REJOINED=0
 if [ $ok = 1 ]; then

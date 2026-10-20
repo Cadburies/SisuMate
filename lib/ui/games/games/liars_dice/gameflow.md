@@ -133,7 +133,7 @@ Supported action keys (sent as strings over the wire):
 ### Client path
 
 1. `GameLobbyScreen._scan()` — calls `GameLanService.scanForGames()` (bonsoir discovery)
-2. Player taps a discovered game → `_connect(service)` → `lan.joinGame(service, name)`
+2. Player taps a discovered game → types the host's 6-digit join code (#435) → `_connect(service)` → `lan.joinGame(service, name, accessCode)`
 3. Host receives `join` message and replies with a `welcome` message: `{ yourId: 'peer_N' }`
 4. Client stores `_myAssignedId = 'peer_N'` in `GameLanService`
 5. When host taps Start, client receives `start` message → `gameStarted` stream fires

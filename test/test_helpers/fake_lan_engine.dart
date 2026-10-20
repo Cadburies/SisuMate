@@ -112,7 +112,8 @@ class FakeLanEngine extends LanEngine {
   Future<void> startHost(String serviceName) async {}
 
   @override
-  Future<void> connectToService(BonsoirService service) async {}
+  Future<void> connectToService(BonsoirService service,
+      {required String accessCode}) async {}
 
   @override
   Future<bool> reconnectToLastHost() async => _host != null;

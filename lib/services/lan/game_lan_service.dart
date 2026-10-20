@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bonsoir/bonsoir.dart';
 
@@ -126,6 +127,16 @@ class GameLanService {
   final Map<String, LobbyPlayer> _pendingReconnectByPeerId = {};
   final Map<String, Timer> _graceTimers = {};
 
+  /// Host-side: peerId → secret handed to that seat in its welcome (#435).
+  /// A rejoin must present it; names and peer ids are visible to everyone in
+  /// the lobby, so they can't prove a device owns a seat.
+  final Map<String, String> _rejoinTokens = {};
+  static final _secureRandom = Random.secure();
+
+  /// Client-side: this device's rejoin secret from the host's welcome.
+  String? _myRejoinToken;
+  String? get myRejoinToken => _myRejoinToken;
+
   final _remoteStateCtrl =
       StreamController<Map<String, dynamic>>.broadcast();
   final _moveCtrl = StreamController<
@@ -143,6 +154,12 @@ class GameLanService {
     if (last != null) yield last;
     yield* _remoteStateCtrl.stream;
   }
+
+  /// Host-side: the code joining players must type (shown in the lobby).
+  String? get accessCode => _engine.accessCode;
+
+  /// Client-side: the host rejected the typed access code.
+  Stream<void> get accessDenied => _engine.accessDenied;
 
   /// Move commands sent by remote players; host listens and applies them.
   Stream<({String peerId, String action, Map<String, dynamic> data})>
@@ -202,6 +219,7 @@ class GameLanService {
     _gameInProgress = false;
     _lastBroadcastState = null;
     _clearGraceState();
+    _rejoinTokens.clear();
     _lobbyPlayers
       ..clear()
       ..add(LobbyPlayer(id: 'host', name: hostPlayerName));
@@ -257,13 +275,15 @@ class GameLanService {
   Future<void> joinGame({
     required BonsoirService service,
     required String playerName,
+    required String accessCode,
   }) async {
     _isHost = false;
     _myPlayerName = playerName;
+    _myRejoinToken = null;
     // Fresh join: drop any snapshot cached from a previous game in this
     // process so it can't replay into the new session.
     _lastReceivedState = null;
-    await _engine.connectToService(service);
+    await _engine.connectToService(service, accessCode: accessCode);
     _engine.sendToHost(LanMessage(
       channel: _kChannel,
       type: _T.join,
@@ -296,8 +316,9 @@ class GameLanService {
       type: _T.join,
       payload: {
         'name': name,
-        // Hint for hosts that support preferred-id rejoin (same as last welcome).
+        // Seat id + secret from the last welcome: proves this device owns it.
         if (_myAssignedId != null) 'preferredId': _myAssignedId,
+        if (_myRejoinToken != null) 'rejoinToken': _myRejoinToken,
       },
     ));
     return true;
@@ -321,6 +342,8 @@ class GameLanService {
     _isHost = false;
     _myAssignedId = null;
     _myPlayerName = null;
+    _myRejoinToken = null;
+    _rejoinTokens.clear();
     _gameInProgress = false;
     _lastBroadcastState = null;
     _lastReceivedState = null;
@@ -329,6 +352,10 @@ class GameLanService {
   }
 
   // ── Internal ───────────────────────────────────────────────────────────────
+
+  static String _newToken() => List.generate(
+          16, (_) => _secureRandom.nextInt(256).toRadixString(16).padLeft(2, '0'))
+      .join();
 
   void _clearGraceState() {
     for (final t in _graceTimers.values) {
@@ -384,6 +411,7 @@ class GameLanService {
   void _finalizeDisconnectedSeat(String peerId) {
     _graceTimers.remove(peerId)?.cancel();
     final pending = _pendingReconnectByPeerId.remove(peerId);
+    _rejoinTokens.remove(peerId);
     if (pending == null) return;
     _lobbyPlayers.removeWhere((p) => p.id == peerId);
     _leaveCtrl.add(peerId);
@@ -392,31 +420,32 @@ class GameLanService {
 
   /// Host-only join handling with LT7 same-seat rebind.
   void _handleHostJoin(String ephemeralPeerId, Map<String, dynamic> payload) {
-    final name = payload['name'] as String? ?? 'Player';
-    final preferredId = payload['preferredId'] as String?;
+    final rawName = payload['name'];
+    final name = rawName is String && rawName.trim().isNotEmpty
+        ? (rawName.length > 40 ? rawName.substring(0, 40) : rawName)
+        : 'Player';
+    final preferredId = payload['preferredId'];
+    final token = payload['rejoinToken'];
 
-    // Prefer explicit preferredId (reconnect path), else match by name among
-    // seats waiting to rejoin.
+    // A seat is only reclaimed with its secret rejoin token (#435). Pending
+    // (dropped) seats first; a still-listed seat covers a socket replaced
+    // before the old one's close was seen.
     LobbyPlayer? seat;
-    if (preferredId != null &&
-        _pendingReconnectByPeerId.containsKey(preferredId)) {
-      seat = _pendingReconnectByPeerId[preferredId];
+    if (preferredId is String &&
+        token is String &&
+        _rejoinTokens[preferredId] == token &&
+        preferredId != ephemeralPeerId) {
+      seat = _pendingReconnectByPeerId[preferredId] ??
+          (_gameInProgress
+              ? _lobbyPlayers.where((p) => p.id == preferredId).firstOrNull
+              : null);
     }
+    // A killed app loses its token, so a *dropped* seat can still be reclaimed
+    // by name (TEST18). The joiner already passed the access code; a seat whose
+    // device is still connected is never handed over this way.
     seat ??= _pendingReconnectByPeerId.values
         .where((p) => p.name == name)
         .firstOrNull;
-
-    // Also allow rejoin if the seat is still listed but the socket was
-    // replaced (edge: grace cancelled incorrectly).
-    if (seat == null && _gameInProgress) {
-      seat = _lobbyPlayers
-          .where((p) =>
-              p.name == name &&
-              p.id != 'host' &&
-              !p.isAI &&
-              p.id != ephemeralPeerId)
-          .firstOrNull;
-    }
 
     if (seat != null && _gameInProgress) {
       final stableId = seat.id;
@@ -462,8 +491,11 @@ class GameLanService {
       return;
     }
 
-    // Pre-game: normal new seat.
+    // Pre-game: normal new seat. One seat per socket.
+    if (_lobbyPlayers.any((p) => p.id == ephemeralPeerId)) return;
     final player = LobbyPlayer(id: ephemeralPeerId, name: name);
+    final rejoinToken = _newToken();
+    _rejoinTokens[ephemeralPeerId] = rejoinToken;
     _lobbyPlayers.add(player);
     _joinCtrl.add(player);
     _engine.sendTo(
@@ -471,7 +503,7 @@ class GameLanService {
       LanMessage(
         channel: _kChannel,
         type: _T.welcome,
-        payload: {'yourId': ephemeralPeerId},
+        payload: {'yourId': ephemeralPeerId, 'rejoinToken': rejoinToken},
       ),
     );
     _broadcastLobby();
@@ -491,6 +523,8 @@ class GameLanService {
       case _T.welcome:
         if (!_isHost) {
           _myAssignedId = msg.payload['yourId'] as String?;
+          final token = msg.payload['rejoinToken'];
+          if (token is String) _myRejoinToken = token;
           // LT7 mid-game rejoin: no second 'start' broadcast is coming, so
           // fire gameStarted off the welcome itself — this is what routes
           // the lobby back into the game screen.
@@ -514,13 +548,20 @@ class GameLanService {
         }
 
       case _T.state:
-        _lastReceivedState = msg.payload;
-        _remoteStateCtrl.add(msg.payload);
+        // Only the host is authoritative; a client can't push state (#435).
+        if (!_isHost) {
+          _lastReceivedState = msg.payload;
+          _remoteStateCtrl.add(msg.payload);
+        }
 
       case _T.move:
-        if (_isHost) {
-          final action = msg.payload['action'] as String? ?? '';
-          final data = msg.payload['data'] as Map<String, dynamic>? ?? {};
+        // Moves only from seated players; the engine-assigned peerId is the seat.
+        if (_isHost && _lobbyPlayers.any((p) => p.id == peerId)) {
+          final rawAction = msg.payload['action'];
+          final rawData = msg.payload['data'];
+          final action = rawAction is String ? rawAction : '';
+          final data =
+              rawData is Map<String, dynamic> ? rawData : <String, dynamic>{};
           _moveCtrl.add((peerId: peerId, action: action, data: data));
         }
 

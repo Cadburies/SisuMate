@@ -283,6 +283,7 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 | `fm.sh` | Feature Map runner (#354): `fm.sh <id>` runs that feature's script (host test named by id), `--reach` only reaches it, `--device <serial\|udid>` reaches it on a running phone/sim. Find ids with `dart run tool/feature_map.dart find <word>`; rules in `.ai_context/feature_map/FORMAT.md` |
 | `fm_device_reach.sh` | Runs a feature's `reach:` steps on a device via `lt_ui_helpers.sh` (label taps + scroll-retry; no `long:`, no iOS `swipe:`). Called by `fm.sh --device` |
 | `wipe_android_avds.sh` | Factory-wipe all local Android AVD userdata/snapshots (keeps AVD defs; does not touch physical phones) |
+| `lan_join_code.sh` | Reads the 6-digit LAN join code (#435) off an iOS host's lobby (`<udid>`) and caches it; `--cached` prints the last one. Used by the multiplayer harness scripts |
 
 ### GUI test drivers — run on demand only (real device/sim required; NOT part of `run_full_suite.sh`)
 

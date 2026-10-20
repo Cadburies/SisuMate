@@ -205,6 +205,9 @@ sleep 1
 ios_tap "$IOS_HOST" "Add AI"
 sleep 2
 echo "Host ready with 3 players (host + 2 AI). Now joining 3 real clients..."
+# #435: clients must type the host's join code.
+JOIN_CODE="$(bash scripts/lan_join_code.sh "$IOS_HOST")" || { echo "no join code on host" >&2; exit 1; }
+echo "Join code: $JOIN_CODE"
 
 join_ios_client() {
   local udid="$1" name="$2"
@@ -223,6 +226,10 @@ join_ios_client() {
   # Tap the discovered-game entry (label is "Liar's Dice\n<host>:<port>") —
   # a plain "Liar's Dice" tap lands on the AppBar title instead.
   ios_tap_game_entry "$udid" "Liar's Dice"
+  sleep 2
+  ios_text "$udid" "$JOIN_CODE"
+  sleep 1
+  ios_tap "$udid" "Join"
   sleep 3
 }
 
@@ -244,6 +251,10 @@ join_android_client() {
   and_tap "$serial" "Join a Game"
   sleep 3
   and_tap_game_entry "$serial" "Liar's Dice"
+  sleep 2
+  adb -s "$serial" shell input text "$JOIN_CODE"
+  sleep 1
+  and_tap "$serial" "Join"
   sleep 3
 }
 

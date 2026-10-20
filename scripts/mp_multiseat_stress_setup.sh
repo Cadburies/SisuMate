@@ -92,6 +92,9 @@ for ((i = 1; i <= AI_COUNT; i++)); do
   ios_tap "$IOS_HOST" "Add AI"
   sleep 1
 done
+# #435: clients must type the host's join code.
+JOIN_CODE="$(bash scripts/lan_join_code.sh "$IOS_HOST")" || { echo "no join code on host" >&2; exit 1; }
+echo "Join code: $JOIN_CODE"
 
 join_ios() {
   local udid="$1" name="$2"
@@ -122,6 +125,10 @@ for el in data:
         break
 " | { read x y && idb ui tap "$x" "$y" --udid "$udid"; } || ios_tap "$udid" "$GAME_LABEL"
   fi
+  sleep 2
+  ios_text "$udid" "$JOIN_CODE"
+  sleep 1
+  ios_tap "$udid" "Join"
   sleep 3
 }
 
@@ -155,6 +162,10 @@ if m:
   and_tap "$serial" "Join a Game"
   sleep 4
   and_tap -c "$serial" "$GAME_LABEL" 2>/dev/null || true
+  sleep 2
+  adb -s "$serial" shell input text "$JOIN_CODE"
+  sleep 1
+  and_tap "$serial" "Join"
   sleep 3
 }
 
