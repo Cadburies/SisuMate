@@ -142,6 +142,52 @@ class SharedKillGuard(unittest.TestCase):
         self.assertIsNone(bash("kill 12345"))
 
 
+class SecretsAndReleaseGuards(unittest.TestCase):
+    """#434: agents never touch release credentials; a human approves store uploads."""
+
+    def _tool(self, tool, **inp):
+        return f.pretool_decision({"tool_name": tool, "tool_input": inp, "cwd": ROOT})
+
+    def test_bash_secret_access_denied(self):
+        for cmd in ("cat secrets/google-play-service-account.json",
+                    "cp ./secrets/AuthKey_ABC.p8 /tmp/x",
+                    "ls secrets/",
+                    "base64 android/key.properties",
+                    "cat ~/keystores/sisumate/upload.jks",
+                    f"head {ROOT}/secrets/appstore-connect.json"):
+            d = bash(cmd)
+            self.assertIsNotNone(d, cmd)
+            self.assertEqual(d[0], "deny", cmd)
+            self.assertIn("release credentials", d[1], cmd)
+
+    def test_secrets_readme_allowed(self):
+        self.assertIsNone(bash("cat secrets/README.md"))
+        self.assertIsNone(self._tool("Read", file_path=os.path.join(ROOT, "secrets/README.md")))
+
+    def test_file_tools_on_secrets_denied(self):
+        for tool, inp in (("Read", {"file_path": os.path.join(ROOT, "secrets/appstore-connect.json")}),
+                          ("Read", {"file_path": "secrets/x.json"}),
+                          ("Grep", {"pattern": "key", "path": os.path.join(ROOT, "secrets")}),
+                          ("Glob", {"pattern": "secrets/**"}),
+                          ("Edit", {"file_path": os.path.join(ROOT, "android/key.properties")})):
+            d = self._tool(tool, **inp)
+            self.assertIsNotNone(d, (tool, inp))
+            self.assertEqual(d[0], "deny", (tool, inp))
+            self.assertIn("release credentials", d[1])
+
+    def test_release_scripts_ask(self):
+        for cmd in ("./scripts/play_release.sh --track internal",
+                    "bash scripts/appstore_release.sh --track testflight"):
+            d = bash(cmd)
+            self.assertEqual(d[0], "ask", cmd)
+            self.assertIn("store release", d[1].lower())
+
+    def test_mentions_are_not_access(self):
+        for cmd in ("grep -rn secrets_manager lib", "git log --oneline",
+                    "echo dart-defines.json"):
+            self.assertIsNone(bash(cmd), cmd)
+
+
 class HookPlumbing(unittest.TestCase):
     def test_other_tools_allowed(self):
         self.assertIsNone(f.pretool_decision({"tool_name": "Read",

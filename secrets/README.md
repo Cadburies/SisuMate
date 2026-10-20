@@ -41,3 +41,7 @@ Issuer ID: [App Store Connect → Users and Access → Integrations → App Stor
 Local upload: `./scripts/appstore_release.sh --track testflight` (default). `--track appstore` still only **uploads** the IPA; submitting for App Review stays a Console click. `--test` checks the key without building.
 
 Agent procedure (both stores, tester tracks, first-time setup): `.ai_context/store_release.md`.
+
+## Agents
+
+Agents never read, copy, list or print anything in this folder (except this README), nor `android/key.properties` or signing keys. `scripts/_factory.py` denies it, and asks a human before each release-script run (#434). Only the release scripts read these files, as subprocesses. A key an agent has seen counts as leaked: rotate it.

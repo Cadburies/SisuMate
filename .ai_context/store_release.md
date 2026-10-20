@@ -2,6 +2,8 @@
 
 Agent-facing. Identity, secrets, and commands to ship a build. Do **not** submit Play production or App Review unless the user explicitly asks.
 
+**Human in the loop (#434):** the factory guard asks a human before every `play_release.sh` / `appstore_release.sh` run and denies agent reads of `secrets/`, `android/key.properties` and `*.p8`/`*.jks`. Run the scripts; never open, copy or print the credential files. Run `cyber-check` (Full) before a release.
+
 **Identity**
 
 | | |

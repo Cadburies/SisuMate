@@ -54,6 +54,16 @@ DOCS_ONLY_RE = re.compile(r"^(\.ai_context/|\.github/|plans/|skills/|marketing/)
 
 # Commands that kill every agent's `flutter run`, not just the caller's.
 SHARED_KILL_RE = re.compile(r"stop_flutter\.sh|\b(pkill|killall)\b[^\n]*\bflutter\b")
+# #434: release credentials. The release scripts read them as subprocesses;
+# an agent never needs the bytes, so a hijacked one can't exfiltrate them.
+SECRET_RE = re.compile(
+    r"(?:^|[\s'\"=/])(?:\./)?secrets(?:/(?!README\.md\b)|(?=$|[\s'\"]))"
+    r"|\bkey\.properties\b|\.(?:p8|jks|keystore)\b"
+    r"|google-play-service-account|appstore-connect\.json")
+RELEASE_RE = re.compile(r"\b(?:play_release|appstore_release)\.sh\b")
+SECRET_REASON = ("That path holds release credentials (secrets/, signing keys). Agents never "
+                 "read, copy or list them; the release scripts use them directly.")
+FILE_TOOLS = ("Read", "Grep", "Glob")
 
 SEGMENT_SPLIT_RE = re.compile(r"&&|\|\||;|\||\n")
 ENV_ASSIGN_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
@@ -241,7 +251,20 @@ def check_git(sub: str, args: list[str]) -> tuple[str, str] | None:
     return None
 
 
+def touches_secret(text: str) -> bool:
+    return bool(SECRET_RE.search(" " + text.replace("\\", "/")))
+
+
 def check_bash(command: str, cwd: str | None = None) -> tuple[str, str] | None:
+    for toks in _segments(command):
+        g = _git_sub(toks)
+        if g and g[0] == "commit":
+            continue  # a commit message may name secrets/ without reading it
+        if touches_secret(" ".join(toks)):
+            return ("deny", SECRET_REASON)
+    if RELEASE_RE.search(command):
+        return ("ask", "This runs a store release (signed build + upload). "
+                       "A human approves every run.")
     if SHARED_KILL_RE.search(command):
         return ("ask", "This kills every agent's `flutter run`, not just yours. "
                        "Prefer `kill <pid>` with the pid android_run.sh/ios_run.sh printed.")
@@ -517,6 +540,11 @@ def pretool_decision(payload: dict) -> tuple[str, str] | None:
     tool = payload.get("tool_name", "")
     inp = payload.get("tool_input") or {}
     cwd = payload.get("cwd") or os.getcwd()
+    if tool in FILE_TOOLS + EDIT_TOOLS:
+        for key in ("file_path", "notebook_path", "path", "pattern" if tool == "Glob" else ""):
+            val = inp.get(key) if key else None
+            if isinstance(val, str) and touches_secret(val):
+                return ("deny", SECRET_REASON)
     if tool in EDIT_TOOLS:
         path = inp.get("file_path") or inp.get("notebook_path") or ""
         if not path:
