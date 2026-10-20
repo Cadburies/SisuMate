@@ -10,4 +10,4 @@ action: Probes local then internet addresses, reports status, and returns boat d
 expect: With a gateway configured, position and wind come from the boat.
 uses: system/platform/boat_position
 script: test/predictwind_datahub_service_test.dart
-source: lib/services/predictwind_datahub_service.dart (PredictWindDatahubService, GatewayDiscoveryResult); lib/services/home_assistant_service.dart (HomeAssistantService)
+source: lib/services/predictwind_datahub_service.dart (PredictWindDatahubService, GatewayDiscoveryResult); lib/services/home_assistant_service.dart (HomeAssistantService); lib/services/gateway_url_policy.dart (GatewayUrlPolicy)

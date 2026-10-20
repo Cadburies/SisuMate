@@ -177,3 +177,77 @@ class AnchorAlarmService {
     return d;
   }
 }
+
+/// #436 — decides which position fixes the anchor watch may trust.
+///
+/// A gateway reachable by someone else (or a glitching one) can report the
+/// boat somewhere it isn't. A fix that implies moving faster than a dragging
+/// boat could is held back until the next poll lands near it. While the watch
+/// is on, [cantVerify] turns true once no fix has been trusted for
+/// [cantVerifyAfter] (owner decision: a calm banner first, then an alert).
+class AnchorFixMonitor {
+  AnchorFixMonitor({
+    DateTime Function()? now,
+    this.cantVerifyAfter = const Duration(minutes: 3),
+    this.maxPlausibleSpeedMps = 7.7, // ~15 kn
+    this.minJumpMeters = 50,
+    this.confirmWithinMeters = 30,
+  }) : _now = now ?? DateTime.now;
+
+  final DateTime Function() _now;
+  final Duration cantVerifyAfter;
+  final double maxPlausibleSpeedMps;
+  final double minJumpMeters;
+  final double confirmWithinMeters;
+
+  static const _geo = AnchorAlarmService();
+
+  ({double lat, double lon})? _trusted;
+  DateTime? _trustedAt;
+  ({double lat, double lon})? _pending;
+  DateTime? _watchSince;
+
+  double _dist(({double lat, double lon}) a, double lat, double lon) =>
+      _geo.distanceMeters(lat1: a.lat, lon1: a.lon, lat2: lat, lon2: lon);
+
+  /// Feed every poll result (null = no fix). Returns the fix to evaluate the
+  /// alarm against, or null when there is nothing trustworthy this poll.
+  ({double lat, double lon})? accept(double? lat, double? lon) {
+    if (lat == null || lon == null) return null;
+    final now = _now();
+    final prev = _trusted;
+    final prevAt = _trustedAt;
+    if (prev != null && prevAt != null) {
+      final d = _dist(prev, lat, lon);
+      final secs = now.difference(prevAt).inMilliseconds / 1000;
+      final implausible =
+          d > minJumpMeters && (secs <= 0 || d / secs > maxPlausibleSpeedMps);
+      if (implausible) {
+        final pending = _pending;
+        if (pending == null || _dist(pending, lat, lon) > confirmWithinMeters) {
+          _pending = (lat: lat, lon: lon);
+          return null;
+        }
+      }
+    }
+    _pending = null;
+    _trusted = (lat: lat, lon: lon);
+    _trustedAt = now;
+    return _trusted;
+  }
+
+  /// True once the active watch has gone [cantVerifyAfter] without a trusted
+  /// fix (counted from whichever is later: the watch starting or the last
+  /// trusted fix). Turning the watch off resets the clock.
+  bool cantVerify({required bool watchActive}) {
+    final now = _now();
+    if (!watchActive) {
+      _watchSince = null;
+      return false;
+    }
+    final since = _watchSince ??= now;
+    final last = _trustedAt;
+    final from = last != null && last.isAfter(since) ? last : since;
+    return now.difference(from) >= cantVerifyAfter;
+  }
+}

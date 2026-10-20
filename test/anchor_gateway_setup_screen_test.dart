@@ -71,7 +71,8 @@ void main() {
     expect(find.widgetWithText(ActionChip, 'HA .local'), findsOneWidget);
     expect(find.widgetWithText(ActionChip, 'HA IP example'), findsOneWidget);
     expect(find.text('Found:'), findsNothing);
-    expect(find.text('Default for DataHub'), findsOneWidget);
+    // #436: the remote default is cleartext over the internet, so it's labelled.
+    expect(find.textContaining('Default for DataHub. Unencrypted'), findsOneWidget);
     expect(find.widgetWithText(ActionChip, 'DataHub internet'), findsOneWidget);
     expect(find.widgetWithText(ActionChip, 'DataHub local'), findsOneWidget);
     expect(find.text('YDWG-02 (NMEA gateway)'), findsOneWidget);
@@ -307,5 +308,40 @@ void main() {
       textOf(find.widgetWithText(TextField, 'YDWG username')),
       'ydwguser',
     );
+  });
+
+  group('#436 cleartext over the internet', () {
+    testWidgets('remote DataHub over http is labelled unencrypted',
+        (tester) async {
+      await pumpScreen(tester);
+      final addressField = find.widgetWithText(TextField, 'Hub address');
+      await reveal(tester, addressField);
+      expect(find.textContaining('Unencrypted over the internet'), findsOneWidget);
+
+      final localChip = find.widgetWithText(ActionChip, 'DataHub local');
+      await reveal(tester, localChip);
+      await tester.tap(localChip);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Unencrypted over the internet'), findsNothing);
+    });
+
+    testWidgets('a bare internet HA host is tested over https', (tester) async {
+      final schemes = <String>[];
+      await pumpScreen(tester, httpClient: MockClient((req) async {
+        schemes.add(req.url.scheme);
+        return http.Response('{"message":"API running."}', 200);
+      }));
+      final remote = find.widgetWithText(TextField, 'HA internet URL');
+      await reveal(tester, remote);
+      await tester.enterText(remote, 'abc.ui.nabu.casa');
+      final token = find.widgetWithText(TextField, 'Long-lived access token');
+      await reveal(tester, token);
+      await tester.enterText(token, 'tok');
+      final button = find.text('Test HA internet');
+      await reveal(tester, button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(schemes, ['https']);
+    });
   });
 }

@@ -6,6 +6,7 @@ import '../components/title_tile.dart';
 import '../../core/di.dart';
 import '../../models/models.dart';
 import '../../services/home_assistant_service.dart';
+import '../../services/gateway_url_policy.dart';
 import '../../services/predictwind_datahub_service.dart';
 
 /// #263 / #306 — Boat instruments / GPS gateway setup (global Settings).
@@ -275,14 +276,23 @@ class _AnchorGatewaySetupScreenState
 
   String _helperForHubAddress() {
     final address = _selectedAddress ?? _normalizedManualAddress() ?? '';
+    final String base;
     if (address == PredictWindDatahubService.defaultDataHubLocalUrl) {
-      return 'Default for DataHub on boat WiFi / intranet';
-    }
-    if (address == PredictWindDatahubService.defaultDataHubRemoteUrlResolved ||
+      base = 'Default for DataHub on boat WiFi / intranet';
+    } else if (address ==
+            PredictWindDatahubService.defaultDataHubRemoteUrlResolved ||
         address == PredictWindDatahubService.defaultDataHubRemoteUrl) {
-      return 'Default for DataHub';
+      base = 'Default for DataHub';
+    } else {
+      base = 'DataHub Hub address (local or internet)';
     }
-    return 'DataHub Hub address (local or internet)';
+    // #436: the vendor tunnel's HTTPS is self-signed, so http stays allowed,
+    // but the user should know the login and position travel in the clear.
+    if (GatewayUrlPolicy.isCleartextToPublic(address)) {
+      return '$base. Unencrypted over the internet: the DataHub login and '
+          'boat position can be read or changed on the way.';
+    }
+    return base;
   }
 
   Future<void> _testDataHub() async {
@@ -404,13 +414,11 @@ class _AnchorGatewaySetupScreenState
           ? _selectedAddress!.trim()
           : _normalizedManualAddress();
 
+  /// #436: a bare host gets https unless it's on the boat LAN, so the HA
+  /// token isn't saved against a cleartext internet address.
   String? _normalizedHaUrl(String raw) {
-    final t = raw.trim();
-    if (t.isEmpty) return null;
-    if (t.startsWith('http://') || t.startsWith('https://')) {
-      return t.endsWith('/') ? t.substring(0, t.length - 1) : t;
-    }
-    return 'http://$t';
+    final t = GatewayUrlPolicy.normalizeBase(raw);
+    return t.isEmpty ? null : t;
   }
 
   Future<void> _testHa({required bool remote}) async {
@@ -711,6 +719,7 @@ class _AnchorGatewaySetupScreenState
                                     hintText: PredictWindDatahubService
                                         .defaultDataHubRemoteUrlResolved,
                                     helperText: _helperForHubAddress(),
+                                    helperMaxLines: 3,
                                   ),
                                   enabled: !busy,
                                   autocorrect: false,

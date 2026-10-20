@@ -1,5 +1,5 @@
 title: Anchor Alarm
-desc: Watches the boat's position at anchor and sounds an alarm if it drags outside the swing circle; shows live instruments.
+desc: Watches the boat's position at anchor and sounds an alarm if it drags outside the swing circle; shows live instruments. If the position can't be verified for 3 minutes (no fix, or a jump further than a boat can move), a slower, separate alert sounds.
 layer: ux
 keywords: anchor, anchor alarm, drag, swing circle, watch, anchorage
 kind: screen

@@ -9,6 +9,7 @@ import 'package:http/testing.dart';
 import 'package:sisu_mate/core/di.dart';
 import 'package:sisu_mate/data/drift/app_database.dart';
 import 'package:sisu_mate/services/predictwind_datahub_service.dart';
+import 'package:sisu_mate/services/anchor_alarm_service.dart';
 import 'package:sisu_mate/ui/anchor/anchor_alarm_screen.dart';
 
 /// #256 — Anchor Alarm screen. GPS/wind come **only** from a mocked
@@ -126,6 +127,7 @@ void main() {
     http.Client? httpClient,
     PredictWindDatahubService hubService = const PredictWindDatahubService(),
     bool allowPhoneFallback = false,
+    AnchorFixMonitor? fixMonitor,
   }) async {
     // The Info tab now renders air/water temp cards ahead of SOG/COG/wind
     // (HA-screen follow-up); that pushes content past the default 600px
@@ -154,6 +156,7 @@ void main() {
             // #303 — production enables phone fallback; host tests keep
             // instruments-only so Geolocator is never invoked.
             allowPhoneFallback: allowPhoneFallback,
+            fixMonitor: fixMonitor,
           ),
         ),
       ),
@@ -279,6 +282,83 @@ void main() {
     expect(requestCount, before);
     expect(find.text('Anchor Alarm'), findsOneWidget);
     await unmount(tester);
+  });
+
+  group('#436 position trust while the watch is on', () {
+    Future<void> dropAnchor(WidgetTester tester) async {
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Drop Anchor Here'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+    }
+
+    Future<void> refresh(WidgetTester tester) async {
+      // The icon is a spinner while a refresh is in flight; wait it out.
+      for (var i = 0; i < 40 && find.byIcon(Icons.refresh).evaluate().isEmpty; i++) {
+        await tester.drag(find.byType(ListView).first, const Offset(0, -400));
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      // The Hub card (with Refresh) sits below the anchor cards.
+      await tester.ensureVisible(find.byIcon(Icons.refresh));
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.refresh));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      // Back to the top, where the banners render (the list builds lazily).
+      await tester.drag(find.byType(ListView).first, const Offset(0, 3000));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    testWidgets('no trustworthy fix for 3 minutes escalates the banner',
+        (tester) async {
+      var now = DateTime(2026, 10, 20, 12);
+      var quality = 4;
+      final client = _SwitchingClient(() => hubClient(quality: quality));
+      await pumpScreen(tester,
+          httpClient: client,
+          hubService: connectedHubService,
+          fixMonitor: AnchorFixMonitor(now: () => now));
+      await dropAnchor(tester);
+
+      quality = 0; // instruments lose the fix
+      await refresh(tester);
+      expect(find.textContaining("Can't verify the anchor position"),
+          findsNothing, reason: 'calm banner first (#256)');
+
+      now = now.add(const Duration(minutes: 3));
+      await refresh(tester);
+      expect(find.textContaining("Can't verify the anchor position"),
+          findsOneWidget);
+      expect(find.textContaining('ANCHOR ALARM'), findsNothing,
+          reason: 'not the drag alarm');
+
+      quality = 4; // fix back
+      await refresh(tester);
+      expect(find.textContaining("Can't verify the anchor position"),
+          findsNothing);
+      await unmount(tester);
+    });
+
+    testWidgets('an impossible jump is not trusted and does not trip the alarm',
+        (tester) async {
+      var now = DateTime(2026, 10, 20, 12);
+      var lat = 12.0;
+      final client = _SwitchingClient(() => hubClient(lat: lat));
+      await pumpScreen(tester,
+          httpClient: client,
+          hubService: connectedHubService,
+          fixMonitor: AnchorFixMonitor(now: () => now));
+      await dropAnchor(tester);
+
+      lat = 12.1; // ~11 km in 20 s
+      now = now.add(const Duration(seconds: 20));
+      await refresh(tester);
+      expect(find.textContaining('jumped further than a boat can move'),
+          findsOneWidget);
+      expect(find.text('12.10000, -61.70000'), findsNothing);
+      await unmount(tester);
+    });
   });
 
   group('anchor set/edit/weigh', () {
@@ -564,4 +644,15 @@ void main() {
       await unmount(tester);
     }, skip: true); // post-drop Drift timer hang
   });
+}
+
+/// Rebuilds the fake Hub per request so a test can change what it reports
+/// between refreshes (delegates at `send`, so requests aren't re-finalized).
+class _SwitchingClient extends http.BaseClient {
+  _SwitchingClient(this._current);
+  final http.Client Function() _current;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      _current().send(request);
 }

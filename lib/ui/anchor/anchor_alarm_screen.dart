@@ -58,6 +58,7 @@ class AnchorAlarmScreen extends ConsumerStatefulWidget {
     this.pollInterval = const Duration(seconds: 20),
     this.showChartMap = true,
     this.positionService = const BoatPositionService(),
+    this.fixMonitor,
     /// Production: true (#303). Widget tests that assert Hub-only copy pass
     /// false so Geolocator is never hit under flutter_test.
     this.allowPhoneFallback = true,
@@ -67,6 +68,9 @@ class AnchorAlarmScreen extends ConsumerStatefulWidget {
   final http.Client? httpClient;
   final BoatPositionService positionService;
   final bool allowPhoneFallback;
+
+  /// #436 — which fixes the watch may trust; tests inject a fake clock.
+  final AnchorFixMonitor? fixMonitor;
 
   /// Auto-refresh cadence — a real, lingering `Timer.periodic` is a classic
   /// `flutter_test` hang source (the test binding waits on pending real
@@ -112,6 +116,14 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
 
   Timer? _pollTimer;
   Timer? _alarmTimer;
+
+  // #436 — position trust (owner decision): implausible jumps aren't used,
+  // and 3 minutes of watch without a trusted fix escalates to an alert.
+  late final AnchorFixMonitor _fixMonitor =
+      widget.fixMonitor ?? AnchorFixMonitor();
+  bool _positionRejected = false;
+  bool _cantVerify = false;
+  Timer? _verifyTimer;
   // #266 — Watch (edit/alarm) vs Info (read-only instruments).
   late final TabController _tabController;
 
@@ -131,6 +143,7 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
     _tabController.dispose();
     _pollTimer?.cancel();
     _alarmTimer?.cancel();
+    _verifyTimer?.cancel();
     super.dispose();
   }
 
@@ -178,11 +191,13 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
       allowPhoneFallback: widget.allowPhoneFallback,
     );
     if (!mounted) return;
+    final trusted = _fixMonitor.accept(pos.latitude, pos.longitude);
     setState(() {
       _hubStatus = pos.instruments.hubStatus;
       _boatData = pos.boatData;
-      _positionLat = pos.latitude;
-      _positionLon = pos.longitude;
+      _positionLat = trusted?.lat;
+      _positionLon = trusted?.lon;
+      _positionRejected = pos.hasPosition && trusted == null;
       _positionSource = pos.positionSource;
       _positionSourceLabel = pos.positionSourceLabel;
       _initialLoadDone = true;
@@ -258,10 +273,13 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
     );
 
     final active = outside || inDanger || shallow || strongWind || ais;
+    final cantVerify =
+        _fixMonitor.cantVerify(watchActive: anchorWatch != null) && !active;
 
     if (mounted) {
       setState(() {
         _alarmActive = active;
+        _cantVerify = cantVerify;
         _isOutsideCircle = outside;
         _isInDangerZone = inDanger;
         _isShallow = shallow;
@@ -277,6 +295,20 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
       _alarmTimer =
           Timer.periodic(const Duration(seconds: 2), (_) => _playAlarmTick());
     }
+
+    // Slower cadence than the drag alarm so the two are told apart by ear.
+    _verifyTimer?.cancel();
+    _verifyTimer = null;
+    if (cantVerify) {
+      _playVerifyTick();
+      _verifyTimer =
+          Timer.periodic(const Duration(seconds: 10), (_) => _playVerifyTick());
+    }
+  }
+
+  void _playVerifyTick() {
+    SystemSound.play(SystemSoundType.alert);
+    HapticFeedback.mediumImpact();
   }
 
   void _playAlarmTick() {
@@ -573,9 +605,12 @@ class _AnchorAlarmScreenState extends ConsumerState<AnchorAlarmScreen>
                                   ),
                                   const SizedBox(height: 12),
                                 ] else if (activeWatch != null &&
-                                    !canDrop) ...[
+                                    (!canDrop || _cantVerify)) ...[
                                   _NoFixWarningBanner(
-                                      hubState: _hubStatus?.state),
+                                    hubState: _hubStatus?.state,
+                                    escalated: _cantVerify,
+                                    jumpRejected: _positionRejected,
+                                  ),
                                   const SizedBox(height: 12),
                                 ],
                                 if (activeWatch == null)
@@ -1555,12 +1590,27 @@ class _PositionCard extends StatelessWidget {
 /// avoid.
 class _NoFixWarningBanner extends StatelessWidget {
   final PredictWindHubConnectionState? hubState;
-  const _NoFixWarningBanner({required this.hubState});
+
+  /// #436 — no trusted fix for 3+ minutes of watch: say so plainly (the
+  /// screen also sounds a slow, distinct alert).
+  final bool escalated;
+
+  /// #436 — a fix arrived but jumped further than a boat can move.
+  final bool jumpRejected;
+
+  const _NoFixWarningBanner({
+    required this.hubState,
+    this.escalated = false,
+    this.jumpRejected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final reason = switch (hubState) {
+    final reason = jumpRejected
+        ? 'The last position jumped further than a boat can move. Waiting '
+            'for a second reading to confirm it.'
+        : switch (hubState) {
       null => 'Checking the PredictWind Hub…',
       PredictWindHubConnectionState.connected =>
         'Connected to the Hub, but no live GPS fix — instruments may be '
@@ -1568,6 +1618,9 @@ class _NoFixWarningBanner extends StatelessWidget {
       _ => "Lost connection to the PredictWind Hub — can't verify the "
           'anchor position.',
     };
+    final title = escalated
+        ? "Can't verify the anchor position for 3+ minutes"
+        : 'Anchor position unknown';
 
     return Card(
       color: theme.colorScheme.tertiaryContainer,
@@ -1582,7 +1635,7 @@ class _NoFixWarningBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Anchor position unknown',
+                    title,
                     style: TextStyle(
                       color: theme.colorScheme.onTertiaryContainer,
                       fontWeight: FontWeight.bold,

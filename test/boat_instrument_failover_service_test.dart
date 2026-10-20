@@ -146,7 +146,7 @@ void main() {
         passwordOverride: 'p',
       );
       final settings = UserSettings()
-        ..homeAssistantRemoteUrl = 'http://ha-remote.test'
+        ..homeAssistantRemoteUrl = 'https://ha-remote.test' // #436: internet HA must be https
         ..homeAssistantToken = 'tok'
         ..homeAssistantGpsEntity = 'device_tracker.boat';
 

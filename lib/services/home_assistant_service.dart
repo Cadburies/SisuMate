@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'gateway_url_policy.dart';
 import 'predictwind_datahub_service.dart';
 
 /// #263 — Home Assistant REST client for boat instruments (GPS/wind/depth).
@@ -66,14 +67,12 @@ class HomeAssistantService {
   static const defaultWaterTempEntity =
       String.fromEnvironment('HA_WATER_TEMP_ENTITY');
 
-  static String _asHttpBase(String raw) {
-    final t = raw.trim();
-    if (t.isEmpty) return t;
-    if (t.startsWith('http://') || t.startsWith('https://')) {
-      return t.endsWith('/') ? t.substring(0, t.length - 1) : t;
-    }
-    return 'http://$t';
-  }
+  /// #436: a bare host gets https unless it's on the boat LAN.
+  static String _asHttpBase(String raw) => GatewayUrlPolicy.normalizeBase(raw);
+
+  /// #436: the long-lived token never travels in cleartext over the internet.
+  static bool _tokenWouldLeak(String base) =>
+      GatewayUrlPolicy.isCleartextToPublic(base);
 
   bool get isConfigured =>
       (baseUrl?.trim().isNotEmpty ?? false) &&
@@ -103,6 +102,14 @@ class HomeAssistantService {
       );
     }
     final base = _asHttpBase(baseUrl!);
+    if (_tokenWouldLeak(base)) {
+      return const GatewayProbeResult(
+        ok: false,
+        detail: 'A Home Assistant address outside the boat network must use '
+            'https:// (e.g. Nabu Casa). Over http:// the access token would '
+            'travel unencrypted.',
+      );
+    }
     final c = client ?? http.Client();
     try {
       final res = await c
@@ -167,6 +174,7 @@ class HomeAssistantService {
   }) async {
     if (!isConfigured || !hasGpsConfig) return null;
     final base = _asHttpBase(baseUrl!);
+    if (_tokenWouldLeak(base)) return null; // probeConnection explains why.
     final c = client ?? http.Client();
     try {
       double? lat;

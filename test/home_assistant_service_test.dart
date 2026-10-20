@@ -229,5 +229,46 @@ void main() {
       expect(r.ok, isTrue);
       expect(r.detail, contains('192.168.0.20'));
     });
+
+    group('#436 token never goes over cleartext to a public host', () {
+      final sent = <Uri>[];
+      final spy = MockClient((request) async {
+        sent.add(request.url);
+        return http.Response('{"message":"API running."}', 200);
+      });
+      setUp(sent.clear);
+
+      test('probe refuses http:// to a public host', () async {
+        const svc = HomeAssistantService(
+            baseUrl: 'http://203.0.113.7:8123', token: 'tok');
+        final r = await svc.probeConnection(client: spy);
+        expect(r.ok, isFalse);
+        expect(r.detail, contains('https://'));
+        expect(sent, isEmpty);
+      });
+
+      test('fetchBoatData refuses http:// to a public host', () async {
+        const svc = HomeAssistantService(
+            baseUrl: 'http://ha.example.com',
+            token: 'tok',
+            gpsEntity: 'device_tracker.boat');
+        expect(await svc.fetchBoatData(client: spy), isNull);
+        expect(sent, isEmpty);
+      });
+
+      test('a bare public host is upgraded to https', () async {
+        const svc =
+            HomeAssistantService(baseUrl: 'abc.ui.nabu.casa', token: 'tok');
+        await svc.probeConnection(client: spy);
+        expect(sent.single.scheme, 'https');
+      });
+
+      test('a bare LAN host stays on http', () async {
+        const svc =
+            HomeAssistantService(baseUrl: '192.168.0.20:8123', token: 'tok');
+        await svc.probeConnection(client: spy);
+        expect(sent.single.scheme, 'http');
+      });
+    });
   });
 }
