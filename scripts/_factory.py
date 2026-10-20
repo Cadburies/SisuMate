@@ -57,7 +57,7 @@ SHARED_KILL_RE = re.compile(r"stop_flutter\.sh|\b(pkill|killall)\b[^\n]*\bflutte
 # #434: release credentials. The release scripts read them as subprocesses;
 # an agent never needs the bytes, so a hijacked one can't exfiltrate them.
 SECRET_RE = re.compile(
-    r"(?:^|[\s'\"=/])(?:\./)?secrets(?:/(?!README\.md\b)|(?=$|[\s'\"]))"
+    r"(?:^|[\s'\"=/])(?:\./)?secrets/(?!README\.md\b)"
     r"|\bkey\.properties\b|\.(?:p8|jks|keystore)\b"
     r"|google-play-service-account|appstore-connect\.json")
 RELEASE_RE = re.compile(r"\b(?:play_release|appstore_release)\.sh\b")
@@ -252,7 +252,10 @@ def check_git(sub: str, args: list[str]) -> tuple[str, str] | None:
 
 
 def touches_secret(text: str) -> bool:
-    return bool(SECRET_RE.search(" " + text.replace("\\", "/")))
+    """`text` is one argument or tool path: the folder itself or a path in it.
+    Prose that merely mentions "secrets" (an issue comment) is not access."""
+    t = text.replace("\\", "/").rstrip("/")
+    return t in ("secrets", "./secrets") or t.endswith("/secrets") or bool(SECRET_RE.search(" " + t))
 
 
 def check_bash(command: str, cwd: str | None = None) -> tuple[str, str] | None:
@@ -260,7 +263,7 @@ def check_bash(command: str, cwd: str | None = None) -> tuple[str, str] | None:
         g = _git_sub(toks)
         if g and g[0] == "commit":
             continue  # a commit message may name secrets/ without reading it
-        if touches_secret(" ".join(toks)):
+        if any(touches_secret(t) for t in toks):
             return ("deny", SECRET_REASON)
     if RELEASE_RE.search(command):
         return ("ask", "This runs a store release (signed build + upload). "

@@ -184,7 +184,8 @@ class SecretsAndReleaseGuards(unittest.TestCase):
 
     def test_mentions_are_not_access(self):
         for cmd in ("grep -rn secrets_manager lib", "git log --oneline",
-                    "echo dart-defines.json"):
+                    "echo dart-defines.json",
+                    'gh issue comment 434 --body "updated the secrets README and guard"'):
             self.assertIsNone(bash(cmd), cmd)
 
 
