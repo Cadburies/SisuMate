@@ -95,13 +95,15 @@ That is the single entry point. (Feature Map: every UI feature's reach path in `
 | # | Step | What |
 | --- | --- | --- |
 | 1 | **SEC3** | `scripts/scan_release_secrets.sh` — no secrets in assets/lib/APK |
-| 2 | **Analyze** | `flutter analyze` — zero issues |
-| 3 | **Host tests** | `flutter test` — unit, widget, screen+Drift, P0–P3 host gates (offline, import, crew join, AI determinism, units, a11y…) |
-| 4 | **TEST8 live RLS** | `scripts/test_supabase_rls.sh` — skips cleanly if no `dart-defines.json` / offline |
-| 5 | **TEST9 integration** | `flutter test integration_test` — default device `flutter-tester` |
+| 2 | **Guard + skills** | `scripts/_factory_test.py`, the triage issue-body tests, `scripts/validate_skills_test.py`, `scripts/validate_skills.py` |
+| 3 | **Analyze** | `flutter analyze` — zero issues |
+| 4 | **Host tests** | `flutter test` — unit, widget, screen+Drift, P0–P3 host gates (offline, import, crew join, AI determinism, units, a11y…) |
+| 5 | **TEST8 live RLS** | `scripts/test_supabase_rls.sh` — skips cleanly if no `dart-defines.json` / offline |
+| 6 | **Schema parity** | `scripts/verify_supabase_schema.sh` — same skip rules; apply migrations first after a schema change |
+| 7 | **TEST9 integration** | `flutter test integration_test` — default device `flutter-tester` |
 
 ```bash
-# Offline / no Supabase credentials (still runs 1–3 + skips 4):
+# Offline / no Supabase credentials (still runs 1–4, skips 5–7):
 ./scripts/run_full_suite.sh --skip-live
 
 # Host-only (no integration_test):

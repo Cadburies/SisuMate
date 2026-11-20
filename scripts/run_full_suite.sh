@@ -67,6 +67,10 @@ echo "==> triage issue-body tests (#433)"
 python3 scripts/_ips_crash_test.py
 python3 scripts/_untrusted_test.py
 
+echo "==> skill contract tests"
+python3 scripts/validate_skills_test.py
+python3 scripts/validate_skills.py --quiet
+
 echo "==> flutter analyze"
 flutter analyze
 

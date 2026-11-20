@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../services/game_ai/game_ai_difficulty.dart';
 import '../../../../services/game_ai/game_ai_persona.dart';
@@ -206,6 +207,10 @@ class GameStateNotifier extends Notifier<GameState> {
   StreamSubscription<({String peerId, String action, Map<String, dynamic> data})>?
       _moveSub;
   StreamSubscription<String>? _leaveSub;
+  Timer? _starterTimer;
+
+  @visibleForTesting
+  bool get hasPendingStarterTimer => _starterTimer?.isActive ?? false;
 
   // Bumped on every initClientMode()/exitMultiplayerMode() call so an
   // in-flight reconnect retry loop from a previous session can tell it's
@@ -218,6 +223,8 @@ class GameStateNotifier extends Notifier<GameState> {
       _remoteSub?.cancel();
       _moveSub?.cancel();
       _leaveSub?.cancel();
+      _starterTimer?.cancel();
+      _starterTimer = null;
     });
     return const GameState(currentState: GameStateEnum.start, players: []);
   }
@@ -399,11 +406,22 @@ class GameStateNotifier extends Notifier<GameState> {
         gameMessage: 'Rolling to determine first player…',
       );
       _broadcastIfHost();
-      Timer(const Duration(seconds: 2), determineStarter);
+      _scheduleStarter();
     }
   }
 
+  void _scheduleStarter() {
+    _starterTimer?.cancel();
+    _starterTimer = Timer(const Duration(seconds: 2), () {
+      _starterTimer = null;
+      if (!ref.mounted) return;
+      determineStarter();
+    });
+  }
+
   void determineStarter() {
+    _starterTimer?.cancel();
+    _starterTimer = null;
     final handRanks =
         state.players.map((p) => evaluateHand(p.dice).index).toList();
     final best = handRanks.reduce((a, b) => a < b ? a : b);
@@ -436,7 +454,7 @@ class GameStateNotifier extends Notifier<GameState> {
         rerollingPlayerIds: tiedIds,
       );
       _broadcastIfHost();
-      Timer(const Duration(seconds: 2), determineStarter);
+      _scheduleStarter();
     }
   }
 

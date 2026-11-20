@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sisu_mate/services/game_ai/game_ai_difficulty.dart';
@@ -540,6 +541,23 @@ void main() {
           expect(d, inInclusiveRange(1, 6));
         }
       }
+    });
+
+    test('disposing during the starter delay does not touch the disposed ref', () {
+      fakeAsync((async) {
+        final c = ProviderContainer();
+        addTwoPlayers(c);
+        final n = notifier(c);
+        n.startGame();
+        expect(n.hasPendingStarterTimer, isTrue);
+        c.dispose();
+        // The 2 s determineStarter timer must be cancelled by dispose; before
+        // the fix this fired against the disposed notifier and failed the
+        // next test that happened to be running (#424).
+        async.elapse(const Duration(seconds: 3));
+        async.flushMicrotasks();
+        expect(n.hasPendingStarterTimer, isFalse);
+      });
     });
   });
 

@@ -29,6 +29,18 @@ Idea from michaelshimeles/skills `evidence-driven-testing`, rewritten for SisuMa
 - Ads: `test20_admob_smoke.sh` (needs `kForceProForTesting = false` for the run; flip it back).
 - Permissions/cold resume: `test19_permissions_smoke.sh`. Perf: `test21_perf_smoke.sh`.
 
+## Perf claims
+
+`test21_perf_smoke.sh` gives the before and after. A number is only evidence when the run supports the claim:
+
+- State the claim first: "cold open p50 1.9 s → 1.5 s on <device>".
+- Read the harness. Note what it times and what it skips.
+- Profile or release build, same data and state, alternating A/B. The harness does 3 cold opens per run; run it twice for at least 5 samples per side, or extend its loop.
+- Report median and range, not one run. One run is a ballpark; say so.
+- Name the limiter (first frame, list build, JSON parse, DB query, network). A change that cannot move the limiter cannot explain the number.
+- Count errors and confirm the work ran inside the timed region (frame reached, list actually flung).
+- Put the micro number next to the end-to-end path the user waits on; report its share.
+
 ## Never
 
 Capture secrets, real user data, or the contents of `dart-defines.json`. Don't post a capture you haven't looked at.

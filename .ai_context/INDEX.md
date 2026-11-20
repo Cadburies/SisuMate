@@ -20,6 +20,7 @@
 | Task | Load |
 | --- | --- |
 | Play / App Store upload | `.ai_context/store_release.md` (commands, secrets, tester tracks). Scripts: `play_release.sh`, `appstore_release.sh` |
+| Domain terms / product copy | `.ai_context/glossary.md` (product and sailing language only; not a spec) |
 | Backlog / pick next work | GitHub Issues: `gh issue list --state open` (skip `agent:*`-claimed, placeholder-Touches, unresolved `Depends on #N`; "do all TEST issues" adds `--label test-gap`; protocol in `AGENTS.md` §Issue kickoff) |
 | Parallel agents | `AGENTS.md` §Parallel agents (issue labels, shared tree on main) |
 | Full test suite (post every task) | **`./scripts/run_full_suite.sh`** (SEC3 → analyze → `flutter test` → live RLS → integration). Flags: `--skip-live`, `--skip-integration`, `--device <id>`. Detail: `AGENTS.md` §5 + `README.md` Testing + `test-gap` issues on GitHub |

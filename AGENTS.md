@@ -30,8 +30,17 @@ Procedures are loaded on demand from `skills/<name>/SKILL.md` (open Agent Skills
 | `schema-change` | Any Drift / model / Supabase / wire-field change (the full cascade) |
 | `unslop` | Commit messages, issue comments, store/wiki copy |
 | `cyber-check` | Security audit — before every store release, after dep/lockfile or agent-tooling changes, and whenever the last audit is >14 days old |
+| `cold-review` | Staged or branch review before commit — fresh-context Standards + issue Acceptance |
+| `blast-radius` | Schema, sync, DI, Pro-gate, or LAN diff — prove the safety fact before shipping |
+| `correct` | Same correction twice — enforce it in `_factory.py` or a test, docs last |
+| `feature-map-audit` | Feature Map, `fm.sh`, or wiki drift — periodic source + live audit |
 
 Rules and skills stay model- and harness-agnostic: no slash commands, vendor tool names or vendor-only paths in their text. Harness wiring (e.g. a `.claude/skills` symlink to `skills/`) is an adapter only. New skill = one folder + `SKILL.md` with a trigger-focused `description` (quote it if it contains `#`), plus source and licence attribution if adapted.
+
+- The `description` is the trigger: front-load the condition ("Use when…"), one trigger per branch, not synonyms.
+- One meaning in one place: link to the skill or source instead of copying it.
+- State the target behaviour; keep a prohibition only for a hard guardrail.
+- Inline what every run needs; put detail only some runs reach in a sibling file. Keep `SKILL.md` under ~120 lines.
 
 ---
 
@@ -116,11 +125,12 @@ Zero build errors before claiming done.
 #### What the full suite runs (in order)
 
 1. **SEC3** — `scripts/scan_release_secrets.sh` (pubspec/assets/lib; optional APK if present)
-2. **`flutter analyze`**
-3. **`flutter test`** — all unit/widget/TEST6/P0–P3 host tests under `test/`
-4. **TEST8 live RLS** — `scripts/test_supabase_rls.sh` (skips cleanly without `dart-defines.json` / offline)
-5. **Live schema parity** — `scripts/verify_supabase_schema.sh` (same skip rules; after any schema change, apply migrations first)
-6. **TEST9** — `flutter test integration_test` (default device: `flutter-tester`)
+2. **Guard + skill contract tests** — `scripts/_factory_test.py`, the triage issue-body tests, `scripts/validate_skills_test.py`, `scripts/validate_skills.py`
+3. **`flutter analyze`**
+4. **`flutter test`** — all unit/widget/TEST6/P0–P3 host tests under `test/`
+5. **TEST8 live RLS** — `scripts/test_supabase_rls.sh` (skips cleanly without `dart-defines.json` / offline)
+6. **Live schema parity** — `scripts/verify_supabase_schema.sh` (same skip rules; after any schema change, apply migrations first)
+7. **TEST9** — `flutter test integration_test` (default device: `flutter-tester`)
 
 #### Flags
 
@@ -135,6 +145,9 @@ Fallback if the script is unavailable:
 
 ```bash
 bash scripts/scan_release_secrets.sh
+python3 scripts/_factory_test.py
+python3 scripts/validate_skills_test.py
+python3 scripts/validate_skills.py
 flutter analyze
 flutter test
 bash scripts/test_supabase_rls.sh          # optional; skips without dart-defines
@@ -278,6 +291,8 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 | `screencap.sh` | adb screenshot → abs path |
 | `wait_for_flutter.sh` | Poll run log |
 | `supabase_cli.sh` | Auth/REST/RPC checks (credentials from dart-defines) |
+| `setup_local.sh` | First-run / drift check: Flutter + Dart, `dart-defines.json` keys and ignore status, store credentials, `.mcp.json`, attached devices. `--check` is read-only; `--analyze` also runs analyze |
+| `review_staged.sh` | Bundles the staged diff, issue spec, standards list, and three reviewer prompts into `build/review/<stamp>/` for a fresh-context review. No model call; see `cold-review` |
 | `idb_tap_label.sh` / `adb_tap_text.sh` | UI tap by label/text (iOS / Android) — semantic match, not hand-computed pixel coords |
 | `adb_swipe_reveal_action.sh` | Android: swipe a list card to reveal its `SwipeableListItem` action pane, then tap the named action (e.g. swipe + tap "Complete") — bounds computed live from `uiautomator dump`, never hardcoded |
 | `fm.sh` | Feature Map runner (#354): `fm.sh <id>` runs that feature's script (host test named by id), `--reach` only reaches it, `--device <serial\|udid>` reaches it on a running phone/sim. Find ids with `dart run tool/feature_map.dart find <word>`; rules in `.ai_context/feature_map/FORMAT.md` |
