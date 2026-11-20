@@ -31,7 +31,7 @@ Name how it breaks, the `file:line`, how likely and how bad, and the cheapest ch
 
 Write the smallest test or throwaway script that calls the real code and fails loud if the fact is false. Run it and paste the result. Keep it as a regression test when it covers a real edge; delete it otherwise.
 
-For a wide or contested change, run independent reviews in parallel and merge the answers. Different reviewers catch different real bugs.
+For a wide or contested change, do a second pass from the opposite assumption before shipping.
 
 ## SisuMate triggers
 

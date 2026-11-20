@@ -27,7 +27,7 @@ Only `.ai_context/feature_map/`, `tool/feature_map.dart`, and the Feature Map ha
 
 1. **Index hygiene.** Fix missing, extra, duplicate, or dead entries. No generated inventory.
 
-2. **Source wave.** One read-only scout per area (launch, home modules, games, system/shared) runs concurrently. Each returns: feature summary, source entry points, likely drift with `file:line`, and one live recipe. Children never drive the app and never edit.
+2. **Source walk.** Go through each area (launch, home modules, games, system/shared) one at a time. For each, record: feature summary, source entry points, likely drift with `file:line`, and one live recipe. Do not drive the app or edit while mapping.
 
 3. **Reconcile.** Every feature has a summary. Merge overlapping recipes into as few app states as practical. Spot-check claimed drift; do not re-prove clean claims. Require a concrete source path before calling a feature missing.
 
