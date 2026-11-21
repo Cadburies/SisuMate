@@ -32,6 +32,8 @@ Write "X causes this because Y", then test it with the smallest change. Change o
 
 **Three failed fixes means stop.** If each fix moves the symptom, the design is wrong, not the hypothesis. Tell the user what you tried and ask before trying a fourth. If you are told "stop guessing" or "is that actually happening?", go back to Phase 1.
 
+Reverting unverified edits is part of that stop. Leaving them in the tree and ending is not. The stop hook will send you back.
+
 ## Flaky and timing tests
 
 See [condition-based-waiting.md](condition-based-waiting.md). Most "flaky under load" failures are real waits on wall-clock time.

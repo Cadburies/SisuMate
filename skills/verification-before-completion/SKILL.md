@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Use before saying work is done, fixed, passing or green; before closing an issue, committing or pushing; and before trusting another agent's success report. Requires fresh command output as evidence for every claim.
+description: Use before saying work is done, fixed, passing or green; before closing an issue, committing or pushing; when a stop hook says the suite receipt is missing; and before trusting another agent's success report. Requires fresh command output as evidence for every claim.
 ---
 
 # Verification before completion
@@ -8,6 +8,10 @@ description: Use before saying work is done, fixed, passing or green; before clo
 Adapted from obra/superpowers `verification-before-completion` (MIT).
 
 **Rule:** no completion claim without evidence produced *after your last edit*. A run from earlier, a run before your last edit, or "it should pass" is not evidence.
+
+## Red means continue
+
+A red or missing gate is not a result to report and stop on. Fix the cause and re-run the full gate. Do not weaken, skip, delete, or narrow a test to get green. Stop only when `systematic-debugging` says three failed fixes, or a human must decide. Then revert unverified edits. The green loop in `AGENTS.md` is the rule. This skill sequences the gate.
 
 ## Gate (run it every time)
 

@@ -95,7 +95,7 @@ That is the single entry point. (Feature Map: every UI feature's reach path in `
 | # | Step | What |
 | --- | --- | --- |
 | 1 | **SEC3** | `scripts/scan_release_secrets.sh` — no secrets in assets/lib/APK |
-| 2 | **Guard + skills** | `scripts/_factory_test.py`, the triage issue-body tests, `scripts/validate_skills_test.py`, `scripts/validate_skills.py` |
+| 2 | **Guard + skills** | `scripts/_factory_test.py`, the triage issue-body tests, `scripts/validate_skills_test.py`, `scripts/validate_skills.py`, `scripts/review_staged_test.py` |
 | 3 | **Analyze** | `flutter analyze` — zero issues |
 | 4 | **Host tests** | `flutter test` — unit, widget, screen+Drift, P0–P3 host gates (offline, import, crew join, AI determinism, units, a11y…) |
 | 5 | **TEST8 live RLS** | `scripts/test_supabase_rls.sh` — skips cleanly if no `dart-defines.json` / offline |

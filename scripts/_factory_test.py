@@ -56,6 +56,12 @@ class EditGuards(unittest.TestCase):
         self.assertIsNone(edit("scripts/fm.sh"))
         self.assertIsNone(edit(".ai_context/INDEX.md"))
 
+    def test_receipt_file_denied(self):
+        for rel in (f.RECEIPT, f.SNAPSHOT, f.REVIEW_RECEIPT):
+            d = edit(rel)
+            self.assertEqual(d[0], "deny", rel)
+            self.assertIn("gate scripts write", d[1])
+
     def test_relative_path_resolved_against_cwd(self):
         d = f.pretool_decision({"tool_name": "Edit",
                                 "tool_input": {"file_path": "CLAUDE.md"}, "cwd": ROOT})
@@ -91,6 +97,21 @@ class GitGuards(unittest.TestCase):
         self.assertIsNone(bash("git commit -m '-a is not a flag here'"))
         self.assertIsNone(bash('git commit -m "Fix (#1)" -m "body --all words"'))
 
+    def test_wrapped_commit_denied(self):
+        for cmd in (
+            "bash -c 'git commit -m x'",
+            "sh -c 'git commit -m x'",
+            "bash -lc 'git commit -m x'",
+            "bash --login -c 'git add lib/x.dart && git commit -m x'",
+            "bash -c 'git add lib/x.dart && git commit -m x'",
+            "sh -c 'git add lib/x.dart; git commit -m x'",
+            "node -e \"require('child_process').execSync('git add lib/x.dart && git commit -m x')\"",
+            "$(git commit -m x)",
+            "python3 -c \"import subprocess; "
+            "subprocess.run(['git','commit','-m','x'])\"",
+        ):
+            self.assertDenied(cmd, "literal")
+
     def test_force_push_denied(self):
         for cmd in ("git push -f", "git push --force origin main",
                     "git push --force-with-lease", "git push origin +main"):
@@ -123,6 +144,28 @@ class GitGuards(unittest.TestCase):
     def test_chained_command_checked_per_segment(self):
         self.assertDenied("git status && git add -A && git commit -m x", "git add")
         self.assertDenied("FOO=1 git reset --hard", "reset --hard")
+
+    def test_governance_bash_write_asks(self):
+        for cmd in ("cat > scripts/review_staged.sh",
+                    "cp /tmp/x AGENTS.md",
+                    "tee scripts/_factory.py",
+                    "sed -i s/a/b/ skills/cold-review/SKILL.md"):
+            d = bash(cmd)
+            self.assertEqual(d[0], "ask", cmd)
+            self.assertIn("governance", d[1])
+        self.assertIsNone(bash("cat scripts/review_staged.sh"))
+
+    def test_receipt_forgery_common_writers(self):
+        for cmd in (
+            "node -e \"require('fs').writeFileSync('build/review_receipt.json','x')\"",
+            "ruby -e \"File.write('build/review_receipt.json','x')\"",
+            "dd of=build/suite_receipt.json",
+            "python3 scripts/_factory.py review-receipt && "
+            "python3 -c \"open('build/review_receipt.json','w').write('x')\"",
+        ):
+            self.assertDenied(cmd, "gate scripts write")
+        self.assertIsNone(bash("python3 scripts/_factory.py review-receipt"))
+        self.assertIsNone(bash("cat build/review_receipt.json"))
 
     def test_read_only_git_allowed(self):
         for cmd in ("git status", "git diff --cached", "git log --oneline -5",
@@ -237,6 +280,15 @@ class FakeRepo:
             during()  # an edit while the suite is running
         return f.write_receipt(self.root, flags, self.report(**kw), None)
 
+    def review(self, status="PASS", findings=None, diff_hash=None):
+        self.write(f.REVIEW_RECEIPT, json.dumps({
+            "status": status,
+            "diff_hash": diff_hash if diff_hash is not None else f.review_diff_hash(self.root),
+            "reviewer_family": "fake",
+            "round": 1,
+            "findings": findings or [],
+        }))
+
     def commit_decision(self, msg="msg"):
         return f.commit_check(self.root, msg)
 
@@ -276,6 +328,7 @@ class ReceiptAndCommitGate(unittest.TestCase):
         self.r.write("lib/a.dart", "a2\n")
         self.r.suite()
         self.r.git("add", "lib/a.dart")
+        self.r.review()
         self.assertIsNone(self.r.commit_decision())
 
     def test_edit_after_suite_denied(self):
@@ -308,6 +361,7 @@ class ReceiptAndCommitGate(unittest.TestCase):
         self.r.suite()
         self.r.write("lib/other_agent.dart", "x\n")  # appears after the suite, not staged
         self.r.git("add", "lib/a.dart")
+        self.r.review()
         self.assertIsNone(self.r.commit_decision())
 
     def test_skip_flags_need_reason(self):
@@ -315,6 +369,7 @@ class ReceiptAndCommitGate(unittest.TestCase):
         self.r.suite(flags="--skip-live")
         self.r.git("add", "lib/a.dart")
         self.assertIn("suite-skip", self.r.commit_decision()[1])
+        self.r.review()
         self.assertIsNone(self.r.commit_decision("x\n\nsuite-skip: offline on a plane"))
 
     def test_test_count_below_head_floor_denied(self):
@@ -340,6 +395,7 @@ class ReceiptAndCommitGate(unittest.TestCase):
         self.r.write("scripts/_factory.py", "# changed by shell\n")
         self.r.suite()
         self.r.git("add", "scripts/_factory.py")
+        self.r.review()
         d = self.r.commit_decision()
         self.assertEqual(d[0], "ask")
         self.assertIn("governance", d[1])
@@ -385,6 +441,258 @@ class StopHook(unittest.TestCase):
         self.assertEqual(f.stale_session_edits(r.root, p), ["lib/a.dart"])
         r.suite()
         self.assertEqual(f.stale_session_edits(r.root, p), [])
+
+    def test_stale_covers_code_trees_not_docs(self):
+        r = FakeRepo()
+        r.write("integration_test/a_test.dart", "x\n")
+        r.write("scripts/fm.sh", "x\n")
+        r.write("tool/x.dart", "x\n")
+        r.write("README.md", "changed\n")
+        paths = {os.path.join(r.root, p) for p in (
+            "integration_test/a_test.dart", "scripts/fm.sh", "tool/x.dart", "README.md")}
+        self.assertEqual(f.stale_session_edits(r.root, paths), [
+            "integration_test/a_test.dart", "scripts/fm.sh", "tool/x.dart"])
+
+    def test_stop_block_sends_the_agent_back(self):
+        d = f.stop_decision(["lib/a.dart"], "keep going")
+        self.assertEqual(d["decision"], "block")
+        self.assertIn("lib/a.dart", d["reason"])
+        self.assertIn("run_full_suite.sh", d["reason"])
+        self.assertIn("Do not commit", d["reason"])
+        self.assertIsNone(f.stop_decision([], "keep going"))
+
+    def test_hold_off_allows_stop(self):
+        self.assertIsNone(f.stop_decision(["lib/a.dart"], "hold off"))
+        self.assertIsNone(f.stop_decision(["lib/a.dart"], "please stop now"))
+        self.assertIsNotNone(f.stop_decision(["lib/a.dart"], "stop guessing"))
+        self.assertFalse(f.is_hold_off(
+            "Please implement hold off handling in the hook and keep going"))
+
+    def test_last_user_text_ignores_assistant(self):
+        lines = [
+            json.dumps({"type": "user", "message": {"role": "user", "content": [
+                {"type": "text", "text": "fix the loop"}]}}),
+            json.dumps({"type": "assistant", "message": {"role": "assistant", "content": [
+                {"type": "text", "text": "hold off"}]}}),
+        ]
+        self.assertEqual(f.last_user_text(lines), "fix the loop")
+        lines.append(json.dumps({"type": "user", "message": {"role": "user",
+                                                             "content": "stop now"}}))
+        self.assertTrue(f.is_hold_off(f.last_user_text(lines)))
+
+
+class ReceiptForge(unittest.TestCase):
+    def test_agent_cannot_write_the_receipt(self):
+        for cmd in ("python3 scripts/_factory.py receipt-write --flags ''",
+                    "python3 scripts/_factory.py snapshot",
+                    "echo {} > build/suite_receipt.json",
+                    "python3 -c \"open('build/suite_snapshot.json','w').write('{}')\""):
+            d = bash(cmd)
+            self.assertEqual(d[0], "deny", cmd)
+            self.assertIn("gate scripts write", d[1], cmd)
+
+    def test_receipt_summary_and_mentions_allowed(self):
+        self.assertIsNone(bash("python3 scripts/_factory.py receipt"))
+        self.assertIsNone(bash("grep suite_receipt.json scripts"))
+
+
+class ReviewFacts(unittest.TestCase):
+    def setUp(self):
+        self.r = FakeRepo()
+
+    def stage(self, path, text):
+        self.r.write(path, text)
+        self.r.git("add", path)
+
+    def rules(self):
+        return {x["rule"] for x in f.review_facts(self.r.root)["findings"]}
+
+    def test_ui_drift_import(self):
+        self.stage("lib/ui/x.dart",
+                   "import 'package:sisu_mate/data/drift/app_database.dart';\n")
+        self.assertIn("ui_drift_import", self.rules())
+
+    def test_colour_literal_and_token(self):
+        self.stage("lib/ui/x.dart", "final a = Color(0xFF000000);\n")
+        self.assertIn("colour_literal", self.rules())
+        self.r.git("reset", "HEAD", "lib/ui/x.dart")
+        self.stage("lib/ui/x.dart", "final a = SisuColors.primary;\n")
+        self.assertNotIn("colour_literal", self.rules())
+
+    def test_colour_literal_on_sisu_colors_line_still_flags(self):
+        self.stage("lib/ui/x.dart",
+                   "final a = [SisuColors.primary, Color(0xFFFFFFFF)];\n")
+        self.assertIn("colour_literal", self.rules())
+
+    def test_colour_literal_moved_from_head_is_ignored(self):
+        self.r.write("lib/ui/x.dart", "// header\nfinal a = Colors.red;\n")
+        self.r.git("add", "lib/ui/x.dart")
+        self.r.git("commit", "-qm", "legacy literal")
+        self.stage("lib/ui/x.dart", "final a = Colors.red;\n// header\n")
+        self.assertNotIn("colour_literal", self.rules())
+
+    def test_colour_literal_new_line_still_flags(self):
+        self.r.write("lib/ui/x.dart", "// header\nfinal a = Colors.red;\n")
+        self.r.git("add", "lib/ui/x.dart")
+        self.r.git("commit", "-qm", "legacy literal")
+        self.stage("lib/ui/x.dart",
+                   "// header\nfinal a = Colors.red;\nfinal b = Colors.blue;\n")
+        self.assertIn("colour_literal", self.rules())
+
+    def test_schema_without_migration(self):
+        self.stage("lib/data/drift/app_database.dart", "int get schemaVersion => 2;\n")
+        self.assertIn("schema_without_migration", self.rules())
+
+    def test_schema_with_migration_allowed(self):
+        self.stage("lib/data/drift/app_database.dart", "int get schemaVersion => 2;\n")
+        self.stage("supabase/migrations/20260101000000_x.sql", "select 1;\n")
+        self.assertNotIn("schema_without_migration", self.rules())
+
+    def test_schema_with_deleted_migration_is_not_a_migration(self):
+        self.r.write("supabase/migrations/20260101000000_x.sql", "select 1;\n")
+        self.r.git("add", "supabase/migrations/20260101000000_x.sql")
+        self.r.git("commit", "-qm", "migration")
+        self.r.git("rm", "-q", "supabase/migrations/20260101000000_x.sql")
+        self.stage("lib/data/drift/app_database.dart", "int get schemaVersion => 2;\n")
+        self.assertIn("schema_without_migration", self.rules())
+
+    def test_llm_only_and_local_fallback(self):
+        self.stage("lib/ui/x.dart", "final r = await LlmClientService().ask('x');\n")
+        self.assertIn("llm_only", self.rules())
+        self.r.git("reset", "HEAD", "lib/ui/x.dart")
+        self.stage("lib/ui/x.dart",
+                   "// local fallback first\nfinal r = await LlmClientService().ask('x');\n")
+        self.assertNotIn("llm_only", self.rules())
+
+    def test_llm_only_localization_is_not_a_fallback(self):
+        self.stage("lib/ui/x.dart",
+                   "import 'app_localizations.dart';\n"
+                   "final r = await LlmClientService().ask('x');\n")
+        self.assertIn("llm_only", self.rules())
+
+
+    def test_unlogged_catch_and_logged_catch(self):
+        self.stage("lib/services/x.dart", "void f() { try { x(); } catch (e) {} }\n")
+        self.assertIn("unlogged_catch", self.rules())
+        self.r.git("reset", "HEAD", "lib/services/x.dart")
+        self.stage("lib/services/x.dart",
+                   "void f() { try { x(); } catch (e, st) { "
+                   "ErrorLogService().logException(e, st); } }\n")
+        self.assertNotIn("unlogged_catch", self.rules())
+
+    def test_test_tamper_removed_expect(self):
+        self.r.write("test/a_test.dart", "test('a', () { expect(1, 1); });\n")
+        self.r.git("add", "test/a_test.dart")
+        self.r.git("commit", "-qm", "test")
+        self.stage("test/a_test.dart", "test('a', () { });\n")
+        self.assertIn("test_tamper", self.rules())
+
+    def test_test_tamper_skip(self):
+        self.stage("test/x_test.dart", "test('x', () {}, skip: 'later');\n")
+        self.assertIn("test_tamper", self.rules())
+
+
+    def test_test_tamper_deleted_file(self):
+        self.r.write("test/gone_test.dart", "test('a', () { expect(1, 1); });\n")
+        self.r.git("add", "test/gone_test.dart")
+        self.r.git("commit", "-qm", "test")
+        self.r.git("rm", "-q", "test/gone_test.dart")
+        self.assertIn("test_tamper", self.rules())
+
+    def test_callers_of_changed_symbol(self):
+        self.stage("lib/a.dart", "void newHelper() {}\n")
+        self.stage("test/a_test.dart", "void t() { newHelper(); }\n")
+        callers = f.review_facts(self.r.root)["facts"]["callers"]
+        self.assertIn("newHelper", callers)
+
+    def test_regression_proof_not_run_by_default(self):
+        self.stage("test/a_test.dart", "test('a', () {});\n")
+        proof = f.review_facts(self.r.root)["facts"]["regression_proof"]
+        self.assertEqual(proof, [{"test": "test/a_test.dart", "result": "not_run"}])
+
+    def test_regression_proof_removes_added_lib(self):
+        from unittest import mock
+
+        bin_dir = os.path.join(self.r.root, "bin")
+        os.makedirs(bin_dir)
+        fake = os.path.join(bin_dir, "flutter")
+        with open(fake, "w", encoding="utf-8") as fh:
+            fh.write("#!/usr/bin/env bash\n"
+                     "grep -q FIX lib/new_fix.dart && exit 0\n"
+                     "exit 1\n")
+        os.chmod(fake, 0o755)
+        self.stage("lib/new_fix.dart", "// FIX\n")
+        self.stage("test/a_test.dart", "test('a', () {});\n")
+        path = bin_dir + os.pathsep + os.environ.get("PATH", "")
+        with mock.patch.dict(os.environ, {"PATH": path}):
+            proof = f.regression_proof(self.r.root, ["test/a_test.dart"], True)
+        self.assertEqual(proof, [{"test": "test/a_test.dart", "result": "fail"}])
+
+    def test_clean_diff_has_no_findings(self):
+        self.stage("lib/services/x.dart", "void f() {}\n")
+        self.assertEqual(f.review_facts(self.r.root)["findings"], [])
+
+
+class ReviewGate(unittest.TestCase):
+    def setUp(self):
+        self.r = FakeRepo()
+
+    def stage_code(self):
+        self.r.write("lib/a.dart", "a2\n")
+        self.r.suite()
+        self.r.git("add", "lib/a.dart")
+
+    def test_missing_review_receipt_denied(self):
+        self.stage_code()
+        d = self.r.commit_decision()
+        self.assertEqual(d[0], "deny")
+        self.assertIn("No review receipt", d[1])
+
+    def test_review_pass_allowed(self):
+        self.stage_code()
+        self.r.review()
+        self.assertIsNone(self.r.commit_decision())
+
+    def test_stale_review_hash_denied(self):
+        self.stage_code()
+        self.r.review(diff_hash="0" * 64)
+        d = self.r.commit_decision()
+        self.assertEqual(d[0], "deny")
+        self.assertIn("stale", d[1])
+
+    def test_review_fail_denied_with_findings(self):
+        self.stage_code()
+        self.r.review(status="FAIL", findings=[
+            {"rule": "ui_drift_import", "file": "lib/a.dart", "line": 1,
+             "scenario": "UI imports Drift"}])
+        d = self.r.commit_decision()
+        self.assertEqual(d[0], "deny")
+        self.assertIn("Cold review FAIL", d[1])
+        self.assertIn("ui_drift_import", d[1])
+
+    def test_review_needs_human_denied(self):
+        self.stage_code()
+        self.r.review(status="NEEDS_HUMAN")
+        self.assertIn("NEEDS_HUMAN", self.r.commit_decision()[1])
+
+    def test_review_receipt_forgery_denied(self):
+        for cmd in ("echo {} > build/review_receipt.json",
+                    "python3 -c \"open('build/review_receipt.json','w').write('{}')\""):
+            d = bash(cmd)
+            self.assertEqual(d[0], "deny", cmd)
+            self.assertIn("gate scripts write", d[1], cmd)
+        self.assertIsNone(bash("python3 scripts/_factory.py review-receipt"))
+
+    def test_review_receipt_edit_denied(self):
+        d = edit(f.REVIEW_RECEIPT)
+        self.assertEqual(d[0], "deny")
+        self.assertIn("gate scripts write", d[1])
+
+    def test_prompt_edits_ask(self):
+        for name in f.REVIEW_PROMPTS:
+            d = edit(f"{f.REVIEW_PROMPT_DIR}/{name}")
+            self.assertEqual(d[0], "ask", name)
+            self.assertIn("governance", d[1])
 
 
 if __name__ == "__main__":

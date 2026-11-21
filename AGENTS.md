@@ -1,6 +1,6 @@
 # Sisu Mate — Agent contract
 
-> The single first-load contract for every agent on this repo, whatever the model or harness. Vendor files (`CLAUDE.md`, …) only point here. Hard rules are also enforced in code by `scripts/_factory.py`, wired as a pre-tool hook where the harness supports one.
+> The single first-load contract for every agent on this repo, whatever the model or harness. Vendor files (`CLAUDE.md`, …) only point here. Hard rules are also enforced in code by `scripts/_factory.py`, wired as a pre-tool hook and a stop hook where the harness supports them.
 
 ## Session start (token budget)
 
@@ -24,7 +24,7 @@ Procedures are loaded on demand from `skills/<name>/SKILL.md` (open Agent Skills
 | `sisu-task` | "do issue N" / "pick next work" — sequences the skills below |
 | `test-driven-development` | Any behaviour change in `lib/` — regression test seen red first |
 | `systematic-debugging` | Any bug, failing/flaky test, triage issue — root cause before fix (Flutter timing: `condition-based-waiting.md`) |
-| `verification-before-completion` | Before claiming done, closing an issue, committing |
+| `verification-before-completion` | Before claiming done, closing an issue, committing, and when the stop hook blocks |
 | `receiving-code-review` | Acting on review findings |
 | `device-evidence` | User-visible change — before/after captures on iOS **and** Android |
 | `schema-change` | Any Drift / model / Supabase / wire-field change (the full cascade) |
@@ -68,6 +68,12 @@ When reading source that **contradicts a Tier A/B claim**, fix the context file 
 ---
 
 ## How a task works
+
+### Green loop
+
+A coding task is unfinished while `./scripts/run_full_suite.sh` has not exited 0 after the last edit. On red, read the failure, fix the cause, and re-run the full suite. Do not hand off, commit, push, or end the session while this session's edits under `LOOP_PREFIXES` in `scripts/_factory.py` (`lib/`, `test/`, `integration_test/`, `scripts/`, `tool/`) lack a fresh suite receipt. Any edit after the receipt invalidates it. Do not weaken, skip, delete, or narrow a test to manufacture green. The test floor only goes up. Stop only when the same failure has been fixed three times with no new evidence (`systematic-debugging`), or a human must decide. Then revert those edits and report the blocker. A human hold-off (`hold off`, `stop now`, `do not continue`, `don't continue`, `you can stop`) allows ending with unverified edits. The loop does not make the task possible. It makes red impossible to call done.
+
+`scripts/hook_stop.sh` blocks that session end and sends the agent back. A warning is not compliance. If the harness forces a stop anyway, that is not green. Do not commit. Analyze is inside the suite. The debug APK build in §5 must also exit 0 before claiming done. The suite does not build the APK.
 
 ### 1. Pick & claim (before any planning or code)
 1. Resolve what the task actually is: an explicit ask ("do issue #N"), a batch/sequence ("do all
@@ -120,7 +126,7 @@ Zero build errors before claiming done.
 ./scripts/run_full_suite.sh
 ```
 
-**Must be green before claiming done.** Add regression tests for every new / changed / fixed behavior. Prefer TEST6-style screen+Drift integrations when touching module UI. No UI-layout-only tests.
+**Must be green before claiming done.** On red, follow the green loop above. Do not hand off. Add regression tests for every new / changed / fixed behavior. Prefer TEST6-style screen+Drift integrations when touching module UI. No UI-layout-only tests.
 
 #### What the full suite runs (in order)
 
@@ -178,20 +184,23 @@ Also: human **README.md → Testing**; open backlog = GitHub Issues (`test-gap` 
 1. Update **Tier A/B** files actually affected (not every file).
 2. Cap `INDEX.md` → **NEXT** at ~6 lines (last / doing / blockers).
 3. Changed any file under `.ai_context/feature_map/`? Run `scripts/publish_wiki.sh` after the push in §8 (the public wiki is generated from it — never edit the wiki by hand).
-4. Close or comment the GitHub issue: paste the suite receipt line (`python3 scripts/_factory.py receipt`, written by a green `run_full_suite.sh`), files touched, blockers. Agent commits of code are refused unless that receipt covers exactly what is staged; stage and commit in separate commands. History = git log + issue threads — there is no changelog file.
+4. Close or comment the GitHub issue: paste the suite receipt line (`python3 scripts/_factory.py receipt`, written by a green `run_full_suite.sh`) and the review receipt line (`python3 scripts/_factory.py review-receipt`), files touched, blockers. Agent commits of code are refused unless the suite receipt covers exactly what is staged **and** `build/review_receipt.json` is `PASS` with the same staged diff hash; stage and commit in separate commands. History = git log + issue threads — there is no changelog file.
 5. Remove the claim: `gh issue edit <N> --remove-label agent:<you>` (closing the issue leaves the
    label attached otherwise, which reads as still-claimed to the next session's §1 check).
 
-### 8. Commit & push (closing rule — only once the suite is green)
-Once §6 is green and §7 is done, commit and push **without waiting for a separate ask** — a
-green suite is the trigger, not a reason to pause for confirmation:
+### 8. Commit & push (closing rule — only once the suite is green and the review is PASS)
+Do not reach this step while the green loop is red. Once §6 is green and §7 is done, commit and push **without waiting for a separate ask** — a
+green suite plus a `PASS` cold-review receipt is the trigger, not a reason to pause for confirmation:
 1. `git add` the **specific files the task touched** (source + tests + the Tier A/B context
    files updated in step 7) — never a blanket `git add -A`; that risks sweeping up another
    agent's unrelated in-progress edits in a shared working tree (see §Parallel agents).
-2. Commit with a message describing the change and why (issue number if one exists).
-3. `git push origin <current-branch>`. If the push is rejected (remote moved), `git fetch` +
+2. Run `scripts/review_staged.sh <N>` on the staged diff. A code commit needs `PASS` with the
+   same staged diff hash; fix confirmed findings and re-run. Docs-only commits are exempt.
+   Staging anything new after the review invalidates the receipt.
+3. Commit with a message describing the change and why (issue number if one exists).
+4. `git push origin <current-branch>`. If the push is rejected (remote moved), `git fetch` +
    rebase/merge and retry — never force-push.
-4. Skip this step only if the suite is not green, the user asked to hold off, or the task was
+5. Skip this step only if the suite is not green, the user asked to hold off, or the task was
    pure investigation/read-only with no diff.
 
 ---
@@ -292,7 +301,7 @@ While batching: claim before code; suite green per issue (`--skip-*` flags need 
 | `wait_for_flutter.sh` | Poll run log |
 | `supabase_cli.sh` | Auth/REST/RPC checks (credentials from dart-defines) |
 | `setup_local.sh` | First-run / drift check: Flutter + Dart, `dart-defines.json` keys and ignore status, store credentials, `.mcp.json`, attached devices. `--check` is read-only; `--analyze` also runs analyze |
-| `review_staged.sh` | Bundles the staged diff, issue spec, standards list, and three reviewer prompts into `build/review/<stamp>/` for a fresh-context review. No model call; see `cold-review` |
+| `review_staged.sh` | Cold-review gate: runs correctness, contract and (with an issue) acceptance passes plus a per-finding verify, writes `build/review_receipt.json`. Requires `SISU_REVIEW_CMD` (default `claude -p`) with `SISU_REVIEW_FAMILY` different from `SISU_BUILDER_FAMILY`; see `cold-review` |
 | `idb_tap_label.sh` / `adb_tap_text.sh` | UI tap by label/text (iOS / Android) — semantic match, not hand-computed pixel coords |
 | `adb_swipe_reveal_action.sh` | Android: swipe a list card to reveal its `SwipeableListItem` action pane, then tap the named action (e.g. swipe + tap "Complete") — bounds computed live from `uiautomator dump`, never hardcoded |
 | `fm.sh` | Feature Map runner (#354): `fm.sh <id>` runs that feature's script (host test named by id), `--reach` only reaches it, `--device <serial\|udid>` reaches it on a running phone/sim. Find ids with `dart run tool/feature_map.dart find <word>`; rules in `.ai_context/feature_map/FORMAT.md` |

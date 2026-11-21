@@ -4,6 +4,7 @@
 # Order:
 #   1) SEC3 secrets scan
 #   2) factory guard tests   (scripts/_factory_test.py) + triage issue-body tests
+#      + cold review script tests (scripts/review_staged_test.py)
 #   3) flutter analyze
 #   4) flutter test          (unit/widget/TEST6/P0/offline/import/AI/units/a11y)
 #   5) TEST8 live Supabase   (scripts/test_supabase_rls.sh; skips without dart-defines)
@@ -70,6 +71,9 @@ python3 scripts/_untrusted_test.py
 echo "==> skill contract tests"
 python3 scripts/validate_skills_test.py
 python3 scripts/validate_skills.py --quiet
+
+echo "==> cold review script tests (#422)"
+python3 scripts/review_staged_test.py
 
 echo "==> flutter analyze"
 flutter analyze
