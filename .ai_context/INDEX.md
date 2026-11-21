@@ -4,12 +4,9 @@
 
 ## NEXT
 
-- **Last:** factory hardening. `AGENTS.md` is now the only contract (`CLAUDE.md` points to it) (#418). Agnostic skills live in `skills/` (#425). The `scripts/_factory.py` guard denies unsafe git, generated-file edits and governance edits (#419).
-- **Last:** #420 agent commits now need a green-suite receipt that covers exactly what's staged. `test/.test_floor` only goes up. #426 home goldens tolerate host-OS anti-alias drift (macOS 27.0.1) up to 0.02%.
-- **Last:** security pass. `skills/cyber-check/` + `scripts/cyber_check.sh` audit (run before releases, on dep/tooling changes, every 14 days). Findings live in **private** advisories; #433–#438 are neutral stubs. #433 done: only owner-authored issues are work, and triage bodies render device text inert (`scripts/_untrusted.py`).
-- **Last:** #434 done. Supabase MCP is database/debugging/docs only. The factory guard denies agent reads of release credentials and asks before store-release runs.
-- **Doing:** #435–#438 (security, in order).
-- **Next:** #421 claim scripts → #422 strengthened cold reviewer (no Greptile/CodeRabbit) → #423 out-of-scope list (Frik writes it). #424 flaky game timers. #395, map bugs #393/#396–#409.
+- **Last:** #422 cold-review gate. Deterministic facts (UI→Drift import, colour literals, schema without migration, LLM-only, unlogged catch, test tamper) plus a fresh-context reviewer (three passes, per-finding verify) write `build/review_receipt.json`; a code commit needs `PASS` with the same staged diff hash. `scripts/review_staged_test.py` runs in the suite.
+- **Doing:** #423 out-of-scope list (Frik writes it).
+- **Next:** #424 flaky game timers. Map bugs #393/#396–#409.
 - **Blockers:** android-34 emulator image broken.
 
 
